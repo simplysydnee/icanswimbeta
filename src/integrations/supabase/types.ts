@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      assessments: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          instructor_notes: string | null
+          scheduled_date: string
+          session_id: string | null
+          status: string
+          swimmer_id: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          instructor_notes?: string | null
+          scheduled_date: string
+          session_id?: string | null
+          status?: string
+          swimmer_id: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          instructor_notes?: string | null
+          scheduled_date?: string
+          session_id?: string | null
+          status?: string
+          swimmer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_swimmer_id_fkey"
+            columns: ["swimmer_id"]
+            isOneToOne: false
+            referencedRelation: "swimmers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           created_at: string
@@ -68,6 +122,8 @@ export type Database = {
           claimed_by: string | null
           created_at: string
           id: string
+          month_year: string | null
+          notification_sent: boolean | null
           original_session_id: string
         }
         Insert: {
@@ -75,6 +131,8 @@ export type Database = {
           claimed_by?: string | null
           created_at?: string
           id?: string
+          month_year?: string | null
+          notification_sent?: boolean | null
           original_session_id: string
         }
         Update: {
@@ -82,6 +140,8 @@ export type Database = {
           claimed_by?: string | null
           created_at?: string
           id?: string
+          month_year?: string | null
+          notification_sent?: boolean | null
           original_session_id?: string
         }
         Relationships: [
@@ -162,14 +222,77 @@ export type Database = {
           },
         ]
       }
+      session_attendance: {
+        Row: {
+          attended: boolean | null
+          booking_id: string
+          created_at: string
+          id: string
+          instructor_notes: string | null
+          marked_at: string | null
+          marked_by: string | null
+          session_id: string
+          swimmer_id: string
+        }
+        Insert: {
+          attended?: boolean | null
+          booking_id: string
+          created_at?: string
+          id?: string
+          instructor_notes?: string | null
+          marked_at?: string | null
+          marked_by?: string | null
+          session_id: string
+          swimmer_id: string
+        }
+        Update: {
+          attended?: boolean | null
+          booking_id?: string
+          created_at?: string
+          id?: string
+          instructor_notes?: string | null
+          marked_at?: string | null
+          marked_by?: string | null
+          session_id?: string
+          swimmer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_attendance_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_attendance_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_attendance_swimmer_id_fkey"
+            columns: ["swimmer_id"]
+            isOneToOne: false
+            referencedRelation: "swimmers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           created_at: string
+          day_of_week: number | null
           end_time: string
           id: string
           instructor_id: string | null
+          is_recurring: boolean | null
+          location: string | null
           max_capacity: number
+          month_year: string | null
           price_cents: number
+          recurrence_pattern: string | null
           session_type: string
           start_time: string
           status: string
@@ -177,11 +300,16 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          day_of_week?: number | null
           end_time: string
           id?: string
           instructor_id?: string | null
+          is_recurring?: boolean | null
+          location?: string | null
           max_capacity?: number
+          month_year?: string | null
           price_cents: number
+          recurrence_pattern?: string | null
           session_type: string
           start_time: string
           status?: string
@@ -189,11 +317,16 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          day_of_week?: number | null
           end_time?: string
           id?: string
           instructor_id?: string | null
+          is_recurring?: boolean | null
+          location?: string | null
           max_capacity?: number
+          month_year?: string | null
           price_cents?: number
+          recurrence_pattern?: string | null
           session_type?: string
           start_time?: string
           status?: string
@@ -313,45 +446,66 @@ export type Database = {
       }
       swimmers: {
         Row: {
+          assessment_status: string | null
           created_at: string
           current_level_id: string | null
           date_of_birth: string
+          enrollment_status: string | null
           first_name: string
           goals: string | null
           id: string
+          is_vmrc_client: boolean | null
           last_name: string
           parent_id: string
           photo_url: string | null
           strengths_interests: string | null
           updated_at: string
+          vmrc_coordinator_email: string | null
+          vmrc_coordinator_name: string | null
+          vmrc_coordinator_phone: string | null
+          vmrc_referral_url: string | null
           waitlist: boolean
         }
         Insert: {
+          assessment_status?: string | null
           created_at?: string
           current_level_id?: string | null
           date_of_birth: string
+          enrollment_status?: string | null
           first_name: string
           goals?: string | null
           id?: string
+          is_vmrc_client?: boolean | null
           last_name: string
           parent_id: string
           photo_url?: string | null
           strengths_interests?: string | null
           updated_at?: string
+          vmrc_coordinator_email?: string | null
+          vmrc_coordinator_name?: string | null
+          vmrc_coordinator_phone?: string | null
+          vmrc_referral_url?: string | null
           waitlist?: boolean
         }
         Update: {
+          assessment_status?: string | null
           created_at?: string
           current_level_id?: string | null
           date_of_birth?: string
+          enrollment_status?: string | null
           first_name?: string
           goals?: string | null
           id?: string
+          is_vmrc_client?: boolean | null
           last_name?: string
           parent_id?: string
           photo_url?: string | null
           strengths_interests?: string | null
           updated_at?: string
+          vmrc_coordinator_email?: string | null
+          vmrc_coordinator_name?: string | null
+          vmrc_coordinator_phone?: string | null
+          vmrc_referral_url?: string | null
           waitlist?: boolean
         }
         Relationships: [
