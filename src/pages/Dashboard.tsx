@@ -44,16 +44,26 @@ const levelSkills = {
 const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/20 to-background">
-      <div className="container mx-auto p-4 md:p-8 max-w-7xl">
+      <div className="container mx-auto px-3 py-4 sm:p-4 md:p-8 max-w-7xl">
         <SwimmerHeader swimmerName="Emma" currentLevel="Tadpole" />
 
         <Tabs defaultValue="progress" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
-            <TabsTrigger value="progress">Progress Tracker</TabsTrigger>
-            <TabsTrigger value="assessment">Initial Assessment</TabsTrigger>
-            <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
-            <TabsTrigger value="videos">Progress Videos</TabsTrigger>
-          </TabsList>
+          <div className="mb-6 sm:mb-8 overflow-x-auto">
+            <TabsList className="inline-flex w-full min-w-max sm:grid sm:grid-cols-4 sm:w-full">
+              <TabsTrigger value="progress" className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
+                Progress Tracker
+              </TabsTrigger>
+              <TabsTrigger value="assessment" className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
+                Initial Assessment
+              </TabsTrigger>
+              <TabsTrigger value="recommendations" className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
+                Recommendations
+              </TabsTrigger>
+              <TabsTrigger value="videos" className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
+                Progress Videos
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="progress" className="space-y-8">
             {/* Level Overview */}
