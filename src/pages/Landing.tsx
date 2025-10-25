@@ -103,22 +103,27 @@ const Landing = () => {
             <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg">
               <CardHeader>
                 <FileText className="h-12 w-12 text-primary mb-4" />
-                <CardTitle className="text-xl">Direct Enrollment</CardTitle>
+                <CardTitle className="text-xl">Private Pay Enrollment</CardTitle>
                 <CardDescription className="text-base">
-                  For private-pay clients ready to enroll and start lessons right away
+                  For families paying directly for swim lessons
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-900">
+                    <strong>⚠️ Not a VMRC Client?</strong> This enrollment is for private-pay families only. If you have VMRC authorization or a coordinator referral, use the "Request Referral" option instead.
+                  </p>
+                </div>
                 <ul className="space-y-2 text-sm text-muted-foreground mb-6">
                   <li>✓ Complete enrollment form</li>
                   <li>✓ Schedule initial assessment</li>
                   <li>✓ Book your first lessons</li>
                   <li>✓ Start swimming within days</li>
                 </ul>
-                <Link to="/booking" className="block">
+                <Link to="/auth" className="block">
                   <Button className="w-full" size="lg">
                     <Calendar className="mr-2 h-5 w-5" />
-                    Enroll Now
+                    Enroll Now (Private Pay)
                   </Button>
                 </Link>
               </CardContent>
