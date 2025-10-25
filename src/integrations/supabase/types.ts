@@ -14,16 +14,392 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          parent_id: string
+          session_id: string
+          status: string
+          swimmer_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          parent_id: string
+          session_id: string
+          status?: string
+          swimmer_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          parent_id?: string
+          session_id?: string
+          status?: string
+          swimmer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_swimmer_id_fkey"
+            columns: ["swimmer_id"]
+            isOneToOne: false
+            referencedRelation: "swimmers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      floating_sessions: {
+        Row: {
+          available_until: string
+          claimed_by: string | null
+          created_at: string
+          id: string
+          original_session_id: string
+        }
+        Insert: {
+          available_until: string
+          claimed_by?: string | null
+          created_at?: string
+          id?: string
+          original_session_id: string
+        }
+        Update: {
+          available_until?: string
+          claimed_by?: string | null
+          created_at?: string
+          id?: string
+          original_session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floating_sessions_original_session_id_fkey"
+            columns: ["original_session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      progress_videos: {
+        Row: {
+          created_at: string
+          id: string
+          instructor_notes: string | null
+          skill_focus: string | null
+          swimmer_id: string
+          uploaded_by: string
+          video_url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          instructor_notes?: string | null
+          skill_focus?: string | null
+          swimmer_id: string
+          uploaded_by: string
+          video_url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          instructor_notes?: string | null
+          skill_focus?: string | null
+          swimmer_id?: string
+          uploaded_by?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progress_videos_swimmer_id_fkey"
+            columns: ["swimmer_id"]
+            isOneToOne: false
+            referencedRelation: "swimmers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          created_at: string
+          end_time: string
+          id: string
+          instructor_id: string | null
+          max_capacity: number
+          price_cents: number
+          session_type: string
+          start_time: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          id?: string
+          instructor_id?: string | null
+          max_capacity?: number
+          price_cents: number
+          session_type: string
+          start_time: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          id?: string
+          instructor_id?: string | null
+          max_capacity?: number
+          price_cents?: number
+          session_type?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      skills: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          level_id: string
+          name: string
+          sequence: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          level_id: string
+          name: string
+          sequence: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          level_id?: string
+          name?: string
+          sequence?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skills_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "swim_levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      swim_levels: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_name: string
+          id: string
+          name: string
+          sequence: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_name: string
+          id?: string
+          name: string
+          sequence: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          id?: string
+          name?: string
+          sequence?: number
+        }
+        Relationships: []
+      }
+      swimmer_skills: {
+        Row: {
+          created_at: string
+          date_mastered: string | null
+          id: string
+          instructor_notes: string | null
+          skill_id: string
+          status: string
+          swimmer_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_mastered?: string | null
+          id?: string
+          instructor_notes?: string | null
+          skill_id: string
+          status?: string
+          swimmer_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_mastered?: string | null
+          id?: string
+          instructor_notes?: string | null
+          skill_id?: string
+          status?: string
+          swimmer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "swimmer_skills_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "swimmer_skills_swimmer_id_fkey"
+            columns: ["swimmer_id"]
+            isOneToOne: false
+            referencedRelation: "swimmers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      swimmers: {
+        Row: {
+          created_at: string
+          current_level_id: string | null
+          date_of_birth: string
+          first_name: string
+          goals: string | null
+          id: string
+          last_name: string
+          parent_id: string
+          photo_url: string | null
+          strengths_interests: string | null
+          updated_at: string
+          waitlist: boolean
+        }
+        Insert: {
+          created_at?: string
+          current_level_id?: string | null
+          date_of_birth: string
+          first_name: string
+          goals?: string | null
+          id?: string
+          last_name: string
+          parent_id: string
+          photo_url?: string | null
+          strengths_interests?: string | null
+          updated_at?: string
+          waitlist?: boolean
+        }
+        Update: {
+          created_at?: string
+          current_level_id?: string | null
+          date_of_birth?: string
+          first_name?: string
+          goals?: string | null
+          id?: string
+          last_name?: string
+          parent_id?: string
+          photo_url?: string | null
+          strengths_interests?: string | null
+          updated_at?: string
+          waitlist?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "swimmers_current_level_id_fkey"
+            columns: ["current_level_id"]
+            isOneToOne: false
+            referencedRelation: "swim_levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "instructor" | "parent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +526,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "instructor", "parent"],
+    },
   },
 } as const
