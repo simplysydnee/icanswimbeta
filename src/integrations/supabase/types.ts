@@ -458,20 +458,64 @@ export type Database = {
       }
       swimmers: {
         Row: {
+          aggressive_behavior: boolean | null
+          aggressive_behavior_description: string | null
+          agreed_to_cancellation_policy: boolean | null
+          allergies_description: string | null
           assessment_status: string | null
+          attendance_standing: string | null
+          availability_general: string[] | null
+          availability_other: string | null
+          behavior_plan_description: string | null
+          client_booking_limit: number | null
+          client_number: string | null
+          comfortable_in_water: string | null
+          communication_type: string | null
           created_at: string
+          created_by: string | null
           current_level_id: string | null
           date_of_birth: string
+          diagnosis: string[] | null
+          elopement_description: string | null
+          elopement_history: boolean | null
+          end_date: string | null
+          enrollment_completed: boolean | null
           enrollment_status: string | null
           first_name: string
+          gender: string | null
           goals: string | null
+          has_allergies: boolean | null
+          has_behavior_plan: boolean | null
+          has_medical_conditions: boolean | null
+          height: string | null
+          history_of_seizures: boolean | null
           id: string
           is_vmrc_client: boolean | null
           last_name: string
+          last_status_update: string | null
+          medical_conditions_description: string | null
+          non_ambulatory: boolean | null
+          other_therapies: boolean | null
+          parent_enrolled: boolean | null
           parent_id: string
+          parent_phone: string | null
           payment_type: string
+          photo_release: boolean | null
           photo_url: string | null
+          previous_swim_lessons: boolean | null
+          restraint_description: string | null
+          restraint_history: boolean | null
+          self_injurious_behavior: boolean | null
+          self_injurious_description: string | null
+          signed_liability: string | null
+          signed_photo_release: string | null
+          signed_waiver: boolean | null
+          sms_policy_consent: boolean | null
+          start_date: string | null
           strengths_interests: string | null
+          swim_goals: string[] | null
+          therapies_description: string | null
+          toilet_trained: boolean | null
           updated_at: string
           vmrc_coordinator_email: string | null
           vmrc_coordinator_name: string | null
@@ -484,22 +528,67 @@ export type Database = {
           vmrc_sessions_authorized: number | null
           vmrc_sessions_used: number | null
           waitlist: boolean
+          weight: string | null
         }
         Insert: {
+          aggressive_behavior?: boolean | null
+          aggressive_behavior_description?: string | null
+          agreed_to_cancellation_policy?: boolean | null
+          allergies_description?: string | null
           assessment_status?: string | null
+          attendance_standing?: string | null
+          availability_general?: string[] | null
+          availability_other?: string | null
+          behavior_plan_description?: string | null
+          client_booking_limit?: number | null
+          client_number?: string | null
+          comfortable_in_water?: string | null
+          communication_type?: string | null
           created_at?: string
+          created_by?: string | null
           current_level_id?: string | null
           date_of_birth: string
+          diagnosis?: string[] | null
+          elopement_description?: string | null
+          elopement_history?: boolean | null
+          end_date?: string | null
+          enrollment_completed?: boolean | null
           enrollment_status?: string | null
           first_name: string
+          gender?: string | null
           goals?: string | null
+          has_allergies?: boolean | null
+          has_behavior_plan?: boolean | null
+          has_medical_conditions?: boolean | null
+          height?: string | null
+          history_of_seizures?: boolean | null
           id?: string
           is_vmrc_client?: boolean | null
           last_name: string
+          last_status_update?: string | null
+          medical_conditions_description?: string | null
+          non_ambulatory?: boolean | null
+          other_therapies?: boolean | null
+          parent_enrolled?: boolean | null
           parent_id: string
+          parent_phone?: string | null
           payment_type?: string
+          photo_release?: boolean | null
           photo_url?: string | null
+          previous_swim_lessons?: boolean | null
+          restraint_description?: string | null
+          restraint_history?: boolean | null
+          self_injurious_behavior?: boolean | null
+          self_injurious_description?: string | null
+          signed_liability?: string | null
+          signed_photo_release?: string | null
+          signed_waiver?: boolean | null
+          sms_policy_consent?: boolean | null
+          start_date?: string | null
           strengths_interests?: string | null
+          swim_goals?: string[] | null
+          therapies_description?: string | null
+          toilet_trained?: boolean | null
           updated_at?: string
           vmrc_coordinator_email?: string | null
           vmrc_coordinator_name?: string | null
@@ -512,22 +601,67 @@ export type Database = {
           vmrc_sessions_authorized?: number | null
           vmrc_sessions_used?: number | null
           waitlist?: boolean
+          weight?: string | null
         }
         Update: {
+          aggressive_behavior?: boolean | null
+          aggressive_behavior_description?: string | null
+          agreed_to_cancellation_policy?: boolean | null
+          allergies_description?: string | null
           assessment_status?: string | null
+          attendance_standing?: string | null
+          availability_general?: string[] | null
+          availability_other?: string | null
+          behavior_plan_description?: string | null
+          client_booking_limit?: number | null
+          client_number?: string | null
+          comfortable_in_water?: string | null
+          communication_type?: string | null
           created_at?: string
+          created_by?: string | null
           current_level_id?: string | null
           date_of_birth?: string
+          diagnosis?: string[] | null
+          elopement_description?: string | null
+          elopement_history?: boolean | null
+          end_date?: string | null
+          enrollment_completed?: boolean | null
           enrollment_status?: string | null
           first_name?: string
+          gender?: string | null
           goals?: string | null
+          has_allergies?: boolean | null
+          has_behavior_plan?: boolean | null
+          has_medical_conditions?: boolean | null
+          height?: string | null
+          history_of_seizures?: boolean | null
           id?: string
           is_vmrc_client?: boolean | null
           last_name?: string
+          last_status_update?: string | null
+          medical_conditions_description?: string | null
+          non_ambulatory?: boolean | null
+          other_therapies?: boolean | null
+          parent_enrolled?: boolean | null
           parent_id?: string
+          parent_phone?: string | null
           payment_type?: string
+          photo_release?: boolean | null
           photo_url?: string | null
+          previous_swim_lessons?: boolean | null
+          restraint_description?: string | null
+          restraint_history?: boolean | null
+          self_injurious_behavior?: boolean | null
+          self_injurious_description?: string | null
+          signed_liability?: string | null
+          signed_photo_release?: string | null
+          signed_waiver?: boolean | null
+          sms_policy_consent?: boolean | null
+          start_date?: string | null
           strengths_interests?: string | null
+          swim_goals?: string[] | null
+          therapies_description?: string | null
+          toilet_trained?: boolean | null
           updated_at?: string
           vmrc_coordinator_email?: string | null
           vmrc_coordinator_name?: string | null
@@ -540,6 +674,7 @@ export type Database = {
           vmrc_sessions_authorized?: number | null
           vmrc_sessions_used?: number | null
           waitlist?: boolean
+          weight?: string | null
         }
         Relationships: [
           {
@@ -621,6 +756,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_client_number: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
