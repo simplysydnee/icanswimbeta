@@ -457,6 +457,7 @@ export type Database = {
           is_vmrc_client: boolean | null
           last_name: string
           parent_id: string
+          payment_type: string
           photo_url: string | null
           strengths_interests: string | null
           updated_at: string
@@ -484,6 +485,7 @@ export type Database = {
           is_vmrc_client?: boolean | null
           last_name: string
           parent_id: string
+          payment_type?: string
           photo_url?: string | null
           strengths_interests?: string | null
           updated_at?: string
@@ -511,6 +513,7 @@ export type Database = {
           is_vmrc_client?: boolean | null
           last_name?: string
           parent_id?: string
+          payment_type?: string
           photo_url?: string | null
           strengths_interests?: string | null
           updated_at?: string

@@ -23,6 +23,7 @@ const Booking = () => {
       assessmentStatus: "complete" as "not_started" | "scheduled" | "complete",
       progressPercentage: 65,
       isVmrcClient: false,
+      paymentType: "private_pay" as "private_pay" | "vmrc" | "scholarship" | "other",
       vmrcSessionsUsed: 0,
       vmrcSessionsAuthorized: 12,
       vmrcCurrentPosNumber: null,
@@ -37,6 +38,7 @@ const Booking = () => {
       assessmentStatus: "complete" as "not_started" | "scheduled" | "complete",
       progressPercentage: 42,
       isVmrcClient: true,
+      paymentType: "vmrc" as "private_pay" | "vmrc" | "scholarship" | "other",
       vmrcSessionsUsed: 8,
       vmrcSessionsAuthorized: 12,
       vmrcCurrentPosNumber: "POS-2024-001",
@@ -51,6 +53,7 @@ const Booking = () => {
       assessmentStatus: "not_started" as "not_started" | "scheduled" | "complete",
       progressPercentage: 0,
       isVmrcClient: true,
+      paymentType: "vmrc" as "private_pay" | "vmrc" | "scholarship" | "other",
       vmrcSessionsUsed: 12,
       vmrcSessionsAuthorized: 12,
       vmrcCurrentPosNumber: "POS-2024-002", // Needs new auth
@@ -193,17 +196,27 @@ const Booking = () => {
                   All selected swimmers will be booked for the same sessions
                 </div>
               )}
-              {selectedSwimmers.some((s) => s.isVmrcClient) && (
+              {selectedSwimmers.some((s) => s.paymentType === "vmrc") && (
                 <div className="text-xs text-primary font-medium break-words">
                   💙 VMRC Client(s):{" "}
                   {selectedSwimmers
-                    .filter((s) => s.isVmrcClient)
+                    .filter((s) => s.paymentType === "vmrc")
                     .map(
                       (s) =>
                         `${s.firstName} (${s.vmrcSessionsUsed}/${s.vmrcSessionsAuthorized} used)`
                     )
                     .join(", ")}{" "}
-                  - Sessions are FREE
+                  - Sessions tracked, no charge
+                </div>
+              )}
+              {selectedSwimmers.some((s) => s.paymentType === "private_pay") && (
+                <div className="text-xs text-muted-foreground">
+                  💳 Private Pay Client(s):{" "}
+                  {selectedSwimmers
+                    .filter((s) => s.paymentType === "private_pay")
+                    .map((s) => s.firstName)
+                    .join(", ")}{" "}
+                  - Will be charged per session
                 </div>
               )}
             </div>
@@ -240,7 +253,7 @@ const Booking = () => {
                   selectedSwimmers={selectedSwimmers.map((s) => ({
                     id: s.id,
                     name: `${s.firstName} ${s.lastName}`,
-                    isVmrcClient: s.isVmrcClient,
+                    paymentType: s.paymentType,
                   }))}
                 />
               </TabsContent>

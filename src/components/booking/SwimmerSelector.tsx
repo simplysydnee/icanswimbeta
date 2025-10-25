@@ -13,6 +13,7 @@ interface Swimmer {
   enrollmentStatus: "waitlist" | "approved" | "enrolled";
   assessmentStatus: "not_started" | "scheduled" | "complete";
   isVmrcClient?: boolean;
+  paymentType?: "private_pay" | "vmrc" | "scholarship" | "other";
   vmrcSessionsUsed?: number;
   vmrcSessionsAuthorized?: number;
   vmrcCurrentPosNumber?: string | null;
@@ -34,7 +35,7 @@ export const SwimmerSelector = ({
     
     // Check VMRC authorization
     if (
-      swimmer?.isVmrcClient &&
+      swimmer?.paymentType === "vmrc" &&
       swimmer.vmrcSessionsUsed !== undefined &&
       swimmer.vmrcSessionsAuthorized !== undefined &&
       swimmer.vmrcSessionsUsed >= swimmer.vmrcSessionsAuthorized
@@ -78,14 +79,14 @@ export const SwimmerSelector = ({
               swimmer.enrollmentStatus === "enrolled" &&
               swimmer.assessmentStatus === "complete" &&
               !(
-                swimmer.isVmrcClient &&
+                swimmer.paymentType === "vmrc" &&
                 swimmer.vmrcSessionsUsed !== undefined &&
                 swimmer.vmrcSessionsAuthorized !== undefined &&
                 swimmer.vmrcSessionsUsed >= swimmer.vmrcSessionsAuthorized
               );
 
             const needsVmrcAuth =
-              swimmer.isVmrcClient &&
+              swimmer.paymentType === "vmrc" &&
               swimmer.vmrcSessionsUsed !== undefined &&
               swimmer.vmrcSessionsAuthorized !== undefined &&
               swimmer.vmrcSessionsUsed >= swimmer.vmrcSessionsAuthorized;
@@ -125,9 +126,14 @@ export const SwimmerSelector = ({
                         <Badge variant={status.variant} className="text-xs">
                           {status.text}
                         </Badge>
-                        {swimmer.isVmrcClient && (
+                        {swimmer.paymentType === "vmrc" && (
                           <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
                             VMRC
+                          </Badge>
+                        )}
+                        {swimmer.paymentType === "private_pay" && (
+                          <Badge variant="outline" className="text-xs">
+                            Private Pay
                           </Badge>
                         )}
                       </div>
@@ -140,7 +146,7 @@ export const SwimmerSelector = ({
                             : "Complete assessment first"}
                         </div>
                       )}
-                      {canBook && swimmer.isVmrcClient && (
+                      {canBook && swimmer.paymentType === "vmrc" && (
                         <div className="text-xs text-primary mt-1">
                           Sessions used: {swimmer.vmrcSessionsUsed}/{swimmer.vmrcSessionsAuthorized}
                         </div>
