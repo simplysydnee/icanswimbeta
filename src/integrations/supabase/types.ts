@@ -877,6 +877,98 @@ export type Database = {
           },
         ]
       }
+      vmrc_referral_requests: {
+        Row: {
+          additional_info: string | null
+          admin_notes: string | null
+          availability_general: string[] | null
+          availability_other: string | null
+          child_age: number
+          child_name: string
+          coordinator_email: string | null
+          coordinator_name: string | null
+          created_at: string
+          id: string
+          liability_agreement: boolean
+          motivation_factors: string | null
+          parent_email: string
+          parent_name: string
+          parent_phone: string
+          photo_release: boolean | null
+          previous_swim_lessons: boolean | null
+          referral_type: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          strengths_interests: string | null
+          swim_goals: string[] | null
+          swimmer_id: string | null
+          swimmer_photo_url: string | null
+        }
+        Insert: {
+          additional_info?: string | null
+          admin_notes?: string | null
+          availability_general?: string[] | null
+          availability_other?: string | null
+          child_age: number
+          child_name: string
+          coordinator_email?: string | null
+          coordinator_name?: string | null
+          created_at?: string
+          id?: string
+          liability_agreement?: boolean
+          motivation_factors?: string | null
+          parent_email: string
+          parent_name: string
+          parent_phone: string
+          photo_release?: boolean | null
+          previous_swim_lessons?: boolean | null
+          referral_type: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          strengths_interests?: string | null
+          swim_goals?: string[] | null
+          swimmer_id?: string | null
+          swimmer_photo_url?: string | null
+        }
+        Update: {
+          additional_info?: string | null
+          admin_notes?: string | null
+          availability_general?: string[] | null
+          availability_other?: string | null
+          child_age?: number
+          child_name?: string
+          coordinator_email?: string | null
+          coordinator_name?: string | null
+          created_at?: string
+          id?: string
+          liability_agreement?: boolean
+          motivation_factors?: string | null
+          parent_email?: string
+          parent_name?: string
+          parent_phone?: string
+          photo_release?: boolean | null
+          previous_swim_lessons?: boolean | null
+          referral_type?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          strengths_interests?: string | null
+          swim_goals?: string[] | null
+          swimmer_id?: string | null
+          swimmer_photo_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vmrc_referral_requests_swimmer_id_fkey"
+            columns: ["swimmer_id"]
+            isOneToOne: false
+            referencedRelation: "swimmers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
