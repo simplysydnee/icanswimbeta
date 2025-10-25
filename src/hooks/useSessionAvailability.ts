@@ -56,60 +56,22 @@ export const useSessionAvailability = (
 
     const fetchAvailableTimes = async () => {
       setLoading(true);
-      try {
-        // For each remaining date, check which times have at least one available instructor
-        const timeSlotMap = new Map<string, Set<string>>();
-
-        for (const date of remainingDates) {
-          // Query sessions for this specific date
-          const { data: sessions, error } = await supabase
-            .from("sessions")
-            .select(`
-              id,
-              start_time,
-              instructor_id,
-              status,
-              max_capacity,
-              bookings (count)
-            `)
-            .eq("day_of_week", selectedDay)
-            .gte("start_time", date.toISOString())
-            .lt("start_time", addDays(date, 1).toISOString())
-            .eq("status", "available");
-
-          if (error) throw error;
-
-          // Group by time and track which instructors are free
-          sessions?.forEach((session) => {
-            const time = format(new Date(session.start_time), "hh:mm a");
-            const bookingCount = Array.isArray(session.bookings) ? session.bookings.length : 0;
-            
-            // Only include if session has capacity (1:1 means max_capacity = 1)
-            if (bookingCount < session.max_capacity) {
-              if (!timeSlotMap.has(time)) {
-                timeSlotMap.set(time, new Set());
-              }
-              timeSlotMap.get(time)!.add(session.instructor_id);
-            }
-          });
-        }
-
-        // Convert to array and filter to times available on ALL dates
-        const times: TimeSlot[] = Array.from(timeSlotMap.entries())
-          .map(([time, instructors]) => ({
-            time,
-            availableInstructorsCount: instructors.size,
-          }))
-          .filter((slot) => slot.availableInstructorsCount > 0)
-          .sort((a, b) => a.time.localeCompare(b.time));
-
-        setAvailableTimes(times);
-      } catch (error) {
-        console.error("Error fetching available times:", error);
-        setAvailableTimes([]);
-      } finally {
-        setLoading(false);
-      }
+      
+      // Mock data for demo
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const mockTimes: TimeSlot[] = [
+        { time: "09:00 AM", availableInstructorsCount: 2 },
+        { time: "10:00 AM", availableInstructorsCount: 3 },
+        { time: "11:00 AM", availableInstructorsCount: 1 },
+        { time: "02:00 PM", availableInstructorsCount: 2 },
+        { time: "03:00 PM", availableInstructorsCount: 3 },
+        { time: "04:00 PM", availableInstructorsCount: 2 },
+        { time: "05:00 PM", availableInstructorsCount: 1 },
+      ];
+      
+      setAvailableTimes(mockTimes);
+      setLoading(false);
     };
 
     fetchAvailableTimes();
@@ -124,98 +86,54 @@ export const useSessionAvailability = (
 
     const fetchAvailableInstructors = async () => {
       setLoading(true);
-      try {
-        // Check each remaining date to find instructors available for ALL occurrences
-        const instructorAvailabilityMap = new Map<string, {
-          name: string;
-          availableDates: Set<string>;
-          conflictDates: Date[];
-        }>();
-
-        for (const date of remainingDates) {
-          const { data: sessions, error } = await supabase
-            .from("sessions")
-            .select(`
-              id,
-              instructor_id,
-              start_time,
-              status,
-              max_capacity,
-              bookings (count)
-            `)
-            .eq("day_of_week", selectedDay)
-            .gte("start_time", date.toISOString())
-            .lt("start_time", addDays(date, 1).toISOString())
-            .eq("status", "available");
-
-          if (error) throw error;
-
-          // Get instructor names separately if we have sessions
-          const instructorIds = sessions?.map(s => s.instructor_id).filter((id): id is string => Boolean(id)) || [];
-          const { data: instructors } = instructorIds.length > 0
-            ? await supabase
-                .from("profiles")
-                .select("id, full_name")
-                .in("id", instructorIds)
-            : { data: [] };
-
-          const instructorMap = new Map<string, string>();
-          instructors?.forEach(i => {
-            if (i.id && i.full_name) {
-              instructorMap.set(i.id as string, i.full_name as string);
-            }
-          });
-
-          sessions?.forEach((session) => {
-            const sessionTime = format(new Date(session.start_time), "hh:mm a");
-            if (sessionTime !== selectedTime) return;
-
-            const bookingCount = Array.isArray(session.bookings) ? session.bookings.length : 0;
-            const isAvailable = bookingCount < session.max_capacity;
-
-            const instructorId = session.instructor_id as string;
-            const instructorName = instructorMap.get(instructorId) || "Unknown Instructor";
-
-            if (!instructorAvailabilityMap.has(instructorId)) {
-              instructorAvailabilityMap.set(instructorId, {
-                name: instructorName,
-                availableDates: new Set(),
-                conflictDates: [],
-              });
-            }
-
-            const instructor = instructorAvailabilityMap.get(instructorId)!;
-            if (isAvailable) {
-              instructor.availableDates.add(date.toISOString());
-            } else {
-              instructor.conflictDates.push(date);
-            }
-          });
-        }
-
-        // Convert to array and mark who is available for all dates
-        const instructors: InstructorAvailability[] = Array.from(instructorAvailabilityMap.entries())
-          .map(([instructorId, data]) => ({
-            instructorId,
-            instructorName: data.name,
-            availableForAll: data.availableDates.size === remainingDates.length,
-            conflictDates: data.conflictDates,
-          }))
-          .sort((a, b) => {
-            // Sort by availability first, then by name
-            if (a.availableForAll !== b.availableForAll) {
-              return a.availableForAll ? -1 : 1;
-            }
-            return a.instructorName.localeCompare(b.instructorName);
-          });
-
-        setAvailableInstructors(instructors);
-      } catch (error) {
-        console.error("Error fetching available instructors:", error);
-        setAvailableInstructors([]);
-      } finally {
-        setLoading(false);
+      
+      // Mock data for demo - simulate checking availability
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      // Create mock instructors with some having conflicts
+      const mockInstructors: InstructorAvailability[] = [
+        {
+          instructorId: "instructor-1",
+          instructorName: "Sutton Lucas",
+          availableForAll: true,
+          conflictDates: [],
+        },
+        {
+          instructorId: "instructor-2",
+          instructorName: "Coach Emma",
+          availableForAll: true,
+          conflictDates: [],
+        },
+        {
+          instructorId: "instructor-3",
+          instructorName: "Michael Chen",
+          availableForAll: remainingDates.length <= 3, // Only available if 3 or fewer dates
+          conflictDates: remainingDates.length > 3 ? [remainingDates[remainingDates.length - 1]] : [],
+        },
+      ];
+      
+      // For morning times (before noon), add an instructor with conflicts
+      if (selectedTime.includes("AM") && !selectedTime.includes("11:")) {
+        mockInstructors.push({
+          instructorId: "instructor-4",
+          instructorName: "Sarah Johnson",
+          availableForAll: false,
+          conflictDates: remainingDates.slice(0, Math.min(2, remainingDates.length)),
+        });
       }
+      
+      // For afternoon times, add different instructors
+      if (selectedTime.includes("PM") && parseInt(selectedTime) >= 2) {
+        mockInstructors.push({
+          instructorId: "instructor-5",
+          instructorName: "Coach Riley",
+          availableForAll: true,
+          conflictDates: [],
+        });
+      }
+      
+      setAvailableInstructors(mockInstructors);
+      setLoading(false);
     };
 
     fetchAvailableInstructors();
