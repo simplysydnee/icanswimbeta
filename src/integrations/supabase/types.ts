@@ -80,6 +80,30 @@ export type Database = {
           },
         ]
       }
+      blackout_dates: {
+        Row: {
+          blackout_date: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          blackout_date: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          blackout_date?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           created_at: string
@@ -127,6 +151,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      breaks: {
+        Row: {
+          active: boolean | null
+          break_end: string
+          break_start: string
+          created_at: string | null
+          created_by: string | null
+          days_of_week: number[] | null
+          id: string
+          label: string | null
+          location: string
+        }
+        Insert: {
+          active?: boolean | null
+          break_end: string
+          break_start: string
+          created_at?: string | null
+          created_by?: string | null
+          days_of_week?: number[] | null
+          id?: string
+          label?: string | null
+          location: string
+        }
+        Update: {
+          active?: boolean | null
+          break_end?: string
+          break_start?: string
+          created_at?: string | null
+          created_by?: string | null
+          days_of_week?: number[] | null
+          id?: string
+          label?: string | null
+          location?: string
+        }
+        Relationships: []
       }
       floating_sessions: {
         Row: {
@@ -333,55 +393,79 @@ export type Database = {
       }
       sessions: {
         Row: {
+          batch_id: string | null
+          blackout_flag: boolean | null
+          booking_count: number | null
           created_at: string
           day_of_week: number | null
           end_time: string
           id: string
           instructor_id: string | null
+          is_full: boolean | null
           is_recurring: boolean | null
           location: string | null
           max_capacity: number
           month_year: string | null
+          notes_tags: string | null
+          open_at: string | null
           price_cents: number
           recurrence_pattern: string | null
           session_type: string
+          session_type_detail: string | null
           start_time: string
           status: string
           updated_at: string
+          weekday: string | null
         }
         Insert: {
+          batch_id?: string | null
+          blackout_flag?: boolean | null
+          booking_count?: number | null
           created_at?: string
           day_of_week?: number | null
           end_time: string
           id?: string
           instructor_id?: string | null
+          is_full?: boolean | null
           is_recurring?: boolean | null
           location?: string | null
           max_capacity?: number
           month_year?: string | null
+          notes_tags?: string | null
+          open_at?: string | null
           price_cents: number
           recurrence_pattern?: string | null
           session_type: string
+          session_type_detail?: string | null
           start_time: string
           status?: string
           updated_at?: string
+          weekday?: string | null
         }
         Update: {
+          batch_id?: string | null
+          blackout_flag?: boolean | null
+          booking_count?: number | null
           created_at?: string
           day_of_week?: number | null
           end_time?: string
           id?: string
           instructor_id?: string | null
+          is_full?: boolean | null
           is_recurring?: boolean | null
           location?: string | null
           max_capacity?: number
           month_year?: string | null
+          notes_tags?: string | null
+          open_at?: string | null
           price_cents?: number
           recurrence_pattern?: string | null
           session_type?: string
+          session_type_detail?: string | null
           start_time?: string
           status?: string
           updated_at?: string
+          weekday?: string | null
         }
         Relationships: []
       }
@@ -796,12 +880,23 @@ export type Database = {
     }
     Functions: {
       generate_client_number: { Args: never; Returns: string }
+      get_last_sunday_of_month: {
+        Args: { month: number; year: number }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      should_sessions_open: {
+        Args: never
+        Returns: {
+          session_id: string
+          session_start_time: string
+        }[]
       }
     }
     Enums: {
