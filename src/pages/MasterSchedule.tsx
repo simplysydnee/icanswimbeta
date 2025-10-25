@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Calendar as CalendarIcon, Plus, X, AlertCircle, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const DAYS_OF_WEEK = [
@@ -61,6 +62,21 @@ const MasterSchedule = () => {
     price: "",
     notesTags: "",
     additionalDates: [] as Date[],
+    allowedSwimLevels: [] as string[],
+  });
+
+  // Fetch swim levels
+  const { data: swimLevels } = useQuery({
+    queryKey: ["swim-levels"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("swim_levels")
+        .select("*")
+        .order("sequence");
+      
+      if (error) throw error;
+      return data;
+    },
   });
 
   const [breaks, setBreaks] = useState<Break[]>([]);
@@ -130,6 +146,7 @@ const MasterSchedule = () => {
           notesTags: formData.notesTags,
           blackoutDates: blackoutDates.map((d) => d.toISOString()),
           additionalDates: formData.additionalDates.map((d) => d.toISOString()),
+          allowedSwimLevels: formData.allowedSwimLevels,
         },
       });
 
@@ -425,6 +442,40 @@ const MasterSchedule = () => {
                   })
                 }
               />
+            </div>
+
+            {/* Swim Levels */}
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">Allowed Swim Levels</Label>
+              <p className="text-sm text-muted-foreground">
+                Select which swim levels can book these sessions (leave empty to allow all levels)
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {swimLevels?.map((level) => (
+                  <div key={level.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`level-${level.id}`}
+                      checked={formData.allowedSwimLevels.includes(level.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setFormData({
+                            ...formData,
+                            allowedSwimLevels: [...formData.allowedSwimLevels, level.id],
+                          });
+                        } else {
+                          setFormData({
+                            ...formData,
+                            allowedSwimLevels: formData.allowedSwimLevels.filter((id) => id !== level.id),
+                          });
+                        }
+                      }}
+                    />
+                    <Label htmlFor={`level-${level.id}`} className="font-normal">
+                      {level.display_name}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Session Template */}

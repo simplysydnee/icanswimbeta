@@ -393,6 +393,7 @@ export type Database = {
       }
       sessions: {
         Row: {
+          allowed_swim_levels: string[] | null
           batch_id: string | null
           blackout_flag: boolean | null
           booking_count: number | null
@@ -418,6 +419,7 @@ export type Database = {
           weekday: string | null
         }
         Insert: {
+          allowed_swim_levels?: string[] | null
           batch_id?: string | null
           blackout_flag?: boolean | null
           booking_count?: number | null
@@ -443,6 +445,7 @@ export type Database = {
           weekday?: string | null
         }
         Update: {
+          allowed_swim_levels?: string[] | null
           batch_id?: string | null
           blackout_flag?: boolean | null
           booking_count?: number | null

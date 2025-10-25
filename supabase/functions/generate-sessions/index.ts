@@ -22,6 +22,7 @@ interface GenerateSessionsRequest {
   notesTags?: string;
   blackoutDates: string[]; // YYYY-MM-DD
   additionalDates?: string[]; // For single sessions
+  allowedSwimLevels?: string[]; // UUIDs of allowed swim levels
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -135,6 +136,9 @@ const handler = async (req: Request): Promise<Response> => {
             weekday: date.toLocaleDateString("en-US", { weekday: "short" }),
             is_recurring: config.sessionType === "weekly_recurring_month",
             month_year: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`,
+            allowed_swim_levels: config.allowedSwimLevels && config.allowedSwimLevels.length > 0 
+              ? config.allowedSwimLevels 
+              : null,
           });
         }
       }
