@@ -280,7 +280,7 @@ const MasterSchedule = () => {
 
               <div className="space-y-2">
                 <Label>Days of Week</Label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {DAYS_OF_WEEK.map((day) => (
                     <div key={day.value} className="flex items-center space-x-2">
                       <Checkbox
@@ -313,7 +313,7 @@ const MasterSchedule = () => {
             <div className="space-y-4">
               <Label className="text-base font-semibold">Time Window</Label>
               
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="startTime">Start Time</Label>
                   <Input
