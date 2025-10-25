@@ -9,6 +9,7 @@ import { SwimmerSelector } from "@/components/booking/SwimmerSelector";
 import { WeeklyBookingTab } from "@/components/booking/WeeklyBookingTab";
 import { FloatingSessionsTab } from "@/components/booking/FloatingSessionsTab";
 import { AssessmentTab } from "@/components/booking/AssessmentTab";
+import { EnrollmentTab } from "@/components/booking/EnrollmentTab";
 
 const Booking = () => {
   // Mock parent's swimmers - in production, fetch from Supabase
@@ -228,7 +229,7 @@ const Booking = () => {
               }
             >
               <div className="mb-6 overflow-x-auto">
-                <TabsList className="inline-flex w-full min-w-max sm:grid sm:grid-cols-3 sm:w-full">
+                <TabsList className="inline-flex w-full min-w-max sm:grid sm:grid-cols-4 sm:w-full">
                   <TabsTrigger value="weekly" disabled={!canBookWeekly} className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
                     Weekly (This Month)
                   </TabsTrigger>
@@ -241,6 +242,12 @@ const Booking = () => {
                     className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4"
                   >
                     Initial Assessment
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="enrollment"
+                    className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4"
+                  >
+                    Enrollment Form
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -266,6 +273,10 @@ const Booking = () => {
 
               <TabsContent value="assessment">
                 <AssessmentTab />
+              </TabsContent>
+
+              <TabsContent value="enrollment">
+                <EnrollmentTab swimmerId={selectedSwimmers[0]?.id} />
               </TabsContent>
             </Tabs>
 
