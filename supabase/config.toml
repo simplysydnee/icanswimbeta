@@ -1,5 +1,11 @@
 project_id = "cmnnzyhncxkjyikjmpef"
 
+[functions.generate-sessions]
+verify_jwt = true
+
+[functions.open-draft-sessions]
+verify_jwt = false
+
 [functions.send-assessment-approval-request]
 verify_jwt = true
 
