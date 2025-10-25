@@ -6,8 +6,11 @@ import { VideoUpload } from "@/components/VideoUpload";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar } from "lucide-react";
+import { ArrowLeft, Calendar, LogOut } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { SwimmerSwitcher } from "@/components/SwimmerSwitcher";
+import { supabase } from "@/integrations/supabase/client";
+import logoHeader from "@/assets/logo-header.png";
 
 const swimLevels: SwimLevel[] = ["tadpole", "minnow", "starfish", "dolphin", "shark"];
 
@@ -49,30 +52,57 @@ const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const swimmerId = searchParams.get("swimmerId");
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/20 to-background">
-      <div className="container mx-auto px-3 py-4 sm:p-4 md:p-8 max-w-7xl">
-        {/* Navigation */}
-        <div className="mb-4 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate("/schedule")}
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            View Schedule
-          </Button>
-          {swimmerId && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/schedule")}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Schedule
-            </Button>
-          )}
+      {/* Header */}
+      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <img 
+              src={logoHeader} 
+              alt="I CAN SWIM" 
+              className="h-8 sm:h-10 w-auto object-contain"
+            />
+            <div className="flex items-center gap-2">
+              <SwimmerSwitcher currentSwimmerId={swimmerId || undefined} />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/schedule")}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Schedule
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
         </div>
+      </header>
+
+      <div className="container mx-auto px-3 py-4 sm:p-4 md:p-8 max-w-7xl">
+        {swimmerId && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/parent-home")}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Home
+          </Button>
+        )}
 
         <SwimmerHeader swimmerName="Emma" currentLevel="Tadpole" />
 

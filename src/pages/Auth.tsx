@@ -39,7 +39,20 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/dashboard");
+        // Check user role and redirect accordingly
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .single();
+
+        if (roleData?.role === "admin") {
+          navigate("/admin/master-schedule");
+        } else if (roleData?.role === "instructor") {
+          navigate("/schedule");
+        } else {
+          navigate("/parent-home");
+        }
       }
     };
     checkUser();
@@ -117,7 +130,25 @@ const Auth = () => {
         description: "You've successfully logged in.",
       });
       
-      navigate("/dashboard");
+      // Check user role and redirect accordingly
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .single();
+
+        if (roleData?.role === "admin") {
+          navigate("/admin/master-schedule");
+        } else if (roleData?.role === "instructor") {
+          navigate("/schedule");
+        } else {
+          navigate("/parent-home");
+        }
+      } else {
+        navigate("/parent-home");
+      }
     } catch (err: any) {
       if (err instanceof z.ZodError) {
         setError(err.errors[0].message);
@@ -144,7 +175,7 @@ const Auth = () => {
         return;
       }
 
-      const redirectUrl = `${window.location.origin}/dashboard`;
+      const redirectUrl = `${window.location.origin}/parent-home`;
 
       const { data, error } = await supabase.auth.signUp({
         email: signupEmail,
@@ -209,7 +240,7 @@ const Auth = () => {
       });
 
       if (invitationToken) {
-        navigate("/dashboard");
+        navigate("/parent-home");
       }
     } catch (err: any) {
       if (err instanceof z.ZodError) {

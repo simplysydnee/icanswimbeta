@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Booking from "./pages/Booking";
 import MasterSchedule from "./pages/MasterSchedule";
 import Schedule from "./pages/Schedule";
+import ParentHome from "./pages/ParentHome";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/parent-home" element={<ParentHome />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/booking" element={<Booking />} />
           <Route path="/schedule" element={<Schedule />} />
