@@ -5,6 +5,9 @@ import { InstructorRecommendations } from "@/components/InstructorRecommendation
 import { VideoUpload } from "@/components/VideoUpload";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Calendar } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const swimLevels: SwimLevel[] = ["tadpole", "minnow", "starfish", "dolphin", "shark"];
 
@@ -42,9 +45,35 @@ const levelSkills = {
 };
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const swimmerId = searchParams.get("swimmerId");
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/20 to-background">
       <div className="container mx-auto px-3 py-4 sm:p-4 md:p-8 max-w-7xl">
+        {/* Navigation */}
+        <div className="mb-4 flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/schedule")}
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            View Schedule
+          </Button>
+          {swimmerId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/schedule")}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Schedule
+            </Button>
+          )}
+        </div>
+
         <SwimmerHeader swimmerName="Emma" currentLevel="Tadpole" />
 
         <Tabs defaultValue="progress" className="w-full">
