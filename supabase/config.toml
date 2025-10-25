@@ -6,6 +6,9 @@ verify_jwt = true
 [functions.send-referral-request]
 verify_jwt = false
 
+[functions.send-parent-invitation]
+verify_jwt = true
+
 [functions.handle-assessment-approval]
 verify_jwt = false
 

@@ -17,11 +17,11 @@ const Landing = () => {
             className="h-12 sm:h-16 w-auto object-contain"
           />
           <div className="flex gap-2 sm:gap-4 flex-wrap">
-            <Link to="/login">
+            <Link to="/auth">
               <Button variant="outline" size="sm" className="sm:size-default">Login</Button>
             </Link>
-            <Link to="/booking">
-              <Button size="sm" className="sm:size-default">Book a Session</Button>
+            <Link to="/auth">
+              <Button size="sm" className="sm:size-default">Get Started</Button>
             </Link>
           </div>
         </nav>
@@ -37,15 +37,15 @@ const Landing = () => {
             Building confidence, safety, and joy in the water through personalized, adaptive instruction tailored to each swimmer's unique needs.
           </p>
           <div className="flex gap-3 sm:gap-4 justify-center flex-wrap px-4">
-            <Link to="/booking">
+            <Link to="/auth">
               <Button size="lg" className="text-base sm:text-lg w-full sm:w-auto">
                 <Calendar className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                Book Your First Lesson
+                Get Started
               </Button>
             </Link>
-            <Link to="/login">
+            <Link to="/auth">
               <Button size="lg" variant="outline" className="text-base sm:text-lg w-full sm:w-auto">
-                View Progress
+                Login to Dashboard
               </Button>
             </Link>
           </div>
@@ -202,7 +202,7 @@ const Landing = () => {
             <CardDescription className="text-lg">
               Join our community of confident swimmers. Book your assessment session today!
             </CardDescription>
-            <Link to="/booking">
+            <Link to="/auth">
               <Button size="lg" className="mt-4">
                 Schedule Your Session
               </Button>

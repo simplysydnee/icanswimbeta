@@ -166,6 +166,45 @@ export type Database = {
           },
         ]
       }
+      parent_invitations: {
+        Row: {
+          claimed: boolean | null
+          claimed_at: string | null
+          claimed_by: string | null
+          created_at: string | null
+          created_by: string | null
+          expires_at: string
+          id: string
+          invitation_token: string
+          parent_email: string
+          swimmer_ids: string[]
+        }
+        Insert: {
+          claimed?: boolean | null
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          invitation_token?: string
+          parent_email: string
+          swimmer_ids: string[]
+        }
+        Update: {
+          claimed?: boolean | null
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          invitation_token?: string
+          parent_email?: string
+          swimmer_ids?: string[]
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
