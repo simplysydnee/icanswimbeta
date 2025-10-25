@@ -214,20 +214,23 @@ const Booking = () => {
                 needsAssessment && !canBookWeekly ? "assessment" : "weekly"
               }
             >
-              <TabsList className="grid w-full grid-cols-3 mb-6">
-                <TabsTrigger value="weekly" disabled={!canBookWeekly}>
-                  Weekly (This Month)
-                </TabsTrigger>
-                <TabsTrigger value="floating" disabled={!canBookWeekly}>
-                  Floating Sessions
-                </TabsTrigger>
-                <TabsTrigger
-                  value="assessment"
-                  disabled={canBookWeekly && !needsAssessment}
-                >
-                  Initial Assessment
-                </TabsTrigger>
-              </TabsList>
+              <div className="mb-6 overflow-x-auto">
+                <TabsList className="inline-flex w-full min-w-max sm:grid sm:grid-cols-3 sm:w-full">
+                  <TabsTrigger value="weekly" disabled={!canBookWeekly} className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
+                    Weekly (This Month)
+                  </TabsTrigger>
+                  <TabsTrigger value="floating" disabled={!canBookWeekly} className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
+                    Floating Sessions
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="assessment"
+                    disabled={canBookWeekly && !needsAssessment}
+                    className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4"
+                  >
+                    Initial Assessment
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               <TabsContent value="weekly">
                 <WeeklyBookingTab
