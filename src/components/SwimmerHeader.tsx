@@ -1,4 +1,4 @@
-import logoReference from "@/assets/logo-reference.png";
+import logo from "@/assets/logo.jpg";
 
 interface SwimmerHeaderProps {
   swimmerName?: string;
@@ -15,7 +15,7 @@ export const SwimmerHeader = ({
         <div className="flex items-center gap-4">
           <div className="bg-white p-3 rounded-xl shadow-md">
             <img 
-              src={logoReference} 
+              src={logo} 
               alt="I CAN SWIM" 
               className="h-12 w-auto object-contain"
             />
