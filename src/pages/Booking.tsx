@@ -123,7 +123,11 @@ const Booking = () => {
           </TabsList>
 
           <TabsContent value="weekly">
-            <WeeklyBookingTab currentMonth={currentMonth} />
+            <WeeklyBookingTab 
+              currentMonth={currentMonth}
+              swimmerId={swimmer.id}
+              parentId={swimmer.id} // TODO: Get actual parent ID from auth
+            />
           </TabsContent>
 
           <TabsContent value="floating">
