@@ -71,7 +71,7 @@ export const ProgressBadge = ({
           "rounded-full flex items-center justify-center transition-all duration-300",
           sizeClasses[size],
           isCompleted && `bg-gradient-to-br ${config.color} shadow-lg scale-105`,
-          isActive && !isCompleted && "bg-gradient-to-br from-primary to-accent animate-pulse shadow-xl",
+          isActive && !isCompleted && "bg-gradient-to-br from-primary to-accent shadow-xl ring-2 ring-primary/30",
           !isActive && !isCompleted && "bg-muted opacity-60"
         )}
       >

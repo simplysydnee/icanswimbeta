@@ -1,6 +1,8 @@
 import { SwimmerHeader } from "@/components/SwimmerHeader";
 import { LevelSkillsCard } from "@/components/LevelSkillsCard";
 import { ProgressBadge, SwimLevel } from "@/components/ProgressBadge";
+import { InstructorRecommendations } from "@/components/InstructorRecommendations";
+import { VideoUpload } from "@/components/VideoUpload";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -46,9 +48,11 @@ const Index = () => {
         <SwimmerHeader swimmerName="Emma" currentLevel="Tadpole" />
 
         <Tabs defaultValue="progress" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
             <TabsTrigger value="progress">Progress Tracker</TabsTrigger>
             <TabsTrigger value="assessment">Initial Assessment</TabsTrigger>
+            <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
+            <TabsTrigger value="videos">Progress Videos</TabsTrigger>
           </TabsList>
 
           <TabsContent value="progress" className="space-y-8">
@@ -162,6 +166,24 @@ const Index = () => {
                 <div className="pt-4 text-xs text-muted-foreground">
                   <p>Assessment completed by: Sutton Lucas, I CAN SWIM</p>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="recommendations" className="space-y-6">
+            <InstructorRecommendations />
+          </TabsContent>
+
+          <TabsContent value="videos" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-2xl">🎥 Progress Videos</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Upload and track swimmer progress videos for skill development and instructor review
+                </p>
+              </CardHeader>
+              <CardContent>
+                <VideoUpload />
               </CardContent>
             </Card>
           </TabsContent>
