@@ -13,7 +13,13 @@ interface WeeklyBookingTabProps {
   currentMonth: Date;
   swimmerId?: string;
   parentId?: string;
-  selectedSwimmers?: Array<{ id: string; name: string; paymentType?: "private_pay" | "vmrc" | "scholarship" | "other" }>;
+  selectedSwimmers?: Array<{ 
+    id: string; 
+    name: string; 
+    paymentType?: "private_pay" | "vmrc" | "scholarship" | "other";
+    vmrcSessionsUsed?: number;
+    vmrcSessionsAuthorized?: number;
+  }>;
 }
 
 const DAYS_OF_WEEK = [
@@ -105,9 +111,35 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId, selectedSw
     // If multiple swimmers selected, book for all of them
     const swimmerCount = selectedSwimmers.length || 1;
     
+    // Calculate remaining sessions for VMRC clients
+    const vmrcClientInfo = selectedSwimmers
+      .filter((s) => s.paymentType === "vmrc")
+      .map((s) => {
+        const currentUsed = s.vmrcSessionsUsed || 0;
+        const authorized = s.vmrcSessionsAuthorized || 12;
+        const afterBooking = currentUsed + mockSessionIds.length;
+        const remaining = authorized - afterBooking;
+        return { name: s.name, remaining, needsRenewal: afterBooking >= authorized };
+      });
+
+    let description = `Successfully booked ${mockSessionIds.length} session(s) for ${swimmerCount} swimmer${swimmerCount > 1 ? 's' : ''}.`;
+    
+    // Add VMRC session count info
+    if (vmrcClientInfo.length > 0) {
+      vmrcClientInfo.forEach((info) => {
+        if (info.needsRenewal) {
+          description += `\n\n⚠️ ${info.name}: You've used all 12 authorized sessions. Please contact your VMRC coordinator to authorize more sessions before booking again.`;
+        } else if (info.remaining <= 3) {
+          description += `\n\n📊 ${info.name}: ${info.remaining} session${info.remaining !== 1 ? 's' : ''} remaining. Contact your coordinator soon for renewal.`;
+        } else {
+          description += `\n\n📊 ${info.name}: ${info.remaining} session${info.remaining !== 1 ? 's' : ''} remaining until coordinator renewal needed.`;
+        }
+      });
+    }
+    
     toast({
       title: "Booking Confirmed! 🎉",
-      description: `Successfully booked ${mockSessionIds.length} session(s) for ${swimmerCount} swimmer${swimmerCount > 1 ? 's' : ''}.`,
+      description,
     });
 
     // Reset selections
@@ -366,6 +398,39 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId, selectedSw
 
           <Card className="bg-primary/5 border-primary">
             <CardContent className="pt-6">
+              {/* VMRC Session Countdown */}
+              {selectedSwimmers.some((s) => s.paymentType === "vmrc") && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  {selectedSwimmers
+                    .filter((s) => s.paymentType === "vmrc")
+                    .map((swimmer) => {
+                      const currentUsed = swimmer.vmrcSessionsUsed || 0;
+                      const authorized = swimmer.vmrcSessionsAuthorized || 12;
+                      const afterBooking = currentUsed + sessionCount;
+                      const remaining = Math.max(0, authorized - afterBooking);
+                      
+                      return (
+                        <div key={swimmer.id} className="text-sm">
+                          <div className="font-semibold text-blue-900 mb-1">
+                            📊 {swimmer.name} - VMRC Session Tracker
+                          </div>
+                          <div className="text-blue-700">
+                            Currently used: {currentUsed}/{authorized} sessions
+                          </div>
+                          <div className="text-blue-700">
+                            After this booking: {afterBooking}/{authorized} sessions
+                          </div>
+                          <div className={`font-medium mt-1 ${remaining <= 3 ? 'text-orange-600' : 'text-blue-900'}`}>
+                            {remaining > 0 
+                              ? `${remaining} session${remaining !== 1 ? 's' : ''} remaining until coordinator renewal needed`
+                              : '⚠️ Will need coordinator authorization before next booking'}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+              
               <div className="flex items-center justify-between mb-4">
                 <div>
                   {allVmrcClients ? (

@@ -254,6 +254,8 @@ const Booking = () => {
                     id: s.id,
                     name: `${s.firstName} ${s.lastName}`,
                     paymentType: s.paymentType,
+                    vmrcSessionsUsed: s.vmrcSessionsUsed,
+                    vmrcSessionsAuthorized: s.vmrcSessionsAuthorized,
                   }))}
                 />
               </TabsContent>
