@@ -13,7 +13,7 @@ interface WeeklyBookingTabProps {
   currentMonth: Date;
   swimmerId?: string;
   parentId?: string;
-  selectedSwimmers?: Array<{ id: string; name: string }>;
+  selectedSwimmers?: Array<{ id: string; name: string; isVmrcClient?: boolean }>;
 }
 
 const DAYS_OF_WEEK = [
@@ -64,7 +64,14 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId, selectedSw
     : remainingDates.length;
 
   const pricePerSession = 65;
-  const totalPrice = sessionCount * pricePerSession;
+  
+  // Check if any VMRC clients are selected
+  const hasVmrcClients = selectedSwimmers.some((s) => s.isVmrcClient);
+  const allVmrcClients = selectedSwimmers.every((s) => s.isVmrcClient);
+  const regularPayingSwimmers = selectedSwimmers.filter((s) => !s.isVmrcClient).length;
+  
+  // Calculate price (VMRC clients don't pay)
+  const totalPrice = pricePerSession * sessionCount * regularPayingSwimmers;
 
   const handleInstructorSelect = async (instructorId: string) => {
     setSelectedInstructor(instructorId);
@@ -358,11 +365,33 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId, selectedSw
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <div className="text-2xl font-bold">${totalPrice * (selectedSwimmers.length || 1)}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {sessionCount} sessions × ${pricePerSession} each
-                    {selectedSwimmers.length > 1 && ` × ${selectedSwimmers.length} swimmers`}
-                  </div>
+                  {allVmrcClients ? (
+                    <>
+                      <div className="text-2xl font-bold text-primary">FREE</div>
+                      <div className="text-sm text-muted-foreground">
+                        {sessionCount} sessions - VMRC subsidized
+                        {selectedSwimmers.length > 1 && ` × ${selectedSwimmers.length} swimmers`}
+                      </div>
+                    </>
+                  ) : hasVmrcClients ? (
+                    <>
+                      <div className="text-2xl font-bold">${totalPrice}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {sessionCount} sessions × ${pricePerSession} × {regularPayingSwimmers} swimmer{regularPayingSwimmers !== 1 ? 's' : ''}
+                      </div>
+                      <div className="text-xs text-primary">
+                        + {selectedSwimmers.length - regularPayingSwimmers} VMRC swimmer{selectedSwimmers.length - regularPayingSwimmers !== 1 ? 's' : ''} (FREE)
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-2xl font-bold">${totalPrice}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {sessionCount} sessions × ${pricePerSession}
+                        {selectedSwimmers.length > 1 && ` × ${selectedSwimmers.length} swimmers`}
+                      </div>
+                    </>
+                  )}
                 </div>
                 <Button size="lg" onClick={handleConfirm} disabled={!swimmerId || !parentId}>
                   Confirm Booking

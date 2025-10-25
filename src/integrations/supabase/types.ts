@@ -463,7 +463,13 @@ export type Database = {
           vmrc_coordinator_email: string | null
           vmrc_coordinator_name: string | null
           vmrc_coordinator_phone: string | null
+          vmrc_current_pos_number: string | null
+          vmrc_pos_expires_at: string | null
+          vmrc_pos_updated_at: string | null
+          vmrc_pos_updated_by: string | null
           vmrc_referral_url: string | null
+          vmrc_sessions_authorized: number | null
+          vmrc_sessions_used: number | null
           waitlist: boolean
         }
         Insert: {
@@ -484,7 +490,13 @@ export type Database = {
           vmrc_coordinator_email?: string | null
           vmrc_coordinator_name?: string | null
           vmrc_coordinator_phone?: string | null
+          vmrc_current_pos_number?: string | null
+          vmrc_pos_expires_at?: string | null
+          vmrc_pos_updated_at?: string | null
+          vmrc_pos_updated_by?: string | null
           vmrc_referral_url?: string | null
+          vmrc_sessions_authorized?: number | null
+          vmrc_sessions_used?: number | null
           waitlist?: boolean
         }
         Update: {
@@ -505,7 +517,13 @@ export type Database = {
           vmrc_coordinator_email?: string | null
           vmrc_coordinator_name?: string | null
           vmrc_coordinator_phone?: string | null
+          vmrc_current_pos_number?: string | null
+          vmrc_pos_expires_at?: string | null
+          vmrc_pos_updated_at?: string | null
+          vmrc_pos_updated_by?: string | null
           vmrc_referral_url?: string | null
+          vmrc_sessions_authorized?: number | null
+          vmrc_sessions_used?: number | null
           waitlist?: boolean
         }
         Relationships: [
@@ -538,6 +556,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vmrc_authorizations: {
+        Row: {
+          authorized_at: string
+          authorized_by: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          notes: string | null
+          pos_number: string
+          sessions_authorized: number
+          swimmer_id: string
+        }
+        Insert: {
+          authorized_at?: string
+          authorized_by: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          pos_number: string
+          sessions_authorized?: number
+          swimmer_id: string
+        }
+        Update: {
+          authorized_at?: string
+          authorized_by?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          notes?: string | null
+          pos_number?: string
+          sessions_authorized?: number
+          swimmer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vmrc_authorizations_swimmer_id_fkey"
+            columns: ["swimmer_id"]
+            isOneToOne: false
+            referencedRelation: "swimmers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

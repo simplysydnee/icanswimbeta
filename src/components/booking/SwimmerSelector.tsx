@@ -12,6 +12,10 @@ interface Swimmer {
   currentLevel: string;
   enrollmentStatus: "waitlist" | "approved" | "enrolled";
   assessmentStatus: "not_started" | "scheduled" | "complete";
+  isVmrcClient?: boolean;
+  vmrcSessionsUsed?: number;
+  vmrcSessionsAuthorized?: number;
+  vmrcCurrentPosNumber?: string | null;
 }
 
 interface SwimmerSelectorProps {
@@ -26,6 +30,19 @@ export const SwimmerSelector = ({
   onSwimmersChange,
 }: SwimmerSelectorProps) => {
   const handleToggleSwimmer = (swimmerId: string) => {
+    const swimmer = swimmers.find((s) => s.id === swimmerId);
+    
+    // Check VMRC authorization
+    if (
+      swimmer?.isVmrcClient &&
+      swimmer.vmrcSessionsUsed !== undefined &&
+      swimmer.vmrcSessionsAuthorized !== undefined &&
+      swimmer.vmrcSessionsUsed >= swimmer.vmrcSessionsAuthorized
+    ) {
+      // Don't allow selection if VMRC auth is needed
+      return;
+    }
+
     if (selectedSwimmerIds.includes(swimmerId)) {
       onSwimmersChange(selectedSwimmerIds.filter((id) => id !== swimmerId));
     } else {
@@ -59,7 +76,19 @@ export const SwimmerSelector = ({
             const isSelected = selectedSwimmerIds.includes(swimmer.id);
             const canBook =
               swimmer.enrollmentStatus === "enrolled" &&
-              swimmer.assessmentStatus === "complete";
+              swimmer.assessmentStatus === "complete" &&
+              !(
+                swimmer.isVmrcClient &&
+                swimmer.vmrcSessionsUsed !== undefined &&
+                swimmer.vmrcSessionsAuthorized !== undefined &&
+                swimmer.vmrcSessionsUsed >= swimmer.vmrcSessionsAuthorized
+              );
+
+            const needsVmrcAuth =
+              swimmer.isVmrcClient &&
+              swimmer.vmrcSessionsUsed !== undefined &&
+              swimmer.vmrcSessionsAuthorized !== undefined &&
+              swimmer.vmrcSessionsUsed >= swimmer.vmrcSessionsAuthorized;
 
             return (
               <Card
@@ -95,12 +124,24 @@ export const SwimmerSelector = ({
                         <Badge variant={status.variant} className="text-xs">
                           {status.text}
                         </Badge>
+                        {swimmer.isVmrcClient && (
+                          <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
+                            VMRC
+                          </Badge>
+                        )}
                       </div>
                       {!canBook && (
                         <div className="text-xs text-muted-foreground mt-1">
-                          {swimmer.enrollmentStatus === "waitlist"
+                          {needsVmrcAuth
+                            ? `Need new POS# (used ${swimmer.vmrcSessionsUsed}/${swimmer.vmrcSessionsAuthorized})`
+                            : swimmer.enrollmentStatus === "waitlist"
                             ? "Awaiting approval"
                             : "Complete assessment first"}
+                        </div>
+                      )}
+                      {canBook && swimmer.isVmrcClient && (
+                        <div className="text-xs text-primary mt-1">
+                          Sessions used: {swimmer.vmrcSessionsUsed}/{swimmer.vmrcSessionsAuthorized}
                         </div>
                       )}
                     </div>

@@ -22,6 +22,10 @@ const Booking = () => {
       enrollmentStatus: "enrolled" as "waitlist" | "approved" | "enrolled",
       assessmentStatus: "complete" as "not_started" | "scheduled" | "complete",
       progressPercentage: 65,
+      isVmrcClient: false,
+      vmrcSessionsUsed: 0,
+      vmrcSessionsAuthorized: 12,
+      vmrcCurrentPosNumber: null,
     },
     {
       id: "swimmer-2",
@@ -32,6 +36,10 @@ const Booking = () => {
       enrollmentStatus: "enrolled" as "waitlist" | "approved" | "enrolled",
       assessmentStatus: "complete" as "not_started" | "scheduled" | "complete",
       progressPercentage: 42,
+      isVmrcClient: true,
+      vmrcSessionsUsed: 8,
+      vmrcSessionsAuthorized: 12,
+      vmrcCurrentPosNumber: "POS-2024-001",
     },
     {
       id: "swimmer-3",
@@ -42,6 +50,10 @@ const Booking = () => {
       enrollmentStatus: "approved" as "waitlist" | "approved" | "enrolled",
       assessmentStatus: "not_started" as "not_started" | "scheduled" | "complete",
       progressPercentage: 0,
+      isVmrcClient: true,
+      vmrcSessionsUsed: 12,
+      vmrcSessionsAuthorized: 12,
+      vmrcCurrentPosNumber: "POS-2024-002", // Needs new auth
     },
   ];
 
@@ -53,10 +65,16 @@ const Booking = () => {
     selectedSwimmerIds.includes(s.id)
   );
 
+  // Check VMRC authorization status
+  const vmrcNeedsAuth = selectedSwimmers.some(
+    (s) => s.isVmrcClient && s.vmrcSessionsUsed >= s.vmrcSessionsAuthorized
+  );
+
   // Determine booking eligibility based on selected swimmers
   const canBookWeekly = selectedSwimmers.every(
     (s) => s.enrollmentStatus === "enrolled" && s.assessmentStatus === "complete"
-  );
+  ) && !vmrcNeedsAuth;
+  
   const needsAssessment = selectedSwimmers.some(
     (s) =>
       s.enrollmentStatus === "waitlist" ||
@@ -118,7 +136,7 @@ const Booking = () => {
               </Button>
             </div>
 
-            {/* Banner for swimmers needing assessment */}
+            {/* Banner for swimmers needing assessment or VMRC auth */}
             {needsAssessment && (
               <Alert className="mb-6 border-primary">
                 <AlertCircle className="h-4 w-4" />
@@ -135,6 +153,32 @@ const Booking = () => {
               </Alert>
             )}
 
+            {vmrcNeedsAuth && (
+              <Alert className="mb-6 border-destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>VMRC Authorization Needed:</strong>{" "}
+                  {selectedSwimmers
+                    .filter(
+                      (s) =>
+                        s.isVmrcClient &&
+                        s.vmrcSessionsUsed >= s.vmrcSessionsAuthorized
+                    )
+                    .map((s) => `${s.firstName} ${s.lastName}`)
+                    .join(", ")}{" "}
+                  {selectedSwimmers.filter(
+                    (s) =>
+                      s.isVmrcClient &&
+                      s.vmrcSessionsUsed >= s.vmrcSessionsAuthorized
+                  ).length === 1
+                    ? "has"
+                    : "have"}{" "}
+                  used all 12 authorized sessions. Please contact your instructor or
+                  admin to enter a new POS number before booking more sessions.
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Selected Swimmers Summary */}
             <div className="mb-6 p-4 bg-primary/10 rounded-lg">
               <div className="text-sm font-medium mb-2">
@@ -144,8 +188,21 @@ const Booking = () => {
                   .join(", ")}
               </div>
               {selectedSwimmers.length > 1 && (
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-muted-foreground mb-2">
                   All selected swimmers will be booked for the same sessions
+                </div>
+              )}
+              {selectedSwimmers.some((s) => s.isVmrcClient) && (
+                <div className="text-xs text-primary font-medium">
+                  💙 VMRC Client(s):{" "}
+                  {selectedSwimmers
+                    .filter((s) => s.isVmrcClient)
+                    .map(
+                      (s) =>
+                        `${s.firstName} (${s.vmrcSessionsUsed}/${s.vmrcSessionsAuthorized} used)`
+                    )
+                    .join(", ")}{" "}
+                  - Sessions are FREE
                 </div>
               )}
             </div>
@@ -179,6 +236,7 @@ const Booking = () => {
                   selectedSwimmers={selectedSwimmers.map((s) => ({
                     id: s.id,
                     name: `${s.firstName} ${s.lastName}`,
+                    isVmrcClient: s.isVmrcClient,
                   }))}
                 />
               </TabsContent>
