@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { InstructorManager } from "@/components/admin/InstructorManager";
 
 const DAYS_OF_WEEK = [
   { value: 1, label: "Monday" },
@@ -427,22 +428,12 @@ const MasterSchedule = () => {
             </div>
 
             {/* Instructors */}
-            <div className="space-y-2">
-              <Label htmlFor="instructors">Instructors (multi-select)</Label>
-              <p className="text-sm text-muted-foreground">
-                TODO: Load from instructors table and show conflict badges
-              </p>
-              <Input
-                id="instructors"
-                placeholder="Enter instructor IDs (comma-separated)"
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    instructors: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-                  })
-                }
-              />
-            </div>
+            <InstructorManager
+              selectedInstructors={formData.instructors}
+              onInstructorsChange={(instructors) =>
+                setFormData({ ...formData, instructors })
+              }
+            />
 
             {/* Swim Levels */}
             <div className="space-y-4">
