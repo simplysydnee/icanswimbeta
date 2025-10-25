@@ -1,1 +1,10 @@
 project_id = "cmnnzyhncxkjyikjmpef"
+
+[functions.handle-assessment-approval]
+verify_jwt = false
+
+[functions.notify-coordinator-assessment]
+verify_jwt = true
+
+[functions.auto-cancel-pending-assessments]
+verify_jwt = false

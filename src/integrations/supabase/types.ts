@@ -16,6 +16,10 @@ export type Database = {
     Tables: {
       assessments: {
         Row: {
+          approval_deadline: string | null
+          approval_notes: string | null
+          approval_status: string | null
+          approved_by: string | null
           completed_at: string | null
           completed_by: string | null
           created_at: string
@@ -28,6 +32,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approval_deadline?: string | null
+          approval_notes?: string | null
+          approval_status?: string | null
+          approved_by?: string | null
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string
@@ -40,6 +48,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approval_deadline?: string | null
+          approval_notes?: string | null
+          approval_status?: string | null
+          approved_by?: string | null
           completed_at?: string | null
           completed_by?: string | null
           created_at?: string
