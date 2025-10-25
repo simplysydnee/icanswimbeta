@@ -99,22 +99,23 @@ export const SwimmerSelector = ({
                 onClick={() => canBook && handleToggleSwimmer(swimmer.id)}
               >
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
                     {swimmers.length > 1 && canBook && (
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => handleToggleSwimmer(swimmer.id)}
                         onClick={(e) => e.stopPropagation()}
+                        className="shrink-0"
                       />
                     )}
-                    <Avatar className="h-12 w-12">
+                    <Avatar className="h-10 w-10 sm:h-12 sm:w-12 shrink-0">
                       <AvatarImage src={swimmer.photoUrl} alt={swimmer.firstName} />
                       <AvatarFallback className="bg-primary/10 text-primary">
-                        <User className="h-6 w-6" />
+                        <User className="h-5 w-5 sm:h-6 sm:w-6" />
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1">
-                      <div className="font-semibold">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm sm:text-base truncate">
                         {swimmer.firstName} {swimmer.lastName}
                       </div>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">

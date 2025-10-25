@@ -95,10 +95,10 @@ const Booking = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/10 to-background">
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Book Swim Sessions</h1>
-          <p className="text-muted-foreground">
+      <div className="container mx-auto px-4 py-4 sm:py-6 max-w-6xl">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Book Swim Sessions</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Select your swimmer(s) and book sessions for the month
           </p>
         </div>
@@ -119,19 +119,20 @@ const Booking = () => {
         ) : (
           <>
             {/* Month Selector */}
-            <div className="flex items-center justify-between mb-6 bg-card p-4 rounded-lg border">
+            <div className="flex items-center justify-between gap-2 mb-6 bg-card p-3 sm:p-4 rounded-lg border">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handlePreviousMonth}
                 disabled={currentMonth <= startOfMonth(new Date())}
+                className="shrink-0"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-base sm:text-lg md:text-xl font-semibold text-center min-w-0">
                 {format(currentMonth, "MMMM yyyy")}
               </h2>
-              <Button variant="outline" size="sm" onClick={handleNextMonth}>
+              <Button variant="outline" size="sm" onClick={handleNextMonth} className="shrink-0">
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -180,8 +181,8 @@ const Booking = () => {
             )}
 
             {/* Selected Swimmers Summary */}
-            <div className="mb-6 p-4 bg-primary/10 rounded-lg">
-              <div className="text-sm font-medium mb-2">
+            <div className="mb-6 p-3 sm:p-4 bg-primary/10 rounded-lg">
+              <div className="text-sm font-medium mb-2 break-words">
                 Booking for:{" "}
                 {selectedSwimmers
                   .map((s) => `${s.firstName} ${s.lastName}`)
@@ -193,7 +194,7 @@ const Booking = () => {
                 </div>
               )}
               {selectedSwimmers.some((s) => s.isVmrcClient) && (
-                <div className="text-xs text-primary font-medium">
+                <div className="text-xs text-primary font-medium break-words">
                   💙 VMRC Client(s):{" "}
                   {selectedSwimmers
                     .filter((s) => s.isVmrcClient)
