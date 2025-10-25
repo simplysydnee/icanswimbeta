@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Award, Calendar, Heart, Shield, Waves } from "lucide-react";
+import { Award, Calendar, Heart, Shield, Waves, UserPlus, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import logoHeader from "@/assets/logo-header.png";
+import { ReferralRequestDialog } from "@/components/ReferralRequestDialog";
 
 const Landing = () => {
   return (
@@ -83,6 +84,79 @@ const Landing = () => {
               </CardDescription>
             </CardHeader>
           </Card>
+        </div>
+      </section>
+
+      {/* Enrollment Section */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">
+            <UserPlus className="inline-block h-6 w-6 sm:h-8 sm:w-8 mr-2 text-primary" />
+            Ready to Start Swimming?
+          </h2>
+          <p className="text-center text-muted-foreground mb-8 sm:mb-12">
+            Choose the enrollment option that's right for you
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Direct Enrollment */}
+            <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg">
+              <CardHeader>
+                <FileText className="h-12 w-12 text-primary mb-4" />
+                <CardTitle className="text-xl">Direct Enrollment</CardTitle>
+                <CardDescription className="text-base">
+                  For private-pay clients ready to enroll and start lessons right away
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+                  <li>✓ Complete enrollment form</li>
+                  <li>✓ Schedule initial assessment</li>
+                  <li>✓ Book your first lessons</li>
+                  <li>✓ Start swimming within days</li>
+                </ul>
+                <Link to="/booking" className="block">
+                  <Button className="w-full" size="lg">
+                    <Calendar className="mr-2 h-5 w-5" />
+                    Enroll Now
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* VMRC/Referral */}
+            <Card className="border-2 hover:border-accent/50 transition-all hover:shadow-lg">
+              <CardHeader>
+                <Heart className="h-12 w-12 text-accent mb-4" />
+                <CardTitle className="text-xl">VMRC / Referral Request</CardTitle>
+                <CardDescription className="text-base">
+                  For VMRC clients or those with coordinator referrals
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+                  <li>✓ Submit referral request</li>
+                  <li>✓ Coordinator reviews and approves</li>
+                  <li>✓ Complete enrollment process</li>
+                  <li>✓ Schedule assessment</li>
+                </ul>
+                <ReferralRequestDialog
+                  trigger={
+                    <Button variant="outline" className="w-full" size="lg">
+                      <Heart className="mr-2 h-5 w-5" />
+                      Request Referral
+                    </Button>
+                  }
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+            <p className="text-sm text-blue-900">
+              <strong>Not sure which option is right for you?</strong> Contact us and we'll help guide you through the enrollment process.
+            </p>
+          </div>
         </div>
       </section>
 

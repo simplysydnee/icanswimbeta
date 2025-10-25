@@ -3,6 +3,9 @@ project_id = "cmnnzyhncxkjyikjmpef"
 [functions.send-assessment-approval-request]
 verify_jwt = true
 
+[functions.send-referral-request]
+verify_jwt = false
+
 [functions.handle-assessment-approval]
 verify_jwt = false
 
