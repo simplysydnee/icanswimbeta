@@ -26,6 +26,7 @@ export const FloatingSessionsTab = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    fetchNotificationPreference();
     fetchFloatingSessions();
 
     // Set up real-time subscription for new floating sessions
@@ -53,6 +54,67 @@ export const FloatingSessionsTab = () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const fetchNotificationPreference = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("floating_session_notification_preferences")
+        .select("enabled")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error && error.code !== "PGRST116") {
+        console.error("Error fetching notification preference:", error);
+        return;
+      }
+
+      setNotifyEnabled(data?.enabled ?? false);
+    } catch (error) {
+      console.error("Error fetching notification preference:", error);
+    }
+  };
+
+  const handleNotifyToggle = async (enabled: boolean) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to enable notifications",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from("floating_session_notification_preferences")
+        .upsert({
+          user_id: user.id,
+          enabled,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+
+      setNotifyEnabled(enabled);
+      toast({
+        title: enabled ? "Notifications Enabled" : "Notifications Disabled",
+        description: enabled
+          ? "You'll receive email notifications when drop-in sessions become available"
+          : "You won't receive notifications for drop-in sessions",
+      });
+    } catch (error) {
+      console.error("Error updating notification preference:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update notification preference",
+        variant: "destructive",
+      });
+    }
+  };
 
   const fetchFloatingSessions = async () => {
     try {
@@ -130,7 +192,7 @@ export const FloatingSessionsTab = () => {
               <Switch
                 id="notify-mode"
                 checked={notifyEnabled}
-                onCheckedChange={setNotifyEnabled}
+                onCheckedChange={handleNotifyToggle}
               />
               <Label htmlFor="notify-mode" className="flex items-center gap-1 cursor-pointer">
                 <Bell className="h-4 w-4" />

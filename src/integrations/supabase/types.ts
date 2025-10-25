@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      assessment_notification_queue: {
+        Row: {
+          child_name: string
+          created_at: string
+          id: string
+          notification_sent_at: string | null
+          parent_email: string
+          parent_name: string
+          session_date: string
+          status: string | null
+          swimmer_id: string
+        }
+        Insert: {
+          child_name: string
+          created_at?: string
+          id?: string
+          notification_sent_at?: string | null
+          parent_email: string
+          parent_name: string
+          session_date: string
+          status?: string | null
+          swimmer_id: string
+        }
+        Update: {
+          child_name?: string
+          created_at?: string
+          id?: string
+          notification_sent_at?: string | null
+          parent_email?: string
+          parent_name?: string
+          session_date?: string
+          status?: string | null
+          swimmer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_notification_queue_swimmer_id_fkey"
+            columns: ["swimmer_id"]
+            isOneToOne: false
+            referencedRelation: "swimmers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessments: {
         Row: {
           approval_deadline: string | null
@@ -185,6 +229,30 @@ export type Database = {
           id?: string
           label?: string | null
           location?: string
+        }
+        Relationships: []
+      }
+      floating_session_notification_preferences: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -880,13 +948,17 @@ export type Database = {
       vmrc_referral_requests: {
         Row: {
           additional_info: string | null
+          admin_approved_at: string | null
           admin_notes: string | null
+          assessment_booking_sent_at: string | null
           availability_general: string[] | null
           availability_other: string | null
           child_age: number
           child_name: string
+          coordinator_completed_at: string | null
           coordinator_email: string | null
           coordinator_name: string | null
+          coordinator_notes: string | null
           created_at: string
           id: string
           liability_agreement: boolean
@@ -907,13 +979,17 @@ export type Database = {
         }
         Insert: {
           additional_info?: string | null
+          admin_approved_at?: string | null
           admin_notes?: string | null
+          assessment_booking_sent_at?: string | null
           availability_general?: string[] | null
           availability_other?: string | null
           child_age: number
           child_name: string
+          coordinator_completed_at?: string | null
           coordinator_email?: string | null
           coordinator_name?: string | null
+          coordinator_notes?: string | null
           created_at?: string
           id?: string
           liability_agreement?: boolean
@@ -934,13 +1010,17 @@ export type Database = {
         }
         Update: {
           additional_info?: string | null
+          admin_approved_at?: string | null
           admin_notes?: string | null
+          assessment_booking_sent_at?: string | null
           availability_general?: string[] | null
           availability_other?: string | null
           child_age?: number
           child_name?: string
+          coordinator_completed_at?: string | null
           coordinator_email?: string | null
           coordinator_name?: string | null
+          coordinator_notes?: string | null
           created_at?: string
           id?: string
           liability_agreement?: boolean
