@@ -1,0 +1,139 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { User } from "lucide-react";
+
+interface Swimmer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  photoUrl?: string;
+  currentLevel: string;
+  enrollmentStatus: "waitlist" | "approved" | "enrolled";
+  assessmentStatus: "not_started" | "scheduled" | "complete";
+}
+
+interface SwimmerSelectorProps {
+  swimmers: Swimmer[];
+  selectedSwimmerIds: string[];
+  onSwimmersChange: (swimmerIds: string[]) => void;
+}
+
+export const SwimmerSelector = ({
+  swimmers,
+  selectedSwimmerIds,
+  onSwimmersChange,
+}: SwimmerSelectorProps) => {
+  const handleToggleSwimmer = (swimmerId: string) => {
+    if (selectedSwimmerIds.includes(swimmerId)) {
+      onSwimmersChange(selectedSwimmerIds.filter((id) => id !== swimmerId));
+    } else {
+      onSwimmersChange([...selectedSwimmerIds, swimmerId]);
+    }
+  };
+
+  const getStatusDisplay = (swimmer: Swimmer) => {
+    if (swimmer.enrollmentStatus === "waitlist") {
+      return { text: "Waitlist", variant: "secondary" as const };
+    }
+    if (swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete") {
+      return { text: "Assessment Needed", variant: "destructive" as const };
+    }
+    return { text: "Ready to Book", variant: "default" as const };
+  };
+
+  return (
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle>
+          {swimmers.length === 1
+            ? "Swimmer"
+            : "Select Swimmer(s) to Book"}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {swimmers.map((swimmer) => {
+            const status = getStatusDisplay(swimmer);
+            const isSelected = selectedSwimmerIds.includes(swimmer.id);
+            const canBook =
+              swimmer.enrollmentStatus === "enrolled" &&
+              swimmer.assessmentStatus === "complete";
+
+            return (
+              <Card
+                key={swimmer.id}
+                className={`cursor-pointer transition-all hover:shadow-md ${
+                  isSelected ? "ring-2 ring-primary" : ""
+                } ${!canBook ? "opacity-60" : ""}`}
+                onClick={() => canBook && handleToggleSwimmer(swimmer.id)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-4">
+                    {swimmers.length > 1 && canBook && (
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => handleToggleSwimmer(swimmer.id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    )}
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={swimmer.photoUrl} alt={swimmer.firstName} />
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        <User className="h-6 w-6" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="font-semibold">
+                        {swimmer.firstName} {swimmer.lastName}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <Badge variant="outline" className="text-xs">
+                          {swimmer.currentLevel}
+                        </Badge>
+                        <Badge variant={status.variant} className="text-xs">
+                          {status.text}
+                        </Badge>
+                      </div>
+                      {!canBook && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {swimmer.enrollmentStatus === "waitlist"
+                            ? "Awaiting approval"
+                            : "Complete assessment first"}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {selectedSwimmerIds.length > 1 && (
+          <div className="mt-4 p-3 bg-primary/10 rounded-lg">
+            <div className="text-sm font-medium text-primary">
+              🎉 Booking for {selectedSwimmerIds.length} swimmers
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              You'll book the same sessions for all selected swimmers
+            </div>
+          </div>
+        )}
+
+        {selectedSwimmerIds.length === 0 && swimmers.length > 0 && (
+          <div className="mt-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground text-center">
+            {swimmers.some(
+              (s) =>
+                s.enrollmentStatus === "enrolled" &&
+                s.assessmentStatus === "complete"
+            )
+              ? "Select at least one swimmer to continue"
+              : "No swimmers ready to book yet"}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};

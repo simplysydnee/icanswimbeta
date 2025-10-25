@@ -5,34 +5,63 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { addMonths, startOfMonth, format } from "date-fns";
-import { BookingHeader } from "@/components/BookingHeader";
+import { SwimmerSelector } from "@/components/booking/SwimmerSelector";
 import { WeeklyBookingTab } from "@/components/booking/WeeklyBookingTab";
 import { FloatingSessionsTab } from "@/components/booking/FloatingSessionsTab";
 import { AssessmentTab } from "@/components/booking/AssessmentTab";
 
 const Booking = () => {
-  // Mock swimmer data for demo - replace with real auth context later
-  const mockSwimmer = {
-    id: "demo-swimmer-123",
-    firstName: "Emma",
-    lastName: "Wilson",
-    photoUrl: undefined,
-    currentLevel: "Minnow",
-    enrollmentStatus: "enrolled" as "waitlist" | "approved" | "enrolled",
-    assessmentStatus: "complete" as "not_started" | "scheduled" | "complete",
-    progressPercentage: 65,
-  };
+  // Mock parent's swimmers - in production, fetch from Supabase
+  const mockSwimmers = [
+    {
+      id: "swimmer-1",
+      firstName: "Emma",
+      lastName: "Wilson",
+      photoUrl: undefined,
+      currentLevel: "Minnow",
+      enrollmentStatus: "enrolled" as "waitlist" | "approved" | "enrolled",
+      assessmentStatus: "complete" as "not_started" | "scheduled" | "complete",
+      progressPercentage: 65,
+    },
+    {
+      id: "swimmer-2",
+      firstName: "Liam",
+      lastName: "Wilson",
+      photoUrl: undefined,
+      currentLevel: "Tadpole",
+      enrollmentStatus: "enrolled" as "waitlist" | "approved" | "enrolled",
+      assessmentStatus: "complete" as "not_started" | "scheduled" | "complete",
+      progressPercentage: 42,
+    },
+    {
+      id: "swimmer-3",
+      firstName: "Olivia",
+      lastName: "Wilson",
+      photoUrl: undefined,
+      currentLevel: "Not Assigned",
+      enrollmentStatus: "approved" as "waitlist" | "approved" | "enrolled",
+      assessmentStatus: "not_started" as "not_started" | "scheduled" | "complete",
+      progressPercentage: 0,
+    },
+  ];
 
+  const [selectedSwimmerIds, setSelectedSwimmerIds] = useState<string[]>([]);
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
 
-  // Determine which tabs should be visible based on swimmer status
-  const showAssessmentOnly = 
-    mockSwimmer.enrollmentStatus === "waitlist" || 
-    (mockSwimmer.enrollmentStatus === "approved" && mockSwimmer.assessmentStatus !== "complete");
+  // Get selected swimmers
+  const selectedSwimmers = mockSwimmers.filter((s) =>
+    selectedSwimmerIds.includes(s.id)
+  );
 
-  const showWeeklyAndFloating = 
-    mockSwimmer.enrollmentStatus === "enrolled" && 
-    mockSwimmer.assessmentStatus === "complete";
+  // Determine booking eligibility based on selected swimmers
+  const canBookWeekly = selectedSwimmers.every(
+    (s) => s.enrollmentStatus === "enrolled" && s.assessmentStatus === "complete"
+  );
+  const needsAssessment = selectedSwimmers.some(
+    (s) =>
+      s.enrollmentStatus === "waitlist" ||
+      (s.enrollmentStatus === "approved" && s.assessmentStatus !== "complete")
+  );
 
   const handlePreviousMonth = () => {
     const now = new Date();
@@ -49,87 +78,131 @@ const Booking = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/10 to-background">
       <div className="container mx-auto px-4 py-6 max-w-6xl">
-        <BookingHeader
-          swimmerName={`${mockSwimmer.firstName} ${mockSwimmer.lastName}`}
-          swimmerPhotoUrl={mockSwimmer.photoUrl}
-          currentLevel={mockSwimmer.currentLevel}
-          enrollmentStatus={mockSwimmer.enrollmentStatus}
-          assessmentStatus={mockSwimmer.assessmentStatus}
-          progressPercentage={mockSwimmer.progressPercentage}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Book Swim Sessions</h1>
+          <p className="text-muted-foreground">
+            Select your swimmer(s) and book sessions for the month
+          </p>
+        </div>
+
+        <SwimmerSelector
+          swimmers={mockSwimmers}
+          selectedSwimmerIds={selectedSwimmerIds}
+          onSwimmersChange={setSelectedSwimmerIds}
         />
 
-        {/* Month Selector */}
-        <div className="flex items-center justify-between mb-6 bg-card p-4 rounded-lg border">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePreviousMonth}
-            disabled={currentMonth <= startOfMonth(new Date())}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <h2 className="text-xl font-semibold">
-            {format(currentMonth, "MMMM yyyy")}
-          </h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNextMonth}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Banner for waitlist/not assessed */}
-        {showAssessmentOnly && (
-          <Alert className="mb-6 border-primary">
+        {selectedSwimmerIds.length === 0 ? (
+          <Alert className="mt-6">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              🔑 Complete your Initial Assessment to unlock weekly lessons and floating sessions.
+              Please select at least one swimmer above to view booking options
             </AlertDescription>
           </Alert>
+        ) : (
+          <>
+            {/* Month Selector */}
+            <div className="flex items-center justify-between mb-6 bg-card p-4 rounded-lg border">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePreviousMonth}
+                disabled={currentMonth <= startOfMonth(new Date())}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <h2 className="text-xl font-semibold">
+                {format(currentMonth, "MMMM yyyy")}
+              </h2>
+              <Button variant="outline" size="sm" onClick={handleNextMonth}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Banner for swimmers needing assessment */}
+            {needsAssessment && (
+              <Alert className="mb-6 border-primary">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {selectedSwimmers.filter(
+                    (s) =>
+                      s.enrollmentStatus === "waitlist" ||
+                      (s.enrollmentStatus === "approved" &&
+                        s.assessmentStatus !== "complete")
+                  ).length === selectedSwimmers.length
+                    ? "All selected swimmers need to complete their Initial Assessment first"
+                    : "Some selected swimmers need to complete their Initial Assessment"}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Selected Swimmers Summary */}
+            <div className="mb-6 p-4 bg-primary/10 rounded-lg">
+              <div className="text-sm font-medium mb-2">
+                Booking for:{" "}
+                {selectedSwimmers
+                  .map((s) => `${s.firstName} ${s.lastName}`)
+                  .join(", ")}
+              </div>
+              {selectedSwimmers.length > 1 && (
+                <div className="text-xs text-muted-foreground">
+                  All selected swimmers will be booked for the same sessions
+                </div>
+              )}
+            </div>
+
+            {/* Booking Tabs */}
+            <Tabs
+              defaultValue={
+                needsAssessment && !canBookWeekly ? "assessment" : "weekly"
+              }
+            >
+              <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsTrigger value="weekly" disabled={!canBookWeekly}>
+                  Weekly (This Month)
+                </TabsTrigger>
+                <TabsTrigger value="floating" disabled={!canBookWeekly}>
+                  Floating Sessions
+                </TabsTrigger>
+                <TabsTrigger
+                  value="assessment"
+                  disabled={canBookWeekly && !needsAssessment}
+                >
+                  Initial Assessment
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="weekly">
+                <WeeklyBookingTab
+                  currentMonth={currentMonth}
+                  swimmerId={selectedSwimmers[0]?.id}
+                  parentId="demo-parent-123"
+                  selectedSwimmers={selectedSwimmers.map((s) => ({
+                    id: s.id,
+                    name: `${s.firstName} ${s.lastName}`,
+                  }))}
+                />
+              </TabsContent>
+
+              <TabsContent value="floating">
+                <FloatingSessionsTab />
+              </TabsContent>
+
+              <TabsContent value="assessment">
+                <AssessmentTab />
+              </TabsContent>
+            </Tabs>
+
+            {/* Back Link */}
+            <div className="mt-8 text-center">
+              <Link
+                to="/dashboard"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ← Back to Dashboard
+              </Link>
+            </div>
+          </>
         )}
-
-        {/* Booking Tabs */}
-        <Tabs defaultValue={showAssessmentOnly ? "assessment" : "weekly"}>
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="weekly" disabled={!showWeeklyAndFloating}>
-              Weekly (This Month)
-            </TabsTrigger>
-            <TabsTrigger value="floating" disabled={!showWeeklyAndFloating}>
-              Floating Sessions
-            </TabsTrigger>
-            <TabsTrigger value="assessment" disabled={showWeeklyAndFloating}>
-              Initial Assessment
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="weekly">
-            <WeeklyBookingTab 
-              currentMonth={currentMonth}
-              swimmerId={mockSwimmer.id}
-              parentId={mockSwimmer.id} // TODO: Get actual parent ID from auth
-            />
-          </TabsContent>
-
-          <TabsContent value="floating">
-            <FloatingSessionsTab />
-          </TabsContent>
-
-          <TabsContent value="assessment">
-            <AssessmentTab />
-          </TabsContent>
-        </Tabs>
-
-        {/* Back Link */}
-        <div className="mt-8 text-center">
-          <Link
-            to="/dashboard"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Back to Dashboard
-          </Link>
-        </div>
       </div>
     </div>
   );

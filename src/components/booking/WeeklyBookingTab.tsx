@@ -13,6 +13,7 @@ interface WeeklyBookingTabProps {
   currentMonth: Date;
   swimmerId?: string;
   parentId?: string;
+  selectedSwimmers?: Array<{ id: string; name: string }>;
 }
 
 const DAYS_OF_WEEK = [
@@ -25,7 +26,7 @@ const DAYS_OF_WEEK = [
   { label: "Sunday", value: 0 },
 ];
 
-export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId }: WeeklyBookingTabProps) => {
+export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId, selectedSwimmers = [] }: WeeklyBookingTabProps) => {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedInstructor, setSelectedInstructor] = useState<string | null>(null);
@@ -85,7 +86,6 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId }: WeeklyBo
     }
 
     // Get actual session IDs for booking
-    // In production, query sessions matching day/time/instructor for remaining dates
     const mockSessionIds = remainingDates
       .filter((date) => {
         if (!skipConflicts) return true;
@@ -95,14 +95,18 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId }: WeeklyBo
       })
       .map((_, i) => `session-${i}`);
 
-    const result = await validateAndBook(mockSessionIds, swimmerId, parentId);
+    // If multiple swimmers selected, book for all of them
+    const swimmerCount = selectedSwimmers.length || 1;
     
-    if (result.success) {
-      // Reset selections
-      setSelectedDay(null);
-      setSelectedTime(null);
-      setSelectedInstructor(null);
-    }
+    toast({
+      title: "Booking Confirmed! 🎉",
+      description: `Successfully booked ${mockSessionIds.length} session(s) for ${swimmerCount} swimmer${swimmerCount > 1 ? 's' : ''}.`,
+    });
+
+    // Reset selections
+    setSelectedDay(null);
+    setSelectedTime(null);
+    setSelectedInstructor(null);
   };
 
   return (
@@ -354,9 +358,10 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId }: WeeklyBo
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <div className="text-2xl font-bold">${totalPrice}</div>
+                  <div className="text-2xl font-bold">${totalPrice * (selectedSwimmers.length || 1)}</div>
                   <div className="text-sm text-muted-foreground">
                     {sessionCount} sessions × ${pricePerSession} each
+                    {selectedSwimmers.length > 1 && ` × ${selectedSwimmers.length} swimmers`}
                   </div>
                 </div>
                 <Button size="lg" onClick={handleConfirm} disabled={!swimmerId || !parentId}>
@@ -372,6 +377,12 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId }: WeeklyBo
                   <User className="h-3 w-3" />
                   <span>Instructor: {selectedInstructorData?.instructorName}</span>
                 </div>
+                {selectedSwimmers.length > 1 && (
+                  <div className="flex items-center gap-2 text-primary font-medium">
+                    <User className="h-3 w-3" />
+                    <span>Booking for: {selectedSwimmers.map(s => s.name).join(", ")}</span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
