@@ -25,7 +25,37 @@ export const useParentSwimmers = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        setError("Not authenticated");
+        // Return mock data for preview when not authenticated
+        const mockSwimmers: ParentSwimmer[] = [
+          {
+            id: "mock-1",
+            first_name: "Emma",
+            last_name: "Johnson",
+            photo_url: "",
+            current_level: "Level 2",
+            enrollment_status: "enrolled",
+            assessment_status: "completed"
+          },
+          {
+            id: "mock-2",
+            first_name: "Liam",
+            last_name: "Johnson",
+            photo_url: "",
+            current_level: "Level 1",
+            enrollment_status: "approved",
+            assessment_status: "scheduled"
+          },
+          {
+            id: "mock-3",
+            first_name: "Olivia",
+            last_name: "Johnson",
+            photo_url: "",
+            current_level: "Not Yet Assessed",
+            enrollment_status: "waitlist",
+            assessment_status: "pending"
+          }
+        ];
+        setSwimmers(mockSwimmers);
         setLoading(false);
         return;
       }
