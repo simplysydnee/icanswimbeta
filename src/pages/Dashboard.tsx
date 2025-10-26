@@ -5,7 +5,7 @@ import { VideoUpload } from "@/components/VideoUpload";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, User, LogOut } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { SwimmerSwitcher } from "@/components/SwimmerSwitcher";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,7 +98,7 @@ const Dashboard = () => {
               className="bg-white/10 text-white border-white/20 hover:bg-white/20 h-8 px-2 sm:px-3 text-xs sm:text-sm"
             >
               <span className="hidden xs:inline">Sign Out</span>
-              <span className="xs:hidden">Out</span>
+              <LogOut className="h-4 w-4 xs:hidden" />
             </Button>
           </div>
         </div>

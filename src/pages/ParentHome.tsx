@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useParentSwimmers } from "@/hooks/useParentSwimmers";
-import { Calendar, User } from "lucide-react";
+import { Calendar, User, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import logoHeader from "@/assets/logo-header.png";
@@ -87,7 +87,7 @@ const ParentHome = () => {
               className="bg-white/10 text-white border-white/20 hover:bg-white/20 text-xs sm:text-sm"
             >
               <span className="hidden xs:inline">Sign Out</span>
-              <span className="xs:hidden">Out</span>
+              <LogOut className="h-4 w-4 xs:hidden" />
             </Button>
           </div>
         </div>
