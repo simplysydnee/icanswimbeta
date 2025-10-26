@@ -66,35 +66,39 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-ocean-light/20 via-background to-background pb-8">
       {/* Sticky Header */}
-      <header className="bg-gradient-to-r from-primary via-accent to-secondary p-4 sm:p-6 shadow-lg sticky top-0 z-50">
-        <div className="container mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+      <header className="bg-gradient-to-r from-primary via-accent to-secondary p-3 sm:p-4 shadow-lg sticky top-0 z-50">
+        <div className="container mx-auto flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <img 
               src={logoHeader}
               alt="I CAN SWIM"
-              className="h-10 sm:h-12 w-auto object-contain"
+              className="h-8 sm:h-10 md:h-12 w-auto object-contain shrink-0"
             />
-            <div className="flex items-center gap-2">
-              <span className="hidden sm:inline text-white/80 text-sm">Viewing:</span>
-              <SwimmerSwitcher currentSwimmerId={swimmerId || undefined} />
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="hidden md:inline text-white/80 text-xs lg:text-sm shrink-0">Viewing:</span>
+              <div className="min-w-0">
+                <SwimmerSwitcher currentSwimmerId={swimmerId || undefined} />
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigate("/schedule")}
-              className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+              className="bg-white/10 text-white border-white/20 hover:bg-white/20 h-8 px-2 sm:px-3 text-xs sm:text-sm"
             >
-              Schedule
+              <span className="hidden xs:inline">Schedule</span>
+              <Calendar className="h-4 w-4 xs:hidden" />
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handleSignOut}
-              className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+              className="bg-white/10 text-white border-white/20 hover:bg-white/20 h-8 px-2 sm:px-3 text-xs sm:text-sm"
             >
-              Sign Out
+              <span className="hidden xs:inline">Sign Out</span>
+              <span className="xs:hidden">Out</span>
             </Button>
           </div>
         </div>
@@ -108,7 +112,7 @@ const Dashboard = () => {
             className="mb-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Enrolled Clients
+            Back to My Swimmers
           </Button>
         )}
 

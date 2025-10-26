@@ -64,26 +64,30 @@ const ParentHome = () => {
     <div className="min-h-screen bg-gradient-to-b from-ocean-light/20 via-background to-background">
       {/* Header */}
       <header className="bg-gradient-to-r from-primary via-accent to-secondary p-4 sm:p-6 shadow-lg sticky top-0 z-50">
-        <div className="container mx-auto flex items-center justify-between gap-4">
+        <div className="container mx-auto flex items-center justify-between gap-2 sm:gap-4">
           <img 
             src={logoHeader}
             alt="I CAN SWIM"
-            className="h-12 sm:h-16 w-auto object-contain"
+            className="h-10 sm:h-12 md:h-16 w-auto object-contain shrink-0"
           />
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => navigate("/schedule")}
-              className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+              className="bg-white/10 text-white border-white/20 hover:bg-white/20 text-xs sm:text-sm"
             >
-              Schedule
+              <span className="hidden xs:inline">Schedule</span>
+              <Calendar className="h-4 w-4 xs:hidden" />
             </Button>
             <Button
               variant="outline"
+              size="sm"
               onClick={handleSignOut}
-              className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+              className="bg-white/10 text-white border-white/20 hover:bg-white/20 text-xs sm:text-sm"
             >
-              Sign Out
+              <span className="hidden xs:inline">Sign Out</span>
+              <span className="xs:hidden">Out</span>
             </Button>
           </div>
         </div>
@@ -93,10 +97,10 @@ const ParentHome = () => {
         {/* Page Title */}
         <div className="mb-8 sm:mb-12">
           <h1 className="text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-            Enrolled Clients
+            My Swimmers
           </h1>
           <p className="text-muted-foreground text-base sm:text-lg">
-            Select a child to view their dashboard or start a booking.
+            Select a swimmer to view their dashboard or start a booking.
           </p>
         </div>
 
@@ -118,13 +122,13 @@ const ParentHome = () => {
             onClick={scrollToSwimmers}
           >
             <User className="h-5 w-5 mr-2" />
-            View Child Dashboards
+            View Swimmer Dashboards
           </Button>
         </div>
 
         {/* Swimmers List */}
         <div id="swimmer-cards">
-          <h2 className="text-2xl font-bold mb-6">My Children</h2>
+          <h2 className="text-2xl font-bold mb-6">My Swimmers</h2>
           
           {swimmers.length === 0 ? (
             <Card>
