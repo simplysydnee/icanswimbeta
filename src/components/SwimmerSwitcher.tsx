@@ -54,7 +54,7 @@ export const SwimmerSwitcher = ({ currentSwimmerId }: SwimmerSwitcherProps) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Switch Swimmer</DropdownMenuLabel>
+        <DropdownMenuLabel>Switch Child</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {swimmers.map((swimmer) => (
           <DropdownMenuItem

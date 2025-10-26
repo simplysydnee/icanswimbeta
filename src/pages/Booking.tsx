@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { addMonths, startOfMonth, format } from "date-fns";
 import { SwimmerSelector } from "@/components/booking/SwimmerSelector";
 import { WeeklyBookingTab } from "@/components/booking/WeeklyBookingTab";
@@ -12,6 +12,8 @@ import { AssessmentTab } from "@/components/booking/AssessmentTab";
 import { EnrollmentTab } from "@/components/booking/EnrollmentTab";
 
 const Booking = () => {
+  const [searchParams] = useSearchParams();
+  const swimmerIdFromUrl = searchParams.get("swimmerId");
   // Mock parent's swimmers - in production, fetch from Supabase
   const mockSwimmers = [
     {
@@ -63,6 +65,13 @@ const Booking = () => {
 
   const [selectedSwimmerIds, setSelectedSwimmerIds] = useState<string[]>([]);
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
+
+  // Pre-select swimmer if coming from a child dashboard
+  useEffect(() => {
+    if (swimmerIdFromUrl && mockSwimmers.find(s => s.id === swimmerIdFromUrl)) {
+      setSelectedSwimmerIds([swimmerIdFromUrl]);
+    }
+  }, [swimmerIdFromUrl]);
 
   // Get selected swimmers
   const selectedSwimmers = mockSwimmers.filter((s) =>
@@ -283,10 +292,10 @@ const Booking = () => {
             {/* Back Link */}
             <div className="mt-8 text-center">
               <Link
-                to="/dashboard"
+                to={swimmerIdFromUrl ? `/dashboard?swimmerId=${swimmerIdFromUrl}` : "/parent-home"}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                ← Back to Dashboard
+                ← Back to {swimmerIdFromUrl ? "Dashboard" : "Enrolled Clients"}
               </Link>
             </div>
           </>
