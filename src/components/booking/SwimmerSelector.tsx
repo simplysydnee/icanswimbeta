@@ -54,6 +54,15 @@ export const SwimmerSelector = ({
   };
 
   const getStatusDisplay = (swimmer: Swimmer) => {
+    // Check if VMRC client has used all sessions
+    if (
+      swimmer.paymentType === "vmrc" &&
+      swimmer.vmrcSessionsUsed !== undefined &&
+      swimmer.vmrcSessionsAuthorized !== undefined &&
+      swimmer.vmrcSessionsUsed >= swimmer.vmrcSessionsAuthorized
+    ) {
+      return { text: "Progress Update Needed", variant: "destructive" as const };
+    }
     if (swimmer.enrollmentStatus === "waitlist") {
       return { text: "Waitlist — Assessment Required", variant: "destructive" as const };
     }
