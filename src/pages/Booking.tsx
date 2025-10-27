@@ -93,9 +93,9 @@ const Booking = () => {
     selectedSwimmerIds.includes(s.id)
   );
 
-  // Check VMRC authorization status
+  // Check VMRC authorization status (exclude waitlist swimmers as they only need assessments)
   const vmrcNeedsAuth = selectedSwimmers.some(
-    (s) => s.isVmrcClient && s.vmrcSessionsUsed >= s.vmrcSessionsAuthorized
+    (s) => s.isVmrcClient && s.vmrcSessionsUsed >= s.vmrcSessionsAuthorized && s.enrollmentStatus !== "waitlist"
   );
 
   // Check if all selected swimmers are Waitlist (restricted to assessments only)
@@ -208,14 +208,16 @@ const Booking = () => {
                     .filter(
                       (s) =>
                         s.isVmrcClient &&
-                        s.vmrcSessionsUsed >= s.vmrcSessionsAuthorized
+                        s.vmrcSessionsUsed >= s.vmrcSessionsAuthorized &&
+                        s.enrollmentStatus !== "waitlist"
                     )
                     .map((s) => `${s.firstName} ${s.lastName}`)
                     .join(", ")}{" "}
                   {selectedSwimmers.filter(
                     (s) =>
                       s.isVmrcClient &&
-                      s.vmrcSessionsUsed >= s.vmrcSessionsAuthorized
+                      s.vmrcSessionsUsed >= s.vmrcSessionsAuthorized &&
+                      s.enrollmentStatus !== "waitlist"
                   ).length === 1
                     ? "has"
                     : "have"}{" "}
