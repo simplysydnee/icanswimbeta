@@ -10,6 +10,7 @@ import Booking from "./pages/Booking";
 import MasterSchedule from "./pages/MasterSchedule";
 import Schedule from "./pages/Schedule";
 import ParentHome from "./pages/ParentHome";
+import UpdateProgress from "./pages/UpdateProgress";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/booking" element={<Booking />} />
           <Route path="/schedule" element={<Schedule />} />
+          <Route path="/update-progress" element={<UpdateProgress />} />
           <Route path="/admin/master-schedule" element={<MasterSchedule />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

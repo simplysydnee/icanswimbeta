@@ -11,6 +11,7 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, User } from "lucid
 import { format, startOfWeek, endOfWeek, addWeeks, addDays, isSameDay, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { SwimmersNeedingUpdate } from "@/components/SwimmersNeedingUpdate";
 
 interface Session {
   id: string;
@@ -29,6 +30,9 @@ interface Session {
       first_name: string;
       last_name: string;
       parent_id: string;
+      payment_type: string;
+      vmrc_sessions_used: number;
+      vmrc_sessions_authorized: number;
     };
   }>;
 }
@@ -119,7 +123,10 @@ const Schedule = () => {
               id,
               first_name,
               last_name,
-              parent_id
+              parent_id,
+              payment_type,
+              vmrc_sessions_used,
+              vmrc_sessions_authorized
             )
           )
         `)
@@ -155,6 +162,9 @@ const Schedule = () => {
             first_name: booking.swimmers.first_name,
             last_name: booking.swimmers.last_name,
             parent_id: booking.swimmers.parent_id,
+            payment_type: booking.swimmers.payment_type,
+            vmrc_sessions_used: booking.swimmers.vmrc_sessions_used,
+            vmrc_sessions_authorized: booking.swimmers.vmrc_sessions_authorized,
           },
         })),
       }));
@@ -203,44 +213,60 @@ const Schedule = () => {
     return (
       <div className="grid grid-cols-7 gap-2">
         {days.map(day => {
-          const daySessions = getSessionsForDay(day);
-          return (
-            <div key={day.toISOString()} className="space-y-2">
-              <div className="text-center font-semibold p-2 bg-muted rounded">
-                <div className="text-sm">{format(day, "EEE")}</div>
-                <div className="text-lg">{format(day, "d")}</div>
-              </div>
-              <div className="space-y-2 min-h-[300px]">
-                {daySessions.map(session => (
-                  <Card 
-                    key={session.id}
-                    className={cn(
-                      "cursor-pointer hover:shadow-lg transition-shadow",
-                      session.instructor?.id && instructorColorMap[session.instructor.id] 
-                        ? `border-l-4 ${instructorColorMap[session.instructor.id]}` 
-                        : ""
-                    )}
-                    onClick={() => handleSessionClick(session)}
-                  >
-                    <CardContent className="p-3">
-                      <div className="text-xs font-semibold mb-1">
-                        {format(parseISO(session.start_time), "h:mm a")}
-                      </div>
-                      <div className="text-xs text-muted-foreground mb-2">
-                        {session.instructor?.full_name || "No instructor"}
-                      </div>
-                      {session.bookings.map(booking => (
-                        <Badge key={booking.id} variant="secondary" className="text-xs mb-1">
-                          {booking.swimmer.first_name} {booking.swimmer.last_name}
-                        </Badge>
-                      ))}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+                     const daySessions = getSessionsForDay(day);
+                      return (
+                        <div key={day.toISOString()} className="space-y-2">
+                          <div className="text-center font-semibold p-2 bg-muted rounded">
+                            <div className="text-sm">{format(day, "EEE")}</div>
+                            <div className="text-lg">{format(day, "d")}</div>
+                          </div>
+                          <div className="space-y-2 min-h-[300px]">
+                            {daySessions.map(session => {
+                              const needsUpdate = session.bookings.some((b: any) => 
+                                b.swimmer.payment_type === "vmrc" &&
+                                b.swimmer.vmrc_sessions_used >= b.swimmer.vmrc_sessions_authorized
+                              );
+                              return (
+                                <Card 
+                                  key={session.id}
+                                  className={cn(
+                                    "cursor-pointer hover:shadow-lg transition-shadow",
+                                    session.instructor?.id && instructorColorMap[session.instructor.id] 
+                                      ? `border-l-4 ${instructorColorMap[session.instructor.id]}` 
+                                      : "",
+                                    needsUpdate && "border-destructive border-2"
+                                  )}
+                                  onClick={() => handleSessionClick(session)}
+                                >
+                                  <CardContent className="p-3">
+                                    <div className="text-xs font-semibold mb-1">
+                                      {format(parseISO(session.start_time), "h:mm a")}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground mb-2">
+                                      {session.instructor?.full_name || "No instructor"}
+                                    </div>
+                                    {session.bookings.map(booking => {
+                                      const swimmerNeedsUpdate = booking.swimmer.payment_type === "vmrc" &&
+                                        booking.swimmer.vmrc_sessions_used >= booking.swimmer.vmrc_sessions_authorized;
+                                      return (
+                                        <Badge 
+                                          key={booking.id} 
+                                          variant={swimmerNeedsUpdate ? "destructive" : "secondary"} 
+                                          className="text-xs mb-1"
+                                        >
+                                          {booking.swimmer.first_name} {booking.swimmer.last_name}
+                                          {swimmerNeedsUpdate && " ⚠️"}
+                                        </Badge>
+                                      );
+                                    })}
+                                  </CardContent>
+                                </Card>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
       </div>
     );
   };
@@ -261,49 +287,65 @@ const Schedule = () => {
             </CardContent>
           </Card>
         ) : (
-          daySessions.map(session => (
-            <Card 
-              key={session.id}
-              className={cn(
-                "cursor-pointer hover:shadow-lg transition-shadow",
-                session.instructor?.id && instructorColorMap[session.instructor.id]
-                  ? `border-l-8 ${instructorColorMap[session.instructor.id]}`
-                  : ""
-              )}
-              onClick={() => handleSessionClick(session)}
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-xl">
-                      {format(parseISO(session.start_time), "h:mm a")} - {format(parseISO(session.end_time), "h:mm a")}
-                    </CardTitle>
-                    <CardDescription className="mt-1">
-                      {session.session_type} • {session.location}
-                    </CardDescription>
+          daySessions.map(session => {
+            const needsUpdate = session.bookings.some((b: any) => 
+              b.swimmer.payment_type === "vmrc" &&
+              b.swimmer.vmrc_sessions_used >= b.swimmer.vmrc_sessions_authorized
+            );
+            return (
+              <Card 
+                key={session.id}
+                className={cn(
+                  "cursor-pointer hover:shadow-lg transition-shadow",
+                  session.instructor?.id && instructorColorMap[session.instructor.id]
+                    ? `border-l-8 ${instructorColorMap[session.instructor.id]}`
+                    : "",
+                  needsUpdate && "border-destructive border-2"
+                )}
+                onClick={() => handleSessionClick(session)}
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-xl">
+                        {format(parseISO(session.start_time), "h:mm a")} - {format(parseISO(session.end_time), "h:mm a")}
+                      </CardTitle>
+                      <CardDescription className="mt-1">
+                        {session.session_type} • {session.location}
+                      </CardDescription>
+                    </div>
+                    <Badge variant="outline" className="text-sm">
+                      {session.instructor?.full_name || "No instructor"}
+                    </Badge>
                   </div>
-                  <Badge variant="outline" className="text-sm">
-                    {session.instructor?.full_name || "No instructor"}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold">
-                    <User className="h-4 w-4" />
-                    Swimmers ({session.bookings.length}):
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-semibold">
+                      <User className="h-4 w-4" />
+                      Swimmers ({session.bookings.length}):
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {session.bookings.map(booking => {
+                        const swimmerNeedsUpdate = booking.swimmer.payment_type === "vmrc" &&
+                          booking.swimmer.vmrc_sessions_used >= booking.swimmer.vmrc_sessions_authorized;
+                        return (
+                          <Badge 
+                            key={booking.id} 
+                            variant={swimmerNeedsUpdate ? "destructive" : "secondary"} 
+                            className="text-sm py-1 px-3"
+                          >
+                            {booking.swimmer.first_name} {booking.swimmer.last_name}
+                            {swimmerNeedsUpdate && " ⚠️ Update Needed"}
+                          </Badge>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {session.bookings.map(booking => (
-                      <Badge key={booking.id} variant="secondary" className="text-sm py-1 px-3">
-                        {booking.swimmer.first_name} {booking.swimmer.last_name}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            );
+          })
         )}
       </div>
     );
@@ -330,6 +372,13 @@ const Schedule = () => {
               : "View your scheduled sessions"}
           </p>
         </div>
+
+        {/* Swimmers Needing Progress Updates - Only for instructors */}
+        {userRole === "instructor" && (
+          <div className="mb-6">
+            <SwimmersNeedingUpdate />
+          </div>
+        )}
 
         <Tabs defaultValue="week" className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-2">
