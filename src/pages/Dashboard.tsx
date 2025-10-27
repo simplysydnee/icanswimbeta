@@ -10,48 +10,81 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { SwimmerSwitcher } from "@/components/SwimmerSwitcher";
 import { supabase } from "@/integrations/supabase/client";
 import { useParentSwimmers } from "@/hooks/useParentSwimmers";
+import { useEffect, useState } from "react";
 import logoHeader from "@/assets/logo-header.png";
 
-const swimLevels: SwimLevel[] = ["tadpole", "minnow", "starfish", "dolphin", "shark"];
+interface SwimLevelData {
+  id: string;
+  name: string;
+  display_name: string;
+  description: string;
+  sequence: number;
+}
 
-const levelSkills = {
-  tadpole: [
-    { name: "Comfortable entering the water", completed: true, dateMastered: "2024-01-15" },
-    { name: "Blowing bubbles at water surface", completed: true, dateMastered: "2024-01-20" },
-    { name: "Getting face wet", completed: false },
-    { name: "Basic water safety awareness", completed: false },
-  ],
-  minnow: [
-    { name: "Submerging face voluntarily", completed: false },
-    { name: "Front float with support", completed: false },
-    { name: "Back float with support", completed: false },
-    { name: "Kicking with kickboard", completed: false },
-  ],
-  starfish: [
-    { name: "Independent front float (5 seconds)", completed: false },
-    { name: "Independent back float (5 seconds)", completed: false },
-    { name: "Recovering from float to standing", completed: false },
-    { name: "Treading water with support", completed: false },
-  ],
-  dolphin: [
-    { name: "Swimming 10 feet independently", completed: false },
-    { name: "Freestyle arm movements", completed: false },
-    { name: "Backstroke basics", completed: false },
-    { name: "Deep water comfort", completed: false },
-  ],
-  shark: [
-    { name: "Swimming 25 feet continuously", completed: false },
-    { name: "Diving from side of pool", completed: false },
-    { name: "Advanced stroke refinement", completed: false },
-    { name: "Water safety skills mastery", completed: false },
-  ],
-};
+interface SkillData {
+  id: string;
+  name: string;
+  description: string;
+  sequence: number;
+  level_id: string;
+}
+
+interface SwimmerSkillData {
+  skill_id: string;
+  status: string;
+  date_mastered: string | null;
+}
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const swimmerId = searchParams.get("swimmerId");
   const { swimmers } = useParentSwimmers();
+  const [swimLevels, setSwimLevels] = useState<SwimLevelData[]>([]);
+  const [skills, setSkills] = useState<SkillData[]>([]);
+  const [swimmerSkills, setSwimmerSkills] = useState<SwimmerSkillData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch swim levels
+        const { data: levelsData, error: levelsError } = await supabase
+          .from("swim_levels")
+          .select("*")
+          .order("sequence");
+
+        if (levelsError) throw levelsError;
+        setSwimLevels(levelsData || []);
+
+        // Fetch skills
+        const { data: skillsData, error: skillsError } = await supabase
+          .from("skills")
+          .select("*")
+          .order("sequence");
+
+        if (skillsError) throw skillsError;
+        setSkills(skillsData || []);
+
+        // Fetch swimmer skills if swimmerId is available
+        if (swimmerId) {
+          const { data: swimmerSkillsData, error: swimmerSkillsError } = await supabase
+            .from("swimmer_skills")
+            .select("skill_id, status, date_mastered")
+            .eq("swimmer_id", swimmerId);
+
+          if (swimmerSkillsError) throw swimmerSkillsError;
+          setSwimmerSkills(swimmerSkillsData || []);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [swimmerId]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -185,47 +218,61 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="progress" className="space-y-8">
-            {/* Level Overview */}
-            <Card className="bg-gradient-to-br from-card via-card to-primary/5">
-              <CardHeader>
-                <CardTitle className="text-2xl">🏊 Swim Journey Progress</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-between items-center gap-4 overflow-x-auto pb-4">
-                  {swimLevels.map((level, index) => (
-                    <ProgressBadge
-                      key={level}
-                      level={level}
-                      isActive={index === 0}
-                      isCompleted={false}
-                      size="md"
-                    />
-                  ))}
+            {loading ? (
+              <Card>
+                <CardContent className="py-8">
+                  <p className="text-center text-muted-foreground">Loading progress...</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                {/* Level Overview */}
+                <Card className="bg-gradient-to-br from-card via-card to-primary/5">
+                  <CardHeader>
+                    <CardTitle className="text-2xl">🏊 Swim Journey Progress</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between items-center gap-4 overflow-x-auto pb-4">
+                      {swimLevels.map((levelData, index) => (
+                        <ProgressBadge
+                          key={levelData.id}
+                          level={levelData.name as SwimLevel}
+                          isActive={currentSwimmer?.current_level === levelData.display_name}
+                          isCompleted={false}
+                          size="md"
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Skills Cards */}
+                <div className="space-y-6">
+                  <h2 className="text-2xl font-bold text-foreground">Skills by Level</h2>
+                  {swimLevels.map((levelData) => {
+                    const levelSkills = skills
+                      .filter((skill) => skill.level_id === levelData.id)
+                      .map((skill) => {
+                        const swimmerSkill = swimmerSkills.find((ss) => ss.skill_id === skill.id);
+                        return {
+                          name: skill.name,
+                          completed: swimmerSkill?.status === "mastered",
+                          dateMastered: swimmerSkill?.date_mastered || undefined,
+                        };
+                      });
+
+                    return (
+                      <LevelSkillsCard
+                        key={levelData.id}
+                        level={levelData.name as SwimLevel}
+                        skills={levelSkills}
+                        isActive={currentSwimmer?.current_level === levelData.display_name}
+                      />
+                    );
+                  })}
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Skills Cards */}
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-foreground">Current Level Skills</h2>
-              <LevelSkillsCard
-                level="tadpole"
-                skills={levelSkills.tadpole}
-                isActive={true}
-                notes="Building confidence each session!"
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                <LevelSkillsCard
-                  level="minnow"
-                  skills={levelSkills.minnow}
-                />
-                <LevelSkillsCard
-                  level="starfish"
-                  skills={levelSkills.starfish}
-                />
-              </div>
-            </div>
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="messages" className="space-y-6">

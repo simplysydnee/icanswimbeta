@@ -174,11 +174,11 @@ const Landing = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
-              { name: "Tadpole", emoji: "🐸", description: "Water comfort and basic safety awareness" },
-              { name: "Minnow", emoji: "🐠", description: "Floating, kicking, and breath control" },
-              { name: "Starfish", emoji: "⭐", description: "Independent floating and water recovery" },
-              { name: "Dolphin", emoji: "🐬", description: "Swimming independently with proper form" },
-              { name: "Shark", emoji: "🦈", description: "Advanced strokes and water safety mastery" },
+              { name: "White", emoji: "💧", description: "Water Readiness - Asking permission to get in the water" },
+              { name: "Red", emoji: "❤️", description: "Body Position and Air Exchange - Wearing lifejacket and jump in" },
+              { name: "Yellow", emoji: "⚡", description: "Forward Movement and Direction Change - Tread water for 10 seconds" },
+              { name: "Green", emoji: "✨", description: "Water Competency - Disorientating entries and recover" },
+              { name: "Blue", emoji: "🌊", description: "Streamlines and Side Breathing - Reach and throw with assist flotation" },
             ].map((level) => (
               <Card key={level.name}>
                 <CardHeader>

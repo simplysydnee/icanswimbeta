@@ -1,7 +1,7 @@
-import { Fish, Waves, Star, Flame, Shield } from "lucide-react";
+import { Droplets, Heart, Zap, Sparkles, Waves } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type SwimLevel = "tadpole" | "minnow" | "starfish" | "dolphin" | "shark";
+export type SwimLevel = "white" | "red" | "yellow" | "green" | "blue";
 
 interface ProgressBadgeProps {
   level: SwimLevel;
@@ -11,35 +11,40 @@ interface ProgressBadgeProps {
 }
 
 const levelConfig = {
-  tadpole: {
-    name: "Tadpole",
+  white: {
+    name: "White",
+    icon: Droplets,
+    color: "from-slate-300 to-slate-100",
+    textColor: "text-slate-700",
+    description: "Water Readiness",
+  },
+  red: {
+    name: "Red",
+    icon: Heart,
+    color: "from-red-500 to-rose-400",
+    textColor: "text-white",
+    description: "Body Position",
+  },
+  yellow: {
+    name: "Yellow",
+    icon: Zap,
+    color: "from-yellow-400 to-amber-300",
+    textColor: "text-amber-900",
+    description: "Forward Movement",
+  },
+  green: {
+    name: "Green",
+    icon: Sparkles,
+    color: "from-green-500 to-emerald-400",
+    textColor: "text-white",
+    description: "Water Competency",
+  },
+  blue: {
+    name: "Blue",
     icon: Waves,
-    color: "from-blue-400 to-cyan-400",
-    description: "Water Introduction",
-  },
-  minnow: {
-    name: "Minnow",
-    icon: Fish,
-    color: "from-teal-400 to-emerald-400",
-    description: "Basic Skills",
-  },
-  starfish: {
-    name: "Starfish",
-    icon: Star,
-    color: "from-orange-400 to-yellow-400",
-    description: "Floating & Balance",
-  },
-  dolphin: {
-    name: "Dolphin",
-    icon: Flame,
-    color: "from-blue-500 to-indigo-500",
-    description: "Swim Strokes",
-  },
-  shark: {
-    name: "Shark",
-    icon: Shield,
-    color: "from-purple-500 to-pink-500",
-    description: "Advanced Skills",
+    color: "from-blue-500 to-cyan-400",
+    textColor: "text-white",
+    description: "Streamlines",
   },
 };
 
@@ -79,7 +84,7 @@ export const ProgressBadge = ({
           size={iconSizes[size]}
           className={cn(
             "transition-all",
-            (isActive || isCompleted) ? "text-white" : "text-muted-foreground"
+            (isActive || isCompleted) ? config.textColor : "text-muted-foreground"
           )}
         />
       </div>
