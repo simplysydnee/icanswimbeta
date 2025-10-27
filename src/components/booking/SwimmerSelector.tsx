@@ -55,7 +55,7 @@ export const SwimmerSelector = ({
 
   const getStatusDisplay = (swimmer: Swimmer) => {
     if (swimmer.enrollmentStatus === "waitlist") {
-      return { text: "Waitlist — Assessment Required", variant: "secondary" as const };
+      return { text: "Waitlist — Assessment Required", variant: "destructive" as const };
     }
     if (swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete") {
       return { text: "Assessment Needed", variant: "destructive" as const };
@@ -148,7 +148,7 @@ export const SwimmerSelector = ({
                       {!canBook && (
                         <div className="text-xs text-muted-foreground mt-1">
                           {needsVmrcAuth
-                            ? `Need new POS# (used ${swimmer.vmrcSessionsUsed}/${swimmer.vmrcSessionsAuthorized})`
+                            ? "Progress Update Needed"
                             : "Complete assessment first"}
                         </div>
                       )}
