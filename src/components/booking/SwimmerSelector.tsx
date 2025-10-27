@@ -87,18 +87,19 @@ export const SwimmerSelector = ({
             const status = getStatusDisplay(swimmer);
             const isSelected = selectedSwimmerIds.includes(swimmer.id);
             
-            // Swimmers can book if: waitlist, approved needing assessment, or enrolled with complete assessment
+            // Only waitlist can book assessments; enrolled can book regular sessions if they have VMRC auth
+            const needsProgressUpdate =
+              swimmer.paymentType === "vmrc" &&
+              swimmer.vmrcSessionsUsed !== undefined &&
+              swimmer.vmrcSessionsAuthorized !== undefined &&
+              swimmer.vmrcSessionsUsed >= swimmer.vmrcSessionsAuthorized;
+
             const canBook =
               swimmer.enrollmentStatus === "waitlist" ||
               (swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete") ||
               (swimmer.enrollmentStatus === "enrolled" &&
                 swimmer.assessmentStatus === "complete" &&
-                !(
-                  swimmer.paymentType === "vmrc" &&
-                  swimmer.vmrcSessionsUsed !== undefined &&
-                  swimmer.vmrcSessionsAuthorized !== undefined &&
-                  swimmer.vmrcSessionsUsed >= swimmer.vmrcSessionsAuthorized
-                ));
+                !needsProgressUpdate);
 
             const needsVmrcAuth =
               swimmer.enrollmentStatus !== "waitlist" &&
@@ -154,21 +155,24 @@ export const SwimmerSelector = ({
                           </Badge>
                         )}
                       </div>
-                      {!canBook && (
+                      {!canBook && needsProgressUpdate && (
+                        <div className="text-xs text-destructive mt-1 font-medium">
+                          Cannot book — Submit progress update first
+                        </div>
+                      )}
+                      {!canBook && !needsProgressUpdate && swimmer.enrollmentStatus === "enrolled" && (
                         <div className="text-xs text-muted-foreground mt-1">
-                          {needsVmrcAuth
-                            ? "Progress Update Needed"
-                            : "Complete assessment first"}
+                          Complete assessment first
                         </div>
                       )}
                       {swimmer.enrollmentStatus === "waitlist" && (
                         <div className="text-xs text-primary mt-1 font-medium">
-                          Assessment booking available
+                          ✓ Can book assessment
                         </div>
                       )}
                       {swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete" && (
                         <div className="text-xs text-primary mt-1 font-medium">
-                          Assessment booking available
+                          ✓ Can book assessment
                         </div>
                       )}
                       {canBook && swimmer.paymentType === "vmrc" && (
