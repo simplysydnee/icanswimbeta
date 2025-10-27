@@ -33,9 +33,10 @@ export const SwimmerSelector = ({
   const handleToggleSwimmer = (swimmerId: string) => {
     const swimmer = swimmers.find((s) => s.id === swimmerId);
     
-    // Check VMRC authorization (only block if not waitlist)
+    // Check VMRC authorization (only block if not waitlist or approved needing assessment)
     if (
       swimmer?.enrollmentStatus !== "waitlist" &&
+      !(swimmer?.enrollmentStatus === "approved" && swimmer?.assessmentStatus !== "complete") &&
       swimmer?.paymentType === "vmrc" &&
       swimmer.vmrcSessionsUsed !== undefined &&
       swimmer.vmrcSessionsAuthorized !== undefined &&
@@ -77,9 +78,10 @@ export const SwimmerSelector = ({
             const status = getStatusDisplay(swimmer);
             const isSelected = selectedSwimmerIds.includes(swimmer.id);
             
-            // Waitlist swimmers can be selected (for assessment booking)
+            // Swimmers can book if: waitlist, approved needing assessment, or enrolled with complete assessment
             const canBook =
               swimmer.enrollmentStatus === "waitlist" ||
+              (swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete") ||
               (swimmer.enrollmentStatus === "enrolled" &&
                 swimmer.assessmentStatus === "complete" &&
                 !(
@@ -91,6 +93,7 @@ export const SwimmerSelector = ({
 
             const needsVmrcAuth =
               swimmer.enrollmentStatus !== "waitlist" &&
+              !(swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete") &&
               swimmer.paymentType === "vmrc" &&
               swimmer.vmrcSessionsUsed !== undefined &&
               swimmer.vmrcSessionsAuthorized !== undefined &&
@@ -150,6 +153,11 @@ export const SwimmerSelector = ({
                         </div>
                       )}
                       {swimmer.enrollmentStatus === "waitlist" && (
+                        <div className="text-xs text-primary mt-1 font-medium">
+                          Assessment booking available
+                        </div>
+                      )}
+                      {swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete" && (
                         <div className="text-xs text-primary mt-1 font-medium">
                           Assessment booking available
                         </div>
