@@ -33,8 +33,9 @@ export const SwimmerSelector = ({
   const handleToggleSwimmer = (swimmerId: string) => {
     const swimmer = swimmers.find((s) => s.id === swimmerId);
     
-    // Check VMRC authorization
+    // Check VMRC authorization (only block if not waitlist)
     if (
+      swimmer?.enrollmentStatus !== "waitlist" &&
       swimmer?.paymentType === "vmrc" &&
       swimmer.vmrcSessionsUsed !== undefined &&
       swimmer.vmrcSessionsAuthorized !== undefined &&
@@ -53,12 +54,12 @@ export const SwimmerSelector = ({
 
   const getStatusDisplay = (swimmer: Swimmer) => {
     if (swimmer.enrollmentStatus === "waitlist") {
-      return { text: "Waitlist", variant: "secondary" as const };
+      return { text: "Waitlist — Assessment Required", variant: "secondary" as const };
     }
     if (swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete") {
       return { text: "Assessment Needed", variant: "destructive" as const };
     }
-    return { text: "Ready to Book", variant: "default" as const };
+    return { text: "Active — Eligible for Bookings", variant: "default" as const };
   };
 
   return (
@@ -75,17 +76,21 @@ export const SwimmerSelector = ({
           {swimmers.map((swimmer) => {
             const status = getStatusDisplay(swimmer);
             const isSelected = selectedSwimmerIds.includes(swimmer.id);
+            
+            // Waitlist swimmers can be selected (for assessment booking)
             const canBook =
-              swimmer.enrollmentStatus === "enrolled" &&
-              swimmer.assessmentStatus === "complete" &&
-              !(
-                swimmer.paymentType === "vmrc" &&
-                swimmer.vmrcSessionsUsed !== undefined &&
-                swimmer.vmrcSessionsAuthorized !== undefined &&
-                swimmer.vmrcSessionsUsed >= swimmer.vmrcSessionsAuthorized
-              );
+              swimmer.enrollmentStatus === "waitlist" ||
+              (swimmer.enrollmentStatus === "enrolled" &&
+                swimmer.assessmentStatus === "complete" &&
+                !(
+                  swimmer.paymentType === "vmrc" &&
+                  swimmer.vmrcSessionsUsed !== undefined &&
+                  swimmer.vmrcSessionsAuthorized !== undefined &&
+                  swimmer.vmrcSessionsUsed >= swimmer.vmrcSessionsAuthorized
+                ));
 
             const needsVmrcAuth =
+              swimmer.enrollmentStatus !== "waitlist" &&
               swimmer.paymentType === "vmrc" &&
               swimmer.vmrcSessionsUsed !== undefined &&
               swimmer.vmrcSessionsAuthorized !== undefined &&
@@ -141,9 +146,12 @@ export const SwimmerSelector = ({
                         <div className="text-xs text-muted-foreground mt-1">
                           {needsVmrcAuth
                             ? `Need new POS# (used ${swimmer.vmrcSessionsUsed}/${swimmer.vmrcSessionsAuthorized})`
-                            : swimmer.enrollmentStatus === "waitlist"
-                            ? "Awaiting approval"
                             : "Complete assessment first"}
+                        </div>
+                      )}
+                      {swimmer.enrollmentStatus === "waitlist" && (
+                        <div className="text-xs text-primary mt-1 font-medium">
+                          Assessment booking available
                         </div>
                       )}
                       {canBook && swimmer.paymentType === "vmrc" && (

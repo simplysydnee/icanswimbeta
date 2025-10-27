@@ -61,6 +61,21 @@ const Booking = () => {
       vmrcSessionsAuthorized: 12,
       vmrcCurrentPosNumber: "POS-2024-002", // Needs new auth
     },
+    {
+      id: "swimmer-4",
+      firstName: "Noah",
+      lastName: "Wilson",
+      photoUrl: undefined,
+      currentLevel: "Not Assigned",
+      enrollmentStatus: "waitlist" as "waitlist" | "approved" | "enrolled",
+      assessmentStatus: "not_started" as "not_started" | "scheduled" | "complete",
+      progressPercentage: 0,
+      isVmrcClient: false,
+      paymentType: "private_pay" as "private_pay" | "vmrc" | "scholarship" | "other",
+      vmrcSessionsUsed: 0,
+      vmrcSessionsAuthorized: 12,
+      vmrcCurrentPosNumber: null,
+    },
   ];
 
   const [selectedSwimmerIds, setSelectedSwimmerIds] = useState<string[]>([]);
@@ -83,10 +98,15 @@ const Booking = () => {
     (s) => s.isVmrcClient && s.vmrcSessionsUsed >= s.vmrcSessionsAuthorized
   );
 
+  // Check if all selected swimmers are Waitlist (restricted to assessments only)
+  const allSwimmersWaitlist = selectedSwimmers.length > 0 && selectedSwimmers.every(
+    (s) => s.enrollmentStatus === "waitlist"
+  );
+
   // Determine booking eligibility based on selected swimmers
   const canBookWeekly = selectedSwimmers.every(
     (s) => s.enrollmentStatus === "enrolled" && s.assessmentStatus === "complete"
-  ) && !vmrcNeedsAuth;
+  ) && !vmrcNeedsAuth && !allSwimmersWaitlist;
   
   const needsAssessment = selectedSwimmers.some(
     (s) =>
@@ -150,8 +170,20 @@ const Booking = () => {
               </Button>
             </div>
 
-            {/* Banner for swimmers needing assessment or VMRC auth */}
-            {needsAssessment && (
+            {/* Banner for Waitlist swimmers */}
+            {allSwimmersWaitlist && (
+              <Alert className="mb-6 border-primary bg-primary/5">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Waitlist Swimmers:</strong> {selectedSwimmers.length === 1 ? "This swimmer is" : "These swimmers are"} currently on the Waitlist. 
+                  You may book an Initial Assessment to begin the enrollment process. 
+                  Once the assessment is completed and approved, full booking options will become available.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Banner for swimmers needing assessment (but not waitlist) */}
+            {needsAssessment && !allSwimmersWaitlist && (
               <Alert className="mb-6 border-primary">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
@@ -234,20 +266,23 @@ const Booking = () => {
             {/* Booking Tabs */}
             <Tabs
               defaultValue={
-                needsAssessment && !canBookWeekly ? "assessment" : "weekly"
+                allSwimmersWaitlist ? "assessment" : needsAssessment && !canBookWeekly ? "assessment" : "weekly"
               }
             >
               <div className="mb-6 overflow-x-auto">
-                <TabsList className="inline-flex w-full min-w-max sm:grid sm:grid-cols-4 sm:w-full">
-                  <TabsTrigger value="weekly" disabled={!canBookWeekly} className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
-                    Weekly (This Month)
-                  </TabsTrigger>
-                  <TabsTrigger value="floating" disabled={!canBookWeekly} className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
-                    Floating Sessions
-                  </TabsTrigger>
+                <TabsList className={`inline-flex w-full min-w-max sm:w-full ${allSwimmersWaitlist ? 'sm:grid-cols-2' : 'sm:grid sm:grid-cols-4'}`}>
+                  {!allSwimmersWaitlist && (
+                    <>
+                      <TabsTrigger value="weekly" disabled={!canBookWeekly} className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
+                        Weekly (This Month)
+                      </TabsTrigger>
+                      <TabsTrigger value="floating" disabled={!canBookWeekly} className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
+                        Floating Sessions
+                      </TabsTrigger>
+                    </>
+                  )}
                   <TabsTrigger
                     value="assessment"
-                    disabled={canBookWeekly && !needsAssessment}
                     className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4"
                   >
                     Initial Assessment
@@ -261,24 +296,28 @@ const Booking = () => {
                 </TabsList>
               </div>
 
-              <TabsContent value="weekly">
-                <WeeklyBookingTab
-                  currentMonth={currentMonth}
-                  swimmerId={selectedSwimmers[0]?.id}
-                  parentId="demo-parent-123"
-                  selectedSwimmers={selectedSwimmers.map((s) => ({
-                    id: s.id,
-                    name: `${s.firstName} ${s.lastName}`,
-                    paymentType: s.paymentType,
-                    vmrcSessionsUsed: s.vmrcSessionsUsed,
-                    vmrcSessionsAuthorized: s.vmrcSessionsAuthorized,
-                  }))}
-                />
-              </TabsContent>
+              {!allSwimmersWaitlist && (
+                <>
+                  <TabsContent value="weekly">
+                    <WeeklyBookingTab
+                      currentMonth={currentMonth}
+                      swimmerId={selectedSwimmers[0]?.id}
+                      parentId="demo-parent-123"
+                      selectedSwimmers={selectedSwimmers.map((s) => ({
+                        id: s.id,
+                        name: `${s.firstName} ${s.lastName}`,
+                        paymentType: s.paymentType,
+                        vmrcSessionsUsed: s.vmrcSessionsUsed,
+                        vmrcSessionsAuthorized: s.vmrcSessionsAuthorized,
+                      }))}
+                    />
+                  </TabsContent>
 
-              <TabsContent value="floating">
-                <FloatingSessionsTab />
-              </TabsContent>
+                  <TabsContent value="floating">
+                    <FloatingSessionsTab />
+                  </TabsContent>
+                </>
+              )}
 
               <TabsContent value="assessment">
                 <AssessmentTab />
@@ -295,7 +334,7 @@ const Booking = () => {
                 to={swimmerIdFromUrl ? `/dashboard?swimmerId=${swimmerIdFromUrl}` : "/parent-home"}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                ← Back to {swimmerIdFromUrl ? "Dashboard" : "Enrolled Clients"}
+                ← Back to {swimmerIdFromUrl ? "Dashboard" : "My Swimmers"}
               </Link>
             </div>
           </>
