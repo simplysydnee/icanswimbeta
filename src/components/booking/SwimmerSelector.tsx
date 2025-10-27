@@ -165,12 +165,12 @@ export const SwimmerSelector = ({
                           Complete assessment first
                         </div>
                       )}
-                      {swimmer.enrollmentStatus === "waitlist" && (
+                      {swimmer.enrollmentStatus === "waitlist" && canBook && (
                         <div className="text-xs text-primary mt-1 font-medium">
                           ✓ Can book assessment
                         </div>
                       )}
-                      {swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete" && (
+                      {swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete" && canBook && (
                         <div className="text-xs text-primary mt-1 font-medium">
                           ✓ Can book assessment
                         </div>
