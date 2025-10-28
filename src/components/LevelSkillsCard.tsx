@@ -4,6 +4,7 @@ import { ProgressBadge, SwimLevel } from "./ProgressBadge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface Skill {
   name: string;
@@ -27,6 +28,7 @@ export const LevelSkillsCard = ({
   notes: initialNotes = ""
 }: LevelSkillsCardProps) => {
   const [notes, setNotes] = useState(initialNotes);
+  const { isAdminOrInstructor, loading } = useUserRole();
   const completedCount = skills.filter(s => s.completed).length;
   const progressPercentage = (completedCount / skills.length) * 100;
 
@@ -64,18 +66,20 @@ export const LevelSkillsCard = ({
           />
         ))}
         
-        <div className="mt-6 pt-6 border-t">
-          <Label htmlFor={`notes-${level}`} className="text-sm font-semibold mb-2 block">
-            Instructor Notes
-          </Label>
-          <Textarea
-            id={`notes-${level}`}
-            placeholder="Add progress notes, observations, or encouragement..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="min-h-[100px] resize-none"
-          />
-        </div>
+        {!loading && isAdminOrInstructor && (
+          <div className="mt-6 pt-6 border-t">
+            <Label htmlFor={`notes-${level}`} className="text-sm font-semibold mb-2 block">
+              Instructor Notes
+            </Label>
+            <Textarea
+              id={`notes-${level}`}
+              placeholder="Add progress notes, observations, or encouragement..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="min-h-[100px] resize-none"
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
