@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Booking from "./pages/Booking";
 import MasterSchedule from "./pages/MasterSchedule";
 import Schedule from "./pages/Schedule";
+import AdminSchedule from "./pages/AdminSchedule";
 import ParentHome from "./pages/ParentHome";
 import UpdateProgress from "./pages/UpdateProgress";
 import NotFound from "./pages/NotFound";
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/booking" element={<Booking />} />
           <Route path="/schedule" element={<Schedule />} />
+          <Route path="/admin/schedule" element={<AdminSchedule />} />
           <Route path="/update-progress" element={<UpdateProgress />} />
           <Route path="/admin/master-schedule" element={<MasterSchedule />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

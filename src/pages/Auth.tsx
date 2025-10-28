@@ -47,7 +47,7 @@ const Auth = () => {
           .single();
 
         if (roleData?.role === "admin") {
-          navigate("/admin/master-schedule");
+          navigate("/admin/schedule");
         } else if (roleData?.role === "instructor") {
           navigate("/schedule");
         } else {
@@ -140,7 +140,7 @@ const Auth = () => {
           .single();
 
         if (roleData?.role === "admin") {
-          navigate("/admin/master-schedule");
+          navigate("/admin/schedule");
         } else if (roleData?.role === "instructor") {
           navigate("/schedule");
         } else {
