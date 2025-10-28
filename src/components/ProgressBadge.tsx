@@ -14,36 +14,41 @@ const levelConfig = {
   white: {
     name: "White",
     icon: Droplets,
-    color: "from-slate-300 to-slate-100",
-    textColor: "text-slate-700",
+    bgColor: "bg-slate-200/60",
+    iconColor: "text-slate-600",
+    activeColor: "from-slate-300 to-slate-100",
     description: "Water Readiness",
   },
   red: {
     name: "Red",
     icon: Heart,
-    color: "from-red-500 to-rose-400",
-    textColor: "text-white",
+    bgColor: "bg-red-200/60",
+    iconColor: "text-red-600",
+    activeColor: "from-red-500 to-rose-400",
     description: "Body Position",
   },
   yellow: {
     name: "Yellow",
     icon: Zap,
-    color: "from-yellow-400 to-amber-300",
-    textColor: "text-amber-900",
+    bgColor: "bg-yellow-200/60",
+    iconColor: "text-yellow-600",
+    activeColor: "from-yellow-400 to-amber-300",
     description: "Forward Movement",
   },
   green: {
     name: "Green",
     icon: Sparkles,
-    color: "from-green-500 to-emerald-400",
-    textColor: "text-white",
+    bgColor: "bg-green-200/60",
+    iconColor: "text-green-600",
+    activeColor: "from-green-500 to-emerald-400",
     description: "Water Competency",
   },
   blue: {
     name: "Blue",
     icon: Waves,
-    color: "from-blue-500 to-cyan-400",
-    textColor: "text-white",
+    bgColor: "bg-blue-200/60",
+    iconColor: "text-blue-600",
+    activeColor: "from-blue-500 to-cyan-400",
     description: "Streamlines",
   },
 };
@@ -73,18 +78,18 @@ export const ProgressBadge = ({
     <div className="flex flex-col items-center gap-2">
       <div
         className={cn(
-          "rounded-full flex items-center justify-center transition-all duration-300",
+          "rounded-full flex items-center justify-center transition-all duration-300 shadow-md",
           sizeClasses[size],
-          isCompleted && `bg-gradient-to-br ${config.color} shadow-lg scale-105`,
-          isActive && !isCompleted && "bg-gradient-to-br from-primary to-accent shadow-xl ring-2 ring-primary/30",
-          !isActive && !isCompleted && "bg-muted opacity-60"
+          isCompleted && `bg-gradient-to-br ${config.activeColor} shadow-lg scale-105`,
+          isActive && !isCompleted && `bg-gradient-to-br ${config.activeColor} shadow-xl ring-4 ring-offset-2`,
+          !isActive && !isCompleted && `${config.bgColor} border-2 border-white/40`
         )}
       >
         <Icon
           size={iconSizes[size]}
           className={cn(
             "transition-all",
-            (isActive || isCompleted) ? config.textColor : "text-muted-foreground"
+            (isActive || isCompleted) ? "text-white drop-shadow-sm" : config.iconColor
           )}
         />
       </div>
