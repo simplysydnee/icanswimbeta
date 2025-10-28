@@ -3,10 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface UpcomingSession {
   id: string;
+  bookingId: string;
   swimmerId: string;
   swimmerName: string;
   sessionDate: string;
   sessionStartTime: string;
+  sessionStartTimeISO: string;
   sessionEndTime: string;
   instructor: string;
   location: string;
@@ -89,7 +91,8 @@ export const useUpcomingSessions = () => {
               const endTime = new Date(session.end_time);
               
               return {
-                id: booking.id,
+                id: session.id,
+                bookingId: booking.id,
                 swimmerId: swimmer.id,
                 swimmerName: `${swimmer.first_name} ${swimmer.last_name}`,
                 sessionDate: startTime.toLocaleDateString("en-US", { 
@@ -103,6 +106,7 @@ export const useUpcomingSessions = () => {
                   hour: "numeric",
                   minute: "2-digit"
                 }),
+                sessionStartTimeISO: session.start_time,
                 sessionEndTime: endTime.toLocaleTimeString("en-US", { 
                   timeZone: "America/Los_Angeles",
                   hour: "numeric",

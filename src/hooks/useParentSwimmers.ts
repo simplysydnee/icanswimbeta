@@ -10,6 +10,7 @@ export interface ParentSwimmer {
   current_level: string;
   enrollment_status: string;
   assessment_status: string;
+  flexible_swimmer: boolean;
 }
 
 export const useParentSwimmers = () => {
@@ -34,7 +35,8 @@ export const useParentSwimmers = () => {
             photo_url: "",
             current_level: "Level 2",
             enrollment_status: "enrolled",
-            assessment_status: "completed"
+            assessment_status: "completed",
+            flexible_swimmer: false
           },
           {
             id: "mock-2",
@@ -43,7 +45,8 @@ export const useParentSwimmers = () => {
             photo_url: "",
             current_level: "Level 1",
             enrollment_status: "approved",
-            assessment_status: "scheduled"
+            assessment_status: "scheduled",
+            flexible_swimmer: false
           },
           {
             id: "mock-3",
@@ -52,7 +55,8 @@ export const useParentSwimmers = () => {
             photo_url: "",
             current_level: "Not Yet Assessed",
             enrollment_status: "waitlist",
-            assessment_status: "pending"
+            assessment_status: "pending",
+            flexible_swimmer: true
           }
         ];
         setSwimmers(mockSwimmers);
@@ -69,6 +73,7 @@ export const useParentSwimmers = () => {
           photo_url,
           enrollment_status,
           assessment_status,
+          flexible_swimmer,
           swim_levels!swimmers_current_level_id_fkey (
             display_name
           )
@@ -86,6 +91,7 @@ export const useParentSwimmers = () => {
         current_level: swimmer.swim_levels?.display_name || "Not Assigned",
         enrollment_status: swimmer.enrollment_status,
         assessment_status: swimmer.assessment_status,
+        flexible_swimmer: swimmer.flexible_swimmer || false,
       }));
 
       setSwimmers(transformedSwimmers);

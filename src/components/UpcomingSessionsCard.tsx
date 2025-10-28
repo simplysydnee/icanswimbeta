@@ -1,8 +1,13 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Clock, MapPin, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, Clock, MapPin, User, XCircle } from "lucide-react";
 import { SwimmerSessionsSummary } from "@/hooks/useUpcomingSessions";
+import { CancellationPolicyModal } from "@/components/CancellationPolicyModal";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface UpcomingSessionsCardProps {
   swimmerSession: SwimmerSessionsSummary;
@@ -10,12 +15,85 @@ interface UpcomingSessionsCardProps {
 
 export const UpcomingSessionsCard = ({ swimmerSession }: UpcomingSessionsCardProps) => {
   const { swimmerName, photoUrl, sessions, remainingSessions, isVmrcClient } = swimmerSession;
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<any>(null);
+  const [isWithin24Hours, setIsWithin24Hours] = useState(false);
   
   const initials = swimmerName
     .split(" ")
     .map(n => n[0])
     .join("")
     .toUpperCase();
+
+  const handleCancelClick = (session: any) => {
+    const sessionStart = new Date(session.sessionStartTimeISO);
+    const now = new Date();
+    const hoursUntilSession = (sessionStart.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
+    setSelectedSession(session);
+    setIsWithin24Hours(hoursUntilSession < 24);
+    setShowCancelModal(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!selectedSession) return;
+
+    try {
+      const user = await supabase.auth.getUser();
+      if (!user.data.user) throw new Error("Not authenticated");
+
+      // Log the cancellation attempt
+      await supabase.from("session_logs").insert({
+        user_id: user.data.user.id,
+        session_id: selectedSession.id,
+        booking_id: selectedSession.bookingId,
+        action: "cancel_attempt",
+        allowed: !isWithin24Hours,
+        reason: isWithin24Hours ? "Blocked: Within 24 hours" : "Allowed: More than 24 hours notice",
+      });
+
+      if (isWithin24Hours) {
+        toast({
+          title: "Cancellation Not Allowed",
+          description: "You cannot cancel a session within 24 hours of the start time.",
+          variant: "destructive",
+        });
+        setShowCancelModal(false);
+        return;
+      }
+
+      // Cancel the booking
+      const { error } = await supabase
+        .from("bookings")
+        .update({
+          status: "cancelled",
+          canceled_at: new Date().toISOString(),
+          canceled_by: user.data.user.id,
+          cancel_source: "parent",
+          cancel_reason: "Canceled by parent through portal",
+        })
+        .eq("id", selectedSession.bookingId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Session Canceled",
+        description: "Your session has been successfully canceled.",
+      });
+
+      setShowCancelModal(false);
+      
+      // Refresh the page to show updated sessions
+      window.location.reload();
+    } catch (error) {
+      console.error("Error canceling session:", error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel session. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Card className="overflow-hidden">
@@ -88,11 +166,34 @@ export const UpcomingSessionsCard = ({ swimmerSession }: UpcomingSessionsCardPro
                     <span>{session.instructor}</span>
                   </div>
                 </div>
+                {session.bookingStatus === "confirmed" && (
+                  <div className="mt-3 pt-3 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleCancelClick(session)}
+                      className="w-full text-destructive hover:bg-destructive/10"
+                    >
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Cancel Session
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
       </CardContent>
+
+      {selectedSession && (
+        <CancellationPolicyModal
+          open={showCancelModal}
+          onOpenChange={setShowCancelModal}
+          onConfirm={handleConfirmCancel}
+          sessionStartTime={new Date(selectedSession.sessionStartTimeISO)}
+          isWithin24Hours={isWithin24Hours}
+        />
+      )}
     </Card>
   );
 };

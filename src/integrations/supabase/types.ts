@@ -550,6 +550,54 @@ export type Database = {
           },
         ]
       }
+      session_logs: {
+        Row: {
+          action: string
+          allowed: boolean
+          booking_id: string | null
+          created_at: string | null
+          id: string
+          reason: string | null
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          allowed: boolean
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          allowed?: boolean
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_logs_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           allowed_swim_levels: string[] | null
@@ -773,6 +821,10 @@ export type Database = {
           enrollment_completed: boolean | null
           enrollment_status: string | null
           first_name: string
+          flexible_swimmer: boolean | null
+          flexible_swimmer_reason: string | null
+          flexible_swimmer_set_at: string | null
+          flexible_swimmer_set_by: string | null
           gender: string | null
           goals: string | null
           has_allergies: boolean | null
@@ -852,6 +904,10 @@ export type Database = {
           enrollment_completed?: boolean | null
           enrollment_status?: string | null
           first_name: string
+          flexible_swimmer?: boolean | null
+          flexible_swimmer_reason?: string | null
+          flexible_swimmer_set_at?: string | null
+          flexible_swimmer_set_by?: string | null
           gender?: string | null
           goals?: string | null
           has_allergies?: boolean | null
@@ -931,6 +987,10 @@ export type Database = {
           enrollment_completed?: boolean | null
           enrollment_status?: string | null
           first_name?: string
+          flexible_swimmer?: boolean | null
+          flexible_swimmer_reason?: string | null
+          flexible_swimmer_set_at?: string | null
+          flexible_swimmer_set_by?: string | null
           gender?: string | null
           goals?: string | null
           has_allergies?: boolean | null

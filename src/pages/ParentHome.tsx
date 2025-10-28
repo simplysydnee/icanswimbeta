@@ -1,9 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useParentSwimmers } from "@/hooks/useParentSwimmers";
-import { Calendar, User, LogOut } from "lucide-react";
+import { Calendar, User, LogOut, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import logoHeader from "@/assets/logo-header.png";
@@ -162,6 +163,23 @@ const ParentHome = () => {
                           </h3>
                           {getStatusBadge(swimmer.enrollment_status, swimmer.assessment_status)}
                         </div>
+                        
+                        {/* Flexible Swimmer Alert */}
+                        {swimmer.flexible_swimmer && (
+                          <Alert className="mb-3 border-amber-500 bg-amber-50 dark:bg-amber-950">
+                            <AlertCircle className="h-4 w-4 text-amber-600" />
+                            <AlertDescription className="text-sm">
+                              <p className="font-bold text-amber-900 dark:text-amber-100 mb-1">
+                                Flexible Swimmer Status
+                              </p>
+                              <p className="text-amber-800 dark:text-amber-200">
+                                Due to a late cancellation, recurring weekly sessions are temporarily unavailable. 
+                                You can still book open single sessions as they become available.
+                              </p>
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                        
                         <p className="text-muted-foreground mb-1">
                           <span className="font-medium">Level:</span> {swimmer.current_level}
                         </p>
