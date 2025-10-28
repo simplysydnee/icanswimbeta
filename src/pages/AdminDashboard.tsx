@@ -29,6 +29,7 @@ import { Calendar, Users, CheckCircle, XCircle, Clock, TrendingUp, TrendingDown,
 import { format } from "date-fns";
 import { POSManagement } from "@/components/admin/POSManagement";
 import { SwimmerDetailDrawer } from "@/components/admin/SwimmerDetailDrawer";
+import { UserManagement } from "@/components/admin/UserManagement";
 
 interface Swimmer {
   id: string;
@@ -476,6 +477,7 @@ const AdminDashboard = () => {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="pos">Purchase Orders</TabsTrigger>
           <TabsTrigger value="swimmers">Swimmers</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -810,6 +812,10 @@ const AdminDashboard = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="users">
+          <UserManagement />
         </TabsContent>
       </Tabs>
 
