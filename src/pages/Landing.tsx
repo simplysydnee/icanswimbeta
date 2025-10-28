@@ -174,16 +174,15 @@ const Landing = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
-              { name: "White", emoji: "💧", description: "Water Readiness - Asking permission to get in the water" },
-              { name: "Red", emoji: "❤️", description: "Body Position and Air Exchange - Wearing lifejacket and jump in" },
-              { name: "Yellow", emoji: "⚡", description: "Forward Movement and Direction Change - Tread water for 10 seconds" },
-              { name: "Green", emoji: "✨", description: "Water Competency - Disorientating entries and recover" },
-              { name: "Blue", emoji: "🌊", description: "Streamlines and Side Breathing - Reach and throw with assist flotation" },
+              { name: "White", description: "Water Readiness - Asking permission to get in the water", bgColor: "bg-slate-100" },
+              { name: "Red", description: "Body Position and Air Exchange - Wearing lifejacket and jump in", bgColor: "bg-red-100" },
+              { name: "Yellow", description: "Forward Movement and Direction Change - Tread water for 10 seconds", bgColor: "bg-yellow-100" },
+              { name: "Green", description: "Water Competency - Disorientating entries and recover", bgColor: "bg-green-100" },
+              { name: "Blue", description: "Streamlines and Side Breathing - Reach and throw with assist flotation", bgColor: "bg-blue-100" },
             ].map((level) => (
-              <Card key={level.name}>
+              <Card key={level.name} className={level.bgColor}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <span className="text-3xl">{level.emoji}</span>
                     {level.name}
                   </CardTitle>
                   <CardDescription>{level.description}</CardDescription>
