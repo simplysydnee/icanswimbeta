@@ -185,24 +185,28 @@ const AdminDashboard = () => {
     try {
       const { data, error } = await supabase
         .from("swimmers")
-        .select(`
-          *,
-          parent_profile:profiles!swimmers_parent_id_fkey (
-            full_name,
-            email
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       
-      // Map the data to match our interface
-      const mappedData = (data || []).map((swimmer: any) => ({
-        ...swimmer,
-        profiles: swimmer.parent_profile
-      }));
+      // Fetch parent profiles separately
+      const enrichedData = await Promise.all(
+        (data || []).map(async (swimmer: any) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name, email")
+            .eq("id", swimmer.parent_id)
+            .single();
+
+          return {
+            ...swimmer,
+            profiles: profile,
+          };
+        })
+      );
       
-      setSwimmers(mappedData);
+      setSwimmers(enrichedData);
     } catch (error) {
       console.error("Error fetching swimmers:", error);
       toast({
@@ -227,17 +231,7 @@ const AdminDashboard = () => {
             created_at,
             canceled_at,
             cancel_reason,
-            cancel_source,
-            swimmers (
-              first_name,
-              last_name
-            ),
-            parent_profile:profiles!bookings_parent_id_fkey (
-              full_name
-            )
-          ),
-          instructor_profile:profiles!sessions_instructor_id_fkey (
-            full_name
+            cancel_source
           )
         `)
         .order("start_time", { ascending: false })
@@ -245,16 +239,51 @@ const AdminDashboard = () => {
 
       if (error) throw error;
       
-      // Map the data to match our interface
-      const mappedData = (data || []).map((session: any) => ({
-        ...session,
-        bookings: session.bookings.map((booking: any) => ({
-          ...booking,
-          profiles: booking.parent_profile
-        }))
-      }));
+      // Enrich sessions with related data
+      const enrichedSessions = await Promise.all(
+        (data || []).map(async (session: any) => {
+          // Fetch instructor profile
+          const instructorProfile = session.instructor_id
+            ? await supabase
+                .from("profiles")
+                .select("full_name")
+                .eq("id", session.instructor_id)
+                .single()
+            : { data: null };
+
+          // Enrich each booking with swimmer and parent info
+          const enrichedBookings = await Promise.all(
+            (session.bookings || []).map(async (booking: any) => {
+              const [swimmerResult, parentResult] = await Promise.all([
+                supabase
+                  .from("swimmers")
+                  .select("first_name, last_name")
+                  .eq("id", booking.swimmer_id)
+                  .single(),
+                supabase
+                  .from("profiles")
+                  .select("full_name")
+                  .eq("id", booking.parent_id)
+                  .single(),
+              ]);
+
+              return {
+                ...booking,
+                swimmers: swimmerResult.data,
+                profiles: parentResult.data,
+              };
+            })
+          );
+
+          return {
+            ...session,
+            instructor_profile: instructorProfile.data,
+            bookings: enrichedBookings,
+          };
+        })
+      );
       
-      setSessions(mappedData);
+      setSessions(enrichedSessions);
     } catch (error) {
       console.error("Error fetching sessions:", error);
     }
