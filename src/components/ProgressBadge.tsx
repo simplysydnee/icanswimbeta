@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
-import whiteIcon from "@/assets/level-white.jpg";
-import redIcon from "@/assets/level-red.jpg";
-import yellowIcon from "@/assets/level-yellow.jpg";
-import greenIcon from "@/assets/level-green.jpg";
-import blueIcon from "@/assets/level-blue.jpg";
+import whiteIcon from "@/assets/level-white.svg";
+import redIcon from "@/assets/level-red.svg";
+import yellowIcon from "@/assets/level-yellow.svg";
+import greenIcon from "@/assets/level-green.svg";
+import blueIcon from "@/assets/level-blue.svg";
 
 export type SwimLevel = "white" | "red" | "yellow" | "green" | "blue";
 
