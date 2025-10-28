@@ -18,26 +18,36 @@ const levelConfig = {
   white: {
     name: "White",
     icon: whiteIcon,
+    bgColor: "bg-slate-100",
+    activeColor: "bg-slate-200",
     description: "Water Readiness",
   },
   red: {
     name: "Red",
     icon: redIcon,
+    bgColor: "bg-red-100",
+    activeColor: "bg-red-200",
     description: "Body Position",
   },
   yellow: {
     name: "Yellow",
     icon: yellowIcon,
+    bgColor: "bg-yellow-100",
+    activeColor: "bg-yellow-200",
     description: "Forward Movement",
   },
   green: {
     name: "Green",
     icon: greenIcon,
+    bgColor: "bg-green-100",
+    activeColor: "bg-green-200",
     description: "Water Competency",
   },
   blue: {
     name: "Blue",
     icon: blueIcon,
+    bgColor: "bg-blue-100",
+    activeColor: "bg-blue-200",
     description: "Streamlines",
   },
 };
@@ -68,6 +78,7 @@ export const ProgressBadge = ({
         className={cn(
           "rounded-full flex items-center justify-center transition-all duration-300 p-2",
           sizeClasses[size],
+          (isCompleted || isActive) ? config.activeColor : config.bgColor,
           isCompleted && "shadow-lg scale-105 ring-4 ring-primary/20",
           isActive && !isCompleted && "shadow-xl ring-4 ring-primary/40",
           !isActive && !isCompleted && "shadow-md opacity-70"
