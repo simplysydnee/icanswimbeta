@@ -6,9 +6,12 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Save } from "lucide-react";
+import { User, Save, FileCheck, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Skill {
@@ -38,6 +41,11 @@ export const UpdateProgressDrawer = ({
   const [skills, setSkills] = useState<Skill[]>([]);
   const [instructorNotes, setInstructorNotes] = useState("");
   const [parentNotes, setParentNotes] = useState("");
+  const [lessonSummary, setLessonSummary] = useState("");
+  const [selectedLevel, setSelectedLevel] = useState<string>("");
+  const [shareWithParent, setShareWithParent] = useState(false);
+  const [posInfo, setPosInfo] = useState<any>(null);
+  const [swimLevels, setSwimLevels] = useState<any[]>([]);
 
   useEffect(() => {
     if (open && swimmerId) {
@@ -62,6 +70,43 @@ export const UpdateProgressDrawer = ({
 
       if (swimmerError) throw swimmerError;
       setSwimmer(swimmerData);
+      setSelectedLevel(swimmerData.current_level_id || "");
+
+      // Fetch all swim levels
+      const { data: levelsData } = await supabase
+        .from("swim_levels")
+        .select("*")
+        .order("sequence");
+      setSwimLevels(levelsData || []);
+
+      // Fetch POS info for VMRC clients
+      if (swimmerData.is_vmrc_client && sessionId) {
+        const { data: sessionData } = await supabase
+          .from("sessions")
+          .select("start_time")
+          .eq("id", sessionId)
+          .single();
+
+        if (sessionData) {
+          const { data: posData, error: posError } = await supabase
+            .rpc("get_active_pos_for_session", {
+              _swimmer_id: swimmerId,
+              _session_date: sessionData.start_time.split("T")[0],
+            });
+
+          if (!posError && posData && posData.length > 0) {
+            setPosInfo(posData[0]);
+            
+            // Auto-fill lesson summary template
+            const levelName = swimmerData.swim_levels?.display_name || "current level";
+            const lessonNum = posData[0].lesson_number;
+            const totalLessons = posData[0].lessons_authorized;
+            setLessonSummary(
+              `Swimmer has completed lesson ${lessonNum}/${totalLessons} in ${levelName}. Demonstrates [skills mastered] and continues to work on [skills not attained].`
+            );
+          }
+        }
+      }
 
       // Fetch swimmer skills
       if (swimmerData.current_level_id) {
@@ -168,12 +213,52 @@ export const UpdateProgressDrawer = ({
     }
   };
 
-  const handleSave = async () => {
-    if (!sessionId || !swimmerId || !bookingId) return;
+  const handleSave = async (createNextPos: boolean = false) => {
+    if (!sessionId || !swimmerId || !bookingId || !lessonSummary.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Lesson summary is required",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setLoading(true);
     try {
-      // Check if attendance record exists
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not found");
+
+      // Get mastered skills
+      const masteredSkills = skills
+        .filter(s => s.status === "mastered")
+        .map(s => s.id);
+
+      const workingOnSkills = skills
+        .filter(s => s.status === "in_progress")
+        .map(s => s.name);
+
+      // Save progress note
+      const { error: progressError } = await supabase
+        .from("progress_notes")
+        .insert({
+          session_id: sessionId,
+          booking_id: bookingId,
+          swimmer_id: swimmerId,
+          instructor_id: user.id,
+          lesson_summary: lessonSummary,
+          current_level_id: selectedLevel || null,
+          skills_mastered: masteredSkills,
+          skills_working_on: workingOnSkills,
+          instructor_notes: instructorNotes,
+          parent_notes: parentNotes,
+          shared_with_parent: shareWithParent,
+          lesson_number: posInfo?.lesson_number || null,
+          total_lessons: posInfo?.lessons_authorized || null,
+        });
+
+      if (progressError) throw progressError;
+
+      // Update attendance
       const { data: existing } = await supabase
         .from("session_attendance")
         .select("id")
@@ -182,23 +267,18 @@ export const UpdateProgressDrawer = ({
         .eq("swimmer_id", swimmerId)
         .single();
 
-      const { data: { user } } = await supabase.auth.getUser();
-
       if (existing) {
-        // Update existing attendance
         const { error } = await supabase
           .from("session_attendance")
           .update({
             instructor_notes: instructorNotes,
             attended: true,
-            marked_by: user?.id,
+            marked_by: user.id,
             marked_at: new Date().toISOString(),
           })
           .eq("id", existing.id);
-
         if (error) throw error;
       } else {
-        // Insert new attendance record
         const { error } = await supabase
           .from("session_attendance")
           .insert({
@@ -207,17 +287,40 @@ export const UpdateProgressDrawer = ({
             swimmer_id: swimmerId,
             instructor_notes: instructorNotes,
             attended: true,
-            marked_by: user?.id,
+            marked_by: user.id,
             marked_at: new Date().toISOString(),
           });
-
         if (error) throw error;
       }
 
-      toast({
-        title: "Progress Saved",
-        description: "Swimmer progress has been updated successfully",
-      });
+      // Create next POS if requested (VMRC only)
+      if (createNextPos && swimmer?.is_vmrc_client && posInfo?.pos_id) {
+        const { data: newPosId, error: posError } = await supabase
+          .rpc("create_next_vmrc_pos", {
+            _swimmer_id: swimmerId,
+            _current_pos_id: posInfo.pos_id,
+            _instructor_id: user.id,
+          });
+
+        if (posError) {
+          console.error("Error creating next POS:", posError);
+          toast({
+            title: "Warning",
+            description: "Progress saved but failed to create next POS",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "Progress saved and next POS created for coordinator approval",
+          });
+        }
+      } else {
+        toast({
+          title: "Progress Saved",
+          description: "Swimmer progress has been updated successfully",
+        });
+      }
 
       onOpenChange(false);
     } catch (error) {
@@ -265,8 +368,60 @@ export const UpdateProgressDrawer = ({
                       VMRC
                     </Badge>
                   )}
+                  {swimmer.payment_type === "private_pay" && (
+                    <Badge variant="secondary" className="bg-green-100 text-green-700">
+                      Private Pay - Unlimited Lessons
+                    </Badge>
+                  )}
                 </div>
               </div>
+            </div>
+
+            {/* VMRC Lesson Progress Alert */}
+            {swimmer.is_vmrc_client && posInfo && posInfo.lesson_number >= 11 && (
+              <Alert className="border-amber-500 bg-amber-50 dark:bg-amber-950">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertDescription>
+                  <p className="font-bold text-amber-900 dark:text-amber-100 mb-1">
+                    Lesson {posInfo.lesson_number} of {posInfo.lessons_authorized}
+                  </p>
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    This is the second-to-last lesson. Consider preparing the next POS for coordinator approval.
+                  </p>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Lesson Summary */}
+            <div className="space-y-2">
+              <Label htmlFor="lesson-summary">
+                Lesson Summary <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="lesson-summary"
+                placeholder="Summarize the lesson progress and key observations..."
+                value={lessonSummary}
+                onChange={(e) => setLessonSummary(e.target.value)}
+                rows={4}
+                className="resize-none"
+              />
+            </div>
+
+            {/* Current Level */}
+            <div className="space-y-2">
+              <Label htmlFor="current-level">Current Level</Label>
+              <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select level" />
+                </SelectTrigger>
+                <SelectContent>
+                  {swimLevels.map((level) => (
+                    <SelectItem key={level.id} value={level.id}>
+                      {level.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Skills Section */}
@@ -332,35 +487,65 @@ export const UpdateProgressDrawer = ({
             {/* Parent-Visible Notes */}
             <div className="space-y-2">
               <Label htmlFor="parent-notes">
-                Parent Notes <span className="text-xs text-muted-foreground">(Visible to Parents)</span>
+                Parent Notes
               </Label>
               <Textarea
                 id="parent-notes"
-                placeholder="Add notes that parents will see..."
+                placeholder="Add notes for parents (optional)..."
                 value={parentNotes}
                 onChange={(e) => setParentNotes(e.target.value)}
-                rows={4}
+                rows={3}
                 className="resize-none"
               />
-              <p className="text-xs text-muted-foreground">
-                These notes will be visible to the swimmer's parents in their dashboard
-              </p>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="share-with-parent"
+                  checked={shareWithParent}
+                  onCheckedChange={setShareWithParent}
+                />
+                <Label htmlFor="share-with-parent" className="text-sm font-normal">
+                  Share with parent
+                </Label>
+              </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col gap-3 pt-4">
+              {swimmer.is_vmrc_client && posInfo && posInfo.lesson_number >= 11 ? (
+                <>
+                  <Button
+                    onClick={() => handleSave(false)}
+                    disabled={loading}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Progress
+                  </Button>
+                  <Button
+                    onClick={() => handleSave(true)}
+                    disabled={loading}
+                    className="w-full"
+                  >
+                    <FileCheck className="h-4 w-4 mr-2" />
+                    {loading ? "Saving..." : "Save & Prepare Next POS"}
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  onClick={() => handleSave(false)}
+                  disabled={loading}
+                  className="w-full"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {loading ? "Saving..." : "Save Progress"}
+                </Button>
+              )}
               <Button
-                onClick={handleSave}
-                disabled={loading}
-                className="flex-1"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {loading ? "Saving..." : "Save Progress"}
-              </Button>
-              <Button
-                variant="outline"
+                variant="ghost"
                 onClick={() => onOpenChange(false)}
                 disabled={loading}
+                className="w-full"
               >
                 Cancel
               </Button>

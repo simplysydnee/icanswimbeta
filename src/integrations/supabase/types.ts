@@ -375,6 +375,105 @@ export type Database = {
         }
         Relationships: []
       }
+      progress_notes: {
+        Row: {
+          booking_id: string
+          created_at: string
+          current_level_id: string | null
+          id: string
+          instructor_id: string
+          instructor_notes: string | null
+          lesson_number: number | null
+          lesson_summary: string
+          next_pos_created: boolean | null
+          next_pos_id: string | null
+          parent_notes: string | null
+          session_id: string
+          shared_with_parent: boolean | null
+          skills_mastered: string[] | null
+          skills_working_on: string[] | null
+          swimmer_id: string
+          total_lessons: number | null
+          updated_at: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          current_level_id?: string | null
+          id?: string
+          instructor_id: string
+          instructor_notes?: string | null
+          lesson_number?: number | null
+          lesson_summary: string
+          next_pos_created?: boolean | null
+          next_pos_id?: string | null
+          parent_notes?: string | null
+          session_id: string
+          shared_with_parent?: boolean | null
+          skills_mastered?: string[] | null
+          skills_working_on?: string[] | null
+          swimmer_id: string
+          total_lessons?: number | null
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          current_level_id?: string | null
+          id?: string
+          instructor_id?: string
+          instructor_notes?: string | null
+          lesson_number?: number | null
+          lesson_summary?: string
+          next_pos_created?: boolean | null
+          next_pos_id?: string | null
+          parent_notes?: string | null
+          session_id?: string
+          shared_with_parent?: boolean | null
+          skills_mastered?: string[] | null
+          skills_working_on?: string[] | null
+          swimmer_id?: string
+          total_lessons?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progress_notes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progress_notes_current_level_id_fkey"
+            columns: ["current_level_id"]
+            isOneToOne: false
+            referencedRelation: "swim_levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progress_notes_next_pos_id_fkey"
+            columns: ["next_pos_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progress_notes_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "progress_notes_swimmer_id_fkey"
+            columns: ["swimmer_id"]
+            isOneToOne: false
+            referencedRelation: "swimmers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       progress_videos: {
         Row: {
           created_at: string
@@ -1230,7 +1329,24 @@ export type Database = {
         }
         Returns: boolean
       }
+      create_next_vmrc_pos: {
+        Args: {
+          _current_pos_id: string
+          _instructor_id: string
+          _swimmer_id: string
+        }
+        Returns: string
+      }
       generate_client_number: { Args: never; Returns: string }
+      get_active_pos_for_session: {
+        Args: { _session_date: string; _swimmer_id: string }
+        Returns: {
+          lesson_number: number
+          lessons_authorized: number
+          lessons_used: number
+          pos_id: string
+        }[]
+      }
       get_last_sunday_of_month: {
         Args: { month: number; year: number }
         Returns: string

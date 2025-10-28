@@ -287,6 +287,13 @@ const AdminSchedule = () => {
       b.swimmer.vmrc_sessions_used >= b.swimmer.vmrc_sessions_authorized
     );
     const isBooked = session.bookings.length > 0;
+    
+    // Check if any VMRC swimmer is at lesson 11/12
+    const hasLesson11 = session.bookings.some(b => 
+      b.swimmer.is_vmrc_client && 
+      b.swimmer.vmrc_sessions_used === 10 && 
+      b.swimmer.vmrc_sessions_authorized === 12
+    );
 
     return (
       <Card 
@@ -297,6 +304,7 @@ const AdminSchedule = () => {
             ? `border-l-4 ${instructorColorMap[session.instructor.id]}` 
             : "",
           needsUpdate && "border-destructive border-2",
+          hasLesson11 && "border-amber-500 border-2",
           !isBooked && "bg-muted/30"
         )}
       >
@@ -312,6 +320,11 @@ const AdminSchedule = () => {
               <div className="text-xs text-muted-foreground mt-1">
                 {session.session_type_detail || session.session_type}
               </div>
+              {hasLesson11 && (
+                <Badge variant="outline" className="mt-1 text-xs bg-amber-50 text-amber-700 border-amber-300">
+                  11/12 – Prepare Next POS
+                </Badge>
+              )}
             </div>
 
             {userRole === "admin" && (
@@ -359,16 +372,21 @@ const AdminSchedule = () => {
               {session.bookings.map(booking => {
                 const swimmerNeedsUpdate = booking.swimmer.is_vmrc_client &&
                   booking.swimmer.vmrc_sessions_used >= booking.swimmer.vmrc_sessions_authorized;
+                const lessonProgress = booking.swimmer.is_vmrc_client
+                  ? `${booking.swimmer.vmrc_sessions_used + 1}/${booking.swimmer.vmrc_sessions_authorized}`
+                  : null;
                 return (
-                  <Badge 
-                    key={booking.id} 
-                    variant={swimmerNeedsUpdate ? "destructive" : "secondary"} 
-                    className={cn(compact ? "text-xs" : "text-sm", "block w-fit")}
-                  >
-                    {booking.swimmer.first_name} {booking.swimmer.last_name}
-                    {swimmerNeedsUpdate && " ⚠️"}
-                    {booking.swimmer.is_vmrc_client && " (VMRC)"}
-                  </Badge>
+                  <div key={booking.id} className="flex items-center gap-2">
+                    <Badge 
+                      variant={swimmerNeedsUpdate ? "destructive" : "secondary"} 
+                      className={cn(compact ? "text-xs" : "text-sm")}
+                    >
+                      {booking.swimmer.first_name} {booking.swimmer.last_name}
+                      {swimmerNeedsUpdate && " ⚠️"}
+                      {booking.swimmer.payment_type === "private_pay" && " (Private Pay)"}
+                      {booking.swimmer.is_vmrc_client && lessonProgress && ` (VMRC ${lessonProgress})`}
+                    </Badge>
+                  </div>
                 );
               })}
             </div>
