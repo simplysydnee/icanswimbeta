@@ -50,6 +50,8 @@ const Auth = () => {
           navigate("/admin/schedule");
         } else if (roleData?.role === "instructor") {
           navigate("/schedule");
+        } else if (roleData?.role === "vmrc_coordinator") {
+          navigate("/coordinator");
         } else {
           navigate("/parent-home");
         }
@@ -143,6 +145,8 @@ const Auth = () => {
           navigate("/admin/schedule");
         } else if (roleData?.role === "instructor") {
           navigate("/schedule");
+        } else if (roleData?.role === "vmrc_coordinator") {
+          navigate("/coordinator");
         } else {
           navigate("/parent-home");
         }

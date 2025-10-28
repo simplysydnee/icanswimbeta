@@ -401,6 +401,85 @@ export type Database = {
           },
         ]
       }
+      purchase_orders: {
+        Row: {
+          allowed_lessons: number
+          assessment_id: string | null
+          authorization_number: string | null
+          coordinator_id: string | null
+          created_at: string
+          end_date: string
+          id: string
+          lessons_booked: number
+          lessons_used: number
+          notes: string | null
+          parent_po_id: string | null
+          po_type: string
+          start_date: string
+          status: string
+          swimmer_id: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_lessons?: number
+          assessment_id?: string | null
+          authorization_number?: string | null
+          coordinator_id?: string | null
+          created_at?: string
+          end_date: string
+          id?: string
+          lessons_booked?: number
+          lessons_used?: number
+          notes?: string | null
+          parent_po_id?: string | null
+          po_type: string
+          start_date: string
+          status?: string
+          swimmer_id: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_lessons?: number
+          assessment_id?: string | null
+          authorization_number?: string | null
+          coordinator_id?: string | null
+          created_at?: string
+          end_date?: string
+          id?: string
+          lessons_booked?: number
+          lessons_used?: number
+          notes?: string | null
+          parent_po_id?: string | null
+          po_type?: string
+          start_date?: string
+          status?: string
+          swimmer_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_parent_po_id_fkey"
+            columns: ["parent_po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_swimmer_id_fkey"
+            columns: ["swimmer_id"]
+            isOneToOne: false
+            referencedRelation: "swimmers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_attendance: {
         Row: {
           attended: boolean | null
