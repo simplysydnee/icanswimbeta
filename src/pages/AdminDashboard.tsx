@@ -25,8 +25,10 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Calendar, Users, CheckCircle, XCircle, Clock, TrendingUp, TrendingDown } from "lucide-react";
+import { Calendar, Users, CheckCircle, XCircle, Clock, TrendingUp, TrendingDown, Eye } from "lucide-react";
 import { format } from "date-fns";
+import { POSManagement } from "@/components/admin/POSManagement";
+import { SwimmerDetailDrawer } from "@/components/admin/SwimmerDetailDrawer";
 
 interface Swimmer {
   id: string;
@@ -37,6 +39,7 @@ interface Swimmer {
   approval_status: string;
   parent_id: string;
   created_at: string;
+  current_level_id: string | null;
   profiles?: {
     full_name: string;
     email: string;
@@ -94,6 +97,9 @@ const AdminDashboard = () => {
   const [declineReason, setDeclineReason] = useState("");
   const [activeTab, setActiveTab] = useState("waitlist");
   const [sessionTab, setSessionTab] = useState("upcoming");
+  const [mainTab, setMainTab] = useState("overview");
+  const [selectedSwimmerForDetail, setSelectedSwimmerForDetail] = useState<string | null>(null);
+  const [showSwimmerDrawer, setShowSwimmerDrawer] = useState(false);
 
   useEffect(() => {
     if (!roleLoading && userRole !== "admin") {
@@ -436,8 +442,16 @@ const AdminDashboard = () => {
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
+      <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="pos">Purchase Orders</TabsTrigger>
+          <TabsTrigger value="swimmers">Swimmers</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Waitlist</CardTitle>
@@ -509,11 +523,11 @@ const AdminDashboard = () => {
           <CardContent>
             <div className="text-2xl font-bold">{kpis.sessionsCanceled}</div>
           </CardContent>
-        </Card>
-      </div>
+          </Card>
+          </div>
 
-      {/* Clients Section */}
-      <Card>
+          {/* Clients Section */}
+          <Card>
         <CardHeader>
           <CardTitle>Clients</CardTitle>
           <div className="flex gap-2 mt-4">
@@ -576,8 +590,18 @@ const AdminDashboard = () => {
                               getStatusBadge(swimmer.approval_status)}
                           </TableCell>
                           <TableCell>{format(new Date(swimmer.created_at), "MMM d, yyyy")}</TableCell>
-                          <TableCell>
+                           <TableCell>
                             <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedSwimmerForDetail(swimmer.id);
+                                  setShowSwimmerDrawer(true);
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
                               {activeTab === "awaiting" && (
                                 <>
                                   <Button
@@ -612,12 +636,12 @@ const AdminDashboard = () => {
                 </Table>
               </div>
             </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+            </Tabs>
+          </CardContent>
+          </Card>
 
-      {/* Sessions Section */}
-      <Card>
+          {/* Sessions Section */}
+          <Card>
         <CardHeader>
           <CardTitle>Sessions</CardTitle>
         </CardHeader>
@@ -682,9 +706,93 @@ const AdminDashboard = () => {
                 </Table>
               </div>
             </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+            </Tabs>
+          </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="pos">
+          <POSManagement />
+        </TabsContent>
+
+        <TabsContent value="swimmers">
+          <Card>
+            <CardHeader>
+              <CardTitle>All Swimmers</CardTitle>
+              <Input
+                placeholder="Search swimmers..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="mt-4"
+              />
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Parent</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Level</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {swimmers
+                      .filter(
+                        (s) =>
+                          !searchTerm ||
+                          s.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          s.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          s.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((swimmer) => (
+                        <TableRow key={swimmer.id}>
+                          <TableCell>
+                            {swimmer.first_name} {swimmer.last_name}
+                          </TableCell>
+                          <TableCell>{swimmer.profiles?.full_name || "N/A"}</TableCell>
+                          <TableCell>{getClientTypeBadge(swimmer.payment_type)}</TableCell>
+                          <TableCell>{getStatusBadge(swimmer.enrollment_status)}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {swimmer.current_level_id ? "Assigned" : "Not Set"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedSwimmerForDetail(swimmer.id);
+                                setShowSwimmerDrawer(true);
+                              }}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <SwimmerDetailDrawer
+        swimmerId={selectedSwimmerForDetail}
+        open={showSwimmerDrawer}
+        onOpenChange={setShowSwimmerDrawer}
+        onUpdate={() => {
+          fetchSwimmers();
+          fetchKPIs();
+        }}
+      />
 
       {/* Approve Dialog */}
       <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>

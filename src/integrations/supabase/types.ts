@@ -345,6 +345,41 @@ export type Database = {
         }
         Relationships: []
       }
+      pos_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          pos_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          pos_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          pos_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_comments_pos_id_fkey"
+            columns: ["pos_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -517,6 +552,7 @@ export type Database = {
           allowed_lessons: number
           assessment_id: string | null
           authorization_number: string | null
+          comments: string | null
           coordinator_id: string | null
           created_at: string
           end_date: string
@@ -535,6 +571,7 @@ export type Database = {
           allowed_lessons?: number
           assessment_id?: string | null
           authorization_number?: string | null
+          comments?: string | null
           coordinator_id?: string | null
           created_at?: string
           end_date: string
@@ -553,6 +590,7 @@ export type Database = {
           allowed_lessons?: number
           assessment_id?: string | null
           authorization_number?: string | null
+          comments?: string | null
           coordinator_id?: string | null
           created_at?: string
           end_date?: string
