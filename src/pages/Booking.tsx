@@ -30,6 +30,7 @@ const Booking = () => {
       vmrcSessionsUsed: 0,
       vmrcSessionsAuthorized: 12,
       vmrcCurrentPosNumber: null,
+      flexibleSwimmer: false,
     },
     {
       id: "swimmer-2",
@@ -45,6 +46,7 @@ const Booking = () => {
       vmrcSessionsUsed: 8,
       vmrcSessionsAuthorized: 12,
       vmrcCurrentPosNumber: "POS-2024-001",
+      flexibleSwimmer: false,
     },
     {
       id: "swimmer-3",
@@ -60,6 +62,7 @@ const Booking = () => {
       vmrcSessionsUsed: 12,
       vmrcSessionsAuthorized: 12,
       vmrcCurrentPosNumber: "POS-2024-002", // Needs new auth
+      flexibleSwimmer: false,
     },
     {
       id: "swimmer-4",
@@ -75,6 +78,7 @@ const Booking = () => {
       vmrcSessionsUsed: 0,
       vmrcSessionsAuthorized: 12,
       vmrcCurrentPosNumber: null,
+      flexibleSwimmer: false,
     },
   ];
 
@@ -103,9 +107,12 @@ const Booking = () => {
     (s) => s.enrollmentStatus === "waitlist"
   );
 
+  // Check if any selected swimmers are Flexible (restricted to floating sessions only)
+  const anyFlexibleSwimmers = selectedSwimmers.some(s => s.flexibleSwimmer);
+
   // Determine booking eligibility based on selected swimmers
   const canBookWeekly = selectedSwimmers.every(
-    (s) => s.enrollmentStatus === "enrolled" && s.assessmentStatus === "complete"
+    (s) => s.enrollmentStatus === "enrolled" && s.assessmentStatus === "complete" && !s.flexibleSwimmer
   ) && !vmrcNeedsAuth && !allSwimmersWaitlist;
   
   const needsAssessment = selectedSwimmers.some(
@@ -169,6 +176,21 @@ const Booking = () => {
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
+
+            {/* Banner for Flexible Swimmers */}
+            {anyFlexibleSwimmers && (
+              <Alert className="mb-6 border-amber-500 bg-amber-50 dark:bg-amber-950">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertDescription>
+                  <strong>Flexible Swimmer Status:</strong>{" "}
+                  {selectedSwimmers.filter(s => s.flexibleSwimmer).map(s => s.firstName).join(", ")}{" "}
+                  {selectedSwimmers.filter(s => s.flexibleSwimmer).length === 1 ? "is" : "are"} currently in Flexible Swimmer status due to a late cancellation.
+                  <br />
+                  <span className="font-semibold mt-2 block">❌ Recurring weekly sessions are not available</span>
+                  <span className="font-semibold">✅ You may book single Floating Sessions as they become available</span>
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* Banner for Waitlist swimmers */}
             {allSwimmersWaitlist && (
@@ -268,17 +290,17 @@ const Booking = () => {
             {/* Booking Tabs */}
             <Tabs
               defaultValue={
-                allSwimmersWaitlist ? "assessment" : needsAssessment && !canBookWeekly ? "assessment" : "weekly"
+                allSwimmersWaitlist ? "assessment" : anyFlexibleSwimmers ? "floating" : needsAssessment && !canBookWeekly ? "assessment" : "weekly"
               }
             >
               <div className="mb-6 overflow-x-auto">
                 <TabsList className={`inline-flex w-full min-w-max sm:w-full ${allSwimmersWaitlist ? 'sm:grid-cols-2' : 'sm:grid sm:grid-cols-4'}`}>
                   {!allSwimmersWaitlist && (
                     <>
-                      <TabsTrigger value="weekly" disabled={!canBookWeekly} className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
+                      <TabsTrigger value="weekly" disabled={!canBookWeekly || anyFlexibleSwimmers} className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
                         Weekly (This Month)
                       </TabsTrigger>
-                      <TabsTrigger value="floating" disabled={!canBookWeekly} className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
+                      <TabsTrigger value="floating" disabled={!canBookWeekly && !anyFlexibleSwimmers} className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
                         Floating Sessions
                       </TabsTrigger>
                     </>
