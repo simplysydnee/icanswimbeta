@@ -1,4 +1,4 @@
-import { Droplets, Heart, Zap, Sparkles, Waves } from "lucide-react";
+import { Droplets, LifeBuoy, Glasses, User, Waves } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type SwimLevel = "white" | "red" | "yellow" | "green" | "blue";
@@ -21,7 +21,7 @@ const levelConfig = {
   },
   red: {
     name: "Red",
-    icon: Heart,
+    icon: LifeBuoy,
     bgColor: "bg-red-200/60",
     iconColor: "text-red-600",
     activeColor: "from-red-500 to-rose-400",
@@ -29,7 +29,7 @@ const levelConfig = {
   },
   yellow: {
     name: "Yellow",
-    icon: Zap,
+    icon: Glasses,
     bgColor: "bg-yellow-200/60",
     iconColor: "text-yellow-600",
     activeColor: "from-yellow-400 to-amber-300",
@@ -37,7 +37,7 @@ const levelConfig = {
   },
   green: {
     name: "Green",
-    icon: Sparkles,
+    icon: User,
     bgColor: "bg-green-200/60",
     iconColor: "text-green-600",
     activeColor: "from-green-500 to-emerald-400",
