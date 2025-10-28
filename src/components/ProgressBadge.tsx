@@ -1,5 +1,9 @@
-import { Droplets, LifeBuoy, Eye, Waves, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import whiteIcon from "@/assets/level-white.jpg";
+import redIcon from "@/assets/level-red.jpg";
+import yellowIcon from "@/assets/level-yellow.jpg";
+import greenIcon from "@/assets/level-green.jpg";
+import blueIcon from "@/assets/level-blue.jpg";
 
 export type SwimLevel = "white" | "red" | "yellow" | "green" | "blue";
 
@@ -13,42 +17,27 @@ interface ProgressBadgeProps {
 const levelConfig = {
   white: {
     name: "White",
-    icon: Droplets,
-    bgColor: "bg-slate-200/60",
-    iconColor: "text-slate-600",
-    activeColor: "from-slate-300 to-slate-100",
+    icon: whiteIcon,
     description: "Water Readiness",
   },
   red: {
     name: "Red",
-    icon: LifeBuoy,
-    bgColor: "bg-red-200/60",
-    iconColor: "text-red-600",
-    activeColor: "from-red-500 to-rose-400",
+    icon: redIcon,
     description: "Body Position",
   },
   yellow: {
     name: "Yellow",
-    icon: Eye,
-    bgColor: "bg-yellow-200/60",
-    iconColor: "text-yellow-600",
-    activeColor: "from-yellow-400 to-amber-300",
+    icon: yellowIcon,
     description: "Forward Movement",
   },
   green: {
     name: "Green",
-    icon: Waves,
-    bgColor: "bg-green-200/60",
-    iconColor: "text-green-600",
-    activeColor: "from-green-500 to-emerald-400",
+    icon: greenIcon,
     description: "Water Competency",
   },
   blue: {
     name: "Blue",
-    icon: User,
-    bgColor: "bg-blue-200/60",
-    iconColor: "text-blue-600",
-    activeColor: "from-blue-500 to-cyan-400",
+    icon: blueIcon,
     description: "Streamlines",
   },
 };
@@ -60,7 +49,6 @@ export const ProgressBadge = ({
   size = "md" 
 }: ProgressBadgeProps) => {
   const config = levelConfig[level];
-  const Icon = config.icon;
   
   const sizeClasses = {
     sm: "w-16 h-16",
@@ -78,18 +66,19 @@ export const ProgressBadge = ({
     <div className="flex flex-col items-center gap-2">
       <div
         className={cn(
-          "rounded-full flex items-center justify-center transition-all duration-300 shadow-md",
+          "rounded-full flex items-center justify-center transition-all duration-300 p-2",
           sizeClasses[size],
-          isCompleted && `bg-gradient-to-br ${config.activeColor} shadow-lg scale-105`,
-          isActive && !isCompleted && `bg-gradient-to-br ${config.activeColor} shadow-xl ring-4 ring-offset-2`,
-          !isActive && !isCompleted && `${config.bgColor} border-2 border-white/40`
+          isCompleted && "shadow-lg scale-105 ring-4 ring-primary/20",
+          isActive && !isCompleted && "shadow-xl ring-4 ring-primary/40",
+          !isActive && !isCompleted && "shadow-md opacity-70"
         )}
       >
-        <Icon
-          size={iconSizes[size]}
+        <img
+          src={config.icon}
+          alt={`${config.name} level`}
           className={cn(
-            "transition-all",
-            (isActive || isCompleted) ? "text-white drop-shadow-sm" : config.iconColor
+            "w-full h-full object-contain transition-all",
+            !isActive && !isCompleted && "opacity-60"
           )}
         />
       </div>
