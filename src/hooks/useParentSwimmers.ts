@@ -56,7 +56,7 @@ export const useParentSwimmers = () => {
             current_level: "Not Yet Assessed",
             enrollment_status: "waitlist",
             assessment_status: "pending",
-            flexible_swimmer: true
+            flexible_swimmer: false
           }
         ];
         setSwimmers(mockSwimmers);
