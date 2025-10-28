@@ -13,6 +13,7 @@ import AdminSchedule from "./pages/AdminSchedule";
 import ParentHome from "./pages/ParentHome";
 import UpdateProgress from "./pages/UpdateProgress";
 import CoordinatorHub from "./pages/CoordinatorHub";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/booking" element={<Booking />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/admin/schedule" element={<AdminSchedule />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/coordinator" element={<CoordinatorHub />} />
           <Route path="/update-progress" element={<UpdateProgress />} />
           <Route path="/admin/master-schedule" element={<MasterSchedule />} />

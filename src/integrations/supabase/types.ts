@@ -150,6 +150,10 @@ export type Database = {
       }
       bookings: {
         Row: {
+          cancel_reason: string | null
+          cancel_source: string | null
+          canceled_at: string | null
+          canceled_by: string | null
           created_at: string
           id: string
           notes: string | null
@@ -160,6 +164,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cancel_reason?: string | null
+          cancel_source?: string | null
+          canceled_at?: string | null
+          canceled_by?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -170,6 +178,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cancel_reason?: string | null
+          cancel_source?: string | null
+          canceled_at?: string | null
+          canceled_by?: string | null
           created_at?: string
           id?: string
           notes?: string | null
@@ -735,6 +747,9 @@ export type Database = {
           aggressive_behavior_description: string | null
           agreed_to_cancellation_policy: boolean | null
           allergies_description: string | null
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
           assessment_status: string | null
           attendance_standing: string | null
           availability_general: string[] | null
@@ -748,6 +763,9 @@ export type Database = {
           created_by: string | null
           current_level_id: string | null
           date_of_birth: string
+          decline_reason: string | null
+          declined_at: string | null
+          declined_by: string | null
           diagnosis: string[] | null
           elopement_description: string | null
           elopement_history: boolean | null
@@ -808,6 +826,9 @@ export type Database = {
           aggressive_behavior_description?: string | null
           agreed_to_cancellation_policy?: boolean | null
           allergies_description?: string | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           assessment_status?: string | null
           attendance_standing?: string | null
           availability_general?: string[] | null
@@ -821,6 +842,9 @@ export type Database = {
           created_by?: string | null
           current_level_id?: string | null
           date_of_birth: string
+          decline_reason?: string | null
+          declined_at?: string | null
+          declined_by?: string | null
           diagnosis?: string[] | null
           elopement_description?: string | null
           elopement_history?: boolean | null
@@ -881,6 +905,9 @@ export type Database = {
           aggressive_behavior_description?: string | null
           agreed_to_cancellation_policy?: boolean | null
           allergies_description?: string | null
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           assessment_status?: string | null
           attendance_standing?: string | null
           availability_general?: string[] | null
@@ -894,6 +921,9 @@ export type Database = {
           created_by?: string | null
           current_level_id?: string | null
           date_of_birth?: string
+          decline_reason?: string | null
+          declined_at?: string | null
+          declined_by?: string | null
           diagnosis?: string[] | null
           elopement_description?: string | null
           elopement_history?: boolean | null
@@ -1133,6 +1163,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_cancel_booking: {
+        Args: {
+          _booking_id: string
+          _user_role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
       generate_client_number: { Args: never; Returns: string }
       get_last_sunday_of_month: {
         Args: { month: number; year: number }
