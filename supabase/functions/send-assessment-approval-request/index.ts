@@ -2,6 +2,28 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 
+// Generate secure token for approval links
+async function generateSecureToken(assessmentId: string, action: string): Promise<string> {
+  const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  const message = `${assessmentId}:${action}`;
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const messageData = encoder.encode(message);
+  
+  const key = await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  
+  const signature = await crypto.subtle.sign("HMAC", key, messageData);
+  return Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
@@ -107,8 +129,12 @@ const handler = async (req: Request): Promise<Response> => {
       minute: "2-digit",
     });
 
-    const approvalUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/handle-assessment-approval?action=approve&assessmentId=${assessmentId}`;
-    const rejectionUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/handle-assessment-approval?action=reject&assessmentId=${assessmentId}`;
+    // Generate secure tokens for approval URLs
+    const approveToken = await generateSecureToken(assessmentId, "approve");
+    const rejectToken = await generateSecureToken(assessmentId, "reject");
+    
+    const approvalUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/handle-assessment-approval?action=approve&assessmentId=${assessmentId}&token=${approveToken}`;
+    const rejectionUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/handle-assessment-approval?action=reject&assessmentId=${assessmentId}&token=${rejectToken}`;
 
     // Send email to coordinator
     const emailResponse = await resend.emails.send({

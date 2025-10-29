@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { z } from "https://esm.sh/zod@3.22.4";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -10,25 +11,39 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-interface ReferralRequest {
-  parentName: string;
-  parentEmail: string;
-  parentPhone: string;
-  childName: string;
-  childAge: string;
-  referralType: string;
-  coordinatorName?: string;
-  coordinatorEmail?: string;
-  previousSwimLessons?: string;
-  swimGoals?: string[];
-  strengthsInterests?: string;
-  motivationFactors?: string;
-  availabilityGeneral?: string[];
-  availabilityOther?: string;
-  photoRelease?: string;
-  liabilityAgreement?: boolean;
-  swimmerPhotoUrl?: string;
-  additionalInfo?: string;
+// Validation schema
+const referralSchema = z.object({
+  parentEmail: z.string().email().max(255),
+  parentName: z.string().trim().min(1).max(100),
+  parentPhone: z.string().regex(/^[\d\s\-\(\)\+]+$/).max(20),
+  childName: z.string().trim().min(1).max(100),
+  childAge: z.string().refine(val => {
+    const age = parseInt(val);
+    return !isNaN(age) && age >= 1 && age <= 18;
+  }, { message: "Age must be between 1 and 18" }),
+  referralType: z.enum(["vmrc", "scholarship", "coordinator", "other"]),
+  coordinatorName: z.string().trim().max(100).optional(),
+  coordinatorEmail: z.string().email().max(255).optional(),
+  previousSwimLessons: z.string().optional(),
+  swimGoals: z.array(z.string().max(100)).max(10).optional(),
+  strengthsInterests: z.string().max(1000).optional(),
+  motivationFactors: z.string().max(1000).optional(),
+  availabilityGeneral: z.array(z.string().max(50)).max(20).optional(),
+  availabilityOther: z.string().max(500).optional(),
+  photoRelease: z.string().optional(),
+  liabilityAgreement: z.boolean().optional(),
+  swimmerPhotoUrl: z.string().url().max(500).optional(),
+  additionalInfo: z.string().max(2000).optional(),
+});
+
+// HTML escape utility
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -42,32 +57,34 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const requestData: ReferralRequest = await req.json();
+    // Parse and validate input
+    const rawData = await req.json();
+    const validatedData = referralSchema.parse(rawData);
 
-    console.log("Processing referral request:", requestData);
+    console.log("Processing validated referral request");
 
     // Save to database
     const { data: savedRequest, error: dbError } = await supabaseClient
       .from("vmrc_referral_requests")
       .insert({
-        parent_name: requestData.parentName,
-        parent_email: requestData.parentEmail,
-        parent_phone: requestData.parentPhone,
-        child_name: requestData.childName,
-        child_age: parseInt(requestData.childAge),
-        referral_type: requestData.referralType,
-        coordinator_name: requestData.coordinatorName,
-        coordinator_email: requestData.coordinatorEmail,
-        previous_swim_lessons: requestData.previousSwimLessons === "yes",
-        swim_goals: requestData.swimGoals,
-        strengths_interests: requestData.strengthsInterests,
-        motivation_factors: requestData.motivationFactors,
-        availability_general: requestData.availabilityGeneral,
-        availability_other: requestData.availabilityOther,
-        photo_release: requestData.photoRelease === "yes",
-        liability_agreement: requestData.liabilityAgreement,
-        swimmer_photo_url: requestData.swimmerPhotoUrl,
-        additional_info: requestData.additionalInfo,
+        parent_name: validatedData.parentName,
+        parent_email: validatedData.parentEmail,
+        parent_phone: validatedData.parentPhone,
+        child_name: validatedData.childName,
+        child_age: parseInt(validatedData.childAge),
+        referral_type: validatedData.referralType,
+        coordinator_name: validatedData.coordinatorName,
+        coordinator_email: validatedData.coordinatorEmail,
+        previous_swim_lessons: validatedData.previousSwimLessons === "yes",
+        swim_goals: validatedData.swimGoals,
+        strengths_interests: validatedData.strengthsInterests,
+        motivation_factors: validatedData.motivationFactors,
+        availability_general: validatedData.availabilityGeneral,
+        availability_other: validatedData.availabilityOther,
+        photo_release: validatedData.photoRelease === "yes",
+        liability_agreement: validatedData.liabilityAgreement,
+        swimmer_photo_url: validatedData.swimmerPhotoUrl,
+        additional_info: validatedData.additionalInfo,
         status: "pending",
       })
       .select()
@@ -75,18 +92,17 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (dbError) {
       console.error("Database error:", dbError);
-      throw dbError;
+      throw new Error("Failed to save referral request");
     }
 
-    console.log("Referral request saved to database:", savedRequest);
+    console.log("Referral request saved to database");
 
     // Determine recipient email
-    let recipientEmail = requestData.coordinatorEmail;
-    let recipientName = requestData.coordinatorName || "Coordinator";
+    let recipientEmail = validatedData.coordinatorEmail;
+    let recipientName = validatedData.coordinatorName || "Coordinator";
 
-    // If not VMRC or no coordinator email provided, send to default admin
-    if (!recipientEmail || requestData.referralType !== "vmrc") {
-      recipientEmail = "admin@swimschool.com"; // TODO: Replace with actual admin email
+    if (!recipientEmail || validatedData.referralType !== "vmrc") {
+      recipientEmail = "admin@swimschool.com";
       recipientName = "Swim School Admin";
     }
 
@@ -95,13 +111,18 @@ const handler = async (req: Request): Promise<Response> => {
       scholarship: "Scholarship Applicant",
       coordinator: "Coordinator Referral",
       other: "Other",
-    }[requestData.referralType] || "Unknown";
+    }[validatedData.referralType] || "Unknown";
+
+    // Escape all user inputs for email
+    const safeParentName = escapeHtml(validatedData.parentName);
+    const safeChildName = escapeHtml(validatedData.childName);
+    const safeRecipientName = escapeHtml(recipientName);
 
     // Send email to coordinator/admin
     const emailResponse = await resend.emails.send({
       from: "I CAN SWIM <onboarding@resend.dev>",
       to: [recipientEmail],
-      subject: `New Enrollment Request - ${requestData.childName}`,
+      subject: `New Enrollment Request - ${safeChildName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 700px; margin: 0 auto;">
           <div style="background-color: #0ea5e9; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
@@ -109,9 +130,9 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
           
           <div style="padding: 30px; background-color: #f9fafb; border-radius: 0 0 8px 8px;">
-            <p>Hello ${recipientName},</p>
+            <p>Hello ${safeRecipientName},</p>
             
-            <p>You've received a new enrollment request. Please review the details below and contact the family to complete the referral process.</p>
+            <p>You've received a new enrollment request. Please review the details below.</p>
             
             <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin-top: 0; color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px;">
@@ -120,70 +141,28 @@ const handler = async (req: Request): Promise<Response> => {
               <p><strong>Referral Type:</strong> ${referralTypeLabel}</p>
               
               <h4 style="color: #1f2937; margin-top: 20px; margin-bottom: 10px;">Parent/Guardian Details</h4>
-              <p style="margin: 5px 0;"><strong>Name:</strong> ${requestData.parentName}</p>
-              <p style="margin: 5px 0;"><strong>Email:</strong> <a href="mailto:${requestData.parentEmail}">${requestData.parentEmail}</a></p>
-              <p style="margin: 5px 0;"><strong>Phone:</strong> <a href="tel:${requestData.parentPhone}">${requestData.parentPhone}</a></p>
+              <p style="margin: 5px 0;"><strong>Name:</strong> ${safeParentName}</p>
+              <p style="margin: 5px 0;"><strong>Email:</strong> ${validatedData.parentEmail}</p>
+              <p style="margin: 5px 0;"><strong>Phone:</strong> ${validatedData.parentPhone}</p>
               
               <h4 style="color: #1f2937; margin-top: 20px; margin-bottom: 10px;">Child Information</h4>
-              <p style="margin: 5px 0;"><strong>Name:</strong> ${requestData.childName}</p>
-              <p style="margin: 5px 0;"><strong>Age:</strong> ${requestData.childAge} years old</p>
+              <p style="margin: 5px 0;"><strong>Name:</strong> ${safeChildName}</p>
+              <p style="margin: 5px 0;"><strong>Age:</strong> ${validatedData.childAge} years old</p>
               
               <h4 style="color: #1f2937; margin-top: 20px; margin-bottom: 10px;">Enrollment Details</h4>
-              <p style="margin: 5px 0;"><strong>Previous Swim Lessons:</strong> ${requestData.previousSwimLessons === "yes" ? "Yes" : "No"}</p>
+              <p style="margin: 5px 0;"><strong>Previous Swim Lessons:</strong> ${validatedData.previousSwimLessons === "yes" ? "Yes" : "No"}</p>
               
-              ${requestData.swimGoals && requestData.swimGoals.length > 0 ? `
+              ${validatedData.swimGoals && validatedData.swimGoals.length > 0 ? `
                 <p style="margin: 10px 0;"><strong>Swim Goals:</strong></p>
                 <ul style="margin: 5px 0 10px 20px;">
-                  ${requestData.swimGoals.map(goal => `<li>${goal}</li>`).join("")}
+                  ${validatedData.swimGoals.map(goal => `<li>${escapeHtml(goal)}</li>`).join("")}
                 </ul>
               ` : ""}
               
-              ${requestData.strengthsInterests ? `
+              ${validatedData.strengthsInterests ? `
                 <p style="margin: 10px 0 5px 0;"><strong>Strengths & Interests:</strong></p>
-                <p style="background-color: #f3f4f6; padding: 10px; border-radius: 6px; margin: 5px 0;">${requestData.strengthsInterests}</p>
+                <p style="background-color: #f3f4f6; padding: 10px; border-radius: 6px; margin: 5px 0;">${escapeHtml(validatedData.strengthsInterests)}</p>
               ` : ""}
-              
-              ${requestData.motivationFactors ? `
-                <p style="margin: 10px 0 5px 0;"><strong>Motivation Factors:</strong></p>
-                <p style="background-color: #f3f4f6; padding: 10px; border-radius: 6px; margin: 5px 0;">${requestData.motivationFactors}</p>
-              ` : ""}
-              
-              ${requestData.availabilityGeneral && requestData.availabilityGeneral.length > 0 ? `
-                <p style="margin: 10px 0;"><strong>Availability:</strong></p>
-                <ul style="margin: 5px 0 10px 20px; columns: 2;">
-                  ${requestData.availabilityGeneral.map(time => `<li>${time}</li>`).join("")}
-                </ul>
-              ` : ""}
-              
-              ${requestData.availabilityOther ? `
-                <p style="margin: 5px 0;"><strong>Additional Availability:</strong> ${requestData.availabilityOther}</p>
-              ` : ""}
-              
-              <p style="margin: 10px 0;"><strong>Photo/Video Release:</strong> ${requestData.photoRelease === "yes" ? "Yes" : "No"}</p>
-              <p style="margin: 5px 0;"><strong>Liability Agreement:</strong> ${requestData.liabilityAgreement ? "Signed ✓" : "Not signed"}</p>
-              
-              ${requestData.swimmerPhotoUrl ? `
-                <p style="margin: 10px 0;"><strong>Swimmer Photo:</strong> <a href="${requestData.swimmerPhotoUrl}" target="_blank">View Photo</a></p>
-              ` : ""}
-              
-              ${requestData.additionalInfo ? `
-                <h4 style="color: #1f2937; margin-top: 20px; margin-bottom: 10px;">Additional Information</h4>
-                <p style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; white-space: pre-wrap;">${requestData.additionalInfo}</p>
-              ` : ""}
-            </div>
-            
-            <div style="background-color: #dbeafe; padding: 15px; border-radius: 8px; border-left: 4px solid #0ea5e9; margin: 20px 0;">
-              <p style="margin: 0; color: #1e40af;">
-                <strong>Next Steps:</strong> Please contact the family within 24-48 hours to discuss enrollment, assessment scheduling, and any required documentation.
-              </p>
-            </div>
-            
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-              <p style="margin: 0; text-align: center;">
-                <a href="mailto:${requestData.parentEmail}" style="display: inline-block; background-color: #0ea5e9; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                  Contact Family
-                </a>
-              </p>
             </div>
             
             <p style="color: #6b7280; font-size: 14px; margin-top: 30px; text-align: center;">
@@ -194,12 +173,12 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Referral request email sent successfully:", emailResponse);
+    console.log("Referral request email sent successfully");
 
     // Send confirmation email to parent
     await resend.emails.send({
       from: "I CAN SWIM <onboarding@resend.dev>",
-      to: [requestData.parentEmail],
+      to: [validatedData.parentEmail],
       subject: "Enrollment Request Received - I CAN SWIM",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -208,9 +187,9 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
           
           <div style="padding: 30px; background-color: #f9fafb; border-radius: 0 0 8px 8px;">
-            <p>Hello ${requestData.parentName},</p>
+            <p>Hello ${safeParentName},</p>
             
-            <p>Thank you for completing the enrollment request for <strong>${requestData.childName}</strong> at I CAN SWIM!</p>
+            <p>Thank you for completing the enrollment request for <strong>${safeChildName}</strong> at I CAN SWIM!</p>
             
             <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin-top: 0; color: #1f2937;">What Happens Next?</h3>
@@ -218,24 +197,11 @@ const handler = async (req: Request): Promise<Response> => {
                 <li>Your coordinator will review your complete enrollment request</li>
                 <li>They will contact you within 24-48 hours</li>
                 <li>You'll discuss enrollment details and assessment scheduling</li>
-                <li>Complete any remaining enrollment paperwork if needed</li>
-                <li>Schedule your child's initial assessment</li>
               </ul>
             </div>
             
-            <div style="background-color: #dbeafe; padding: 15px; border-radius: 8px; border-left: 4px solid #0ea5e9; margin: 20px 0;">
-              <p style="margin: 0; color: #1e40af;">
-                <strong>Questions?</strong> Feel free to reply to this email or call us directly. We're here to help!
-              </p>
-            </div>
-            
             <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
-              We're excited to start this swimming journey with ${requestData.childName}!
-            </p>
-            
-            <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
-              Best regards,<br>
-              The I CAN SWIM Team
+              We're excited to start this swimming journey with ${safeChildName}!
             </p>
           </div>
         </div>
@@ -249,7 +215,6 @@ const handler = async (req: Request): Promise<Response> => {
         success: true, 
         message: "Referral request submitted successfully",
         requestId: savedRequest.id,
-        emailId: emailResponse.data?.id
       }),
       {
         status: 200,
@@ -258,8 +223,20 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error("Error in send-referral-request:", error);
+    
+    // Return validation errors without exposing internal details
+    if (error.name === 'ZodError') {
+      return new Response(
+        JSON.stringify({ error: "Invalid input data", details: error.errors }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Failed to process referral request" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

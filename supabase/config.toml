@@ -19,4 +19,4 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.auto-cancel-pending-assessments]
-verify_jwt = false
+verify_jwt = true
