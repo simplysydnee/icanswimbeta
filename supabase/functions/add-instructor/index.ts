@@ -53,35 +53,66 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Full name and email are required");
     }
 
-    console.log(`Creating instructor account for: ${fullName} (${email})`);
+    console.log(`Processing instructor account for: ${fullName} (${email})`);
 
-    // Create the auth user
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      email_confirm: true,
-      user_metadata: {
-        full_name: fullName,
-      },
-    });
+    // Check if user already exists
+    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
+    const userExists = existingUser?.users?.find(u => u.email === email);
 
-    if (authError) {
-      console.error("Error creating auth user:", authError);
-      throw authError;
+    let userId: string;
+
+    if (userExists) {
+      console.log(`User already exists with ID: ${userExists.id}`);
+      userId = userExists.id;
+
+      // Update their profile name if needed
+      const { error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .update({ full_name: fullName })
+        .eq("id", userId);
+
+      if (profileError) {
+        console.error("Error updating profile:", profileError);
+      }
+
+      // Remove parent role if they have it
+      await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", "parent");
+
+    } else {
+      // Create new auth user
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: {
+          full_name: fullName,
+        },
+      });
+
+      if (authError) {
+        console.error("Error creating auth user:", authError);
+        throw authError;
+      }
+
+      if (!authData.user) {
+        throw new Error("Failed to create user");
+      }
+
+      userId = authData.user.id;
+      console.log(`Auth user created with ID: ${userId}`);
     }
 
-    if (!authData.user) {
-      throw new Error("Failed to create user");
-    }
-
-    console.log(`Auth user created with ID: ${authData.user.id}`);
-
-    // The profile should be created automatically by the trigger
-    // Now assign the instructor role
+    // Assign or update instructor role (use upsert to handle existing role)
     const { error: roleInsertError } = await supabaseAdmin
       .from("user_roles")
-      .insert({
-        user_id: authData.user.id,
+      .upsert({
+        user_id: userId,
         role: "instructor",
+      }, {
+        onConflict: "user_id,role"
       });
 
     if (roleInsertError) {
@@ -89,13 +120,13 @@ const handler = async (req: Request): Promise<Response> => {
       throw roleInsertError;
     }
 
-    console.log(`Instructor role assigned to user ${authData.user.id}`);
+    console.log(`Instructor role assigned to user ${userId}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         instructor: {
-          id: authData.user.id,
+          id: userId,
           full_name: fullName,
           email,
         },

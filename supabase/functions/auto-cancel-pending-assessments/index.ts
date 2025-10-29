@@ -31,11 +31,9 @@ const handler = async (req: Request): Promise<Response> => {
       .select(`
         *,
         swimmers (
-          *,
-          profiles:parent_id (
-            full_name,
-            email
-          )
+          first_name,
+          last_name,
+          parent_id
         )
       `)
       .eq("approval_status", "pending")
@@ -78,7 +76,15 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Send cancellation email to parent
       const swimmer = assessment.swimmers;
-      const parentEmail = swimmer?.profiles?.email;
+      
+      // Fetch parent profile separately
+      const { data: parentProfile } = await supabaseClient
+        .from("profiles")
+        .select("email, full_name")
+        .eq("id", swimmer?.parent_id)
+        .single();
+
+      const parentEmail = parentProfile?.email;
 
       if (parentEmail) {
         try {
