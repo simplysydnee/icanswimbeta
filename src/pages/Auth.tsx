@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, Waves } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import logoHeader from "@/assets/logo-header.png";
+import logoCircular from "@/assets/logo-circular.jpg";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
@@ -274,7 +275,11 @@ const Auth = () => {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <Waves className="h-12 w-12 text-primary" />
+              <img 
+                src={logoCircular} 
+                alt="I CAN SWIM" 
+                className="h-24 w-24 object-contain"
+              />
             </div>
             <CardTitle className="text-2xl">
               {invitationToken ? "Create Your Account" : "Welcome to I CAN SWIM"}
