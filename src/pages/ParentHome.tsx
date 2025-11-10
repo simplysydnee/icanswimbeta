@@ -7,7 +7,7 @@ import { useParentSwimmers } from "@/hooks/useParentSwimmers";
 import { Calendar, User, LogOut, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import logoHeader from "@/assets/logo-header.png";
+import logoHeader from "@/assets/logo-parent-header.png";
 
 const ParentHome = () => {
   const { swimmers, loading, error } = useParentSwimmers();
