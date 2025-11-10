@@ -10,6 +10,7 @@ import { WeeklyBookingTab } from "@/components/booking/WeeklyBookingTab";
 import { FloatingSessionsTab } from "@/components/booking/FloatingSessionsTab";
 import { AssessmentTab } from "@/components/booking/AssessmentTab";
 import { EnrollmentTab } from "@/components/booking/EnrollmentTab";
+import logoHeader from "@/assets/logo-header.png";
 
 const Booking = () => {
   const [searchParams] = useSearchParams();
@@ -145,6 +146,13 @@ const Booking = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/10 to-background">
       <div className="container mx-auto px-4 py-4 sm:py-6 max-w-6xl">
+        <div className="mb-4">
+          <img 
+            src={logoHeader} 
+            alt="I CAN SWIM" 
+            className="h-12 w-auto object-contain mb-4"
+          />
+        </div>
         <div className="mb-4 sm:mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">Book Swim Sessions</h1>
           <p className="text-sm sm:text-base text-muted-foreground">

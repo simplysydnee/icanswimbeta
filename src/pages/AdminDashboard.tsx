@@ -31,6 +31,7 @@ import { POSManagement } from "@/components/admin/POSManagement";
 import { SwimmerDetailDrawer } from "@/components/admin/SwimmerDetailDrawer";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { InstructorNotificationBell } from "@/components/InstructorNotificationBell";
+import logoHeader from "@/assets/logo-header.png";
 
 interface Swimmer {
   id: string;
@@ -469,6 +470,13 @@ const AdminDashboard = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <div className="mb-4">
+        <img 
+          src={logoHeader} 
+          alt="I CAN SWIM" 
+          className="h-12 w-auto object-contain"
+        />
+      </div>
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <InstructorNotificationBell />

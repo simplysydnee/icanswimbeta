@@ -10,6 +10,7 @@ import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, Dr
 import { AlertCircle, Calendar, CheckCircle, Clock, FileText, Plus, Search, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import logoHeader from "@/assets/logo-header.png";
 
 interface PurchaseOrder {
   id: string;
@@ -178,6 +179,13 @@ const CoordinatorHub = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <div className="mb-4">
+        <img 
+          src={logoHeader} 
+          alt="I CAN SWIM" 
+          className="h-12 w-auto object-contain"
+        />
+      </div>
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">VMRC Coordinator Hub</h1>

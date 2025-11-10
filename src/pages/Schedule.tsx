@@ -12,6 +12,7 @@ import { format, startOfWeek, endOfWeek, addWeeks, addDays, isSameDay, parseISO 
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { SwimmersNeedingUpdate } from "@/components/SwimmersNeedingUpdate";
+import logoHeader from "@/assets/logo-header.png";
 
 interface Session {
   id: string;
@@ -362,6 +363,13 @@ const Schedule = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/10 to-background p-6">
       <div className="container mx-auto max-w-7xl">
+        <div className="mb-4">
+          <img 
+            src={logoHeader} 
+            alt="I CAN SWIM" 
+            className="h-12 w-auto object-contain"
+          />
+        </div>
         <div className="mb-6">
           <h1 className="text-3xl font-bold">
             {userRole === "admin" ? "Master Schedule" : "My Schedule"}

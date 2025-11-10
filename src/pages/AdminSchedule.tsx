@@ -22,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import logoHeader from "@/assets/logo-header.png";
 
 interface Session {
   id: string;
@@ -535,6 +536,13 @@ const AdminSchedule = () => {
     <>
       <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/10 to-background p-6">
         <div className="container mx-auto max-w-7xl">
+          <div className="mb-4">
+            <img 
+              src={logoHeader} 
+              alt="I CAN SWIM" 
+              className="h-12 w-auto object-contain"
+            />
+          </div>
           {/* Header with Create Master Schedule Button */}
           <div className="flex items-center justify-between mb-6">
             <div>
