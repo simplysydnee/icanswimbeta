@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
 import { toast as sonnerToast } from "sonner";
+import logoHeader from "@/assets/logo-header.png";
 
 export default function PosApproval() {
   const { requestId } = useParams();
@@ -193,6 +194,11 @@ export default function PosApproval() {
     <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/10 to-background py-8 px-4">
       <div className="container mx-auto max-w-4xl">
         <div className="mb-6">
+          <img 
+            src={logoHeader} 
+            alt="I CAN SWIM" 
+            className="h-12 w-auto object-contain mb-6"
+          />
           <h1 className="text-3xl font-bold mb-2">VMRC POS Approval Request</h1>
           <p className="text-muted-foreground">
             Review progress summary and approve new POS authorization

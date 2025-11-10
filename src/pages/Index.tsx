@@ -4,6 +4,7 @@ import { useUpcomingSessions } from "@/hooks/useUpcomingSessions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Calendar } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import logoHeader from "@/assets/logo-header.png";
 
 const Index = () => {
   const { swimmerSessions, loading, error } = useUpcomingSessions();
@@ -40,6 +41,13 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/20 to-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <img 
+              src={logoHeader} 
+              alt="I CAN SWIM" 
+              className="h-12 w-auto object-contain"
+            />
+          </div>
           <h1 className="text-4xl font-bold text-foreground mb-2">
             Welcome Back
           </h1>
