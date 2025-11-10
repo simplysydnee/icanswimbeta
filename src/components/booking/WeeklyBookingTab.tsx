@@ -153,8 +153,22 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId, selectedSw
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Select a day and time to automatically book all remaining weeks this month. 
-          Sessions are billed monthly and renew when next month's schedule is posted.
+          <strong>Recurring Weekly Lessons:</strong> Select a day and time to book every week for the rest of this month. 
+          Your swimmer will have the same time slot each week for consistency - especially important for swimmers with special needs.
+          {privatePaySwimmers > 0 && (
+            <span className="block mt-2 font-medium">💳 Private pay clients will be billed monthly</span>
+          )}
+          {hasVmrcClients && (
+            <span className="block mt-2 font-medium">📊 VMRC clients: Sessions are tracked toward your authorization limit (no charge)</span>
+          )}
+        </AlertDescription>
+      </Alert>
+
+      <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950">
+        <AlertCircle className="h-4 w-4 text-blue-600" />
+        <AlertDescription>
+          <strong>Why weekly consistency?</strong> Regular, recurring sessions at the same time help swimmers with special needs 
+          build routine and comfort. If you need to cancel a session, it will become available as a floating session for others to book.
         </AlertDescription>
       </Alert>
 
@@ -383,11 +397,11 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId, selectedSw
                           </Badge>
                         )}
                       </div>
-                      {privatePaySwimmers > 0 && !isSkipped && (
+                      {!allVmrcClients && privatePaySwimmers > 0 && !isSkipped && (
                         <span className="font-semibold">${pricePerSession}</span>
                       )}
-                      {privatePaySwimmers === 0 && (
-                        <span className="text-sm text-primary font-medium">Tracked</span>
+                      {allVmrcClients && !isSkipped && (
+                        <span className="text-sm text-primary font-medium">Tracked (No Charge)</span>
                       )}
                     </div>
                   );
@@ -398,9 +412,9 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId, selectedSw
 
           <Card className="bg-primary/5 border-primary">
             <CardContent className="pt-6">
-              {/* VMRC Session Countdown */}
+              {/* VMRC Session Countdown - Only for VMRC clients */}
               {selectedSwimmers.some((s) => s.paymentType === "vmrc") && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
                   {selectedSwimmers
                     .filter((s) => s.paymentType === "vmrc")
                     .map((swimmer) => {
@@ -411,17 +425,17 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId, selectedSw
                       
                       return (
                         <div key={swimmer.id} className="text-sm">
-                          <div className="font-semibold text-blue-900 mb-1">
-                            📊 {swimmer.name} - VMRC Session Tracker
+                          <div className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                            📊 {swimmer.name} - VMRC Session Tracker (No Charge)
                           </div>
-                          <div className="text-blue-700">
+                          <div className="text-blue-700 dark:text-blue-300">
                             Currently used: {currentUsed}/{authorized} sessions
                           </div>
-                          <div className="text-blue-700">
+                          <div className="text-blue-700 dark:text-blue-300">
                             After this booking: {afterBooking}/{authorized} sessions
                           </div>
-                          <div className={`font-medium mt-1 ${remaining <= 3 ? 'text-orange-600' : 'text-blue-900'}`}>
-                            {remaining > 0 
+                          <div className={`font-medium mt-1 ${remaining <= 3 ? 'text-orange-600 dark:text-orange-400' : 'text-blue-900 dark:text-blue-100'}`}>
+                            {remaining > 0
                               ? `${remaining} session${remaining !== 1 ? 's' : ''} remaining until coordinator renewal needed`
                               : '⚠️ Will need coordinator authorization before next booking'}
                           </div>

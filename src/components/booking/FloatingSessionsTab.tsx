@@ -186,19 +186,24 @@ export const FloatingSessionsTab = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Drop-In Sessions</CardTitle>
-            <div className="flex items-center gap-2">
-              <Switch
-                id="notify-mode"
-                checked={notifyEnabled}
-                onCheckedChange={handleNotifyToggle}
-              />
-              <Label htmlFor="notify-mode" className="flex items-center gap-1 cursor-pointer">
-                <Bell className="h-4 w-4" />
-                Notify me
-              </Label>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <CardTitle>Floating Sessions (Cancelled Spots)</CardTitle>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="notify-mode"
+                  checked={notifyEnabled}
+                  onCheckedChange={handleNotifyToggle}
+                />
+                <Label htmlFor="notify-mode" className="flex items-center gap-1 cursor-pointer">
+                  <Bell className="h-4 w-4" />
+                  Notify me
+                </Label>
+              </div>
             </div>
+            <p className="text-sm text-muted-foreground">
+              These are single sessions that opened up due to cancellations. Perfect for filling gaps or making up missed lessons.
+            </p>
           </div>
         </CardHeader>
         <CardContent>
@@ -214,11 +219,14 @@ export const FloatingSessionsTab = () => {
             </div>
           ) : floatingSessions.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <p className="text-lg mb-2">No floating sessions available right now</p>
+              <p className="text-lg mb-2">No cancelled spots available right now</p>
               <p className="text-sm">
                 {notifyEnabled
-                  ? "We'll notify you when a spot opens up!"
-                  : "Enable notifications to be alerted when new spots become available"}
+                  ? "We'll notify you when someone cancels and a spot opens up!"
+                  : "Enable notifications to be alerted when cancelled spots become available"}
+              </p>
+              <p className="text-xs mt-3 italic">
+                Cancelled sessions become available here for others to book, helping maintain consistency for all swimmers.
               </p>
             </div>
           ) : (

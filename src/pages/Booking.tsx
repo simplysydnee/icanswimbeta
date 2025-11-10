@@ -349,10 +349,16 @@ const Booking = () => {
                   {!allSwimmersWaitlist && !showPosMessage && (
                     <>
                       <TabsTrigger value="weekly" disabled={!canBookWeekly || anyFlexibleSwimmers} className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
-                        Weekly (This Month)
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span>Weekly Recurring</span>
+                          <span className="text-[10px] opacity-70">(Same time each week)</span>
+                        </div>
                       </TabsTrigger>
                       <TabsTrigger value="floating" disabled={!canBookWeekly && !anyFlexibleSwimmers} className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
-                        Floating Sessions
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span>Floating Sessions</span>
+                          <span className="text-[10px] opacity-70">(Cancelled spots)</span>
+                        </div>
                       </TabsTrigger>
                     </>
                   )}
