@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "npm:resend@2.0.0";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -102,7 +102,8 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Generate approval link with the request ID
-    const approvalUrl = `${Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.lovable.app') || 'https://your-app.lovable.app'}/pos-approval/${progressRequest.id}`;
+    const projectUrl = Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.lovable.app') || 'https://icanswimapp.lovable.app';
+    const approvalUrl = `${projectUrl}/pos-approval/${progressRequest.id}`;
 
     // Generate comprehensive summary
     const comprehensiveSummary = `
@@ -166,28 +167,6 @@ ${recentNotes.map((note, index) => `
 This is an automated message from I CAN SWIM. If you have any questions, please contact ${instructor.full_name} at ${instructor.email}.
 </p>
     `.trim();
-
-    // Store the request in database
-    const { data: progressRequest, error: requestError } = await supabaseClient
-      .from("progress_update_requests")
-      .insert({
-        swimmer_id: swimmerId,
-        instructor_id: instructorId,
-        coordinator_email: swimmer.vmrc_coordinator_email,
-        coordinator_name: swimmer.vmrc_coordinator_name,
-        current_pos_number: currentPosNumber,
-        progress_summary: progressSummary,
-        skills_summary: skillsSummary,
-        lessons_completed: lessonsCompleted,
-        sent_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (requestError) {
-      console.error("Error storing progress request:", requestError);
-      throw requestError;
-    }
 
     // Send email to VMRC coordinator
     if (swimmer.vmrc_coordinator_email) {

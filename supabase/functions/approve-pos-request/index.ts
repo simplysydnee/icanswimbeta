@@ -19,13 +19,22 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
       {
-        auth: {
-          persistSession: false,
+        global: {
+          headers: { Authorization: req.headers.get("Authorization")! },
         },
       }
     );
+
+    // Verify user is authenticated
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
+    }
 
     const { requestId, newPosNumber }: ApprovalRequest = await req.json();
 

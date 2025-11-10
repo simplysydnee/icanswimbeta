@@ -9,24 +9,48 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/useUserRole";
+import { toast as sonnerToast } from "sonner";
 
 export default function PosApproval() {
   const { requestId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { userRole, loading: roleLoading, isCoordinator } = useUserRole();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [request, setRequest] = useState<any>(null);
   const [newPosNumber, setNewPosNumber] = useState("");
   const [approved, setApproved] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
-    if (requestId) {
-      fetchRequest();
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        sonnerToast.error("Please log in to access this page");
+        navigate("/auth?redirect=/pos-approval/" + requestId);
+        return;
+      }
+      
+      if (!roleLoading && !isCoordinator) {
+        sonnerToast.error("Unauthorized: Only coordinators can approve POS requests");
+        navigate("/");
+        return;
+      }
+      
+      if (requestId && isCoordinator) {
+        setAuthorized(true);
+        fetchRequest(user.id);
+      }
+    };
+    
+    if (!roleLoading) {
+      checkAuth();
     }
-  }, [requestId]);
+  }, [requestId, roleLoading, isCoordinator, navigate]);
 
-  const fetchRequest = async () => {
+  const fetchRequest = async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from("progress_update_requests")
@@ -35,6 +59,7 @@ export default function PosApproval() {
           swimmers (
             first_name,
             last_name,
+            created_by,
             vmrc_coordinator_name,
             vmrc_coordinator_email,
             swim_levels (
@@ -50,6 +75,18 @@ export default function PosApproval() {
         .single();
 
       if (error) throw error;
+
+      if (!data) {
+        sonnerToast.error("Request not found");
+        return;
+      }
+
+      // Verify the logged-in coordinator is the one for this request
+      if (data.swimmers?.created_by !== userId) {
+        sonnerToast.error("Unauthorized: You can only approve requests for your swimmers");
+        navigate("/");
+        return;
+      }
 
       setRequest(data);
     } catch (error: any) {
@@ -102,7 +139,7 @@ export default function PosApproval() {
     }
   };
 
-  if (loading) {
+  if (loading || roleLoading || !authorized) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/10 to-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

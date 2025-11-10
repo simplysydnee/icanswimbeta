@@ -22,7 +22,7 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.approve-pos-request]
-verify_jwt = false
+verify_jwt = true
 
 [functions.notify-instructor-progress-needed]
 verify_jwt = true

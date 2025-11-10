@@ -21,6 +21,7 @@ const Auth = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const redirectPath = searchParams.get('redirect');
   
   const invitationToken = searchParams.get("token");
   const [invitationEmail, setInvitationEmail] = useState<string | null>(null);
@@ -142,16 +143,16 @@ const Auth = () => {
           .single();
 
         if (roleData?.role === "admin") {
-          navigate("/admin/schedule");
+          navigate(redirectPath || "/admin/schedule");
         } else if (roleData?.role === "instructor") {
-          navigate("/schedule");
+          navigate(redirectPath || "/schedule");
         } else if (roleData?.role === "vmrc_coordinator") {
-          navigate("/coordinator");
+          navigate(redirectPath || "/coordinator-hub");
         } else {
-          navigate("/parent-home");
+          navigate(redirectPath || "/parent-home");
         }
       } else {
-        navigate("/parent-home");
+        navigate(redirectPath || "/parent-home");
       }
     } catch (err: any) {
       if (err instanceof z.ZodError) {
