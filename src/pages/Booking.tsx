@@ -39,7 +39,7 @@ const Booking = () => {
       photoUrl: undefined,
       currentLevel: "Tadpole",
       enrollmentStatus: "enrolled" as "waitlist" | "approved" | "enrolled",
-      assessmentStatus: "pos_authorization_needed" as "not_started" | "scheduled" | "complete" | "pos_authorization_needed" | "pos_request_sent",
+      assessmentStatus: "complete" as "not_started" | "scheduled" | "complete" | "pos_authorization_needed" | "pos_request_sent",
       progressPercentage: 42,
       isVmrcClient: true,
       paymentType: "vmrc" as "private_pay" | "vmrc" | "scholarship" | "other",
