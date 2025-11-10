@@ -23,7 +23,7 @@ const Booking = () => {
       photoUrl: undefined,
       currentLevel: "Minnow",
       enrollmentStatus: "enrolled" as "waitlist" | "approved" | "enrolled",
-      assessmentStatus: "complete" as "not_started" | "scheduled" | "complete" | "progress_update",
+      assessmentStatus: "complete" as "not_started" | "scheduled" | "complete" | "pos_authorization_needed" | "pos_request_sent",
       progressPercentage: 65,
       isVmrcClient: false,
       paymentType: "private_pay" as "private_pay" | "vmrc" | "scholarship" | "other",
@@ -39,7 +39,7 @@ const Booking = () => {
       photoUrl: undefined,
       currentLevel: "Tadpole",
       enrollmentStatus: "enrolled" as "waitlist" | "approved" | "enrolled",
-      assessmentStatus: "progress_update" as "not_started" | "scheduled" | "complete" | "progress_update",
+      assessmentStatus: "pos_authorization_needed" as "not_started" | "scheduled" | "complete" | "pos_authorization_needed" | "pos_request_sent",
       progressPercentage: 42,
       isVmrcClient: true,
       paymentType: "vmrc" as "private_pay" | "vmrc" | "scholarship" | "other",
@@ -55,7 +55,7 @@ const Booking = () => {
       photoUrl: undefined,
       currentLevel: "Not Assigned",
       enrollmentStatus: "approved" as "waitlist" | "approved" | "enrolled",
-      assessmentStatus: "not_started" as "not_started" | "scheduled" | "complete" | "progress_update",
+      assessmentStatus: "not_started" as "not_started" | "scheduled" | "complete" | "pos_authorization_needed" | "pos_request_sent",
       progressPercentage: 0,
       isVmrcClient: true,
       paymentType: "vmrc" as "private_pay" | "vmrc" | "scholarship" | "other",
@@ -71,7 +71,7 @@ const Booking = () => {
       photoUrl: undefined,
       currentLevel: "Not Assigned",
       enrollmentStatus: "waitlist" as "waitlist" | "approved" | "enrolled",
-      assessmentStatus: "not_started" as "not_started" | "scheduled" | "complete" | "progress_update",
+      assessmentStatus: "not_started" as "not_started" | "scheduled" | "complete" | "pos_authorization_needed" | "pos_request_sent",
       progressPercentage: 0,
       isVmrcClient: false,
       paymentType: "private_pay" as "private_pay" | "vmrc" | "scholarship" | "other",
@@ -110,20 +110,24 @@ const Booking = () => {
   // Check if any selected swimmers are Flexible (restricted to floating sessions only)
   const anyFlexibleSwimmers = selectedSwimmers.some(s => s.flexibleSwimmer);
 
-  // Check if any swimmers need progress update (not initial assessment)
-  const needsProgressUpdate = selectedSwimmers.some(
-    (s) => s.assessmentStatus === "progress_update"
+  // Check if any swimmers need POS authorization or have request sent
+  const needsPosAuth = selectedSwimmers.some(
+    (s) => s.assessmentStatus === "pos_authorization_needed"
   );
+  const posRequestSent = selectedSwimmers.some(
+    (s) => s.assessmentStatus === "pos_request_sent"
+  );
+  const showPosMessage = needsPosAuth || posRequestSent;
 
   // Determine booking eligibility based on selected swimmers
   const canBookWeekly = selectedSwimmers.every(
     (s) => s.enrollmentStatus === "enrolled" && s.assessmentStatus === "complete" && !s.flexibleSwimmer
-  ) && !vmrcNeedsAuth && !allSwimmersWaitlist && !needsProgressUpdate;
+  ) && !vmrcNeedsAuth && !allSwimmersWaitlist && !showPosMessage;
   
   const needsAssessment = selectedSwimmers.some(
     (s) =>
       s.enrollmentStatus === "waitlist" ||
-      (s.enrollmentStatus === "approved" && s.assessmentStatus !== "complete" && s.assessmentStatus !== "progress_update")
+      (s.enrollmentStatus === "approved" && s.assessmentStatus !== "complete" && s.assessmentStatus !== "pos_authorization_needed" && s.assessmentStatus !== "pos_request_sent")
   );
 
   const handlePreviousMonth = () => {
@@ -226,21 +230,35 @@ const Booking = () => {
               </Alert>
             )}
 
-            {/* Banner for swimmers needing progress update */}
-            {needsProgressUpdate && (
+            {/* Banner for POS authorization or request sent */}
+            {showPosMessage && (
               <Alert className="mb-6 border-amber-500 bg-amber-50 dark:bg-amber-950">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
                 <AlertDescription>
-                  <strong>Progress Update Required:</strong>{" "}
-                  {selectedSwimmers
-                    .filter((s) => s.assessmentStatus === "progress_update")
-                    .map((s) => s.firstName)
-                    .join(", ")}{" "}
-                  {selectedSwimmers.filter((s) => s.assessmentStatus === "progress_update").length === 1 ? "needs" : "need"} a progress update from the instructor.
+                  <strong>{needsPosAuth ? "POS Authorization Needed" : "POS Request Sent"}</strong>
                   <br />
-                  <span className="font-semibold mt-2 block">📋 This is for instructor evaluation only - not a new assessment</span>
-                  {selectedSwimmers.some(s => s.isVmrcClient && s.assessmentStatus === "progress_update") && (
-                    <span className="font-semibold block">💙 VMRC clients: You will also need to request a new POS for 12 additional lessons</span>
+                  <br />
+                  {needsPosAuth && (
+                    <>
+                      {selectedSwimmers
+                        .filter((s) => s.assessmentStatus === "pos_authorization_needed")
+                        .map((s) => s.firstName)
+                        .join(", ")}{" "}
+                      {selectedSwimmers.filter((s) => s.assessmentStatus === "pos_authorization_needed").length === 1 ? "has" : "have"} completed 12/12 authorized sessions.
+                      <br />
+                      <span className="font-semibold mt-2 block">📋 Your instructor will send a progress summary and request a new POS from your VMRC coordinator</span>
+                    </>
+                  )}
+                  {posRequestSent && (
+                    <>
+                      Progress update and POS request have been sent to your VMRC coordinator.
+                      <br />
+                      <span className="font-semibold mt-2 block">✅ Request submitted - waiting for VMRC approval</span>
+                      <span className="font-semibold block">📞 Please contact your coordinator to follow up on the authorization</span>
+                      {selectedSwimmers.find(s => s.assessmentStatus === "pos_request_sent")?.vmrcCurrentPosNumber && (
+                        <span className="block mt-1 text-sm">Current POS: {selectedSwimmers.find(s => s.assessmentStatus === "pos_request_sent")?.vmrcCurrentPosNumber}</span>
+                      )}
+                    </>
                   )}
                 </AlertDescription>
               </Alert>
@@ -315,12 +333,12 @@ const Booking = () => {
             {/* Booking Tabs */}
             <Tabs
               defaultValue={
-                allSwimmersWaitlist ? "assessment" : anyFlexibleSwimmers ? "floating" : needsProgressUpdate ? "enrollment" : needsAssessment && !canBookWeekly ? "assessment" : "weekly"
+                allSwimmersWaitlist ? "assessment" : anyFlexibleSwimmers ? "floating" : showPosMessage ? "enrollment" : needsAssessment && !canBookWeekly ? "assessment" : "weekly"
               }
             >
               <div className="mb-6 overflow-x-auto">
-                <TabsList className={`inline-flex w-full min-w-max sm:w-full ${allSwimmersWaitlist || needsProgressUpdate ? 'sm:grid-cols-2' : 'sm:grid sm:grid-cols-4'}`}>
-                  {!allSwimmersWaitlist && !needsProgressUpdate && (
+                <TabsList className={`inline-flex w-full min-w-max sm:w-full ${allSwimmersWaitlist || showPosMessage ? 'sm:grid-cols-2' : 'sm:grid sm:grid-cols-4'}`}>
+                  {!allSwimmersWaitlist && !showPosMessage && (
                     <>
                       <TabsTrigger value="weekly" disabled={!canBookWeekly || anyFlexibleSwimmers} className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4">
                         Weekly (This Month)
@@ -330,7 +348,7 @@ const Booking = () => {
                       </TabsTrigger>
                     </>
                   )}
-                  {!needsProgressUpdate && (
+                  {!showPosMessage && (
                     <TabsTrigger
                       value="assessment"
                       className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4"
@@ -342,12 +360,12 @@ const Booking = () => {
                     value="enrollment"
                     className="flex-1 whitespace-nowrap text-xs sm:text-sm px-3 sm:px-4"
                   >
-                    {needsProgressUpdate ? "Contact for Progress Update" : "Enrollment Form"}
+                    {showPosMessage ? "POS Status Info" : "Enrollment Form"}
                   </TabsTrigger>
                 </TabsList>
               </div>
 
-              {!allSwimmersWaitlist && !needsProgressUpdate && (
+              {!allSwimmersWaitlist && !showPosMessage && (
                 <>
                   <TabsContent value="weekly">
                     <WeeklyBookingTab
@@ -370,26 +388,53 @@ const Booking = () => {
                 </>
               )}
 
-              {!needsProgressUpdate && (
+              {!showPosMessage && (
                 <TabsContent value="assessment">
                   <AssessmentTab />
                 </TabsContent>
               )}
 
               <TabsContent value="enrollment">
-                {needsProgressUpdate ? (
+                {showPosMessage ? (
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>Progress Update Required</strong>
+                      <strong>{needsPosAuth ? "POS Authorization Needed" : "POS Request Sent - Awaiting Approval"}</strong>
                       <br />
                       <br />
-                      Please contact your instructor to schedule a progress update session. This is an instructor evaluation only and does not require booking a new initial assessment.
-                      <br />
-                      <br />
-                      {selectedSwimmers.some(s => s.isVmrcClient && s.assessmentStatus === "progress_update") && (
+                      {needsPosAuth && (
                         <>
-                          <strong>For VMRC Clients:</strong> You will also need to request a new Purchase Order (POS) for 12 additional lessons. Please contact your coordinator or instructor to submit the POS request.
+                          This swimmer has completed all 12 authorized sessions (12/12 used). Your instructor will send a progress summary to your VMRC coordinator to request a new POS authorization for 12 additional lessons.
+                          <br />
+                          <br />
+                          <strong>What happens next:</strong>
+                          <br />
+                          • Your instructor prepares and sends a comprehensive progress summary
+                          <br />
+                          • Request is sent to your VMRC coordinator for approval
+                          <br />
+                          • Once approved, you can continue booking sessions
+                        </>
+                      )}
+                      {posRequestSent && (
+                        <>
+                          The progress update and POS request have been successfully submitted to your VMRC coordinator. You cannot book new sessions until the new POS is approved.
+                          <br />
+                          <br />
+                          <strong>Next Steps:</strong>
+                          <br />
+                          • The instructor has submitted the progress summary and POS request
+                          <br />
+                          • Please contact your VMRC coordinator to follow up
+                          <br />
+                          • Once the new POS is approved, booking will be available again
+                          <br />
+                          <br />
+                          {selectedSwimmers.find(s => s.assessmentStatus === "pos_request_sent") && (
+                            <>
+                              <strong>Coordinator Contact:</strong> {selectedSwimmers.find(s => s.assessmentStatus === "pos_request_sent")?.vmrcCurrentPosNumber || "Contact your instructor for coordinator information"}
+                            </>
+                          )}
                         </>
                       )}
                     </AlertDescription>

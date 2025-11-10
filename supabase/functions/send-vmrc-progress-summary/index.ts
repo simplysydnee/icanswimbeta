@@ -168,11 +168,11 @@ This is an automated message from I CAN SWIM. If you have any questions, please 
       console.warn("No coordinator email found for swimmer");
     }
 
-    // Update swimmer assessment status to indicate progress update was sent
+    // Update swimmer assessment status to indicate POS request was sent
     await supabaseClient
       .from("swimmers")
       .update({
-        assessment_status: "progress_update",
+        assessment_status: "pos_request_sent",
         last_status_update: new Date().toISOString(),
       })
       .eq("id", swimmerId);

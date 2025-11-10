@@ -11,7 +11,7 @@ interface Swimmer {
   photoUrl?: string;
   currentLevel: string;
   enrollmentStatus: "waitlist" | "approved" | "enrolled";
-  assessmentStatus: "not_started" | "scheduled" | "complete" | "progress_update";
+  assessmentStatus: "not_started" | "scheduled" | "complete" | "pos_authorization_needed" | "pos_request_sent";
   isVmrcClient?: boolean;
   paymentType?: "private_pay" | "vmrc" | "scholarship" | "other";
   vmrcSessionsUsed?: number;
@@ -54,9 +54,12 @@ export const SwimmerSelector = ({
   };
 
   const getStatusDisplay = (swimmer: Swimmer) => {
-    // Check if progress update is needed
-    if (swimmer.assessmentStatus === "progress_update") {
-      return { text: "Progress Update Needed", variant: "destructive" as const };
+    // Check if POS authorization or request is in process
+    if (swimmer.assessmentStatus === "pos_authorization_needed") {
+      return { text: "POS Authorization Needed", variant: "destructive" as const };
+    }
+    if (swimmer.assessmentStatus === "pos_request_sent") {
+      return { text: "POS Request Sent", variant: "secondary" as const };
     }
     // Check if VMRC client has used all sessions
     if (
@@ -92,7 +95,8 @@ export const SwimmerSelector = ({
             const isSelected = selectedSwimmerIds.includes(swimmer.id);
             
             // Only waitlist can book assessments; enrolled can book regular sessions if they have VMRC auth
-            const needsProgressUpdate = swimmer.assessmentStatus === "progress_update";
+            const needsPosAuth = swimmer.assessmentStatus === "pos_authorization_needed";
+            const posRequestSent = swimmer.assessmentStatus === "pos_request_sent";
             
             const needsVmrcPosAuth =
               swimmer.paymentType === "vmrc" &&
@@ -102,10 +106,11 @@ export const SwimmerSelector = ({
 
             const canBook =
               swimmer.enrollmentStatus === "waitlist" ||
-              (swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete" && swimmer.assessmentStatus !== "progress_update") ||
+              (swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete" && !needsPosAuth && !posRequestSent) ||
               (swimmer.enrollmentStatus === "enrolled" &&
                 swimmer.assessmentStatus === "complete" &&
-                !needsProgressUpdate &&
+                !needsPosAuth &&
+                !posRequestSent &&
                 !needsVmrcPosAuth);
 
             return (
@@ -154,17 +159,22 @@ export const SwimmerSelector = ({
                           </Badge>
                         )}
                       </div>
-                      {!canBook && needsProgressUpdate && (
+                      {!canBook && needsPosAuth && (
                         <div className="text-xs text-destructive mt-1 font-medium">
-                          Progress update needed — Contact instructor
+                          POS authorization needed (12/12 used)
                         </div>
                       )}
-                      {!canBook && needsVmrcPosAuth && !needsProgressUpdate && (
+                      {!canBook && posRequestSent && (
+                        <div className="text-xs text-amber-600 mt-1 font-medium">
+                          POS request sent — Awaiting approval
+                        </div>
+                      )}
+                      {!canBook && needsVmrcPosAuth && !needsPosAuth && !posRequestSent && (
                         <div className="text-xs text-destructive mt-1 font-medium">
                           Cannot book — New POS authorization needed
                         </div>
                       )}
-                      {!canBook && !needsProgressUpdate && !needsVmrcPosAuth && swimmer.enrollmentStatus === "enrolled" && (
+                      {!canBook && !needsPosAuth && !posRequestSent && !needsVmrcPosAuth && swimmer.enrollmentStatus === "enrolled" && (
                         <div className="text-xs text-muted-foreground mt-1">
                           Complete assessment first
                         </div>
@@ -174,7 +184,7 @@ export const SwimmerSelector = ({
                           ✓ Can book assessment
                         </div>
                       )}
-                      {swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete" && swimmer.assessmentStatus !== "progress_update" && canBook && (
+                      {swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete" && !needsPosAuth && !posRequestSent && canBook && (
                         <div className="text-xs text-primary mt-1 font-medium">
                           ✓ Can book assessment
                         </div>
