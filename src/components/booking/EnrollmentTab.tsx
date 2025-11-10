@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -139,12 +140,116 @@ export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
   };
 
   const handleSubmit = async () => {
-    // TODO: Integrate with Supabase to save enrollment data
-    console.log("Enrollment data:", formData);
-    toast({
-      title: "Enrollment Information Saved",
-      description: "The enrollment information has been successfully saved.",
-    });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to submit enrollment",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validate required waiver fields
+      if (!formData.photoVideoPermission || !formData.photoVideoSignature) {
+        toast({
+          title: "Missing Information",
+          description: "Please complete the photo/video permission section",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!formData.liabilityWaiverAgreed || !formData.liabilityWaiverSignature) {
+        toast({
+          title: "Missing Information",
+          description: "Please complete the liability waiver section",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!formData.cancellationPolicyAgreed || !formData.cancellationPolicySignature) {
+        toast({
+          title: "Missing Information",
+          description: "Please complete the cancellation policy section",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update swimmer record with enrollment details and waivers
+      const swimmerData = {
+        parent_phone: formData.parentPhone,
+        gender: formData.gender,
+        height: formData.height,
+        weight: formData.weight,
+        diagnosis: formData.diagnosis,
+        non_ambulatory: formData.nonAmbulatory,
+        history_of_seizures: formData.historyOfSeizures,
+        has_allergies: formData.hasAllergies,
+        allergies_description: formData.allergiesDescription,
+        has_medical_conditions: formData.hasMedicalConditions,
+        medical_conditions_description: formData.medicalConditionsDescription,
+        toilet_trained: formData.toiletTrained,
+        other_therapies: formData.otherTherapies,
+        therapies_description: formData.therapiesDescription,
+        comfortable_in_water: formData.comfortableInWater,
+        self_injurious_behavior: formData.selfInjuriousBehavior,
+        self_injurious_description: formData.selfInjuriousDescription,
+        aggressive_behavior: formData.aggressiveBehavior,
+        aggressive_behavior_description: formData.aggressiveBehaviorDescription,
+        elopement_history: formData.elopementHistory,
+        elopement_description: formData.elopementDescription,
+        has_behavior_plan: formData.hasBehaviorPlan,
+        behavior_plan_description: formData.behaviorPlanDescription,
+        previous_swim_lessons: formData.previousSwimLessons,
+        swim_goals: formData.swimGoals,
+        strengths_interests: formData.strengthsInterests,
+        motivation_factors: formData.motivators,
+        availability_general: formData.availabilityGeneral,
+        availability_other: formData.availabilityOther,
+        start_date: formData.startDate ? format(formData.startDate, 'yyyy-MM-dd') : null,
+        client_booking_limit: formData.clientBookingLimit,
+        attendance_standing: formData.attendanceStanding,
+        photo_release: formData.photoVideoPermission === "yes",
+        photo_video_signature: formData.photoVideoSignature,
+        liability_waiver_signature: formData.liabilityWaiverSignature,
+        cancellation_policy_signature: formData.cancellationPolicySignature,
+        enrollment_completed: true,
+      };
+
+      if (swimmerId) {
+        // Update existing swimmer
+        const { error } = await supabase
+          .from("swimmers")
+          .update(swimmerData)
+          .eq("id", swimmerId);
+
+        if (error) throw error;
+      } else {
+        // This shouldn't happen in normal flow, but handle it gracefully
+        toast({
+          title: "Error",
+          description: "No swimmer ID provided. Please contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Enrollment Complete",
+        description: "Your enrollment information and waivers have been successfully saved.",
+      });
+    } catch (error) {
+      console.error("Error saving enrollment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save enrollment information. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

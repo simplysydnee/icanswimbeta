@@ -1043,6 +1043,7 @@ export type Database = {
           availability_general: string[] | null
           availability_other: string | null
           behavior_plan_description: string | null
+          cancellation_policy_signature: string | null
           client_booking_limit: number | null
           client_number: string | null
           comfortable_in_water: string | null
@@ -1076,6 +1077,7 @@ export type Database = {
           is_vmrc_client: boolean | null
           last_name: string
           last_status_update: string | null
+          liability_waiver_signature: string | null
           medical_conditions_description: string | null
           non_ambulatory: boolean | null
           other_therapies: boolean | null
@@ -1085,6 +1087,7 @@ export type Database = {
           payment_type: string
           photo_release: boolean | null
           photo_url: string | null
+          photo_video_signature: string | null
           previous_swim_lessons: boolean | null
           restraint_description: string | null
           restraint_history: boolean | null
@@ -1126,6 +1129,7 @@ export type Database = {
           availability_general?: string[] | null
           availability_other?: string | null
           behavior_plan_description?: string | null
+          cancellation_policy_signature?: string | null
           client_booking_limit?: number | null
           client_number?: string | null
           comfortable_in_water?: string | null
@@ -1159,6 +1163,7 @@ export type Database = {
           is_vmrc_client?: boolean | null
           last_name: string
           last_status_update?: string | null
+          liability_waiver_signature?: string | null
           medical_conditions_description?: string | null
           non_ambulatory?: boolean | null
           other_therapies?: boolean | null
@@ -1168,6 +1173,7 @@ export type Database = {
           payment_type?: string
           photo_release?: boolean | null
           photo_url?: string | null
+          photo_video_signature?: string | null
           previous_swim_lessons?: boolean | null
           restraint_description?: string | null
           restraint_history?: boolean | null
@@ -1209,6 +1215,7 @@ export type Database = {
           availability_general?: string[] | null
           availability_other?: string | null
           behavior_plan_description?: string | null
+          cancellation_policy_signature?: string | null
           client_booking_limit?: number | null
           client_number?: string | null
           comfortable_in_water?: string | null
@@ -1242,6 +1249,7 @@ export type Database = {
           is_vmrc_client?: boolean | null
           last_name?: string
           last_status_update?: string | null
+          liability_waiver_signature?: string | null
           medical_conditions_description?: string | null
           non_ambulatory?: boolean | null
           other_therapies?: boolean | null
@@ -1251,6 +1259,7 @@ export type Database = {
           payment_type?: string
           photo_release?: boolean | null
           photo_url?: string | null
+          photo_video_signature?: string | null
           previous_swim_lessons?: boolean | null
           restraint_description?: string | null
           restraint_history?: boolean | null

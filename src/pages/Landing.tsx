@@ -1,11 +1,46 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Award, Calendar, Heart, Shield, Waves, UserPlus, FileText } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logoHeader from "@/assets/logo-header.png";
 import { ReferralRequestDialog } from "@/components/ReferralRequestDialog";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Landing = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    checkWaiverStatus();
+  }, []);
+
+  const checkWaiverStatus = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return; // Not logged in, stay on landing page
+
+      // Get the swimmer record for this parent
+      const { data: swimmers } = await supabase
+        .from("swimmers")
+        .select("id, photo_video_signature, liability_waiver_signature, cancellation_policy_signature")
+        .eq("parent_id", user.id)
+        .maybeSingle();
+
+      if (!swimmers) return; // No swimmer record yet
+
+      // Check if all waivers are NOT completed
+      if (
+        !swimmers.photo_video_signature ||
+        !swimmers.liability_waiver_signature ||
+        !swimmers.cancellation_policy_signature
+      ) {
+        // Waivers not completed, redirect to waiver page
+        navigate("/waivers");
+      }
+    } catch (error) {
+      console.error("Error checking waiver status:", error);
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/10 to-background">
       {/* Hero Section */}
