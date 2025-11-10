@@ -55,7 +55,7 @@ const Booking = () => {
       photoUrl: undefined,
       currentLevel: "Not Assigned",
       enrollmentStatus: "approved" as "waitlist" | "approved" | "enrolled",
-      assessmentStatus: "not_started" as "not_started" | "scheduled" | "complete" | "pos_authorization_needed" | "pos_request_sent",
+      assessmentStatus: "pos_request_sent" as "not_started" | "scheduled" | "complete" | "pos_authorization_needed" | "pos_request_sent",
       progressPercentage: 0,
       isVmrcClient: true,
       paymentType: "vmrc" as "private_pay" | "vmrc" | "scholarship" | "other",
