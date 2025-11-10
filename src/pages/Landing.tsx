@@ -19,7 +19,31 @@ const Landing = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return; // Not logged in, stay on landing page
 
-      // Get the swimmer record for this parent
+      // Check user role first
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (roleData && roleData.length > 0) {
+        const role = roleData[0].role;
+        
+        // Redirect non-parent roles to their dashboards
+        if (role === "admin") {
+          navigate("/admin/dashboard");
+          return;
+        } else if (role === "instructor") {
+          navigate("/dashboard");
+          return;
+        } else if (role === "vmrc_coordinator") {
+          navigate("/coordinator");
+          return;
+        }
+      }
+
+      // For parents, check waiver status
       const { data: swimmers } = await supabase
         .from("swimmers")
         .select("id, photo_video_signature, liability_waiver_signature, cancellation_policy_signature")
@@ -36,6 +60,9 @@ const Landing = () => {
       ) {
         // Waivers not completed, redirect to waiver page
         navigate("/waivers");
+      } else {
+        // Waivers completed, redirect to parent home
+        navigate("/parent-home");
       }
     } catch (error) {
       console.error("Error checking waiver status:", error);
