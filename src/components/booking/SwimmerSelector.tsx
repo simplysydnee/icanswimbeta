@@ -104,9 +104,16 @@ export const SwimmerSelector = ({
               swimmer.vmrcSessionsAuthorized !== undefined &&
               swimmer.vmrcSessionsUsed >= swimmer.vmrcSessionsAuthorized;
 
+            // Check if swimmer has used any sessions (if so, they shouldn't book assessments)
+            const hasUsedSessions = (swimmer.vmrcSessionsUsed || 0) > 0;
+
             const canBook =
               swimmer.enrollmentStatus === "waitlist" ||
-              (swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete" && !needsPosAuth && !posRequestSent) ||
+              (swimmer.enrollmentStatus === "approved" && 
+               swimmer.assessmentStatus !== "complete" && 
+               !needsPosAuth && 
+               !posRequestSent && 
+               !hasUsedSessions) ||
               (swimmer.enrollmentStatus === "enrolled" &&
                 swimmer.assessmentStatus === "complete" &&
                 !needsPosAuth &&
@@ -159,9 +166,9 @@ export const SwimmerSelector = ({
                           </Badge>
                         )}
                       </div>
-                      {!canBook && needsPosAuth && (
+                      {!canBook && (needsPosAuth || needsVmrcPosAuth) && (
                         <div className="text-xs text-destructive mt-1 font-medium">
-                          POS authorization needed (12/12 used)
+                          POS authorization needed ({swimmer.vmrcSessionsUsed}/{swimmer.vmrcSessionsAuthorized} used)
                         </div>
                       )}
                       {!canBook && posRequestSent && (
@@ -169,12 +176,12 @@ export const SwimmerSelector = ({
                           POS request sent — Awaiting approval
                         </div>
                       )}
-                      {!canBook && needsVmrcPosAuth && !needsPosAuth && !posRequestSent && (
-                        <div className="text-xs text-destructive mt-1 font-medium">
-                          Cannot book — New POS authorization needed
+                      {!canBook && !needsPosAuth && !posRequestSent && !needsVmrcPosAuth && hasUsedSessions && swimmer.enrollmentStatus === "approved" && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Already using services — Contact admin
                         </div>
                       )}
-                      {!canBook && !needsPosAuth && !posRequestSent && !needsVmrcPosAuth && swimmer.enrollmentStatus === "enrolled" && (
+                      {!canBook && !needsPosAuth && !posRequestSent && !needsVmrcPosAuth && !hasUsedSessions && swimmer.enrollmentStatus === "enrolled" && (
                         <div className="text-xs text-muted-foreground mt-1">
                           Complete assessment first
                         </div>
@@ -184,7 +191,7 @@ export const SwimmerSelector = ({
                           ✓ Can book assessment
                         </div>
                       )}
-                      {swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete" && !needsPosAuth && !posRequestSent && canBook && (
+                      {swimmer.enrollmentStatus === "approved" && swimmer.assessmentStatus !== "complete" && !needsPosAuth && !posRequestSent && !hasUsedSessions && canBook && (
                         <div className="text-xs text-primary mt-1 font-medium">
                           ✓ Can book assessment
                         </div>
