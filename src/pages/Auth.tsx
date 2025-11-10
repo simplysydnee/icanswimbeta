@@ -40,24 +40,51 @@ const Auth = () => {
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        // Check user role and redirect accordingly
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id)
-          .single();
+      if (!session) return;
 
-        if (roleData?.role === "admin") {
-          navigate("/admin/schedule");
-        } else if (roleData?.role === "instructor") {
-          navigate("/schedule");
-        } else if (roleData?.role === "vmrc_coordinator") {
-          navigate("/coordinator");
-        } else {
-          navigate("/parent-home");
-        }
+      // Fetch user roles (handle multiple roles)
+      const { data: rolesData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id);
+
+      const roles = (rolesData || []).map((r: any) => r.role as string);
+      const isAdmin = roles.includes("admin");
+      const isInstructor = roles.includes("instructor");
+      const isCoordinator = roles.includes("vmrc_coordinator");
+
+      if (isAdmin) {
+        navigate("/admin/dashboard");
+        return;
       }
+      if (isInstructor) {
+        navigate("/schedule");
+        return;
+      }
+      if (isCoordinator) {
+        navigate("/coordinator");
+        return;
+      }
+
+      // Parent: enforce waiver completion before accessing parent pages
+      const { data: swimmer } = await supabase
+        .from("swimmers")
+        .select("id, photo_video_signature, liability_waiver_signature, cancellation_policy_signature")
+        .eq("parent_id", session.user.id)
+        .maybeSingle();
+
+      if (
+        swimmer && (
+          !swimmer.photo_video_signature ||
+          !swimmer.liability_waiver_signature ||
+          !swimmer.cancellation_policy_signature
+        )
+      ) {
+        navigate("/waivers");
+        return;
+      }
+
+      navigate("/parent-home");
     };
     checkUser();
   }, [navigate]);
@@ -137,18 +164,43 @@ const Auth = () => {
       // Check user role and redirect accordingly
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: roleData } = await supabase
+        const { data: rolesData } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", user.id)
-          .single();
+          .eq("user_id", user.id);
 
-        if (roleData?.role === "admin") {
-          navigate(redirectPath || "/admin/schedule");
-        } else if (roleData?.role === "instructor") {
+        const roles = (rolesData || []).map((r: any) => r.role as string);
+        const isAdmin = roles.includes("admin");
+        const isInstructor = roles.includes("instructor");
+        const isCoordinator = roles.includes("vmrc_coordinator");
+
+        if (isAdmin) {
+          navigate(redirectPath || "/admin/dashboard");
+          return;
+        }
+        if (isInstructor) {
           navigate(redirectPath || "/schedule");
-        } else if (roleData?.role === "vmrc_coordinator") {
-          navigate(redirectPath || "/coordinator-hub");
+          return;
+        }
+        if (isCoordinator) {
+          navigate(redirectPath || "/coordinator");
+          return;
+        }
+        // Parent: enforce waiver completion first
+        const { data: swimmer } = await supabase
+          .from("swimmers")
+          .select("id, photo_video_signature, liability_waiver_signature, cancellation_policy_signature")
+          .eq("parent_id", user.id)
+          .maybeSingle();
+
+        if (
+          swimmer && (
+            !swimmer.photo_video_signature ||
+            !swimmer.liability_waiver_signature ||
+            !swimmer.cancellation_policy_signature
+          )
+        ) {
+          navigate("/waivers");
         } else {
           navigate(redirectPath || "/parent-home");
         }

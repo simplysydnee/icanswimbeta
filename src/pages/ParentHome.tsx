@@ -6,12 +6,30 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useParentSwimmers } from "@/hooks/useParentSwimmers";
 import { Calendar, User, LogOut, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logoHeader from "@/assets/logo-parent-header.png";
 
 const ParentHome = () => {
   const { swimmers, loading, error } = useParentSwimmers();
   const navigate = useNavigate();
+
+  // Redirect non-parent roles away from Parent Home
+  useEffect(() => {
+    const redirectNonParent = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { navigate("/auth"); return; }
+      const { data: rolesData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+      const roles = (rolesData || []).map((r: any) => r.role as string);
+      if (roles.includes("admin")) { navigate("/admin/dashboard"); return; }
+      if (roles.includes("instructor")) { navigate("/schedule"); return; }
+      if (roles.includes("vmrc_coordinator")) { navigate("/coordinator"); return; }
+    };
+    redirectNonParent();
+  }, [navigate]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
