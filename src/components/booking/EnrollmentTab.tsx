@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { CalendarIcon, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { LiabilityWaiverModal } from "@/components/LiabilityWaiverModal";
 
 interface EnrollmentTabProps {
   swimmerId?: string;
@@ -52,6 +53,7 @@ const AVAILABILITY_SLOTS = [
 
 export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
   const { toast } = useToast();
+  const [waiverModalOpen, setWaiverModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     // Basic Info
     parentPhone: "",
@@ -110,6 +112,12 @@ export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
     signedWaiver: false,
     photoRelease: false,
     smsPolicyConsent: false,
+    
+    // Photo/Video Permission and Signatures
+    photoVideoPermission: "",
+    photoVideoSignature: "",
+    liabilityWaiverAgreed: false,
+    liabilityWaiverSignature: "",
   });
 
   const handleCheckboxChange = (field: string, checked: boolean) => {
@@ -655,60 +663,84 @@ export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
         </CardContent>
       </Card>
 
-      {/* Legal & Administrative */}
+      {/* Photo/Video Permission */}
       <Card>
         <CardHeader>
-          <CardTitle>Legal & Administrative</CardTitle>
-          <CardDescription>Required agreements and policies</CardDescription>
+          <CardTitle>Photo & Video Permission</CardTitle>
+          <CardDescription>Media release authorization</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="photoVideoPermission">
+              Do you give permission for I CAN SWIM, LLC to use photos or videos of your swimmer for promotional or educational purposes (e.g., social media, website, flyers)?
+            </Label>
+            <Select
+              value={formData.photoVideoPermission}
+              onValueChange={(value) => setFormData({ ...formData, photoVideoPermission: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="yes">Yes</SelectItem>
+                <SelectItem value="no">No</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="photoVideoSignature">Parent/Guardian Signature</Label>
+            <Input
+              id="photoVideoSignature"
+              placeholder="Type your full name to sign"
+              value={formData.photoVideoSignature}
+              onChange={(e) => setFormData({ ...formData, photoVideoSignature: e.target.value })}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Liability Waiver */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Liability Waiver</CardTitle>
+          <CardDescription>Required legal agreement</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div className="flex items-start space-x-2">
               <Checkbox
-                id="agreedToCancellationPolicy"
-                checked={formData.agreedToCancellationPolicy}
-                onCheckedChange={(checked) => handleCheckboxChange("agreedToCancellationPolicy", checked as boolean)}
+                id="liabilityWaiverAgreed"
+                checked={formData.liabilityWaiverAgreed}
+                onCheckedChange={(checked) => handleCheckboxChange("liabilityWaiverAgreed", checked as boolean)}
               />
-              <Label htmlFor="agreedToCancellationPolicy" className="font-normal">
-                I agree to the Cancellation Policy
+              <Label htmlFor="liabilityWaiverAgreed" className="font-normal">
+                I have read and agree to the full{" "}
+                <button
+                  type="button"
+                  onClick={() => setWaiverModalOpen(true)}
+                  className="text-primary underline hover:text-primary/80"
+                >
+                  Waiver and Release of Liability
+                </button>
+                .
               </Label>
             </div>
 
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                id="signedWaiver"
-                checked={formData.signedWaiver}
-                onCheckedChange={(checked) => handleCheckboxChange("signedWaiver", checked as boolean)}
+            <div className="space-y-2">
+              <Label htmlFor="liabilityWaiverSignature">Parent/Guardian Signature</Label>
+              <Input
+                id="liabilityWaiverSignature"
+                placeholder="Type your full name to sign"
+                value={formData.liabilityWaiverSignature}
+                onChange={(e) => setFormData({ ...formData, liabilityWaiverSignature: e.target.value })}
               />
-              <Label htmlFor="signedWaiver" className="font-normal">
-                Signed Liability Waiver
-              </Label>
-            </div>
-
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                id="photoRelease"
-                checked={formData.photoRelease}
-                onCheckedChange={(checked) => handleCheckboxChange("photoRelease", checked as boolean)}
-              />
-              <Label htmlFor="photoRelease" className="font-normal">
-                Photo Release Authorization
-              </Label>
-            </div>
-
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                id="smsPolicyConsent"
-                checked={formData.smsPolicyConsent}
-                onCheckedChange={(checked) => handleCheckboxChange("smsPolicyConsent", checked as boolean)}
-              />
-              <Label htmlFor="smsPolicyConsent" className="font-normal">
-                SMS Policy Consent (receive text message notifications)
-              </Label>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <LiabilityWaiverModal open={waiverModalOpen} onOpenChange={setWaiverModalOpen} />
 
       {/* Submit Button */}
       <div className="flex justify-end gap-4">
