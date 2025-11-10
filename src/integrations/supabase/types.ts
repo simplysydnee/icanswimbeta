@@ -1359,19 +1359,36 @@ export type Database = {
           additional_info: string | null
           admin_approved_at: string | null
           admin_notes: string | null
+          aggressive_behavior: boolean | null
+          aggressive_behavior_description: string | null
+          allergies_description: string | null
           assessment_booking_sent_at: string | null
           availability_general: string[] | null
           availability_other: string | null
-          child_age: number
+          child_date_of_birth: string | null
+          child_height: string | null
           child_name: string
+          child_weight: string | null
+          comfortable_in_water: boolean | null
           coordinator_completed_at: string | null
           coordinator_email: string | null
           coordinator_name: string | null
           coordinator_notes: string | null
           created_at: string
+          diagnosis: Database["public"]["Enums"]["diagnosis_type"] | null
+          elopement_behavior: boolean | null
+          elopement_description: string | null
+          has_allergies: boolean | null
+          has_medical_conditions: boolean | null
+          has_other_therapies: boolean | null
+          has_safety_plan: boolean | null
+          has_seizure_disorder: boolean | null
           id: string
           liability_agreement: boolean
+          medical_conditions_description: string | null
           motivation_factors: string | null
+          non_ambulatory: boolean | null
+          other_therapies_description: string | null
           parent_email: string
           parent_name: string
           parent_phone: string
@@ -1380,29 +1397,50 @@ export type Database = {
           referral_type: string
           reviewed_at: string | null
           reviewed_by: string | null
+          safety_plan_description: string | null
+          self_injurious_behavior: boolean | null
+          self_injurious_description: string | null
           status: string | null
           strengths_interests: string | null
           swim_goals: string[] | null
           swimmer_id: string | null
           swimmer_photo_url: string | null
+          toilet_trained: boolean | null
         }
         Insert: {
           additional_info?: string | null
           admin_approved_at?: string | null
           admin_notes?: string | null
+          aggressive_behavior?: boolean | null
+          aggressive_behavior_description?: string | null
+          allergies_description?: string | null
           assessment_booking_sent_at?: string | null
           availability_general?: string[] | null
           availability_other?: string | null
-          child_age: number
+          child_date_of_birth?: string | null
+          child_height?: string | null
           child_name: string
+          child_weight?: string | null
+          comfortable_in_water?: boolean | null
           coordinator_completed_at?: string | null
           coordinator_email?: string | null
           coordinator_name?: string | null
           coordinator_notes?: string | null
           created_at?: string
+          diagnosis?: Database["public"]["Enums"]["diagnosis_type"] | null
+          elopement_behavior?: boolean | null
+          elopement_description?: string | null
+          has_allergies?: boolean | null
+          has_medical_conditions?: boolean | null
+          has_other_therapies?: boolean | null
+          has_safety_plan?: boolean | null
+          has_seizure_disorder?: boolean | null
           id?: string
           liability_agreement?: boolean
+          medical_conditions_description?: string | null
           motivation_factors?: string | null
+          non_ambulatory?: boolean | null
+          other_therapies_description?: string | null
           parent_email: string
           parent_name: string
           parent_phone: string
@@ -1411,29 +1449,50 @@ export type Database = {
           referral_type: string
           reviewed_at?: string | null
           reviewed_by?: string | null
+          safety_plan_description?: string | null
+          self_injurious_behavior?: boolean | null
+          self_injurious_description?: string | null
           status?: string | null
           strengths_interests?: string | null
           swim_goals?: string[] | null
           swimmer_id?: string | null
           swimmer_photo_url?: string | null
+          toilet_trained?: boolean | null
         }
         Update: {
           additional_info?: string | null
           admin_approved_at?: string | null
           admin_notes?: string | null
+          aggressive_behavior?: boolean | null
+          aggressive_behavior_description?: string | null
+          allergies_description?: string | null
           assessment_booking_sent_at?: string | null
           availability_general?: string[] | null
           availability_other?: string | null
-          child_age?: number
+          child_date_of_birth?: string | null
+          child_height?: string | null
           child_name?: string
+          child_weight?: string | null
+          comfortable_in_water?: boolean | null
           coordinator_completed_at?: string | null
           coordinator_email?: string | null
           coordinator_name?: string | null
           coordinator_notes?: string | null
           created_at?: string
+          diagnosis?: Database["public"]["Enums"]["diagnosis_type"] | null
+          elopement_behavior?: boolean | null
+          elopement_description?: string | null
+          has_allergies?: boolean | null
+          has_medical_conditions?: boolean | null
+          has_other_therapies?: boolean | null
+          has_safety_plan?: boolean | null
+          has_seizure_disorder?: boolean | null
           id?: string
           liability_agreement?: boolean
+          medical_conditions_description?: string | null
           motivation_factors?: string | null
+          non_ambulatory?: boolean | null
+          other_therapies_description?: string | null
           parent_email?: string
           parent_name?: string
           parent_phone?: string
@@ -1442,11 +1501,15 @@ export type Database = {
           referral_type?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
+          safety_plan_description?: string | null
+          self_injurious_behavior?: boolean | null
+          self_injurious_description?: string | null
           status?: string | null
           strengths_interests?: string | null
           swim_goals?: string[] | null
           swimmer_id?: string | null
           swimmer_photo_url?: string | null
+          toilet_trained?: boolean | null
         }
         Relationships: [
           {
@@ -1509,6 +1572,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "instructor" | "parent" | "vmrc_coordinator"
+      diagnosis_type:
+        | "ADD/ADHD"
+        | "Autism"
+        | "Developmental Disability"
+        | "Learning Disability"
+        | "Sensory Processing"
+        | "Speech Delay"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1637,6 +1707,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "instructor", "parent", "vmrc_coordinator"],
+      diagnosis_type: [
+        "ADD/ADHD",
+        "Autism",
+        "Developmental Disability",
+        "Learning Disability",
+        "Sensory Processing",
+        "Speech Delay",
+      ],
     },
   },
 } as const

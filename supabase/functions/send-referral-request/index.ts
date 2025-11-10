@@ -13,26 +13,52 @@ const corsHeaders = {
 
 // Validation schema
 const referralSchema = z.object({
-  parentEmail: z.string().email().max(255),
-  parentName: z.string().trim().min(1).max(100),
-  parentPhone: z.string().regex(/^[\d\s\-\(\)\+]+$/).max(20),
+  // Client Information
   childName: z.string().trim().min(1).max(100),
-  childAge: z.string().refine(val => {
-    const age = parseInt(val);
-    return !isNaN(age) && age >= 1 && age <= 18;
-  }, { message: "Age must be between 1 and 18" }),
+  childDateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  diagnosis: z.enum(["ADD/ADHD", "Autism", "Developmental Disability", "Learning Disability", "Sensory Processing", "Speech Delay"]),
+  parentName: z.string().trim().min(1).max(100),
+  parentEmail: z.string().email().max(255),
+  parentPhone: z.string().regex(/^[\d\s\-\(\)\+]+$/).max(20),
+  
+  // Medical & Physical Profile
+  nonAmbulatory: z.string(),
+  hasSeizureDisorder: z.string(),
+  height: z.string().max(20),
+  weight: z.string().max(20),
+  toiletTrained: z.string(),
+  hasMedicalConditions: z.string(),
+  medicalConditionsDescription: z.string().max(1000).optional(),
+  hasAllergies: z.string(),
+  allergiesDescription: z.string().max(1000).optional(),
+  hasOtherTherapies: z.string(),
+  otherTherapiesDescription: z.string().max(1000).optional(),
+  
+  // Behavioral & Safety
+  comfortableInWater: z.string(),
+  selfInjuriousBehavior: z.string(),
+  selfInjuriousDescription: z.string().max(1000).optional(),
+  aggressiveBehavior: z.string(),
+  aggressiveBehaviorDescription: z.string().max(1000).optional(),
+  elopementBehavior: z.string(),
+  elopementDescription: z.string().max(1000).optional(),
+  hasSafetyPlan: z.string(),
+  safetyPlanDescription: z.string().max(1000).optional(),
+  
+  // Referral & Consent
   referralType: z.enum(["vmrc", "scholarship", "coordinator", "other"]),
   coordinatorName: z.string().trim().max(100).optional(),
   coordinatorEmail: z.string().email().max(255).optional(),
+  photoRelease: z.string().optional(),
+  liabilityAgreement: z.boolean().optional(),
+  swimmerPhotoUrl: z.string().url().max(500).optional().nullable(),
+  
+  // Optional retained fields
   previousSwimLessons: z.string().optional(),
   swimGoals: z.array(z.string().max(100)).max(10).optional(),
   strengthsInterests: z.string().max(1000).optional(),
-  motivationFactors: z.string().max(1000).optional(),
   availabilityGeneral: z.array(z.string().max(50)).max(20).optional(),
   availabilityOther: z.string().max(500).optional(),
-  photoRelease: z.string().optional(),
-  liabilityAgreement: z.boolean().optional(),
-  swimmerPhotoUrl: z.string().url().max(500).optional(),
   additionalInfo: z.string().max(2000).optional(),
 });
 
@@ -67,23 +93,52 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: savedRequest, error: dbError } = await supabaseClient
       .from("vmrc_referral_requests")
       .insert({
+        // Client Information
+        child_name: validatedData.childName,
+        child_date_of_birth: validatedData.childDateOfBirth,
+        diagnosis: validatedData.diagnosis,
         parent_name: validatedData.parentName,
         parent_email: validatedData.parentEmail,
         parent_phone: validatedData.parentPhone,
-        child_name: validatedData.childName,
-        child_age: parseInt(validatedData.childAge),
+        
+        // Medical & Physical Profile
+        non_ambulatory: validatedData.nonAmbulatory === "yes",
+        has_seizure_disorder: validatedData.hasSeizureDisorder === "yes",
+        child_height: validatedData.height,
+        child_weight: validatedData.weight,
+        toilet_trained: validatedData.toiletTrained === "yes",
+        has_medical_conditions: validatedData.hasMedicalConditions === "yes",
+        medical_conditions_description: validatedData.medicalConditionsDescription,
+        has_allergies: validatedData.hasAllergies === "yes",
+        allergies_description: validatedData.allergiesDescription,
+        has_other_therapies: validatedData.hasOtherTherapies === "yes",
+        other_therapies_description: validatedData.otherTherapiesDescription,
+        
+        // Behavioral & Safety
+        comfortable_in_water: validatedData.comfortableInWater === "yes",
+        self_injurious_behavior: validatedData.selfInjuriousBehavior === "yes",
+        self_injurious_description: validatedData.selfInjuriousDescription,
+        aggressive_behavior: validatedData.aggressiveBehavior === "yes",
+        aggressive_behavior_description: validatedData.aggressiveBehaviorDescription,
+        elopement_behavior: validatedData.elopementBehavior === "yes",
+        elopement_description: validatedData.elopementDescription,
+        has_safety_plan: validatedData.hasSafetyPlan === "yes",
+        safety_plan_description: validatedData.safetyPlanDescription,
+        
+        // Referral & Consent
         referral_type: validatedData.referralType,
         coordinator_name: validatedData.coordinatorName,
         coordinator_email: validatedData.coordinatorEmail,
-        previous_swim_lessons: validatedData.previousSwimLessons === "yes",
-        swim_goals: validatedData.swimGoals,
-        strengths_interests: validatedData.strengthsInterests,
-        motivation_factors: validatedData.motivationFactors,
-        availability_general: validatedData.availabilityGeneral,
-        availability_other: validatedData.availabilityOther,
         photo_release: validatedData.photoRelease === "yes",
         liability_agreement: validatedData.liabilityAgreement,
         swimmer_photo_url: validatedData.swimmerPhotoUrl,
+        
+        // Optional retained fields
+        previous_swim_lessons: validatedData.previousSwimLessons === "yes",
+        swim_goals: validatedData.swimGoals,
+        strengths_interests: validatedData.strengthsInterests,
+        availability_general: validatedData.availabilityGeneral,
+        availability_other: validatedData.availabilityOther,
         additional_info: validatedData.additionalInfo,
         status: "pending",
       })
@@ -147,7 +202,42 @@ const handler = async (req: Request): Promise<Response> => {
               
               <h4 style="color: #1f2937; margin-top: 20px; margin-bottom: 10px;">Child Information</h4>
               <p style="margin: 5px 0;"><strong>Name:</strong> ${safeChildName}</p>
-              <p style="margin: 5px 0;"><strong>Age:</strong> ${validatedData.childAge} years old</p>
+              <p style="margin: 5px 0;"><strong>Date of Birth:</strong> ${validatedData.childDateOfBirth}</p>
+              <p style="margin: 5px 0;"><strong>Diagnosis:</strong> ${validatedData.diagnosis}</p>
+              
+              <h4 style="color: #1f2937; margin-top: 20px; margin-bottom: 10px;">Medical & Physical Profile</h4>
+              <p style="margin: 5px 0;"><strong>Height:</strong> ${validatedData.height}</p>
+              <p style="margin: 5px 0;"><strong>Weight:</strong> ${validatedData.weight}</p>
+              <p style="margin: 5px 0;"><strong>Toilet Trained:</strong> ${validatedData.toiletTrained}</p>
+              <p style="margin: 5px 0;"><strong>Uses Wheelchair/Non-ambulatory:</strong> ${validatedData.nonAmbulatory}</p>
+              <p style="margin: 5px 0;"><strong>Seizure Disorder:</strong> ${validatedData.hasSeizureDisorder}</p>
+              ${validatedData.hasMedicalConditions === "yes" && validatedData.medicalConditionsDescription ? `
+                <p style="margin: 10px 0 5px 0;"><strong>Medical Conditions:</strong></p>
+                <p style="background-color: #f3f4f6; padding: 10px; border-radius: 6px; margin: 5px 0;">${escapeHtml(validatedData.medicalConditionsDescription)}</p>
+              ` : ""}
+              ${validatedData.hasAllergies === "yes" && validatedData.allergiesDescription ? `
+                <p style="margin: 10px 0 5px 0;"><strong>Allergies:</strong></p>
+                <p style="background-color: #f3f4f6; padding: 10px; border-radius: 6px; margin: 5px 0;">${escapeHtml(validatedData.allergiesDescription)}</p>
+              ` : ""}
+              
+              <h4 style="color: #1f2937; margin-top: 20px; margin-bottom: 10px;">Behavioral & Safety Information</h4>
+              <p style="margin: 5px 0;"><strong>Comfortable in Water:</strong> ${validatedData.comfortableInWater}</p>
+              ${validatedData.selfInjuriousBehavior === "yes" && validatedData.selfInjuriousDescription ? `
+                <p style="margin: 10px 0 5px 0;"><strong>Self-Injurious Behaviors:</strong></p>
+                <p style="background-color: #fef3c7; padding: 10px; border-radius: 6px; margin: 5px 0;">${escapeHtml(validatedData.selfInjuriousDescription)}</p>
+              ` : ""}
+              ${validatedData.aggressiveBehavior === "yes" && validatedData.aggressiveBehaviorDescription ? `
+                <p style="margin: 10px 0 5px 0;"><strong>Aggressive Behavior:</strong></p>
+                <p style="background-color: #fef3c7; padding: 10px; border-radius: 6px; margin: 5px 0;">${escapeHtml(validatedData.aggressiveBehaviorDescription)}</p>
+              ` : ""}
+              ${validatedData.elopementBehavior === "yes" && validatedData.elopementDescription ? `
+                <p style="margin: 10px 0 5px 0;"><strong>Elopement Behaviors:</strong></p>
+                <p style="background-color: #fef3c7; padding: 10px; border-radius: 6px; margin: 5px 0;">${escapeHtml(validatedData.elopementDescription)}</p>
+              ` : ""}
+              ${validatedData.hasSafetyPlan === "yes" && validatedData.safetyPlanDescription ? `
+                <p style="margin: 10px 0 5px 0;"><strong>Safety Plan/BIP:</strong></p>
+                <p style="background-color: #dbeafe; padding: 10px; border-radius: 6px; margin: 5px 0;">${escapeHtml(validatedData.safetyPlanDescription)}</p>
+              ` : ""}
               
               <h4 style="color: #1f2937; margin-top: 20px; margin-bottom: 10px;">Enrollment Details</h4>
               <p style="margin: 5px 0;"><strong>Previous Swim Lessons:</strong> ${validatedData.previousSwimLessons === "yes" ? "Yes" : "No"}</p>
