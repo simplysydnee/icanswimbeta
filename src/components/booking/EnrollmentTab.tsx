@@ -13,6 +13,7 @@ import { CalendarIcon, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { LiabilityWaiverModal } from "@/components/LiabilityWaiverModal";
+import { CancellationPolicyAgreementModal } from "@/components/CancellationPolicyAgreementModal";
 
 interface EnrollmentTabProps {
   swimmerId?: string;
@@ -54,6 +55,7 @@ const AVAILABILITY_SLOTS = [
 export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
   const { toast } = useToast();
   const [waiverModalOpen, setWaiverModalOpen] = useState(false);
+  const [cancellationPolicyModalOpen, setCancellationPolicyModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     // Basic Info
     parentPhone: "",
@@ -118,6 +120,8 @@ export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
     photoVideoSignature: "",
     liabilityWaiverAgreed: false,
     liabilityWaiverSignature: "",
+    cancellationPolicyAgreed: false,
+    cancellationPolicySignature: "",
   });
 
   const handleCheckboxChange = (field: string, checked: boolean) => {
@@ -740,7 +744,48 @@ export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
         </CardContent>
       </Card>
 
+      {/* Cancellation Policy Agreement */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cancellation Policy Agreement</CardTitle>
+          <CardDescription>Required policy acknowledgment</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="cancellationPolicyAgreed"
+                checked={formData.cancellationPolicyAgreed}
+                onCheckedChange={(checked) => handleCheckboxChange("cancellationPolicyAgreed", checked as boolean)}
+              />
+              <Label htmlFor="cancellationPolicyAgreed" className="font-normal">
+                I have read and agree to the{" "}
+                <button
+                  type="button"
+                  onClick={() => setCancellationPolicyModalOpen(true)}
+                  className="text-primary underline hover:text-primary/80"
+                >
+                  Cancellation Policy
+                </button>
+                .
+              </Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cancellationPolicySignature">Parent/Guardian Signature</Label>
+              <Input
+                id="cancellationPolicySignature"
+                placeholder="Type your full name to sign"
+                value={formData.cancellationPolicySignature}
+                onChange={(e) => setFormData({ ...formData, cancellationPolicySignature: e.target.value })}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <LiabilityWaiverModal open={waiverModalOpen} onOpenChange={setWaiverModalOpen} />
+      <CancellationPolicyAgreementModal open={cancellationPolicyModalOpen} onOpenChange={setCancellationPolicyModalOpen} />
 
       {/* Submit Button */}
       <div className="flex justify-end gap-4">
