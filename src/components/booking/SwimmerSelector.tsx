@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { User } from "lucide-react";
+import { ProgressBadge, SwimLevel } from "@/components/ProgressBadge";
 
 interface Swimmer {
   id: string;
@@ -148,10 +149,14 @@ export const SwimmerSelector = ({
                       <div className="font-semibold text-sm sm:text-base truncate">
                         {swimmer.firstName} {swimmer.lastName}
                       </div>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <Badge variant="outline" className="text-xs">
-                          {swimmer.currentLevel}
-                        </Badge>
+                      <div className="flex items-center gap-3 mt-2 flex-wrap">
+                        <div className="scale-75 origin-left">
+                          <ProgressBadge 
+                            level={swimmer.currentLevel as SwimLevel} 
+                            isActive={true}
+                            size="sm"
+                          />
+                        </div>
                         <Badge variant={status.variant} className="text-xs">
                           {status.text}
                         </Badge>
