@@ -79,6 +79,31 @@ const handler = async (req: Request): Promise<Response> => {
     const lessonsCompleted = swimmer.vmrc_sessions_used || 0;
     const currentPosNumber = swimmer.vmrc_current_pos_number || "N/A";
 
+    // Store the request in database first
+    const { data: progressRequest, error: requestError } = await supabaseClient
+      .from("progress_update_requests")
+      .insert({
+        swimmer_id: swimmerId,
+        instructor_id: instructorId,
+        coordinator_email: swimmer.vmrc_coordinator_email,
+        coordinator_name: swimmer.vmrc_coordinator_name,
+        current_pos_number: currentPosNumber,
+        progress_summary: progressSummary,
+        skills_summary: skillsSummary,
+        lessons_completed: lessonsCompleted,
+        sent_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (requestError) {
+      console.error("Error storing progress request:", requestError);
+      throw requestError;
+    }
+
+    // Generate approval link with the request ID
+    const approvalUrl = `${Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.lovable.app') || 'https://your-app.lovable.app'}/pos-approval/${progressRequest.id}`;
+
     // Generate comprehensive summary
     const comprehensiveSummary = `
 <h2>Progress Summary for ${swimmer.first_name} ${swimmer.last_name}</h2>
@@ -123,7 +148,18 @@ ${recentNotes.map((note, index) => `
 <h3>POS Renewal Request</h3>
 <p>Based on the progress above, we are requesting authorization for an additional 12 lessons to continue ${swimmer.first_name}'s swim development.</p>
 
-<p>Please review and provide a new POS number when approved.</p>
+<div style="margin: 30px 0; padding: 20px; background-color: #f0f9ff; border-radius: 8px; text-align: center;">
+  <p style="margin: 0 0 15px 0; font-size: 16px; font-weight: bold; color: #1e40af;">Click the button below to review and approve this POS request:</p>
+  <a href="${approvalUrl}" style="display: inline-block; padding: 12px 30px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">Review & Approve POS Request</a>
+  <p style="margin: 15px 0 0 0; font-size: 12px; color: #64748b;">Or copy this link: ${approvalUrl}</p>
+</div>
+
+<p><strong>What you need to do:</strong></p>
+<ol>
+  <li>Click the button above to review the complete progress summary</li>
+  <li>Enter the new POS authorization number</li>
+  <li>Click "Approve" to authorize 12 additional lessons</li>
+</ol>
 
 <hr />
 <p style="font-size: 12px; color: #666;">

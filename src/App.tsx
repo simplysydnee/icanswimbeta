@@ -14,6 +14,7 @@ import ParentHome from "./pages/ParentHome";
 import UpdateProgress from "./pages/UpdateProgress";
 import CoordinatorHub from "./pages/CoordinatorHub";
 import AdminDashboard from "./pages/AdminDashboard";
+import PosApproval from "./pages/PosApproval";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/coordinator" element={<CoordinatorHub />} />
           <Route path="/update-progress" element={<UpdateProgress />} />
           <Route path="/admin/master-schedule" element={<MasterSchedule />} />
+          <Route path="/pos-approval/:requestId" element={<PosApproval />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

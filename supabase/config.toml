@@ -20,3 +20,12 @@ verify_jwt = false
 
 [functions.auto-cancel-pending-assessments]
 verify_jwt = true
+
+[functions.approve-pos-request]
+verify_jwt = false
+
+[functions.notify-instructor-progress-needed]
+verify_jwt = true
+
+[functions.send-vmrc-progress-summary]
+verify_jwt = true
