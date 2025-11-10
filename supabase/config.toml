@@ -29,3 +29,6 @@ verify_jwt = true
 
 [functions.send-vmrc-progress-summary]
 verify_jwt = true
+
+[functions.setup-demo-accounts]
+verify_jwt = false
