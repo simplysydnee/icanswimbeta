@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Save, FileCheck, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ProgressSummaryButton } from "@/components/ProgressSummaryButton";
 
 interface Skill {
   id: string;
@@ -511,6 +512,22 @@ export const UpdateProgressDrawer = ({
 
             {/* Action Buttons */}
             <div className="flex flex-col gap-3 pt-4">
+              {swimmer.is_vmrc_client && posInfo && posInfo.lesson_number >= 11 && (
+                <ProgressSummaryButton
+                  swimmerId={swimmer.id}
+                  swimmerName={`${swimmer.first_name} ${swimmer.last_name}`}
+                  currentLevel={swimmer.swim_levels?.display_name}
+                  coordinatorEmail={swimmer.vmrc_coordinator_email}
+                  coordinatorName={swimmer.vmrc_coordinator_name}
+                  posNumber={swimmer.vmrc_current_pos_number}
+                  masteredSkills={skills.filter(s => s.status === "mastered").map(s => s.name)}
+                  inProgressSkills={skills.filter(s => s.status === "in_progress").map(s => s.name)}
+                  lessonsCompleted={posInfo.lessons_used + 1}
+                  variant="default"
+                  size="default"
+                />
+              )}
+              
               {swimmer.is_vmrc_client && posInfo && posInfo.lesson_number >= 11 ? (
                 <>
                   <Button

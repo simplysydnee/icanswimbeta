@@ -306,6 +306,47 @@ export type Database = {
           },
         ]
       }
+      instructor_notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          notification_type: string
+          read: boolean | null
+          read_at: string | null
+          swimmer_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          notification_type: string
+          read?: boolean | null
+          read_at?: string | null
+          swimmer_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          notification_type?: string
+          read?: boolean | null
+          read_at?: string | null
+          swimmer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instructor_notifications_swimmer_id_fkey"
+            columns: ["swimmer_id"]
+            isOneToOne: false
+            referencedRelation: "swimmers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parent_invitations: {
         Row: {
           claimed: boolean | null
@@ -502,6 +543,68 @@ export type Database = {
           },
           {
             foreignKeyName: "progress_notes_swimmer_id_fkey"
+            columns: ["swimmer_id"]
+            isOneToOne: false
+            referencedRelation: "swimmers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      progress_update_requests: {
+        Row: {
+          coordinator_email: string
+          coordinator_name: string | null
+          created_at: string | null
+          current_pos_number: string | null
+          id: string
+          instructor_id: string
+          lessons_completed: number | null
+          new_pos_number: string | null
+          progress_summary: string
+          responded_at: string | null
+          sent_at: string | null
+          skills_summary: Json | null
+          status: string
+          swimmer_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          coordinator_email: string
+          coordinator_name?: string | null
+          created_at?: string | null
+          current_pos_number?: string | null
+          id?: string
+          instructor_id: string
+          lessons_completed?: number | null
+          new_pos_number?: string | null
+          progress_summary: string
+          responded_at?: string | null
+          sent_at?: string | null
+          skills_summary?: Json | null
+          status?: string
+          swimmer_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          coordinator_email?: string
+          coordinator_name?: string | null
+          created_at?: string | null
+          current_pos_number?: string | null
+          id?: string
+          instructor_id?: string
+          lessons_completed?: number | null
+          new_pos_number?: string | null
+          progress_summary?: string
+          responded_at?: string | null
+          sent_at?: string | null
+          skills_summary?: Json | null
+          status?: string
+          swimmer_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progress_update_requests_swimmer_id_fkey"
             columns: ["swimmer_id"]
             isOneToOne: false
             referencedRelation: "swimmers"

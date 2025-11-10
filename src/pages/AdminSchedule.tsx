@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { SwimmersNeedingUpdate } from "@/components/SwimmersNeedingUpdate";
 import { UpdateProgressDrawer } from "@/components/admin/UpdateProgressDrawer";
+import { InstructorNotificationBell } from "@/components/InstructorNotificationBell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -547,16 +548,19 @@ const AdminSchedule = () => {
               </p>
             </div>
             
-            {userRole === "admin" && (
-              <Button
-                size="lg"
-                onClick={() => navigate("/admin/master-schedule")}
-                className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Create Master Schedule
-              </Button>
-            )}
+            <div className="flex items-center gap-3">
+              <InstructorNotificationBell />
+              {userRole === "admin" && (
+                <Button
+                  size="lg"
+                  onClick={() => navigate("/admin/master-schedule")}
+                  className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  Create Master Schedule
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Swimmers Needing Progress Updates - Only for instructors */}

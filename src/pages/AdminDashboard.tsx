@@ -30,6 +30,7 @@ import { format } from "date-fns";
 import { POSManagement } from "@/components/admin/POSManagement";
 import { SwimmerDetailDrawer } from "@/components/admin/SwimmerDetailDrawer";
 import { UserManagement } from "@/components/admin/UserManagement";
+import { InstructorNotificationBell } from "@/components/InstructorNotificationBell";
 
 interface Swimmer {
   id: string;
@@ -470,6 +471,7 @@ const AdminDashboard = () => {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <InstructorNotificationBell />
       </div>
 
       <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-4">
