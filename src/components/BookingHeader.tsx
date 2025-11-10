@@ -8,7 +8,7 @@ interface BookingHeaderProps {
   swimmerPhotoUrl?: string;
   currentLevel: string;
   enrollmentStatus: "waitlist" | "approved" | "enrolled";
-  assessmentStatus: "not_started" | "scheduled" | "complete";
+  assessmentStatus: "not_started" | "scheduled" | "complete" | "progress_update";
   progressPercentage?: number;
 }
 
@@ -23,6 +23,9 @@ export const BookingHeader = ({
   const getStatusDisplay = () => {
     if (enrollmentStatus === "waitlist") {
       return { text: "Waitlist", variant: "secondary" as const };
+    }
+    if (assessmentStatus === "progress_update") {
+      return { text: "Progress Update Needed", variant: "default" as const };
     }
     if (enrollmentStatus === "approved" && assessmentStatus !== "complete") {
       return { text: "Approved – Book Assessment", variant: "default" as const };
