@@ -27,33 +27,27 @@ const DIAGNOSIS_OPTIONS = [
 ];
 
 const SWIM_GOALS = [
-  "Water Comfort",
-  "Basic Skills",
-  "Water Safety",
-  "Stroke Development",
-  "Independence",
+  "Develop comfort and familiarity with water",
+  "Front crawl",
+  "Backstroke",
+  "Improve basic water safety skills (e.g. floating, treading water)",
+  "Learn basic swimming strokes (e.g. front stroke)",
+  "Learn to swim with flotation device",
+  "Become comfortable in water",
+  "Enter and exit water",
+  "To float on back",
+  "Perform basic arm and leg movement",
+  "Tread water",
 ];
 
 const AVAILABILITY_SLOTS = [
-  "Monday Morning",
-  "Monday Afternoon",
-  "Monday Evening",
-  "Tuesday Morning",
-  "Tuesday Afternoon",
-  "Tuesday Evening",
-  "Wednesday Morning",
-  "Wednesday Afternoon",
-  "Wednesday Evening",
-  "Thursday Morning",
-  "Thursday Afternoon",
-  "Thursday Evening",
-  "Friday Morning",
-  "Friday Afternoon",
-  "Friday Evening",
-  "Saturday Morning",
-  "Saturday Afternoon",
-  "Sunday Morning",
-  "Sunday Afternoon",
+  "Flexible – I can adjust my schedule if needed",
+  "Weekday Mornings (8 AM- 12 PM)",
+  "Weekday Afternoons (12 PM – 4 PM)",
+  "Weekday Evenings (4 PM – 7 PM)",
+  "Saturday Availability",
+  "Sunday Availability",
+  "Other (please specify)",
 ];
 
 export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
@@ -384,13 +378,20 @@ export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
           <CardDescription>Previous experience and learning objectives</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-start space-x-2">
-            <Checkbox
-              id="previousSwimLessons"
-              checked={formData.previousSwimLessons}
-              onCheckedChange={(checked) => handleCheckboxChange("previousSwimLessons", checked as boolean)}
-            />
-            <Label htmlFor="previousSwimLessons" className="font-normal">Previous Swim Lessons</Label>
+          <div className="space-y-2">
+            <Label>Has your child previously taken swim lessons?</Label>
+            <Select
+              value={formData.previousSwimLessons ? "yes" : "no"}
+              onValueChange={(value) => setFormData({ ...formData, previousSwimLessons: value === "yes" })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="yes">Yes</SelectItem>
+                <SelectItem value="no">No</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
@@ -409,8 +410,8 @@ export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label>Swim Goals (select all that apply)</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <Label>What swim skills and water safety skills would you like your child to develop? (select all that apply)</Label>
+            <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto p-2 border rounded-md">
               {SWIM_GOALS.map((goal) => (
                 <div key={goal} className="flex items-start space-x-2">
                   <Checkbox
@@ -418,7 +419,7 @@ export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
                     checked={formData.swimGoals.includes(goal)}
                     onCheckedChange={() => handleMultiSelectToggle("swimGoals", goal)}
                   />
-                  <Label htmlFor={`goal-${goal}`} className="font-normal">{goal}</Label>
+                  <Label htmlFor={`goal-${goal}`} className="font-normal text-sm">{goal}</Label>
                 </div>
               ))}
             </div>
@@ -475,20 +476,20 @@ export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="strengthsInterests">Strengths/Interests</Label>
+            <Label htmlFor="strengthsInterests">Please describe your child's strengths, interests, and favorite activities.</Label>
             <Textarea
               id="strengthsInterests"
-              placeholder="What are your child's strengths and interests?"
+              placeholder="Describe your child's strengths, interests, and favorite activities..."
               value={formData.strengthsInterests}
               onChange={(e) => setFormData({ ...formData, strengthsInterests: e.target.value })}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="motivators">What would be good motivators or reinforcement for positive behavior in the pool?</Label>
+            <Label htmlFor="motivators">What kinds of things motivate your child and encourage positive behavior, especially in a pool environment?</Label>
             <Textarea
               id="motivators"
-              placeholder="e.g., Praise, toys, specific activities..."
+              placeholder="e.g., Praise, toys, specific activities, rewards..."
               value={formData.motivators}
               onChange={(e) => setFormData({ ...formData, motivators: e.target.value })}
             />
@@ -574,8 +575,8 @@ export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>What is your general availability for swim lessons?</Label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto p-2 border rounded-md">
+            <Label>What is your general availability for swim lessons? (select all that apply)</Label>
+            <div className="grid grid-cols-1 gap-2 p-2 border rounded-md">
               {AVAILABILITY_SLOTS.map((slot) => (
                 <div key={slot} className="flex items-start space-x-2">
                   <Checkbox
