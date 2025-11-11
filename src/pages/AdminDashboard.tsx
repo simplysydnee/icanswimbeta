@@ -32,6 +32,7 @@ import { SwimmerDetailDrawer } from "@/components/admin/SwimmerDetailDrawer";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { InstructorNotificationBell } from "@/components/InstructorNotificationBell";
 import logoHeader from "@/assets/logo-header.png";
+import AdminSchedule from "./AdminSchedule";
 
 interface Swimmer {
   id: string;
@@ -469,100 +470,103 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="mb-4">
+    <div className="container mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="mb-2 sm:mb-4">
         <img 
           src={logoHeader} 
           alt="I CAN SWIM" 
-          className="h-12 w-auto object-contain"
+          className="h-10 sm:h-12 w-auto object-contain"
         />
       </div>
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+        <h1 className="text-2xl sm:text-3xl font-bold">Admin Dashboard</h1>
         <InstructorNotificationBell />
       </div>
 
       <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="pos">Purchase Orders</TabsTrigger>
-          <TabsTrigger value="swimmers">Swimmers</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
+        <TabsList className="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm py-2">Overview</TabsTrigger>
+          <TabsTrigger value="schedule" className="text-xs sm:text-sm py-2">Schedule</TabsTrigger>
+          <TabsTrigger value="pos" className="text-xs sm:text-sm py-2">Purchase Orders</TabsTrigger>
+          <TabsTrigger value="swimmers" className="text-xs sm:text-sm py-2">Swimmers</TabsTrigger>
+          <TabsTrigger value="users" className="text-xs sm:text-sm py-2">Users</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="space-y-4 sm:space-y-6">
           {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-7 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Waitlist</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Waitlist</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpis.waitlist}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{kpis.waitlist}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               Pending Enrollment
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpis.pendingEnrollment}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{kpis.pendingEnrollment}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               Awaiting Approval
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-600">{kpis.awaitingApproval}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-amber-600">{kpis.awaitingApproval}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Approved</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Approved</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{kpis.approved}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-green-600">{kpis.approved}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Declined</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Declined</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{kpis.declined}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-red-600">{kpis.declined}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-              <TrendingUp className="h-4 w-4" />
-              Booked (7d)
+          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
+              <TrendingUp className="h-3 sm:h-4 w-3 sm:w-4" />
+              <span className="hidden sm:inline">Booked (7d)</span>
+              <span className="sm:hidden">Booked</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpis.sessionsBooked}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{kpis.sessionsBooked}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-              <TrendingDown className="h-4 w-4" />
-              Canceled (7d)
+          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
+              <TrendingDown className="h-3 sm:h-4 w-3 sm:w-4" />
+              <span className="hidden sm:inline">Canceled (7d)</span>
+              <span className="sm:hidden">Canceled</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpis.sessionsCanceled}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{kpis.sessionsCanceled}</div>
           </CardContent>
           </Card>
           </div>
@@ -750,6 +754,10 @@ const AdminDashboard = () => {
             </Tabs>
           </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="schedule">
+          <AdminSchedule />
         </TabsContent>
 
         <TabsContent value="pos">
