@@ -92,12 +92,20 @@ export function UserManagement() {
 
   const updateUserRole = async (userId: string, newRole: "admin" | "instructor" | "parent" | "vmrc_coordinator") => {
     try {
-      const { error } = await supabase
+      // Delete existing roles for this user
+      const { error: deleteError } = await supabase
         .from("user_roles")
-        .update({ role: newRole })
+        .delete()
         .eq("user_id", userId);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
+
+      // Insert new role
+      const { error: insertError } = await supabase
+        .from("user_roles")
+        .insert({ user_id: userId, role: newRole });
+
+      if (insertError) throw insertError;
 
       toast({
         title: "Success",
