@@ -1,73 +1,59 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
-import { addMonths, startOfMonth, format } from "date-fns";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BookingHeader } from "@/components/BookingHeader";
 import { SwimmerSelector } from "@/components/booking/SwimmerSelector";
 import { WeeklyBookingTab } from "@/components/booking/WeeklyBookingTab";
-import { FloatingSessionsTab } from "@/components/booking/FloatingSessionsTab";
 import { AssessmentTab } from "@/components/booking/AssessmentTab";
+import { FloatingSessionsTab } from "@/components/booking/FloatingSessionsTab";
 import { EnrollmentTab } from "@/components/booking/EnrollmentTab";
+import { supabase } from "@/integrations/supabase/client";
+import { useSwimmersQuery } from "@/hooks/useSwimmersQuery";
 import { LogoutButton } from "@/components/LogoutButton";
 import logoHeader from "@/assets/logo-header.png";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { addMonths, startOfMonth, format } from "date-fns";
+import { useSearchParams } from "react-router-dom";
 
 const Booking = () => {
   const [searchParams] = useSearchParams();
   const swimmerIdFromUrl = searchParams.get("swimmerId");
-  const [swimmers, setSwimmers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedSwimmerIds, setSelectedSwimmerIds] = useState<string[]>([]);
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
+  const [parentId, setParentId] = useState<string | undefined>();
+  
+  const { data: rawSwimmers = [], isLoading: loading } = useSwimmersQuery();
 
   useEffect(() => {
-    const fetchSwimmers = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        // Fetch parent's swimmers with level info - single query with join
-        const { data, error } = await supabase
-          .from('swimmers')
-          .select(`
-            *,
-            swim_levels!swimmers_current_level_id_fkey(display_name)
-          `)
-          .eq('parent_id', user.id)
-          .order('first_name');
-
-        if (error) throw error;
-
-        // Transform to expected format
-        const transformedSwimmers = (data || []).map(s => ({
-          id: s.id,
-          firstName: s.first_name,
-          lastName: s.last_name,
-          photoUrl: s.photo_url,
-          currentLevel: s.swim_levels?.display_name || '',
-          enrollmentStatus: s.enrollment_status,
-          assessmentStatus: s.assessment_status,
-          progressPercentage: 0, // Calculate from skills if needed
-          isVmrcClient: s.is_vmrc_client,
-          paymentType: s.payment_type,
-          vmrcSessionsUsed: s.vmrc_sessions_used,
-          vmrcSessionsAuthorized: s.vmrc_sessions_authorized,
-          vmrcCurrentPosNumber: s.vmrc_current_pos_number,
-          flexibleSwimmer: s.flexible_swimmer,
-        }));
-
-        setSwimmers(transformedSwimmers);
-      } catch (error) {
-        console.error('Error fetching swimmers:', error);
-      } finally {
-        setLoading(false);
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setParentId(user.id);
       }
     };
 
-    fetchSwimmers();
+    fetchUser();
   }, []);
+
+  // Transform swimmers to expected format
+  const swimmers = rawSwimmers.map(s => ({
+    id: s.id,
+    firstName: s.first_name,
+    lastName: s.last_name,
+    photoUrl: s.photo_url,
+    currentLevel: s.swim_levels?.display_name || '',
+    enrollmentStatus: s.enrollment_status,
+    assessmentStatus: s.assessment_status,
+    progressPercentage: 0,
+    isVmrcClient: s.is_vmrc_client,
+    paymentType: s.payment_type,
+    vmrcSessionsUsed: s.vmrc_sessions_used,
+    vmrcSessionsAuthorized: s.vmrc_sessions_authorized,
+    vmrcCurrentPosNumber: s.vmrc_current_pos_number,
+    flexibleSwimmer: s.flexible_swimmer,
+  }));
 
   // Pre-select swimmer if coming from a child dashboard
   useEffect(() => {

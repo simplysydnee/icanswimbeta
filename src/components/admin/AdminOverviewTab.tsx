@@ -12,30 +12,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CheckCircle, XCircle, TrendingUp, TrendingDown, Eye } from "lucide-react";
+import { CheckCircle, XCircle, Eye } from "lucide-react";
 import { format } from "date-fns";
-import { Swimmer } from "@/hooks/useSwimmers";
-import { Session } from "@/hooks/useSessions";
-import { AdminKPIs } from "@/hooks/useAdminKPIs";
+import { useSwimmersQuery, Swimmer } from "@/hooks/useSwimmersQuery";
+import { useSessionsQuery, Session } from "@/hooks/useSessionsQuery";
 import { AdminKPICards } from "./AdminKPICards";
 
 interface AdminOverviewTabProps {
-  kpis: AdminKPIs;
-  swimmers: Swimmer[];
-  sessions: Session[];
   onApproveSwimmer: (swimmer: Swimmer) => void;
   onDeclineSwimmer: (swimmer: Swimmer) => void;
   onViewSwimmer: (swimmerId: string) => void;
 }
 
 export const AdminOverviewTab = ({
-  kpis,
-  swimmers,
-  sessions,
   onApproveSwimmer,
   onDeclineSwimmer,
   onViewSwimmer,
 }: AdminOverviewTabProps) => {
+  const { data: swimmers = [], isLoading: swimmersLoading } = useSwimmersQuery();
+  const { data: sessions = [], isLoading: sessionsLoading } = useSessionsQuery();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("waitlist");
   const [sessionTab, setSessionTab] = useState("upcoming");
@@ -137,7 +132,7 @@ export const AdminOverviewTab = ({
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* KPI Cards */}
-      <AdminKPICards kpis={kpis} />
+      <AdminKPICards />
 
       {/* Clients Section */}
       <Card>

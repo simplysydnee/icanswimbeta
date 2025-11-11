@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,15 +11,29 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Eye } from "lucide-react";
-import { Swimmer } from "@/hooks/useSwimmers";
+import { useSwimmersQuery, Swimmer } from "@/hooks/useSwimmersQuery";
+import { useState } from "react";
 
 interface AdminSwimmersTabProps {
-  swimmers: Swimmer[];
   onViewSwimmer: (swimmerId: string) => void;
 }
 
-export const AdminSwimmersTab = ({ swimmers, onViewSwimmer }: AdminSwimmersTabProps) => {
+export const AdminSwimmersTab = ({ onViewSwimmer }: AdminSwimmersTabProps) => {
+  const { data: swimmers = [], isLoading } = useSwimmersQuery();
   const [searchTerm, setSearchTerm] = useState("");
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>All Swimmers</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">Loading swimmers...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
