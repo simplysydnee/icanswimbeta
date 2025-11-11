@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, AlertCircle, CheckCircle2, User, Calendar } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { LogoutButton } from "@/components/LogoutButton";
 
 interface Swimmer {
   id: string;
@@ -145,14 +146,16 @@ const UpdateProgress = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/10 to-background p-6">
       <div className="container mx-auto max-w-3xl">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/schedule")}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Schedule
-        </Button>
+        <div className="mb-4 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/schedule")}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Schedule
+          </Button>
+          <LogoutButton />
+        </div>
 
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">Update Swimmer Progress</h1>

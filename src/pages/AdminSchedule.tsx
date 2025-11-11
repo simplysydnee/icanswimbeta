@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { SwimmersNeedingUpdate } from "@/components/SwimmersNeedingUpdate";
 import { UpdateProgressDrawer } from "@/components/admin/UpdateProgressDrawer";
 import { InstructorNotificationBell } from "@/components/InstructorNotificationBell";
+import { LogoutButton } from "@/components/LogoutButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -536,12 +537,13 @@ const AdminSchedule = () => {
     <>
       <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/10 to-background p-6">
         <div className="container mx-auto max-w-7xl">
-          <div className="mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <img 
               src={logoHeader} 
               alt="I CAN SWIM" 
               className="h-12 w-auto object-contain"
             />
+            <LogoutButton />
           </div>
           {/* Header with Create Master Schedule Button */}
           <div className="flex items-center justify-between mb-6">

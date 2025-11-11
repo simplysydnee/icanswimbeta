@@ -31,6 +31,7 @@ import { POSManagement } from "@/components/admin/POSManagement";
 import { SwimmerDetailDrawer } from "@/components/admin/SwimmerDetailDrawer";
 import { UserManagement } from "@/components/admin/UserManagement";
 import { InstructorNotificationBell } from "@/components/InstructorNotificationBell";
+import { LogoutButton } from "@/components/LogoutButton";
 import logoHeader from "@/assets/logo-header.png";
 import AdminSchedule from "./AdminSchedule";
 import { SetupDemoData } from "@/components/admin/SetupDemoData";
@@ -472,12 +473,13 @@ const AdminDashboard = () => {
 
   return (
     <div className="container mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
-      <div className="mb-2 sm:mb-4">
+      <div className="mb-2 sm:mb-4 flex items-center justify-between">
         <img 
           src={logoHeader} 
           alt="I CAN SWIM" 
           className="h-10 sm:h-12 w-auto object-contain"
         />
+        <LogoutButton />
       </div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
         <h1 className="text-2xl sm:text-3xl font-bold">Admin Dashboard</h1>

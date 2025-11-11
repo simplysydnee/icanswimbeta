@@ -10,6 +10,7 @@ import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, Dr
 import { AlertCircle, Calendar, CheckCircle, Clock, FileText, Plus, Search, Upload, Users, Phone, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { LogoutButton } from "@/components/LogoutButton";
 import logoHeader from "@/assets/logo-header.png";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
@@ -292,12 +293,13 @@ const CoordinatorHub = () => {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <img 
           src={logoHeader} 
           alt="I CAN SWIM" 
           className="h-12 w-auto object-contain"
         />
+        <LogoutButton />
       </div>
       <div className="flex justify-between items-center">
         <div>

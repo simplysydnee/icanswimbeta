@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { LiabilityWaiverModal } from "@/components/LiabilityWaiverModal";
 import { CancellationPolicyAgreementModal } from "@/components/CancellationPolicyAgreementModal";
 import { useToast } from "@/hooks/use-toast";
+import { LogoutButton } from "@/components/LogoutButton";
 import { Loader2 } from "lucide-react";
 
 export default function WaiverCompletion() {
@@ -176,6 +177,9 @@ export default function WaiverCompletion() {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-3xl mx-auto space-y-6">
+        <div className="flex items-center justify-end mb-4">
+          <LogoutButton />
+        </div>
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-primary">Required Waivers</h1>
           <p className="text-muted-foreground">

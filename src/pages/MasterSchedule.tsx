@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { InstructorManager } from "@/components/admin/InstructorManager";
+import { LogoutButton } from "@/components/LogoutButton";
 import logoHeader from "@/assets/logo-header.png";
 
 const DAYS_OF_WEEK = [
@@ -205,11 +206,14 @@ const MasterSchedule = () => {
     <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/10 to-background p-6">
       <div className="container mx-auto max-w-5xl">
         <div className="mb-6">
-          <img 
-            src={logoHeader} 
-            alt="I CAN SWIM" 
-            className="h-12 w-auto object-contain mb-4"
-          />
+          <div className="flex items-center justify-between mb-4">
+            <img 
+              src={logoHeader} 
+              alt="I CAN SWIM" 
+              className="h-12 w-auto object-contain"
+            />
+            <LogoutButton />
+          </div>
           <h1 className="text-3xl font-bold">Master Schedule (Admin)</h1>
           <p className="text-muted-foreground">Generate swim sessions for instructors</p>
         </div>
