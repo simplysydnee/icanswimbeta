@@ -88,7 +88,7 @@ export const useUpdateSession = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Session> }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: Record<string, any> }) => {
       const { data, error } = await supabase
         .from('sessions')
         .update(updates)
@@ -110,10 +110,10 @@ export const useCreateSession = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (session: Partial<Session>) => {
+    mutationFn: async (session: Record<string, any>) => {
       const { data, error } = await supabase
         .from('sessions')
-        .insert([session])
+        .insert([session as any])
         .select()
         .single();
 

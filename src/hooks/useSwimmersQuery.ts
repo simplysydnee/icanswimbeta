@@ -54,7 +54,7 @@ export const useUpdateSwimmer = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Swimmer> }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: Record<string, any> }) => {
       const { data, error } = await supabase
         .from('swimmers')
         .update(updates)
@@ -76,10 +76,10 @@ export const useCreateSwimmer = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (swimmer: Partial<Swimmer>) => {
+    mutationFn: async (swimmer: Record<string, any>) => {
       const { data, error } = await supabase
         .from('swimmers')
-        .insert([swimmer])
+        .insert([swimmer as any])
         .select()
         .single();
 

@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { addMonths, startOfMonth, format } from "date-fns";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 
 const Booking = () => {
   const [searchParams] = useSearchParams();
@@ -42,16 +42,16 @@ const Booking = () => {
     id: s.id,
     firstName: s.first_name,
     lastName: s.last_name,
-    photoUrl: s.photo_url,
+    photoUrl: s.photo_url || '',
     currentLevel: s.swim_levels?.display_name || '',
-    enrollmentStatus: s.enrollment_status,
-    assessmentStatus: s.assessment_status,
+    enrollmentStatus: s.enrollment_status as any,
+    assessmentStatus: s.assessment_status as any,
     progressPercentage: 0,
     isVmrcClient: s.is_vmrc_client,
-    paymentType: s.payment_type,
+    paymentType: s.payment_type as any,
     vmrcSessionsUsed: s.vmrc_sessions_used,
     vmrcSessionsAuthorized: s.vmrc_sessions_authorized,
-    vmrcCurrentPosNumber: s.vmrc_current_pos_number,
+    vmrcCurrentPosNumber: s.vmrc_current_pos_number || '',
     flexibleSwimmer: s.flexible_swimmer,
   }));
 
@@ -369,7 +369,7 @@ const Booking = () => {
                       selectedSwimmers={selectedSwimmers.map((s) => ({
                         id: s.id,
                         name: `${s.firstName} ${s.lastName}`,
-                        paymentType: s.paymentType,
+                        paymentType: s.paymentType as "private_pay" | "vmrc" | "scholarship" | "other",
                         vmrcSessionsUsed: s.vmrcSessionsUsed,
                         vmrcSessionsAuthorized: s.vmrcSessionsAuthorized,
                       }))}

@@ -160,9 +160,6 @@ const AdminDashboard = () => {
 
         <TabsContent value="overview">
           <AdminOverviewTab
-            kpis={kpis}
-            swimmers={swimmers}
-            sessions={sessions}
             onApproveSwimmer={(swimmer) => {
               setSelectedSwimmer(swimmer);
               setShowApproveDialog(true);
@@ -192,7 +189,6 @@ const AdminDashboard = () => {
 
         <TabsContent value="swimmers">
           <AdminSwimmersTab
-            swimmers={swimmers}
             onViewSwimmer={(swimmerId) => {
               setSelectedSwimmerForDetail(swimmerId);
               setShowSwimmerDrawer(true);
