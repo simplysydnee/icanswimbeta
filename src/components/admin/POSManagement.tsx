@@ -97,40 +97,18 @@ export const POSManagement = () => {
 
   const fetchPurchaseOrders = async () => {
     try {
+      // Single query with joins - fixes N+1 query problem
       const { data, error } = await supabase
         .from("purchase_orders")
-        .select("*")
+        .select(`
+          *,
+          swimmers!purchase_orders_swimmer_id_fkey(first_name, last_name),
+          profiles!purchase_orders_coordinator_id_fkey(full_name)
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      
-      // Fetch related data separately
-      const enrichedData = await Promise.all(
-        (data || []).map(async (po: any) => {
-          const [swimmerResult, coordinatorResult] = await Promise.all([
-            supabase
-              .from("swimmers")
-              .select("first_name, last_name")
-              .eq("id", po.swimmer_id)
-              .single(),
-            po.coordinator_id
-              ? supabase
-                  .from("profiles")
-                  .select("full_name")
-                  .eq("id", po.coordinator_id)
-                  .single()
-              : Promise.resolve({ data: null, error: null }),
-          ]);
-
-          return {
-            ...po,
-            swimmers: swimmerResult.data,
-            coordinator: coordinatorResult.data,
-          };
-        })
-      );
-
-      setPurchaseOrders(enrichedData);
+      setPurchaseOrders(data as any || []);
     } catch (error) {
       console.error("Error fetching purchase orders:", error);
       toast({
@@ -172,31 +150,18 @@ export const POSManagement = () => {
 
   const fetchComments = async (posId: string) => {
     try {
+      // Single query with join - fixes N+1 query problem
       const { data, error } = await supabase
         .from("pos_comments")
-        .select("*")
+        .select(`
+          *,
+          profiles!pos_comments_user_id_fkey(full_name)
+        `)
         .eq("pos_id", posId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      
-      // Fetch user profiles separately
-      const enrichedComments = await Promise.all(
-        (data || []).map(async (comment: any) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("full_name")
-            .eq("id", comment.user_id)
-            .single();
-
-          return {
-            ...comment,
-            profiles: profile,
-          };
-        })
-      );
-
-      setComments((prev) => ({ ...prev, [posId]: enrichedComments }));
+      setComments((prev) => ({ ...prev, [posId]: data as any || [] }));
     } catch (error) {
       console.error("Error fetching comments:", error);
     }

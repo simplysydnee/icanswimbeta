@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -16,88 +17,79 @@ import logoHeader from "@/assets/logo-header.png";
 const Booking = () => {
   const [searchParams] = useSearchParams();
   const swimmerIdFromUrl = searchParams.get("swimmerId");
-  // Mock parent's swimmers - in production, fetch from Supabase
-  const mockSwimmers = [
-    {
-      id: "swimmer-1",
-      firstName: "Emma",
-      lastName: "Wilson",
-      photoUrl: undefined,
-      currentLevel: "yellow",
-      enrollmentStatus: "enrolled" as "waitlist" | "approved" | "enrolled",
-      assessmentStatus: "complete" as "not_started" | "scheduled" | "complete" | "pos_authorization_needed" | "pos_request_sent",
-      progressPercentage: 65,
-      isVmrcClient: false,
-      paymentType: "private_pay" as "private_pay" | "vmrc" | "scholarship" | "other",
-      vmrcSessionsUsed: 0,
-      vmrcSessionsAuthorized: 12,
-      vmrcCurrentPosNumber: null,
-      flexibleSwimmer: false,
-    },
-    {
-      id: "swimmer-2",
-      firstName: "Liam",
-      lastName: "Wilson",
-      photoUrl: undefined,
-      currentLevel: "green",
-      enrollmentStatus: "enrolled" as "waitlist" | "approved" | "enrolled",
-      assessmentStatus: "complete" as "not_started" | "scheduled" | "complete" | "pos_authorization_needed" | "pos_request_sent",
-      progressPercentage: 42,
-      isVmrcClient: true,
-      paymentType: "vmrc" as "private_pay" | "vmrc" | "scholarship" | "other",
-      vmrcSessionsUsed: 8,
-      vmrcSessionsAuthorized: 12,
-      vmrcCurrentPosNumber: "POS-2024-001",
-      flexibleSwimmer: false,
-    },
-    {
-      id: "swimmer-3",
-      firstName: "Olivia",
-      lastName: "Wilson",
-      photoUrl: undefined,
-      currentLevel: "white",
-      enrollmentStatus: "approved" as "waitlist" | "approved" | "enrolled",
-      assessmentStatus: "pos_request_sent" as "not_started" | "scheduled" | "complete" | "pos_authorization_needed" | "pos_request_sent",
-      progressPercentage: 0,
-      isVmrcClient: true,
-      paymentType: "vmrc" as "private_pay" | "vmrc" | "scholarship" | "other",
-      vmrcSessionsUsed: 12,
-      vmrcSessionsAuthorized: 12,
-      vmrcCurrentPosNumber: "POS-2024-002", // Needs new auth
-      flexibleSwimmer: false,
-    },
-    {
-      id: "swimmer-4",
-      firstName: "Noah",
-      lastName: "Wilson",
-      photoUrl: undefined,
-      currentLevel: "red",
-      enrollmentStatus: "waitlist" as "waitlist" | "approved" | "enrolled",
-      assessmentStatus: "not_started" as "not_started" | "scheduled" | "complete" | "pos_authorization_needed" | "pos_request_sent",
-      progressPercentage: 0,
-      isVmrcClient: false,
-      paymentType: "private_pay" as "private_pay" | "vmrc" | "scholarship" | "other",
-      vmrcSessionsUsed: 0,
-      vmrcSessionsAuthorized: 12,
-      vmrcCurrentPosNumber: null,
-      flexibleSwimmer: false,
-    },
-  ];
-
+  const [swimmers, setSwimmers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedSwimmerIds, setSelectedSwimmerIds] = useState<string[]>([]);
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
 
+  useEffect(() => {
+    const fetchSwimmers = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Fetch parent's swimmers with level info - single query with join
+        const { data, error } = await supabase
+          .from('swimmers')
+          .select(`
+            *,
+            swim_levels!swimmers_current_level_id_fkey(display_name)
+          `)
+          .eq('parent_id', user.id)
+          .order('first_name');
+
+        if (error) throw error;
+
+        // Transform to expected format
+        const transformedSwimmers = (data || []).map(s => ({
+          id: s.id,
+          firstName: s.first_name,
+          lastName: s.last_name,
+          photoUrl: s.photo_url,
+          currentLevel: s.swim_levels?.display_name || '',
+          enrollmentStatus: s.enrollment_status,
+          assessmentStatus: s.assessment_status,
+          progressPercentage: 0, // Calculate from skills if needed
+          isVmrcClient: s.is_vmrc_client,
+          paymentType: s.payment_type,
+          vmrcSessionsUsed: s.vmrc_sessions_used,
+          vmrcSessionsAuthorized: s.vmrc_sessions_authorized,
+          vmrcCurrentPosNumber: s.vmrc_current_pos_number,
+          flexibleSwimmer: s.flexible_swimmer,
+        }));
+
+        setSwimmers(transformedSwimmers);
+      } catch (error) {
+        console.error('Error fetching swimmers:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSwimmers();
+  }, []);
+
   // Pre-select swimmer if coming from a child dashboard
   useEffect(() => {
-    if (swimmerIdFromUrl && mockSwimmers.find(s => s.id === swimmerIdFromUrl)) {
+    if (swimmerIdFromUrl && swimmers.find(s => s.id === swimmerIdFromUrl)) {
       setSelectedSwimmerIds([swimmerIdFromUrl]);
     }
-  }, [swimmerIdFromUrl]);
+  }, [swimmerIdFromUrl, swimmers]);
 
   // Get selected swimmers
-  const selectedSwimmers = mockSwimmers.filter((s) =>
+  const selectedSwimmers = swimmers.filter((s) =>
     selectedSwimmerIds.includes(s.id)
   );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/10 to-background">
+        <div className="container mx-auto px-4 py-8">
+          <p>Loading swimmers...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Check VMRC authorization status (exclude waitlist swimmers as they only need assessments)
   const vmrcNeedsAuth = selectedSwimmers.some(
@@ -163,7 +155,7 @@ const Booking = () => {
         </div>
 
         <SwimmerSelector
-          swimmers={mockSwimmers}
+          swimmers={swimmers}
           selectedSwimmerIds={selectedSwimmerIds}
           onSwimmersChange={setSelectedSwimmerIds}
         />
