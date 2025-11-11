@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
+import { RouteErrorBoundary } from "@/components/RouteErrorBoundary";
 
 // Lazy load all route components for code splitting
 const Landing = lazy(() => import("./pages/Landing"));
@@ -41,21 +42,21 @@ const App = () => (
       <BrowserRouter>
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/parent-home" element={<ParentHome />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/booking" element={<Booking />} />
-            <Route path="/schedule" element={<Schedule />} />
-            <Route path="/admin/schedule" element={<AdminSchedule />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/coordinator" element={<CoordinatorHub />} />
-            <Route path="/update-progress" element={<UpdateProgress />} />
-            <Route path="/admin/master-schedule" element={<MasterSchedule />} />
-            <Route path="/pos-approval/:requestId" element={<PosApproval />} />
-            <Route path="/waivers" element={<WaiverCompletion />} />
+            <Route path="/" element={<RouteErrorBoundary routeName="Landing"><Landing /></RouteErrorBoundary>} />
+            <Route path="/auth" element={<RouteErrorBoundary routeName="Authentication"><Auth /></RouteErrorBoundary>} />
+            <Route path="/parent-home" element={<RouteErrorBoundary routeName="Parent Home"><ParentHome /></RouteErrorBoundary>} />
+            <Route path="/dashboard" element={<RouteErrorBoundary routeName="Dashboard"><Dashboard /></RouteErrorBoundary>} />
+            <Route path="/booking" element={<RouteErrorBoundary routeName="Booking"><Booking /></RouteErrorBoundary>} />
+            <Route path="/schedule" element={<RouteErrorBoundary routeName="Schedule"><Schedule /></RouteErrorBoundary>} />
+            <Route path="/admin/schedule" element={<RouteErrorBoundary routeName="Admin Schedule"><AdminSchedule /></RouteErrorBoundary>} />
+            <Route path="/admin/dashboard" element={<RouteErrorBoundary routeName="Admin Dashboard"><AdminDashboard /></RouteErrorBoundary>} />
+            <Route path="/coordinator" element={<RouteErrorBoundary routeName="Coordinator Hub"><CoordinatorHub /></RouteErrorBoundary>} />
+            <Route path="/update-progress" element={<RouteErrorBoundary routeName="Update Progress"><UpdateProgress /></RouteErrorBoundary>} />
+            <Route path="/admin/master-schedule" element={<RouteErrorBoundary routeName="Master Schedule"><MasterSchedule /></RouteErrorBoundary>} />
+            <Route path="/pos-approval/:requestId" element={<RouteErrorBoundary routeName="POS Approval"><PosApproval /></RouteErrorBoundary>} />
+            <Route path="/waivers" element={<RouteErrorBoundary routeName="Waivers"><WaiverCompletion /></RouteErrorBoundary>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={<RouteErrorBoundary routeName="Not Found"><NotFound /></RouteErrorBoundary>} />
           </Routes>
         </Suspense>
       </BrowserRouter>
