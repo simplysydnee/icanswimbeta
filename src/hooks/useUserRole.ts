@@ -23,13 +23,14 @@ export const useUserRole = () => {
           .select("role")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
-          .limit(1);
+          .limit(1)
+          .maybeSingle();
 
         if (error) {
           console.error("Error fetching user role:", error);
           setUserRole(null);
-        } else if (roleData && roleData.length > 0) {
-          setUserRole(roleData[0].role as UserRole);
+        } else if (roleData) {
+          setUserRole(roleData.role as UserRole);
         } else {
           setUserRole(null);
         }
