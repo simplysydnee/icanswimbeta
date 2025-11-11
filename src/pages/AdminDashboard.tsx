@@ -33,6 +33,7 @@ import { UserManagement } from "@/components/admin/UserManagement";
 import { InstructorNotificationBell } from "@/components/InstructorNotificationBell";
 import logoHeader from "@/assets/logo-header.png";
 import AdminSchedule from "./AdminSchedule";
+import { SetupDemoData } from "@/components/admin/SetupDemoData";
 
 interface Swimmer {
   id: string;
@@ -833,7 +834,10 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="users">
-          <UserManagement />
+          <div className="space-y-6">
+            <SetupDemoData />
+            <UserManagement />
+          </div>
         </TabsContent>
       </Tabs>
 
