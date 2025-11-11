@@ -189,8 +189,7 @@ export const swimmersApi = {
           .from('swimmers')
           .select(`
             *,
-            swim_levels!swimmers_current_level_id_fkey(display_name),
-            profiles!swimmers_parent_id_fkey(full_name, email)
+            swim_levels!swimmers_current_level_id_fkey(display_name)
           `)
           .order('first_name');
         return result as any;
@@ -209,8 +208,7 @@ export const swimmersApi = {
           .from('swimmers')
           .select(`
             *,
-            swim_levels!swimmers_current_level_id_fkey(display_name),
-            profiles!swimmers_parent_id_fkey(full_name, email)
+            swim_levels!swimmers_current_level_id_fkey(display_name)
           `)
           .eq('id', id)
           .single();
@@ -230,8 +228,7 @@ export const swimmersApi = {
           .from('swimmers')
           .select(`
             *,
-            swim_levels!swimmers_current_level_id_fkey(display_name),
-            profiles!swimmers_parent_id_fkey(full_name, email)
+            swim_levels!swimmers_current_level_id_fkey(display_name)
           `)
           .eq('parent_id', parentId)
           .order('first_name');
@@ -252,8 +249,7 @@ export const swimmersApi = {
           .insert([swimmer as any])
           .select(`
             *,
-            swim_levels!swimmers_current_level_id_fkey(display_name),
-            profiles!swimmers_parent_id_fkey(full_name, email)
+            swim_levels!swimmers_current_level_id_fkey(display_name)
           `)
           .single();
         return result as any;
@@ -274,8 +270,7 @@ export const swimmersApi = {
           .eq('id', id)
           .select(`
             *,
-            swim_levels!swimmers_current_level_id_fkey(display_name),
-            profiles!swimmers_parent_id_fkey(full_name, email)
+            swim_levels!swimmers_current_level_id_fkey(display_name)
           `)
           .single();
         return result as any;
@@ -302,7 +297,6 @@ export const sessionsApi = {
           .from('sessions')
           .select(`
             *,
-            profiles!sessions_instructor_id_fkey(full_name),
             bookings(
               id,
               status,
@@ -310,9 +304,7 @@ export const sessionsApi = {
               created_at,
               canceled_at,
               cancel_reason,
-              cancel_source,
-              swimmers!bookings_swimmer_id_fkey(first_name, last_name),
-              profiles!bookings_parent_id_fkey(full_name)
+              cancel_source
             )
           `)
           .order('start_time', { ascending: true });
@@ -344,7 +336,6 @@ export const sessionsApi = {
           .from('sessions')
           .select(`
             *,
-            profiles!sessions_instructor_id_fkey(full_name),
             bookings(
               id,
               status,
@@ -352,9 +343,7 @@ export const sessionsApi = {
               created_at,
               canceled_at,
               cancel_reason,
-              cancel_source,
-              swimmers!bookings_swimmer_id_fkey(first_name, last_name),
-              profiles!bookings_parent_id_fkey(full_name)
+              cancel_source
             )
           `)
           .eq('id', id)
@@ -375,8 +364,7 @@ export const sessionsApi = {
           .from('sessions')
           .insert([session as any])
           .select(`
-            *,
-            profiles!sessions_instructor_id_fkey(full_name)
+            *
           `)
           .single();
         return result as any;
@@ -396,8 +384,7 @@ export const sessionsApi = {
           .update(updates)
           .eq('id', id)
           .select(`
-            *,
-            profiles!sessions_instructor_id_fkey(full_name)
+            *
           `)
           .single();
         return result as any;
