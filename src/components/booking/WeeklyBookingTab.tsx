@@ -1,13 +1,14 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin, User, AlertCircle, AlertTriangle, Timer } from "lucide-react";
+import { Calendar, Clock, User, AlertCircle, AlertTriangle, Timer, MapPin } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
 import { useSessionAvailability } from "@/hooks/useSessionAvailability";
 import { useBookingHold } from "@/hooks/useBookingHold";
-import { useToast } from "@/hooks/use-toast";
+import { useBookingLogic } from "@/hooks/useBookingLogic";
+import { useSessionFiltering } from "@/hooks/useSessionFiltering";
 
 interface WeeklyBookingTabProps {
   currentMonth: Date;
@@ -36,15 +37,26 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId, selectedSw
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedInstructor, setSelectedInstructor] = useState<string | null>(null);
-  const [skipConflicts, setSkipConflicts] = useState<boolean>(false);
 
-  const { toast } = useToast();
   const { loading, remainingDates, availableTimes, availableInstructors } = useSessionAvailability(
     currentMonth,
     selectedDay,
     selectedTime
   );
-  const { holdExpiresAt, createHold, releaseHold, validateAndBook } = useBookingHold();
+  const { holdExpiresAt, createHold, releaseHold } = useBookingHold();
+  
+  const {
+    skipConflicts,
+    setSkipConflicts,
+    pricePerSession,
+    hasVmrcClients,
+    allVmrcClients,
+    privatePaySwimmers,
+    calculateSessionCount,
+    calculateTotalPrice,
+    calculateVmrcInfo,
+    handleConfirmBooking,
+  } = useBookingLogic(selectedSwimmers);
 
   // Reset selections when dependencies change
   useEffect(() => {
@@ -63,89 +75,30 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId, selectedSw
     (i) => i.instructorId === selectedInstructor
   );
 
-  const sessionCount = selectedInstructorData
-    ? skipConflicts
-      ? remainingDates.length - selectedInstructorData.conflictDates.length
-      : remainingDates.length
-    : remainingDates.length;
-
-  const pricePerSession = 65;
+  const sessionCount = calculateSessionCount(remainingDates.length, selectedInstructorData);
+  const totalPrice = calculateTotalPrice(sessionCount);
   
-  // Check payment types
-  const hasVmrcClients = selectedSwimmers.some((s) => s.paymentType === "vmrc");
-  const allVmrcClients = selectedSwimmers.every((s) => s.paymentType === "vmrc");
-  const privatePaySwimmers = selectedSwimmers.filter((s) => s.paymentType === "private_pay").length;
-  
-  // Calculate price (only private_pay clients are charged)
-  const totalPrice = pricePerSession * sessionCount * privatePaySwimmers;
+  const { filteredDates, isDateConflicted, isDateSkipped, generateSessionIds } = useSessionFiltering(
+    remainingDates,
+    selectedInstructorData,
+    skipConflicts
+  );
 
   const handleInstructorSelect = async (instructorId: string) => {
     setSelectedInstructor(instructorId);
-
-    // Create soft hold for the sessions
-    // In production, this would query session IDs and hold them
     const mockSessionIds = remainingDates.map((_, i) => `session-${i}`);
     await createHold(mockSessionIds);
   };
 
   const handleConfirm = async () => {
-    if (!swimmerId || !parentId || !selectedInstructor) {
-      toast({
-        title: "Missing Information",
-        description: "Please complete your selection before confirming.",
-        variant: "destructive",
-      });
-      return;
+    const sessionIds = generateSessionIds();
+    const success = await handleConfirmBooking(swimmerId, parentId, selectedInstructor, sessionIds);
+    
+    if (success) {
+      setSelectedDay(null);
+      setSelectedTime(null);
+      setSelectedInstructor(null);
     }
-
-    // Get actual session IDs for booking
-    const mockSessionIds = remainingDates
-      .filter((date) => {
-        if (!skipConflicts) return true;
-        return !selectedInstructorData?.conflictDates.some((c) => 
-          c.getTime() === date.getTime()
-        );
-      })
-      .map((_, i) => `session-${i}`);
-
-    // If multiple swimmers selected, book for all of them
-    const swimmerCount = selectedSwimmers.length || 1;
-    
-    // Calculate remaining sessions for VMRC clients
-    const vmrcClientInfo = selectedSwimmers
-      .filter((s) => s.paymentType === "vmrc")
-      .map((s) => {
-        const currentUsed = s.vmrcSessionsUsed || 0;
-        const authorized = s.vmrcSessionsAuthorized || 12;
-        const afterBooking = currentUsed + mockSessionIds.length;
-        const remaining = authorized - afterBooking;
-        return { name: s.name, remaining, needsRenewal: afterBooking >= authorized };
-      });
-
-    let description = `Successfully booked ${mockSessionIds.length} session(s) for ${swimmerCount} swimmer${swimmerCount > 1 ? 's' : ''}.`;
-    
-    // Add VMRC session count info
-    if (vmrcClientInfo.length > 0) {
-      vmrcClientInfo.forEach((info) => {
-        if (info.needsRenewal) {
-          description += `\n\n⚠️ ${info.name}: You've used all 12 authorized sessions. Please contact your VMRC coordinator to authorize more sessions before booking again.`;
-        } else if (info.remaining <= 3) {
-          description += `\n\n📊 ${info.name}: ${info.remaining} session${info.remaining !== 1 ? 's' : ''} remaining. Contact your coordinator soon for renewal.`;
-        } else {
-          description += `\n\n📊 ${info.name}: ${info.remaining} session${info.remaining !== 1 ? 's' : ''} remaining until coordinator renewal needed.`;
-        }
-      });
-    }
-    
-    toast({
-      title: "Booking Confirmed! 🎉",
-      description,
-    });
-
-    // Reset selections
-    setSelectedDay(null);
-    setSelectedTime(null);
-    setSelectedInstructor(null);
   };
 
   return (
@@ -371,10 +324,8 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId, selectedSw
             <CardContent>
               <div className="space-y-3">
                 {remainingDates.map((date, index) => {
-                  const isConflict = selectedInstructorData?.conflictDates.some(
-                    (c) => c.getTime() === date.getTime()
-                  );
-                  const isSkipped = isConflict && skipConflicts;
+                  const isConflict = isDateConflicted(date);
+                  const isSkipped = isDateSkipped(date);
 
                   return (
                     <div
@@ -415,18 +366,16 @@ export const WeeklyBookingTab = ({ currentMonth, swimmerId, parentId, selectedSw
               {/* VMRC Session Countdown - Only for VMRC clients */}
               {selectedSwimmers.some((s) => s.paymentType === "vmrc") && (
                 <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  {selectedSwimmers
-                    .filter((s) => s.paymentType === "vmrc")
-                    .map((swimmer) => {
-                      const currentUsed = swimmer.vmrcSessionsUsed || 0;
-                      const authorized = swimmer.vmrcSessionsAuthorized || 12;
-                      const afterBooking = currentUsed + sessionCount;
-                      const remaining = Math.max(0, authorized - afterBooking);
+                  {calculateVmrcInfo(sessionCount).map((info) => {
+                      const currentUsed = info.currentUsed;
+                      const authorized = info.authorized;
+                      const afterBooking = info.afterBooking;
+                      const remaining = info.remaining;
                       
                       return (
-                        <div key={swimmer.id} className="text-sm">
+                        <div key={info.name} className="text-sm">
                           <div className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                            📊 {swimmer.name} - VMRC Session Tracker (No Charge)
+                            📊 {info.name} - VMRC Session Tracker (No Charge)
                           </div>
                           <div className="text-blue-700 dark:text-blue-300">
                             Currently used: {currentUsed}/{authorized} sessions
