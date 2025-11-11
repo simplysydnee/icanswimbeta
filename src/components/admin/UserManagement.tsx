@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Link } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { UserPlus, Link, Search } from "lucide-react";
 
 interface User {
   id: string;
@@ -31,6 +32,7 @@ export function UserManagement() {
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedSwimmers, setSelectedSwimmers] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -129,6 +131,7 @@ export function UserManagement() {
       .filter((s) => s.parent_id === user.id)
       .map((s) => s.id);
     setSelectedSwimmers(userSwimmers);
+    setSearchQuery("");
     setConnectDialogOpen(true);
   };
 
@@ -291,8 +294,28 @@ export function UserManagement() {
               Select which swimmers should be connected to this user
             </DialogDescription>
           </DialogHeader>
-          <div className="max-h-[400px] overflow-y-auto space-y-2">
-            {swimmers.map((swimmer) => (
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search swimmers by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          {swimmers.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No swimmers found. Please run the demo data setup or create swimmers first.
+            </div>
+          ) : (
+            <div className="max-h-[400px] overflow-y-auto space-y-2">
+              {swimmers
+                .filter((swimmer) => {
+                  if (!searchQuery) return true;
+                  const fullName = `${swimmer.first_name} ${swimmer.last_name}`.toLowerCase();
+                  return fullName.includes(searchQuery.toLowerCase());
+                })
+                .map((swimmer) => (
               <div
                 key={swimmer.id}
                 className="flex items-center space-x-2 p-2 hover:bg-muted rounded-lg cursor-pointer"
@@ -312,9 +335,10 @@ export function UserManagement() {
                     </span>
                   )}
                 </Label>
-              </div>
-            ))}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setConnectDialogOpen(false)}>
               Cancel
