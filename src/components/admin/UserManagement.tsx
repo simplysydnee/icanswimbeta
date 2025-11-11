@@ -52,7 +52,9 @@ export function UserManagement() {
             .from("user_roles")
             .select("role")
             .eq("user_id", profile.id)
-            .single();
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
           return {
             ...profile,
