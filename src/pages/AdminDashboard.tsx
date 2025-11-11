@@ -587,24 +587,24 @@ const AdminDashboard = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="waitlist">Waitlist</TabsTrigger>
-              <TabsTrigger value="pending">Pending Enrollment</TabsTrigger>
-              <TabsTrigger value="awaiting">Awaiting Approval</TabsTrigger>
-              <TabsTrigger value="approved">Approved</TabsTrigger>
-              <TabsTrigger value="declined">Declined</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto">
+              <TabsTrigger value="waitlist" className="text-xs sm:text-sm">Waitlist</TabsTrigger>
+              <TabsTrigger value="pending" className="text-xs sm:text-sm">Pending</TabsTrigger>
+              <TabsTrigger value="awaiting" className="text-xs sm:text-sm">Awaiting</TabsTrigger>
+              <TabsTrigger value="approved" className="text-xs sm:text-sm">Approved</TabsTrigger>
+              <TabsTrigger value="declined" className="text-xs sm:text-sm">Declined</TabsTrigger>
             </TabsList>
 
             <TabsContent value={activeTab} className="mt-4">
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Parent</TableHead>
+                      <TableHead className="hidden md:table-cell">Parent</TableHead>
                       <TableHead>Swimmer</TableHead>
-                      <TableHead>Client Type</TableHead>
+                      <TableHead className="hidden sm:table-cell">Client Type</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Date Added</TableHead>
+                      <TableHead className="hidden lg:table-cell">Date Added</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -618,7 +618,7 @@ const AdminDashboard = () => {
                     ) : (
                       filteredSwimmers.map((swimmer) => (
                         <TableRow key={swimmer.id}>
-                          <TableCell>
+                          <TableCell className="hidden md:table-cell">
                             <div>
                               <div className="font-medium">{swimmer.profiles?.full_name || "N/A"}</div>
                               <div className="text-sm text-muted-foreground">
@@ -627,17 +627,24 @@ const AdminDashboard = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {swimmer.first_name} {swimmer.last_name}
+                            <div>
+                              <div className="font-medium">{swimmer.first_name} {swimmer.last_name}</div>
+                              <div className="text-xs text-muted-foreground md:hidden mt-1">
+                                {swimmer.profiles?.full_name}
+                              </div>
+                            </div>
                           </TableCell>
-                          <TableCell>{getClientTypeBadge(swimmer.payment_type)}</TableCell>
+                          <TableCell className="hidden sm:table-cell">{getClientTypeBadge(swimmer.payment_type)}</TableCell>
                           <TableCell>
-                            {getStatusBadge(swimmer.enrollment_status)}
-                            {swimmer.approval_status !== "pending" &&
-                              getStatusBadge(swimmer.approval_status)}
+                            <div className="flex flex-col gap-1">
+                              {getStatusBadge(swimmer.enrollment_status)}
+                              {swimmer.approval_status !== "pending" &&
+                                getStatusBadge(swimmer.approval_status)}
+                            </div>
                           </TableCell>
-                          <TableCell>{format(new Date(swimmer.created_at), "MMM d, yyyy")}</TableCell>
+                          <TableCell className="hidden lg:table-cell">{format(new Date(swimmer.created_at), "MMM d, yyyy")}</TableCell>
                            <TableCell>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-1 sm:gap-2">
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -645,6 +652,7 @@ const AdminDashboard = () => {
                                   setSelectedSwimmerForDetail(swimmer.id);
                                   setShowSwimmerDrawer(true);
                                 }}
+                                className="h-8 w-8 p-0 sm:w-auto sm:px-2"
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -656,9 +664,10 @@ const AdminDashboard = () => {
                                       setSelectedSwimmer(swimmer);
                                       setShowApproveDialog(true);
                                     }}
+                                    className="h-8 px-2 text-xs"
                                   >
-                                    <CheckCircle className="h-4 w-4 mr-1" />
-                                    Approve
+                                    <CheckCircle className="h-3 w-3 sm:mr-1" />
+                                    <span className="hidden sm:inline">Approve</span>
                                   </Button>
                                   <Button
                                     size="sm"
@@ -667,9 +676,10 @@ const AdminDashboard = () => {
                                       setSelectedSwimmer(swimmer);
                                       setShowDeclineDialog(true);
                                     }}
+                                    className="h-8 px-2 text-xs"
                                   >
-                                    <XCircle className="h-4 w-4 mr-1" />
-                                    Decline
+                                    <XCircle className="h-3 w-3 sm:mr-1" />
+                                    <span className="hidden sm:inline">Decline</span>
                                   </Button>
                                 </>
                               )}
@@ -693,22 +703,28 @@ const AdminDashboard = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={sessionTab} onValueChange={setSessionTab}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-              <TabsTrigger value="booked">Booked (Last 7d)</TabsTrigger>
-              <TabsTrigger value="canceled">Canceled (Last 7d)</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 h-auto">
+              <TabsTrigger value="upcoming" className="text-xs sm:text-sm">Upcoming</TabsTrigger>
+              <TabsTrigger value="booked" className="text-xs sm:text-sm">
+                <span className="hidden sm:inline">Booked (Last 7d)</span>
+                <span className="sm:hidden">Booked</span>
+              </TabsTrigger>
+              <TabsTrigger value="canceled" className="text-xs sm:text-sm">
+                <span className="hidden sm:inline">Canceled (Last 7d)</span>
+                <span className="sm:hidden">Canceled</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value={sessionTab} className="mt-4">
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Date/Time</TableHead>
                       <TableHead>Swimmer</TableHead>
-                      <TableHead>Parent</TableHead>
-                      <TableHead>Instructor</TableHead>
-                      <TableHead>Type</TableHead>
+                      <TableHead className="hidden md:table-cell">Parent</TableHead>
+                      <TableHead className="hidden lg:table-cell">Instructor</TableHead>
+                      <TableHead className="hidden sm:table-cell">Type</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -724,17 +740,32 @@ const AdminDashboard = () => {
                         session.bookings.map((booking) => (
                           <TableRow key={booking.id}>
                             <TableCell>
-                              {format(new Date(session.start_time), "MMM d, yyyy h:mm a")}
+                              <div className="text-sm">
+                                <div>{format(new Date(session.start_time), "MMM d, yyyy")}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {format(new Date(session.start_time), "h:mm a")}
+                                </div>
+                              </div>
                             </TableCell>
                             <TableCell>
-                              {booking.swimmers.first_name} {booking.swimmers.last_name}
+                              <div>
+                                <div className="font-medium text-sm">
+                                  {booking.swimmers.first_name} {booking.swimmers.last_name}
+                                </div>
+                                <div className="text-xs text-muted-foreground md:hidden mt-1">
+                                  {booking.profiles?.full_name}
+                                </div>
+                              </div>
                             </TableCell>
-                            <TableCell>{booking.profiles?.full_name}</TableCell>
-                            <TableCell>{session.instructor_profile?.full_name || "N/A"}</TableCell>
-                            <TableCell>{session.session_type}</TableCell>
+                            <TableCell className="hidden md:table-cell">{booking.profiles?.full_name}</TableCell>
+                            <TableCell className="hidden lg:table-cell">{session.instructor_profile?.full_name || "N/A"}</TableCell>
+                            <TableCell className="hidden sm:table-cell">
+                              <span className="text-xs">{session.session_type}</span>
+                            </TableCell>
                             <TableCell>
                               <Badge
                                 variant={booking.status === "confirmed" ? "default" : "destructive"}
+                                className="text-xs"
                               >
                                 {booking.status}
                               </Badge>
@@ -777,15 +808,15 @@ const AdminDashboard = () => {
               />
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
-                      <TableHead>Parent</TableHead>
-                      <TableHead>Type</TableHead>
+                      <TableHead className="hidden md:table-cell">Parent</TableHead>
+                      <TableHead className="hidden sm:table-cell">Type</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Level</TableHead>
+                      <TableHead className="hidden lg:table-cell">Level</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -801,12 +832,17 @@ const AdminDashboard = () => {
                       .map((swimmer) => (
                         <TableRow key={swimmer.id}>
                           <TableCell>
-                            {swimmer.first_name} {swimmer.last_name}
+                            <div>
+                              <div className="font-medium">{swimmer.first_name} {swimmer.last_name}</div>
+                              <div className="text-xs text-muted-foreground md:hidden mt-1">
+                                {swimmer.profiles?.full_name || "N/A"}
+                              </div>
+                            </div>
                           </TableCell>
-                          <TableCell>{swimmer.profiles?.full_name || "N/A"}</TableCell>
-                          <TableCell>{getClientTypeBadge(swimmer.payment_type)}</TableCell>
+                          <TableCell className="hidden md:table-cell">{swimmer.profiles?.full_name || "N/A"}</TableCell>
+                          <TableCell className="hidden sm:table-cell">{getClientTypeBadge(swimmer.payment_type)}</TableCell>
                           <TableCell>{getStatusBadge(swimmer.enrollment_status)}</TableCell>
-                          <TableCell>
+                          <TableCell className="hidden lg:table-cell">
                             <Badge variant="outline">
                               {swimmer.current_level_id ? "Assigned" : "Not Set"}
                             </Badge>
@@ -819,9 +855,10 @@ const AdminDashboard = () => {
                                 setSelectedSwimmerForDetail(swimmer.id);
                                 setShowSwimmerDrawer(true);
                               }}
+                              className="h-8 w-8 p-0 sm:w-auto sm:px-3"
                             >
-                              <Eye className="h-4 w-4 mr-2" />
-                              View
+                              <Eye className="h-4 w-4 sm:mr-2" />
+                              <span className="hidden sm:inline">View</span>
                             </Button>
                           </TableCell>
                         </TableRow>
