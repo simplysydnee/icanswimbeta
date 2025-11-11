@@ -18,6 +18,7 @@ export interface Swimmer {
   vmrc_sessions_authorized: number;
   vmrc_current_pos_number: string | null;
   photo_url: string | null;
+  created_at: string;
   swim_levels?: {
     display_name: string;
   };

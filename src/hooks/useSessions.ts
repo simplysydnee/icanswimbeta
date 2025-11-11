@@ -20,6 +20,10 @@ export interface Session {
     id: string;
     status: string;
     swimmer_id: string;
+    created_at: string;
+    canceled_at: string | null;
+    cancel_reason: string | null;
+    cancel_source: string | null;
     swimmers?: {
       first_name: string;
       last_name: string;
@@ -53,6 +57,10 @@ export const useSessions = (filters?: {
             id,
             status,
             swimmer_id,
+            created_at,
+            canceled_at,
+            cancel_reason,
+            cancel_source,
             swimmers!bookings_swimmer_id_fkey(first_name, last_name),
             profiles!bookings_parent_id_fkey(full_name)
           )

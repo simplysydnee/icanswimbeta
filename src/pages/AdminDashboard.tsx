@@ -2,19 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -25,8 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Calendar, Users, CheckCircle, XCircle, Clock, TrendingUp, TrendingDown, Eye } from "lucide-react";
-import { format } from "date-fns";
 import { POSManagement } from "@/components/admin/POSManagement";
 import { SwimmerDetailDrawer } from "@/components/admin/SwimmerDetailDrawer";
 import { UserManagement } from "@/components/admin/UserManagement";
@@ -35,325 +22,33 @@ import { LogoutButton } from "@/components/LogoutButton";
 import logoHeader from "@/assets/logo-header.png";
 import AdminSchedule from "./AdminSchedule";
 import { SetupDemoData } from "@/components/admin/SetupDemoData";
-
-interface Swimmer {
-  id: string;
-  first_name: string;
-  last_name: string;
-  payment_type: string;
-  enrollment_status: string;
-  approval_status: string;
-  parent_id: string;
-  created_at: string;
-  current_level_id: string | null;
-  profiles?: {
-    full_name: string;
-    email: string;
-  };
-}
-
-interface Session {
-  id: string;
-  start_time: string;
-  end_time: string;
-  session_type: string;
-  status: string;
-  bookings: Array<{
-    id: string;
-    status: string;
-    canceled_at: string | null;
-    cancel_reason: string | null;
-    cancel_source: string | null;
-    swimmer_id: string;
-    parent_id: string;
-    created_at: string;
-    swimmers: {
-      first_name: string;
-      last_name: string;
-    };
-    profiles: {
-      full_name: string;
-    };
-  }>;
-  instructor_profile?: {
-    full_name: string;
-  };
-}
+import { useAdminKPIs } from "@/hooks/useAdminKPIs";
+import { useSwimmers, Swimmer } from "@/hooks/useSwimmers";
+import { useSessions } from "@/hooks/useSessions";
+import { AdminOverviewTab } from "@/components/admin/AdminOverviewTab";
+import { AdminBookingsRevenueTab } from "@/components/admin/AdminBookingsRevenueTab";
+import { AdminSwimmersTab } from "@/components/admin/AdminSwimmersTab";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { userRole, loading: roleLoading } = useUserRole();
-  const [kpis, setKpis] = useState({
-    waitlist: 0,
-    pendingEnrollment: 0,
-    awaitingApproval: 0,
-    approved: 0,
-    declined: 0,
-    sessionsBooked: 0,
-    sessionsCanceled: 0,
-  });
+  const { kpis, loading: kpisLoading, refetch: refetchKpis } = useAdminKPIs();
+  const { swimmers, loading: swimmersLoading, refetch: refetchSwimmers } = useSwimmers();
+  const { sessions, loading: sessionsLoading } = useSessions();
   
-  const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [filteredSwimmers, setFilteredSwimmers] = useState<Swimmer[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedSwimmer, setSelectedSwimmer] = useState<Swimmer | null>(null);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showDeclineDialog, setShowDeclineDialog] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
-  const [activeTab, setActiveTab] = useState("waitlist");
-  const [sessionTab, setSessionTab] = useState("upcoming");
   const [mainTab, setMainTab] = useState("overview");
   const [selectedSwimmerForDetail, setSelectedSwimmerForDetail] = useState<string | null>(null);
   const [showSwimmerDrawer, setShowSwimmerDrawer] = useState(false);
-  
-  // Bookings & Revenue state
-  const [revenueMonth, setRevenueMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  });
-  const [revenueData, setRevenueData] = useState({
-    lessonsAttended: 0,
-    assessmentsCompleted: 0,
-    canceled: 0,
-    noShows: 0,
-    openSpots: 0,
-    vmrcAssessments: { count: 0, revenue: 0 },
-    privateAssessments: { count: 0, revenue: 0 },
-    vmrcLessons: { count: 0, revenue: 0 },
-    privateLessons: { count: 0, revenue: 0 },
-  });
 
   useEffect(() => {
     if (!roleLoading && userRole !== "admin") {
       navigate("/");
     }
   }, [userRole, roleLoading, navigate]);
-
-  useEffect(() => {
-    fetchKPIs();
-    fetchSwimmers();
-    fetchSessions();
-  }, []);
-
-  useEffect(() => {
-    if (mainTab === "bookings-revenue") {
-      fetchRevenueData();
-    }
-  }, [mainTab, revenueMonth]);
-
-  useEffect(() => {
-    filterSwimmers();
-  }, [searchTerm, activeTab, swimmers]);
-
-  const fetchKPIs = async () => {
-    try {
-      // Fetch counts for each status
-      const { data: waitlistData } = await supabase
-        .from("swimmers")
-        .select("id", { count: "exact", head: true })
-        .eq("enrollment_status", "waitlist");
-
-      const { data: pendingData } = await supabase
-        .from("swimmers")
-        .select("id", { count: "exact", head: true })
-        .eq("enrollment_status", "pending_enrollment");
-
-      const { data: awaitingData } = await supabase
-        .from("swimmers")
-        .select("id", { count: "exact", head: true })
-        .eq("enrollment_status", "enrolled")
-        .eq("approval_status", "pending");
-
-      const { data: approvedData } = await supabase
-        .from("swimmers")
-        .select("id", { count: "exact", head: true })
-        .eq("approval_status", "approved");
-
-      const { data: declinedData } = await supabase
-        .from("swimmers")
-        .select("id", { count: "exact", head: true })
-        .eq("approval_status", "declined");
-
-      // Fetch sessions booked in next 7 days
-      const sevenDaysFromNow = new Date();
-      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-      
-      const { data: upcomingBookings } = await supabase
-        .from("bookings")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "confirmed")
-        .gte("created_at", new Date().toISOString())
-        .lte("created_at", sevenDaysFromNow.toISOString());
-
-      // Fetch sessions canceled in last 7 days
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
-      const { data: canceledBookings } = await supabase
-        .from("bookings")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "cancelled")
-        .gte("canceled_at", sevenDaysAgo.toISOString());
-
-      setKpis({
-        waitlist: waitlistData?.length || 0,
-        pendingEnrollment: pendingData?.length || 0,
-        awaitingApproval: awaitingData?.length || 0,
-        approved: approvedData?.length || 0,
-        declined: declinedData?.length || 0,
-        sessionsBooked: upcomingBookings?.length || 0,
-        sessionsCanceled: canceledBookings?.length || 0,
-      });
-    } catch (error) {
-      console.error("Error fetching KPIs:", error);
-    }
-  };
-
-  const fetchSwimmers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("swimmers")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      
-      // Fetch parent profiles separately
-      const enrichedData = await Promise.all(
-        (data || []).map(async (swimmer: any) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("full_name, email")
-            .eq("id", swimmer.parent_id)
-            .single();
-
-          return {
-            ...swimmer,
-            profiles: profile,
-          };
-        })
-      );
-      
-      setSwimmers(enrichedData);
-    } catch (error) {
-      console.error("Error fetching swimmers:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch swimmers",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const fetchSessions = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("sessions")
-        .select(`
-          *,
-          bookings (
-            id,
-            status,
-            swimmer_id,
-            parent_id,
-            created_at,
-            canceled_at,
-            cancel_reason,
-            cancel_source
-          )
-        `)
-        .order("start_time", { ascending: false })
-        .limit(100);
-
-      if (error) throw error;
-      
-      // Enrich sessions with related data
-      const enrichedSessions = await Promise.all(
-        (data || []).map(async (session: any) => {
-          // Fetch instructor profile
-          const instructorProfile = session.instructor_id
-            ? await supabase
-                .from("profiles")
-                .select("full_name")
-                .eq("id", session.instructor_id)
-                .single()
-            : { data: null };
-
-          // Enrich each booking with swimmer and parent info
-          const enrichedBookings = await Promise.all(
-            (session.bookings || []).map(async (booking: any) => {
-              const [swimmerResult, parentResult] = await Promise.all([
-                supabase
-                  .from("swimmers")
-                  .select("first_name, last_name")
-                  .eq("id", booking.swimmer_id)
-                  .single(),
-                supabase
-                  .from("profiles")
-                  .select("full_name")
-                  .eq("id", booking.parent_id)
-                  .single(),
-              ]);
-
-              return {
-                ...booking,
-                swimmers: swimmerResult.data,
-                profiles: parentResult.data,
-              };
-            })
-          );
-
-          return {
-            ...session,
-            instructor_profile: instructorProfile.data,
-            bookings: enrichedBookings,
-          };
-        })
-      );
-      
-      setSessions(enrichedSessions);
-    } catch (error) {
-      console.error("Error fetching sessions:", error);
-    }
-  };
-
-  const filterSwimmers = () => {
-    let filtered = swimmers;
-
-    // Filter by tab
-    switch (activeTab) {
-      case "waitlist":
-        filtered = filtered.filter((s) => s.enrollment_status === "waitlist");
-        break;
-      case "pending":
-        filtered = filtered.filter((s) => s.enrollment_status === "pending_enrollment");
-        break;
-      case "awaiting":
-        filtered = filtered.filter(
-          (s) => s.enrollment_status === "enrolled" && s.approval_status === "pending"
-        );
-        break;
-      case "approved":
-        filtered = filtered.filter((s) => s.approval_status === "approved");
-        break;
-      case "declined":
-        filtered = filtered.filter((s) => s.approval_status === "declined");
-        break;
-    }
-
-    // Search filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (s) =>
-          s.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    setFilteredSwimmers(filtered);
-  };
 
   const handleApprove = async () => {
     if (!selectedSwimmer) return;
@@ -376,8 +71,8 @@ const AdminDashboard = () => {
       });
 
       setShowApproveDialog(false);
-      fetchKPIs();
-      fetchSwimmers();
+      refetchKpis();
+      refetchSwimmers();
     } catch (error) {
       console.error("Error approving swimmer:", error);
       toast({
@@ -418,8 +113,8 @@ const AdminDashboard = () => {
 
       setShowDeclineDialog(false);
       setDeclineReason("");
-      fetchKPIs();
-      fetchSwimmers();
+      refetchKpis();
+      refetchSwimmers();
     } catch (error) {
       console.error("Error declining swimmer:", error);
       toast({
@@ -430,189 +125,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      waitlist: "outline",
-      pending_enrollment: "secondary",
-      pending: "secondary",
-      approved: "default",
-      declined: "destructive",
-    };
-    return <Badge variant={variants[status] || "outline"}>{status.replace("_", " ")}</Badge>;
-  };
-
-  const getClientTypeBadge = (type: string) => {
-    return (
-      <Badge variant={type === "vmrc" ? "secondary" : "outline"}>
-        {type === "vmrc" ? "VMRC" : "Private Pay"}
-      </Badge>
-    );
-  };
-
-  const filterSessions = () => {
-    const now = new Date();
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const sevenDaysFromNow = new Date();
-    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-
-    let filtered = sessions;
-
-    switch (sessionTab) {
-      case "upcoming":
-        filtered = filtered.filter((s) => new Date(s.start_time) >= now);
-        break;
-      case "booked":
-        filtered = sessions.filter((s) => {
-          return s.bookings.some(
-            (b) =>
-              b.status === "confirmed" &&
-              new Date(b.created_at) >= sevenDaysAgo
-          );
-        });
-        break;
-      case "canceled":
-        filtered = sessions.filter((s) => {
-          return s.bookings.some(
-            (b) =>
-              b.status === "cancelled" &&
-              b.canceled_at &&
-              new Date(b.canceled_at) >= sevenDaysAgo
-          );
-        });
-        break;
-    }
-
-    return filtered;
-  };
-
-  const fetchRevenueData = async () => {
-    try {
-      const [year, month] = revenueMonth.split('-').map(Number);
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0, 23, 59, 59);
-
-      // Fetch all sessions in the month with bookings and attendance
-      const { data: sessionsData, error: sessionsError } = await supabase
-        .from("sessions")
-        .select(`
-          *,
-          bookings!inner (
-            id,
-            status,
-            swimmer_id,
-            swimmers!inner (
-              payment_type
-            )
-          ),
-          session_attendance (
-            attended,
-            booking_id
-          )
-        `)
-        .gte("start_time", startDate.toISOString())
-        .lte("start_time", endDate.toISOString());
-
-      if (sessionsError) throw sessionsError;
-
-      let lessonsAttended = 0;
-      let assessmentsCompleted = 0;
-      let canceled = 0;
-      let noShows = 0;
-      let openSpots = 0;
-
-      let vmrcAssessmentCount = 0;
-      let privateAssessmentCount = 0;
-      let vmrcLessonCount = 0;
-      let privateLessonCount = 0;
-
-      // Process each session
-      (sessionsData || []).forEach((session: any) => {
-        const sessionType = session.session_type?.toLowerCase() || '';
-        const isAssessment = sessionType.includes('assessment') || sessionType.includes('initial');
-        
-        // Count open spots
-        const bookedCount = session.bookings?.filter((b: any) => b.status === 'confirmed').length || 0;
-        openSpots += Math.max(0, (session.max_capacity || 1) - bookedCount);
-
-        // Process bookings
-        session.bookings?.forEach((booking: any) => {
-          const paymentType = booking.swimmers?.payment_type || 'private_pay';
-          const isVMRC = paymentType === 'vmrc';
-          
-          if (booking.status === 'cancelled') {
-            canceled++;
-            return;
-          }
-
-          // Check attendance
-          const attendance = session.session_attendance?.find((att: any) => att.booking_id === booking.id);
-          
-          if (attendance?.attended) {
-            // Attended sessions generate revenue
-            if (isAssessment) {
-              assessmentsCompleted++;
-              if (isVMRC) {
-                vmrcAssessmentCount++;
-              } else {
-                privateAssessmentCount++;
-              }
-            } else {
-              lessonsAttended++;
-              if (isVMRC) {
-                vmrcLessonCount++;
-              } else {
-                privateLessonCount++;
-              }
-            }
-          } else if (attendance && !attendance.attended) {
-            noShows++;
-          }
-        });
-      });
-
-      // Calculate revenue (only for attended sessions)
-      const RATES = {
-        vmrcAssessment: 175,
-        privateAssessment: 75,
-        vmrcLesson: 96.44,
-        privateLesson: 75,
-      };
-
-      setRevenueData({
-        lessonsAttended,
-        assessmentsCompleted,
-        canceled,
-        noShows,
-        openSpots,
-        vmrcAssessments: {
-          count: vmrcAssessmentCount,
-          revenue: vmrcAssessmentCount * RATES.vmrcAssessment,
-        },
-        privateAssessments: {
-          count: privateAssessmentCount,
-          revenue: privateAssessmentCount * RATES.privateAssessment,
-        },
-        vmrcLessons: {
-          count: vmrcLessonCount,
-          revenue: vmrcLessonCount * RATES.vmrcLesson,
-        },
-        privateLessons: {
-          count: privateLessonCount,
-          revenue: privateLessonCount * RATES.privateLesson,
-        },
-      });
-    } catch (error) {
-      console.error("Error fetching revenue data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch revenue data",
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (roleLoading) {
+  if (roleLoading || kpisLoading || swimmersLoading || sessionsLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
@@ -645,479 +158,28 @@ const AdminDashboard = () => {
           <TabsTrigger value="users" className="text-xs sm:text-sm py-2">Users</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-4 sm:space-y-6">
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4">
-        <Card>
-          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Waitlist</CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">{kpis.waitlist}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-              Pending Enrollment
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">{kpis.pendingEnrollment}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-              Awaiting Approval
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold text-amber-600">{kpis.awaitingApproval}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Approved</CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold text-green-600">{kpis.approved}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Declined</CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold text-red-600">{kpis.declined}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
-              <TrendingUp className="h-3 sm:h-4 w-3 sm:w-4" />
-              <span className="hidden sm:inline">Booked (7d)</span>
-              <span className="sm:hidden">Booked</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">{kpis.sessionsBooked}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
-              <TrendingDown className="h-3 sm:h-4 w-3 sm:w-4" />
-              <span className="hidden sm:inline">Canceled (7d)</span>
-              <span className="sm:hidden">Canceled</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6 pt-0">
-            <div className="text-xl sm:text-2xl font-bold">{kpis.sessionsCanceled}</div>
-          </CardContent>
-          </Card>
-          </div>
-
-          {/* Clients Section */}
-          <Card>
-        <CardHeader>
-          <CardTitle>Clients</CardTitle>
-          <div className="flex gap-2 mt-4">
-            <Input
-              placeholder="Search by name or parent..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 h-auto">
-              <TabsTrigger value="waitlist" className="text-xs sm:text-sm">Waitlist</TabsTrigger>
-              <TabsTrigger value="pending" className="text-xs sm:text-sm">Pending</TabsTrigger>
-              <TabsTrigger value="awaiting" className="text-xs sm:text-sm">Awaiting</TabsTrigger>
-              <TabsTrigger value="approved" className="text-xs sm:text-sm">Approved</TabsTrigger>
-              <TabsTrigger value="declined" className="text-xs sm:text-sm">Declined</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value={activeTab} className="mt-4">
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="hidden md:table-cell">Parent</TableHead>
-                      <TableHead>Swimmer</TableHead>
-                      <TableHead className="hidden sm:table-cell">Client Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="hidden lg:table-cell">Date Added</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredSwimmers.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground">
-                          No swimmers found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredSwimmers.map((swimmer) => (
-                        <TableRow key={swimmer.id}>
-                          <TableCell className="hidden md:table-cell">
-                            <div>
-                              <div className="font-medium">{swimmer.profiles?.full_name || "N/A"}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {swimmer.profiles?.email}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{swimmer.first_name} {swimmer.last_name}</div>
-                              <div className="text-xs text-muted-foreground md:hidden mt-1">
-                                {swimmer.profiles?.full_name}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell">{getClientTypeBadge(swimmer.payment_type)}</TableCell>
-                          <TableCell>
-                            <div className="flex flex-col gap-1">
-                              {getStatusBadge(swimmer.enrollment_status)}
-                              {swimmer.approval_status !== "pending" &&
-                                getStatusBadge(swimmer.approval_status)}
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden lg:table-cell">{format(new Date(swimmer.created_at), "MMM d, yyyy")}</TableCell>
-                           <TableCell>
-                            <div className="flex flex-wrap gap-1 sm:gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedSwimmerForDetail(swimmer.id);
-                                  setShowSwimmerDrawer(true);
-                                }}
-                                className="h-8 w-8 p-0 sm:w-auto sm:px-2"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              {activeTab === "awaiting" && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => {
-                                      setSelectedSwimmer(swimmer);
-                                      setShowApproveDialog(true);
-                                    }}
-                                    className="h-8 px-2 text-xs"
-                                  >
-                                    <CheckCircle className="h-3 w-3 sm:mr-1" />
-                                    <span className="hidden sm:inline">Approve</span>
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={() => {
-                                      setSelectedSwimmer(swimmer);
-                                      setShowDeclineDialog(true);
-                                    }}
-                                    className="h-8 px-2 text-xs"
-                                  >
-                                    <XCircle className="h-3 w-3 sm:mr-1" />
-                                    <span className="hidden sm:inline">Decline</span>
-                                  </Button>
-                                </>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </TabsContent>
-            </Tabs>
-          </CardContent>
-          </Card>
-
-          {/* Sessions Section */}
-          <Card>
-        <CardHeader>
-          <CardTitle>Sessions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={sessionTab} onValueChange={setSessionTab}>
-            <TabsList className="grid w-full grid-cols-3 h-auto">
-              <TabsTrigger value="upcoming" className="text-xs sm:text-sm">Upcoming</TabsTrigger>
-              <TabsTrigger value="booked" className="text-xs sm:text-sm">
-                <span className="hidden sm:inline">Booked (Last 7d)</span>
-                <span className="sm:hidden">Booked</span>
-              </TabsTrigger>
-              <TabsTrigger value="canceled" className="text-xs sm:text-sm">
-                <span className="hidden sm:inline">Canceled (Last 7d)</span>
-                <span className="sm:hidden">Canceled</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value={sessionTab} className="mt-4">
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date/Time</TableHead>
-                      <TableHead>Swimmer</TableHead>
-                      <TableHead className="hidden md:table-cell">Parent</TableHead>
-                      <TableHead className="hidden lg:table-cell">Instructor</TableHead>
-                      <TableHead className="hidden sm:table-cell">Type</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filterSessions().length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground">
-                          No sessions found
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filterSessions().map((session) =>
-                        session.bookings.map((booking) => (
-                          <TableRow key={booking.id}>
-                            <TableCell>
-                              <div className="text-sm">
-                                <div>{format(new Date(session.start_time), "MMM d, yyyy")}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {format(new Date(session.start_time), "h:mm a")}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div>
-                                <div className="font-medium text-sm">
-                                  {booking.swimmers.first_name} {booking.swimmers.last_name}
-                                </div>
-                                <div className="text-xs text-muted-foreground md:hidden mt-1">
-                                  {booking.profiles?.full_name}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell">{booking.profiles?.full_name}</TableCell>
-                            <TableCell className="hidden lg:table-cell">{session.instructor_profile?.full_name || "N/A"}</TableCell>
-                            <TableCell className="hidden sm:table-cell">
-                              <span className="text-xs">{session.session_type}</span>
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={booking.status === "confirmed" ? "default" : "destructive"}
-                                className="text-xs"
-                              >
-                                {booking.status}
-                              </Badge>
-                              {booking.canceled_at && (
-                                <div className="text-xs text-muted-foreground mt-1">
-                                  {booking.cancel_source} - {booking.cancel_reason}
-                                </div>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </TabsContent>
-            </Tabs>
-          </CardContent>
-          </Card>
+        <TabsContent value="overview">
+          <AdminOverviewTab
+            kpis={kpis}
+            swimmers={swimmers}
+            sessions={sessions}
+            onApproveSwimmer={(swimmer) => {
+              setSelectedSwimmer(swimmer);
+              setShowApproveDialog(true);
+            }}
+            onDeclineSwimmer={(swimmer) => {
+              setSelectedSwimmer(swimmer);
+              setShowDeclineDialog(true);
+            }}
+            onViewSwimmer={(swimmerId) => {
+              setSelectedSwimmerForDetail(swimmerId);
+              setShowSwimmerDrawer(true);
+            }}
+          />
         </TabsContent>
 
-        <TabsContent value="bookings-revenue" className="space-y-4 sm:space-y-6">
-          {/* Month Filter */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Filters</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4">
-                <div className="flex-1 max-w-xs">
-                  <label className="text-sm font-medium mb-2 block">Month</label>
-                  <Input
-                    type="month"
-                    value={revenueMonth}
-                    onChange={(e) => setRevenueMonth(e.target.value)}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Session Activity KPIs */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-            <Card>
-              <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                  Lessons Attended
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 pt-0">
-                <div className="text-xl sm:text-2xl font-bold text-green-600">
-                  {revenueData.lessonsAttended}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                  Assessments Completed
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 pt-0">
-                <div className="text-xl sm:text-2xl font-bold text-blue-600">
-                  {revenueData.assessmentsCompleted}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                  Canceled
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 pt-0">
-                <div className="text-xl sm:text-2xl font-bold text-red-600">
-                  {revenueData.canceled}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                  No-Shows
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 pt-0">
-                <div className="text-xl sm:text-2xl font-bold text-orange-600">
-                  {revenueData.noShows}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2 p-3 sm:p-6 sm:pb-2">
-                <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
-                  Open Spots
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-6 pt-0">
-                <div className="text-xl sm:text-2xl font-bold">
-                  {revenueData.openSpots}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Revenue Breakdown */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Monthly Revenue Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      VMRC Initial Assessments
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      ${revenueData.vmrcAssessments.revenue.toFixed(2)}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {revenueData.vmrcAssessments.count} × $175.00
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Private Pay Initial Assessments
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      ${revenueData.privateAssessments.revenue.toFixed(2)}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {revenueData.privateAssessments.count} × $75.00
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      VMRC Lessons
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      ${revenueData.vmrcLessons.revenue.toFixed(2)}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {revenueData.vmrcLessons.count} × $96.44
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">
-                      Private Pay Lessons
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      ${revenueData.privateLessons.revenue.toFixed(2)}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {revenueData.privateLessons.count} × $75.00
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Grand Total */}
-              <Card className="bg-primary/5 border-primary">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Monthly Revenue Total</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-primary">
-                    ${(
-                      revenueData.vmrcAssessments.revenue +
-                      revenueData.privateAssessments.revenue +
-                      revenueData.vmrcLessons.revenue +
-                      revenueData.privateLessons.revenue
-                    ).toFixed(2)}
-                  </div>
-                </CardContent>
-              </Card>
-            </CardContent>
-          </Card>
+        <TabsContent value="bookings-revenue">
+          <AdminBookingsRevenueTab />
         </TabsContent>
 
         <TabsContent value="schedule">
@@ -1129,77 +191,13 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="swimmers">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Swimmers</CardTitle>
-              <Input
-                placeholder="Search swimmers..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="mt-4"
-              />
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead className="hidden md:table-cell">Parent</TableHead>
-                      <TableHead className="hidden sm:table-cell">Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="hidden lg:table-cell">Level</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {swimmers
-                      .filter(
-                        (s) =>
-                          !searchTerm ||
-                          s.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          s.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          s.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-                      )
-                      .map((swimmer) => (
-                        <TableRow key={swimmer.id}>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{swimmer.first_name} {swimmer.last_name}</div>
-                              <div className="text-xs text-muted-foreground md:hidden mt-1">
-                                {swimmer.profiles?.full_name || "N/A"}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">{swimmer.profiles?.full_name || "N/A"}</TableCell>
-                          <TableCell className="hidden sm:table-cell">{getClientTypeBadge(swimmer.payment_type)}</TableCell>
-                          <TableCell>{getStatusBadge(swimmer.enrollment_status)}</TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            <Badge variant="outline">
-                              {swimmer.current_level_id ? "Assigned" : "Not Set"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedSwimmerForDetail(swimmer.id);
-                                setShowSwimmerDrawer(true);
-                              }}
-                              className="h-8 w-8 p-0 sm:w-auto sm:px-3"
-                            >
-                              <Eye className="h-4 w-4 sm:mr-2" />
-                              <span className="hidden sm:inline">View</span>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+          <AdminSwimmersTab
+            swimmers={swimmers}
+            onViewSwimmer={(swimmerId) => {
+              setSelectedSwimmerForDetail(swimmerId);
+              setShowSwimmerDrawer(true);
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="users">
@@ -1215,8 +213,8 @@ const AdminDashboard = () => {
         open={showSwimmerDrawer}
         onOpenChange={setShowSwimmerDrawer}
         onUpdate={() => {
-          fetchSwimmers();
-          fetchKPIs();
+          refetchSwimmers();
+          refetchKpis();
         }}
       />
 
