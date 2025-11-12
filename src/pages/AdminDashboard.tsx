@@ -23,8 +23,8 @@ import logoHeader from "@/assets/logo-header.png";
 import AdminSchedule from "./AdminSchedule";
 import { SetupDemoData } from "@/components/admin/SetupDemoData";
 import { useAdminKPIs } from "@/hooks/useAdminKPIs";
-import { useSwimmers, Swimmer } from "@/hooks/useSwimmers";
-import { useSessions } from "@/hooks/useSessions";
+import { useSwimmersQuery, Swimmer } from "@/hooks/useSwimmersQuery";
+import { useSessionsQuery } from "@/hooks/useSessionsQuery";
 import { AdminOverviewTab } from "@/components/admin/AdminOverviewTab";
 import { AdminBookingsRevenueTab } from "@/components/admin/AdminBookingsRevenueTab";
 import { AdminSwimmersTab } from "@/components/admin/AdminSwimmersTab";
@@ -33,8 +33,8 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { userRole, loading: roleLoading } = useUserRole();
   const { kpis, loading: kpisLoading, refetch: refetchKpis } = useAdminKPIs();
-  const { swimmers, loading: swimmersLoading, refetch: refetchSwimmers } = useSwimmers();
-  const { sessions, loading: sessionsLoading } = useSessions();
+  const { data: swimmers = [], isLoading: swimmersLoading, refetch: refetchSwimmers } = useSwimmersQuery();
+  const { data: sessions = [], isLoading: sessionsLoading } = useSessionsQuery();
   
   const [selectedSwimmer, setSelectedSwimmer] = useState<Swimmer | null>(null);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
