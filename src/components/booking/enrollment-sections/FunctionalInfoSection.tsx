@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface FunctionalInfoSectionProps {
   formData: {
-    toiletTrained: boolean;
+    toiletTrained: boolean | undefined;
     nonAmbulatory: boolean;
     communicationType: string;
     strengthsInterests: string;

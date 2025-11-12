@@ -1,53 +1,50 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PhotoPermissionSectionProps {
   formData: {
-    photoVideoPermission: boolean;
-    socialMediaConsent: boolean;
+    photoVideoPermission: string;
+    photoVideoSignature: string;
   };
-  onCheckboxChange: (field: string, checked: boolean) => void;
+  onChange: (field: string, value: string) => void;
 }
 
-export const PhotoPermissionSection = ({ formData, onCheckboxChange }: PhotoPermissionSectionProps) => {
+export const PhotoPermissionSection = ({ formData, onChange }: PhotoPermissionSectionProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Photo & Video Permissions</CardTitle>
-        <CardDescription>Media consent and usage permissions</CardDescription>
+        <CardTitle>Photo & Video Permission</CardTitle>
+        <CardDescription>Media release authorization</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-start space-x-2">
-          <Checkbox
-            id="photoVideoPermission"
-            checked={formData.photoVideoPermission}
-            onCheckedChange={(checked) => onCheckboxChange("photoVideoPermission", checked as boolean)}
-          />
-          <div className="space-y-1">
-            <Label htmlFor="photoVideoPermission" className="font-normal">
-              I give permission for photos and videos to be taken of my child during swim lessons
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              Photos and videos may be used for progress tracking, instructor training, and program improvement purposes.
-            </p>
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="photoVideoPermission">
+            Do you give permission for I CAN SWIM, LLC to use photos or videos of your swimmer for promotional or educational purposes (e.g., social media, website, flyers)?
+          </Label>
+          <Select
+            value={formData.photoVideoPermission}
+            onValueChange={(value) => onChange("photoVideoPermission", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="yes">Yes</SelectItem>
+              <SelectItem value="no">No</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <div className="flex items-start space-x-2">
-          <Checkbox
-            id="socialMediaConsent"
-            checked={formData.socialMediaConsent}
-            onCheckedChange={(checked) => onCheckboxChange("socialMediaConsent", checked as boolean)}
+        <div className="space-y-2">
+          <Label htmlFor="photoVideoSignature">Parent/Guardian Signature</Label>
+          <Input
+            id="photoVideoSignature"
+            placeholder="Type your full name to sign"
+            value={formData.photoVideoSignature}
+            onChange={(e) => onChange("photoVideoSignature", e.target.value)}
           />
-          <div className="space-y-1">
-            <Label htmlFor="socialMediaConsent" className="font-normal">
-              I consent to photos and videos being used on social media and marketing materials
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              This includes use on websites, social media platforms, promotional materials, and advertisements. Your child's name will not be used without additional permission.
-            </p>
-          </div>
         </div>
       </CardContent>
     </Card>
