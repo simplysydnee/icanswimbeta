@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useParentSwimmers } from "@/hooks/useParentSwimmers";
+import { useParentSwimmersQuery } from "@/hooks/useParentSwimmersQuery";
 
 interface SwimmerSwitcherProps {
   currentSwimmerId?: string;
@@ -18,7 +18,7 @@ interface SwimmerSwitcherProps {
 
 export const SwimmerSwitcher = ({ currentSwimmerId }: SwimmerSwitcherProps) => {
   const navigate = useNavigate();
-  const { swimmers } = useParentSwimmers();
+  const { data: swimmers = [] } = useParentSwimmersQuery();
 
   const currentSwimmer = swimmers.find((s) => s.id === currentSwimmerId);
 
