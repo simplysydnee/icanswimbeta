@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useAuth } from "@/hooks/useAuth";
 import { toast as sonnerToast } from "sonner";
 import { LogoutButton } from "@/components/LogoutButton";
 import logoHeader from "@/assets/logo-header.png";
@@ -18,7 +18,7 @@ export default function PosApproval() {
   const { requestId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { userRole, loading: roleLoading, isCoordinator } = useUserRole();
+  const { isCoordinator, isLoading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [request, setRequest] = useState<any>(null);
@@ -35,7 +35,7 @@ export default function PosApproval() {
         return;
       }
       
-      if (!roleLoading && !isCoordinator) {
+      if (!authLoading && !isCoordinator) {
         sonnerToast.error("Unauthorized: Only coordinators can approve POS requests");
         navigate("/");
         return;
@@ -47,10 +47,10 @@ export default function PosApproval() {
       }
     };
     
-    if (!roleLoading) {
+    if (!authLoading) {
       checkAuth();
     }
-  }, [requestId, roleLoading, isCoordinator, navigate]);
+  }, [requestId, authLoading, isCoordinator, navigate]);
 
   const fetchRequest = async (userId: string) => {
     try {
@@ -141,7 +141,7 @@ export default function PosApproval() {
     }
   };
 
-  if (loading || roleLoading || !authorized) {
+  if (loading || authLoading || !authorized) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background via-ocean-light/10 to-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

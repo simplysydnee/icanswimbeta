@@ -4,7 +4,7 @@ import { ProgressBadge, SwimLevel } from "./ProgressBadge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Skill {
   name: string;
@@ -28,7 +28,7 @@ export const LevelSkillsCard = ({
   notes: initialNotes = ""
 }: LevelSkillsCardProps) => {
   const [notes, setNotes] = useState(initialNotes);
-  const { isAdminOrInstructor, loading } = useUserRole();
+  const { isAdminOrInstructor, isLoading } = useAuth();
   const completedCount = skills.filter(s => s.completed).length;
   const progressPercentage = (completedCount / skills.length) * 100;
 
@@ -66,7 +66,7 @@ export const LevelSkillsCard = ({
           />
         ))}
         
-        {!loading && isAdminOrInstructor && (
+        {!isLoading && isAdminOrInstructor && (
           <div className="mt-6 pt-6 border-t">
             <Label htmlFor={`notes-${level}`} className="text-sm font-semibold mb-2 block">
               Instructor Notes

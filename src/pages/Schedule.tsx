@@ -10,10 +10,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, User } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, addDays, isSameDay, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { SwimmersNeedingUpdate } from "@/components/SwimmersNeedingUpdate";
 import { LogoutButton } from "@/components/LogoutButton";
 import logoHeader from "@/assets/logo-header.png";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Session {
   id: string;
@@ -53,51 +54,18 @@ const INSTRUCTOR_COLORS = [
 const Schedule = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user, isAdmin, isInstructor, isLoading: authLoading } = useAuth();
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [instructorColorMap, setInstructorColorMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    fetchUserRole();
-  }, []);
-
-  useEffect(() => {
-    if (userRole) {
+    if (user) {
       fetchSessions();
     }
-  }, [currentWeek, selectedDate, userRole]);
-
-  const fetchUserRole = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/auth");
-        return;
-      }
-
-      setCurrentUserId(user.id);
-
-      const { data: roleData, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .single();
-
-      if (error) throw error;
-      setUserRole(roleData.role);
-    } catch (error) {
-      console.error("Error fetching user role:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch user role",
-        variant: "destructive",
-      });
-    }
-  };
+  }, [currentWeek, selectedDate, user]);
 
   const fetchSessions = async () => {
     setLoading(true);
@@ -138,8 +106,8 @@ const Schedule = () => {
         .order("start_time");
 
       // If user is an instructor, only show their sessions
-      if (userRole === "instructor" && currentUserId) {
-        query = query.eq("instructor_id", currentUserId);
+      if (isInstructor && user?.id) {
+        query = query.eq("instructor_id", user.id);
       }
 
       const { data, error } = await query;
@@ -353,12 +321,16 @@ const Schedule = () => {
     );
   };
 
-  if (!userRole) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
       </div>
     );
+  }
+
+  if (!isAdmin && !isInstructor) {
+    return <Navigate to="/auth" replace />;
   }
 
   return (
@@ -374,17 +346,17 @@ const Schedule = () => {
         </div>
         <div className="mb-6">
           <h1 className="text-3xl font-bold">
-            {userRole === "admin" ? "Master Schedule" : "My Schedule"}
+            {isAdmin ? "Master Schedule" : "My Schedule"}
           </h1>
           <p className="text-muted-foreground">
-            {userRole === "admin" 
+            {isAdmin 
               ? "View all sessions and swimmers" 
               : "View your scheduled sessions"}
           </p>
         </div>
 
         {/* Swimmers Needing Progress Updates - Only for instructors */}
-        {userRole === "instructor" && (
+        {isInstructor && (
           <div className="mb-6">
             <SwimmersNeedingUpdate />
           </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,7 +31,7 @@ import { AdminSwimmersTab } from "@/components/admin/AdminSwimmersTab";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { userRole, loading: roleLoading } = useUserRole();
+  const { isAdmin, isLoading: authLoading } = useAuth();
   const { kpis, loading: kpisLoading, refetch: refetchKpis } = useAdminKPIs();
   const { data: swimmers = [], isLoading: swimmersLoading, refetch: refetchSwimmers } = useSwimmersQuery();
   const { data: sessions = [], isLoading: sessionsLoading } = useSessionsQuery();
@@ -45,10 +45,10 @@ const AdminDashboard = () => {
   const [showSwimmerDrawer, setShowSwimmerDrawer] = useState(false);
 
   useEffect(() => {
-    if (!roleLoading && userRole !== "admin") {
+    if (!authLoading && !isAdmin) {
       navigate("/");
     }
-  }, [userRole, roleLoading, navigate]);
+  }, [isAdmin, authLoading, navigate]);
 
   const handleApprove = async () => {
     if (!selectedSwimmer) return;
@@ -125,11 +125,11 @@ const AdminDashboard = () => {
     }
   };
 
-  if (roleLoading || kpisLoading || swimmersLoading || sessionsLoading) {
+  if (authLoading || kpisLoading || swimmersLoading || sessionsLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
-  if (userRole !== "admin") {
+  if (!isAdmin) {
     return null;
   }
 
