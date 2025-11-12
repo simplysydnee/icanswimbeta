@@ -22,10 +22,10 @@ const AVAILABILITY_SLOTS = [
 
 interface SchedulingSectionProps {
   formData: {
-    availability: string[];
-    preferredStartDate: Date | undefined;
-    weeklyBookingLimit: number;
-    attendanceExpectation: string;
+    availabilityGeneral: string[];
+    startDate: Date | undefined;
+    clientBookingLimit: number;
+    attendanceStanding: string;
   };
   onMultiSelectToggle: (field: string, value: string) => void;
   onChange: (field: string, value: any) => void;
@@ -46,8 +46,8 @@ export const SchedulingSection = ({ formData, onMultiSelectToggle, onChange }: S
               <div key={slot} className="flex items-start space-x-2">
                 <Checkbox
                   id={`availability-${slot}`}
-                  checked={formData.availability.includes(slot)}
-                  onCheckedChange={() => onMultiSelectToggle("availability", slot)}
+                  checked={formData.availabilityGeneral.includes(slot)}
+                  onCheckedChange={() => onMultiSelectToggle("availabilityGeneral", slot)}
                 />
                 <Label htmlFor={`availability-${slot}`} className="font-normal">
                   {slot}
@@ -58,19 +58,19 @@ export const SchedulingSection = ({ formData, onMultiSelectToggle, onChange }: S
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="preferredStartDate">Preferred Start Date</Label>
+          <Label htmlFor="startDate">Preferred Start Date</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className={cn(
                   "w-full justify-start text-left font-normal",
-                  !formData.preferredStartDate && "text-muted-foreground"
+                  !formData.startDate && "text-muted-foreground"
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {formData.preferredStartDate ? (
-                  format(formData.preferredStartDate, "PPP")
+                {formData.startDate ? (
+                  format(formData.startDate, "PPP")
                 ) : (
                   <span>Pick a date</span>
                 )}
@@ -79,8 +79,8 @@ export const SchedulingSection = ({ formData, onMultiSelectToggle, onChange }: S
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={formData.preferredStartDate}
-                onSelect={(date) => onChange("preferredStartDate", date)}
+                selected={formData.startDate}
+                onSelect={(date) => onChange("startDate", date)}
                 disabled={(date) => date < new Date()}
                 initialFocus
                 className={cn("p-3 pointer-events-auto")}
@@ -90,25 +90,25 @@ export const SchedulingSection = ({ formData, onMultiSelectToggle, onChange }: S
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="weeklyBookingLimit">Maximum Sessions Per Week</Label>
+          <Label htmlFor="clientBookingLimit">Maximum Sessions Per Week</Label>
           <Input
-            id="weeklyBookingLimit"
+            id="clientBookingLimit"
             type="number"
             min="1"
             max="5"
             placeholder="1"
-            value={formData.weeklyBookingLimit}
-            onChange={(e) => onChange("weeklyBookingLimit", parseInt(e.target.value) || 1)}
+            value={formData.clientBookingLimit}
+            onChange={(e) => onChange("clientBookingLimit", parseInt(e.target.value) || 1)}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="attendanceExpectation">Expected Attendance Frequency</Label>
+          <Label htmlFor="attendanceStanding">Expected Attendance Frequency</Label>
           <Select
-            value={formData.attendanceExpectation}
-            onValueChange={(value) => onChange("attendanceExpectation", value)}
+            value={formData.attendanceStanding}
+            onValueChange={(value) => onChange("attendanceStanding", value)}
           >
-            <SelectTrigger id="attendanceExpectation">
+            <SelectTrigger id="attendanceStanding">
               <SelectValue placeholder="Select frequency" />
             </SelectTrigger>
             <SelectContent>
