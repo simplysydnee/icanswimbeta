@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useParentSwimmers } from "@/hooks/useParentSwimmers";
+import { useParentSwimmersQuery } from "@/hooks/useParentSwimmersQuery";
 import { Calendar, User, LogOut, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import logoHeader from "@/assets/logo-parent-header.png";
 
 const ParentHome = () => {
-  const { swimmers, loading, error } = useParentSwimmers();
+  const { data: swimmers = [], isLoading: loading, error } = useParentSwimmersQuery();
   const navigate = useNavigate();
 
   // Redirect non-parent roles away from Parent Home
@@ -71,7 +71,7 @@ const ParentHome = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-ocean-light/20 via-background to-background">
         <Card className="max-w-md">
           <CardContent className="pt-6">
-            <p className="text-muted-foreground mb-4">{error}</p>
+            <p className="text-muted-foreground mb-4">{error?.message || 'An error occurred'}</p>
             <Button onClick={() => navigate("/auth")}>Back to Login</Button>
           </CardContent>
         </Card>
