@@ -9,7 +9,7 @@ import { ArrowLeft, Calendar, Clock, User, LogOut } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { SwimmerSwitcher } from "@/components/SwimmerSwitcher";
 import { supabase } from "@/integrations/supabase/client";
-import { useParentSwimmers } from "@/hooks/useParentSwimmers";
+import { useParentSwimmersQuery } from "@/hooks/useParentSwimmersQuery";
 import { useEffect, useState } from "react";
 import logoHeader from "@/assets/logo-header.png";
 
@@ -39,7 +39,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const swimmerId = searchParams.get("swimmerId");
-  const { swimmers } = useParentSwimmers();
+  const { data: swimmers = [] } = useParentSwimmersQuery();
   const [swimLevels, setSwimLevels] = useState<SwimLevelData[]>([]);
   const [skills, setSkills] = useState<SkillData[]>([]);
   const [swimmerSkills, setSwimmerSkills] = useState<SwimmerSkillData[]>([]);
