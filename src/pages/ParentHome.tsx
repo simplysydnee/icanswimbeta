@@ -4,36 +4,32 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useParentSwimmersQuery } from "@/hooks/useParentSwimmersQuery";
+import { useAuth } from "@/hooks/useAuth";
 import { Calendar, User, LogOut, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import logoHeader from "@/assets/logo-parent-header.png";
 
 const ParentHome = () => {
   const { data: swimmers = [], isLoading: loading, error } = useParentSwimmersQuery();
   const navigate = useNavigate();
+  const { isAuthenticated, hasRole, redirectByRole, signOut, isLoading: authLoading } = useAuth();
 
   // Redirect non-parent roles away from Parent Home
   useEffect(() => {
-    const redirectNonParent = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate("/auth"); return; }
-      const { data: rolesData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
-      const roles = (rolesData || []).map((r: any) => r.role as string);
-      if (roles.includes("admin")) { navigate("/admin/dashboard"); return; }
-      if (roles.includes("instructor")) { navigate("/schedule"); return; }
-      if (roles.includes("vmrc_coordinator")) { navigate("/coordinator"); return; }
-    };
-    redirectNonParent();
-  }, [navigate]);
+    if (!isAuthenticated) {
+      navigate("/auth");
+      return;
+    }
+
+    // Redirect non-parent roles to their dashboards
+    if (hasRole('admin') || hasRole('instructor') || hasRole('vmrc_coordinator')) {
+      redirectByRole(navigate);
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
+    await signOut();
   };
 
   const getStatusBadge = (enrollmentStatus: string, assessmentStatus: string) => {
@@ -58,7 +54,7 @@ const ParentHome = () => {
     element?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-ocean-light/20 via-background to-background">
         <p className="text-muted-foreground">Loading swimmers...</p>
