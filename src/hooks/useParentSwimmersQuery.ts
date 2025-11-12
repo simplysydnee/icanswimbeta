@@ -63,43 +63,8 @@ export const useParentSwimmersQuery = (options?: UseParentSwimmersQueryOptions) 
   return useQuery({
     queryKey: ['swimmers', 'parent', parentId],
     queryFn: async () => {
-      // DEVELOPMENT ONLY: Return mock data when not authenticated
-      // TODO: Remove this mock data check before production deployment
       if (!parentId) {
-        console.warn('[DEV] No authenticated user - returning mock data');
-        const mockSwimmers: ParentSwimmer[] = [
-          {
-            id: "mock-1",
-            first_name: "Emma",
-            last_name: "Johnson",
-            photo_url: "",
-            current_level: "Level 2",
-            enrollment_status: "enrolled",
-            assessment_status: "completed",
-            flexible_swimmer: false
-          },
-          {
-            id: "mock-2",
-            first_name: "Liam",
-            last_name: "Johnson",
-            photo_url: "",
-            current_level: "Level 1",
-            enrollment_status: "approved",
-            assessment_status: "scheduled",
-            flexible_swimmer: false
-          },
-          {
-            id: "mock-3",
-            first_name: "Olivia",
-            last_name: "Johnson",
-            photo_url: "",
-            current_level: "Not Yet Assessed",
-            enrollment_status: "waitlist",
-            assessment_status: "pending",
-            flexible_swimmer: false
-          }
-        ];
-        return mockSwimmers;
+        return [];
       }
 
       // Fetch real data from API
