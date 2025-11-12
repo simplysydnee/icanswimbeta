@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import logoHeader from "@/assets/logo-header.png";
 import logoCircular from "@/assets/logo-circular.jpg";
 import { z } from "zod";
@@ -20,6 +21,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const { isAuthenticated, hasRole, redirectByRole } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const redirectPath = searchParams.get('redirect');
@@ -36,58 +38,47 @@ const Auth = () => {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupFullName, setSignupFullName] = useState("");
 
+  // Helper to check parent waiver status
+  const checkParentWaiverStatus = async (userId: string) => {
+    const { data: swimmer } = await supabase
+      .from("swimmers")
+      .select("id, photo_video_signature, liability_waiver_signature, cancellation_policy_signature")
+      .eq("parent_id", userId)
+      .maybeSingle();
+
+    if (
+      swimmer && (
+        !swimmer.photo_video_signature ||
+        !swimmer.liability_waiver_signature ||
+        !swimmer.cancellation_policy_signature
+      )
+    ) {
+      navigate("/waivers");
+      return true;
+    }
+    return false;
+  };
+
   // Check if user is already logged in
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+    const handleRedirect = async () => {
+      if (!isAuthenticated) return;
 
-      // Fetch user roles (handle multiple roles)
-      const { data: rolesData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id);
-
-      const roles = (rolesData || []).map((r: any) => r.role as string);
-      const isAdmin = roles.includes("admin");
-      const isInstructor = roles.includes("instructor");
-      const isCoordinator = roles.includes("vmrc_coordinator");
-
-      if (isAdmin) {
-        navigate("/admin/dashboard");
-        return;
-      }
-      if (isInstructor) {
-        navigate("/schedule");
-        return;
-      }
-      if (isCoordinator) {
-        navigate("/coordinator");
-        return;
+      // For parents, check waiver status first
+      if (hasRole('parent')) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const needsWaiver = await checkParentWaiverStatus(user.id);
+          if (needsWaiver) return;
+        }
       }
 
-      // Parent: enforce waiver completion before accessing parent pages
-      const { data: swimmer } = await supabase
-        .from("swimmers")
-        .select("id, photo_video_signature, liability_waiver_signature, cancellation_policy_signature")
-        .eq("parent_id", session.user.id)
-        .maybeSingle();
-
-      if (
-        swimmer && (
-          !swimmer.photo_video_signature ||
-          !swimmer.liability_waiver_signature ||
-          !swimmer.cancellation_policy_signature
-        )
-      ) {
-        navigate("/waivers");
-        return;
-      }
-
-      navigate("/parent-home");
+      // Use centralized role-based redirect
+      redirectByRole(navigate);
     };
-    checkUser();
-  }, [navigate]);
+
+    handleRedirect();
+  }, [isAuthenticated, navigate]);
 
   // Verify invitation token if present
   useEffect(() => {
@@ -161,52 +152,8 @@ const Auth = () => {
         description: "You've successfully logged in.",
       });
       
-      // Check user role and redirect accordingly
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: rolesData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id);
-
-        const roles = (rolesData || []).map((r: any) => r.role as string);
-        const isAdmin = roles.includes("admin");
-        const isInstructor = roles.includes("instructor");
-        const isCoordinator = roles.includes("vmrc_coordinator");
-
-        if (isAdmin) {
-          navigate(redirectPath || "/admin/dashboard");
-          return;
-        }
-        if (isInstructor) {
-          navigate(redirectPath || "/schedule");
-          return;
-        }
-        if (isCoordinator) {
-          navigate(redirectPath || "/coordinator");
-          return;
-        }
-        // Parent: enforce waiver completion first
-        const { data: swimmer } = await supabase
-          .from("swimmers")
-          .select("id, photo_video_signature, liability_waiver_signature, cancellation_policy_signature")
-          .eq("parent_id", user.id)
-          .maybeSingle();
-
-        if (
-          swimmer && (
-            !swimmer.photo_video_signature ||
-            !swimmer.liability_waiver_signature ||
-            !swimmer.cancellation_policy_signature
-          )
-        ) {
-          navigate("/waivers");
-        } else {
-          navigate(redirectPath || "/parent-home");
-        }
-      } else {
-        navigate(redirectPath || "/parent-home");
-      }
+      // Auth state will update automatically via useAuth
+      // The useEffect above will handle redirection based on roles
     } catch (err: any) {
       if (err instanceof z.ZodError) {
         setError(err.errors[0].message);
