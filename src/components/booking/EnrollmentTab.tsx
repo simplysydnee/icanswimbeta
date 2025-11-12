@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { swimmersApi } from "@/lib/api-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,8 +57,10 @@ const AVAILABILITY_SLOTS = [
 
 export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [waiverModalOpen, setWaiverModalOpen] = useState(false);
   const [cancellationPolicyModalOpen, setCancellationPolicyModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     // Basic Info
     parentPhone: "",
@@ -140,16 +144,17 @@ export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
   };
 
   const handleSubmit = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to continue",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to submit enrollment",
-          variant: "destructive",
-        });
-        return;
-      }
 
       // Validate required waiver fields
       if (!formData.photoVideoPermission || !formData.photoVideoSignature) {
@@ -222,12 +227,7 @@ export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
 
       if (swimmerId) {
         // Update existing swimmer
-        const { error } = await supabase
-          .from("swimmers")
-          .update(swimmerData)
-          .eq("id", swimmerId);
-
-        if (error) throw error;
+        await swimmersApi.update(swimmerId, swimmerData);
       } else {
         // This shouldn't happen in normal flow, but handle it gracefully
         toast({
@@ -249,6 +249,8 @@ export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
         description: "Failed to save enrollment information. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -897,8 +899,8 @@ export const EnrollmentTab = ({ swimmerId }: EnrollmentTabProps) => {
         <Button variant="outline" size="lg">
           Save Draft
         </Button>
-        <Button size="lg" onClick={handleSubmit}>
-          Submit Enrollment
+        <Button size="lg" onClick={handleSubmit} disabled={isSubmitting}>
+          {isSubmitting ? "Submitting..." : "Submit Enrollment"}
         </Button>
       </div>
     </div>
