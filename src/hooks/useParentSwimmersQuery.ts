@@ -15,6 +15,19 @@ export interface ParentSwimmer {
   flexible_swimmer: boolean;
 }
 
+interface DatabaseSwimmer {
+  id: string;
+  first_name: string;
+  last_name: string;
+  photo_url?: string;
+  swim_levels?: {
+    display_name: string;
+  } | null;
+  enrollment_status: string;
+  assessment_status: string;
+  flexible_swimmer?: boolean;
+}
+
 interface UseParentSwimmersQueryOptions {
   parentId?: string;
 }
@@ -102,7 +115,7 @@ export const useParentSwimmersQuery = (options?: UseParentSwimmersQueryOptions) 
       }
 
       // Transform to ParentSwimmer interface
-      const transformedSwimmers: ParentSwimmer[] = (data || []).map((swimmer: any) => ({
+      const transformedSwimmers: ParentSwimmer[] = (data || []).map((swimmer: DatabaseSwimmer) => ({
         id: swimmer.id,
         first_name: swimmer.first_name,
         last_name: swimmer.last_name,
