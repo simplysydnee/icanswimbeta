@@ -12,7 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, User, Plus, Filter, X, Edit, FileText, UserX } from "lucide-react";
 import { format, startOfWeek, endOfWeek, addWeeks, addDays, isSameDay, parseISO, startOfMonth, endOfMonth, addMonths, eachDayOfInterval } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
+import { useAuth } from '@/hooks/useAuth';
 import { SwimmersNeedingUpdate } from "@/components/SwimmersNeedingUpdate";
 import { UpdateProgressDrawer } from "@/components/admin/UpdateProgressDrawer";
 import { InstructorNotificationBell } from "@/components/InstructorNotificationBell";
@@ -67,13 +68,12 @@ const INSTRUCTOR_COLORS = [
 const AdminSchedule = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user, isAdmin, isInstructor, isLoading: authLoading } = useAuth();
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [instructorColorMap, setInstructorColorMap] = useState<Record<string, string>>({});
   
   // Filters
@@ -90,42 +90,10 @@ const AdminSchedule = () => {
   const [selectedBooking, setSelectedBooking] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchUserRole();
-  }, []);
-
-  useEffect(() => {
-    if (userRole) {
+    if (user) {
       fetchSessions();
     }
-  }, [currentWeek, selectedDate, currentMonth, userRole]);
-
-  const fetchUserRole = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/auth");
-        return;
-      }
-
-      setCurrentUserId(user.id);
-
-      const { data: roleData, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .single();
-
-      if (error) throw error;
-      setUserRole(roleData.role);
-    } catch (error) {
-      console.error("Error fetching user role:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch user role",
-        variant: "destructive",
-      });
-    }
-  };
+  }, [currentWeek, selectedDate, currentMonth, user]);
 
   const fetchSessions = async () => {
     setLoading(true);
@@ -170,8 +138,8 @@ const AdminSchedule = () => {
         .order("start_time");
 
       // If user is an instructor, only show their sessions
-      if (userRole === "instructor" && currentUserId) {
-        query = query.eq("instructor_id", currentUserId);
+      if (isInstructor && user?.id) {
+        query = query.eq("instructor_id", user.id);
       }
 
       const { data, error } = await query;
@@ -330,7 +298,7 @@ const AdminSchedule = () => {
               )}
             </div>
 
-            {userRole === "admin" && (
+            {isAdmin && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -525,12 +493,13 @@ const AdminSchedule = () => {
     new Set(sessions.map(s => s.session_type))
   );
 
-  if (!userRole) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
+  // Auth guard
+  if (authLoading || loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!isAdmin && !isInstructor) {
+    return <Navigate to="/auth" replace />;
   }
 
   return (
@@ -549,10 +518,10 @@ const AdminSchedule = () => {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold">
-                {userRole === "admin" ? "Admin Schedule" : "My Schedule"}
+                {isAdmin ? "Admin Schedule" : "My Schedule"}
               </h1>
               <p className="text-muted-foreground">
-                {userRole === "admin" 
+                {isAdmin 
                   ? "Manage all sessions and track swimmer progress" 
                   : "View your scheduled sessions"}
               </p>
@@ -560,7 +529,7 @@ const AdminSchedule = () => {
             
             <div className="flex items-center gap-3">
               <InstructorNotificationBell />
-              {userRole === "admin" && (
+              {isAdmin && (
                 <Button
                   size="lg"
                   onClick={() => navigate("/admin/master-schedule")}
@@ -574,7 +543,7 @@ const AdminSchedule = () => {
           </div>
 
           {/* Swimmers Needing Progress Updates - Only for instructors */}
-          {userRole === "instructor" && (
+          {isInstructor && (
             <div className="mb-6">
               <SwimmersNeedingUpdate />
             </div>
