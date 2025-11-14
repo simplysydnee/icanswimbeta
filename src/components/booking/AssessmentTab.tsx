@@ -301,7 +301,7 @@ export const AssessmentTab = ({ selectedSwimmers = [] }: AssessmentTabProps) => 
               <Button
                 size="lg"
                 onClick={handleConfirm}
-                data-testid="confirm-assessment-button"
+                data-testid="confirm-booking"
                 disabled={bookingInProgress || selectedSwimmers.length === 0}
               >
                 {bookingInProgress ? (
