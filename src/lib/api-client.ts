@@ -72,6 +72,42 @@ export interface Session {
   }>;
 }
 
+export interface Booking {
+  id: string;
+  session_id: string;
+  swimmer_id: string;
+  parent_id: string;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  canceled_at: string | null;
+  cancel_reason: string | null;
+  cancel_source: string | null;
+}
+
+export interface Assessment {
+  id: string;
+  swimmer_id: string;
+  session_id: string | null;
+  scheduled_date: string;
+  status: string;
+  approval_status: string;
+  instructor_notes: string | null;
+  completed_at: string | null;
+  completed_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateAssessmentData {
+  swimmer_id: string;
+  session_id: string;
+  scheduled_date: string;
+  status?: string;
+  approval_status?: string;
+}
+
 export interface AdminKPIs {
   totalSwimmers: number;
   activeSwimmers: number;
@@ -394,6 +430,151 @@ export const sessionsApi = {
   },
 };
 
+// ==================== BOOKINGS API ====================
+
+export const bookingsApi = {
+  /**
+   * Create an assessment booking
+   */
+  async createAssessment(
+    sessionId: string,
+    swimmerId: string,
+    parentId: string
+  ): Promise<ApiResponse<Booking>> {
+    return executeWithRetry(
+      async () => {
+        // First create the booking
+        const bookingResult = await supabase
+          .from('bookings')
+          .insert([{
+            session_id: sessionId,
+            swimmer_id: swimmerId,
+            parent_id: parentId,
+            status: 'confirmed'
+          }])
+          .select()
+          .single();
+
+        if (bookingResult.error) {
+          return bookingResult as any;
+        }
+
+        // Then create the assessment record
+        const sessionResult = await supabase
+          .from('sessions')
+          .select('start_time')
+          .eq('id', sessionId)
+          .single();
+
+        if (sessionResult.error) {
+          return sessionResult as any;
+        }
+
+        const assessmentResult = await supabase
+          .from('assessments')
+          .insert([{
+            swimmer_id: swimmerId,
+            session_id: sessionId,
+            scheduled_date: sessionResult.data.start_time,
+            status: 'scheduled',
+            approval_status: 'approved'
+          }])
+          .select()
+          .single();
+
+        if (assessmentResult.error) {
+          return assessmentResult as any;
+        }
+
+        // Update session status to booked
+        await supabase
+          .from('sessions')
+          .update({ status: 'booked' })
+          .eq('id', sessionId);
+
+        return bookingResult as any;
+      },
+      'create assessment booking'
+    );
+  },
+
+  /**
+   * Fetch bookings by parent ID
+   */
+  async getByParentId(parentId: string): Promise<ApiResponse<Booking[]>> {
+    return executeWithRetry(
+      async () => {
+        const result = await supabase
+          .from('bookings')
+          .select(`
+            *,
+            sessions(
+              start_time,
+              end_time,
+              location,
+              session_type,
+              profiles!sessions_instructor_id_fkey(full_name)
+            ),
+            swimmers(first_name, last_name)
+          `)
+          .eq('parent_id', parentId)
+          .order('created_at', { ascending: false });
+        return result as any;
+      },
+      'fetch bookings by parent'
+    );
+  },
+
+  /**
+   * Cancel a booking
+   */
+  async cancel(id: string, reason: string, source: string): Promise<ApiResponse<Booking>> {
+    return executeWithRetry(
+      async () => {
+        const result = await supabase
+          .from('bookings')
+          .update({
+            status: 'canceled',
+            canceled_at: new Date().toISOString(),
+            cancel_reason: reason,
+            cancel_source: source
+          })
+          .eq('id', id)
+          .select()
+          .single();
+        return result as any;
+      },
+      'cancel booking'
+    );
+  },
+
+  /**
+   * Create a regular booking (for weekly sessions)
+   */
+  async create(
+    sessionId: string,
+    swimmerId: string,
+    parentId: string
+  ): Promise<ApiResponse<Booking>> {
+    return executeWithRetry(
+      async () => {
+        const result = await supabase
+          .from('bookings')
+          .insert([{
+            session_id: sessionId,
+            swimmer_id: swimmerId,
+            parent_id: parentId,
+            status: 'confirmed'
+          }])
+          .select()
+          .single();
+        return result as any;
+      },
+      'create booking'
+    );
+  },
+};
+
 // ==================== ADMIN KPIs API ====================
 
 export const adminApi = {
@@ -453,5 +634,116 @@ export const adminApi = {
         error: formatErrorMessage(error as Error, 'fetch admin KPIs'),
       };
     }
+  },
+};
+
+// ==================== ASSESSMENTS API ====================
+
+export const assessmentsApi = {
+  /**
+   * Create a new assessment
+   */
+  async create(assessmentData: CreateAssessmentData): Promise<ApiResponse<Assessment>> {
+    return executeWithRetry(
+      async () => {
+        const result = await supabase
+          .from("assessments")
+          .insert([{
+            swimmer_id: assessmentData.swimmer_id,
+            session_id: assessmentData.session_id,
+            scheduled_date: assessmentData.scheduled_date,
+            status: assessmentData.status || "scheduled",
+            approval_status: assessmentData.approval_status || "approved"
+          }])
+          .select()
+          .single();
+        return result as any;
+      },
+      "create assessment"
+    );
+  },
+
+  /**
+   * Get assessments by swimmer ID
+   */
+  async getBySwimmer(swimmerId: string): Promise<ApiResponse<Assessment[]>> {
+    return executeWithRetry(
+      async () => {
+        const result = await supabase
+          .from("assessments")
+          .select("*")
+          .eq("swimmer_id", swimmerId)
+          .order("scheduled_date", { ascending: true });
+        return result as any;
+      },
+      "fetch assessments by swimmer"
+    );
+  },
+
+  /**
+   * Get available assessment sessions
+   */
+  async getAvailableSessions(date?: string): Promise<ApiResponse<Session[]>> {
+    return executeWithRetry(
+      async () => {
+        let query = supabase
+          .from("sessions")
+          .select(`
+            *,
+            bookings(
+              id,
+              status,
+              swimmer_id
+            )
+          `)
+          .eq("session_type", "initial_assessment")
+          .eq("status", "available")
+          .gte("start_time", new Date().toISOString())
+          .order("start_time", { ascending: true });
+
+        if (date) {
+          const startOfDay = new Date(date);
+          startOfDay.setHours(0, 0, 0, 0);
+          const endOfDay = new Date(date);
+          endOfDay.setHours(23, 59, 59, 999);
+
+          query = query
+            .gte("start_time", startOfDay.toISOString())
+            .lte("start_time", endOfDay.toISOString());
+        }
+
+        const result = await query;
+        return result as any;
+      },
+      "fetch available assessment sessions"
+    );
+  },
+
+  /**
+   * Update assessment status
+   */
+  async updateStatus(id: string, status: string, notes?: string): Promise<ApiResponse<Assessment>> {
+    return executeWithRetry(
+      async () => {
+        const updates: any = { status };
+
+        if (status === "completed") {
+          updates.completed_at = new Date().toISOString();
+        }
+
+        if (notes) {
+          updates.instructor_notes = notes;
+        }
+
+        const result = await supabase
+          .from("assessments")
+          .update(updates)
+          .eq("id", id)
+          .select()
+          .single();
+        return result as any;
+      },
+      "update assessment status"
+    );
   },
 };

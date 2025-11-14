@@ -384,7 +384,13 @@ const Booking = () => {
 
               {!showPosMessage && (
                 <TabsContent value="assessment">
-                  <AssessmentTab />
+                  <AssessmentTab
+                    selectedSwimmers={selectedSwimmers.map((s) => ({
+                      id: s.id,
+                      name: `${s.firstName} ${s.lastName}`,
+                      paymentType: s.paymentType as "private_pay" | "vmrc" | "scholarship" | "other",
+                    }))}
+                  />
                 </TabsContent>
               )}
 

@@ -6,10 +6,24 @@ import { Clock, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { format, parseISO, isSameDay } from "date-fns";
 import { useAssessmentSessions } from "@/hooks/useAssessmentSessions";
 import { Skeleton } from "@/components/ui/skeleton";
+import { assessmentsApi } from "@/lib/api-client";
+import { useAuth } from "@/hooks/useAuth";
 
-export const AssessmentTab = () => {
+export interface AssessmentTabProps {
+  selectedSwimmers?: Array<{
+    id: string;
+    name: string;
+    paymentType?: "private_pay" | "vmrc" | "scholarship" | "other";
+  }>;
+}
+
+export const AssessmentTab = ({ selectedSwimmers = [] }: AssessmentTabProps) => {
   const { sessions, loading, error } = useAssessmentSessions();
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [bookingInProgress, setBookingInProgress] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
+  const { user } = useAuth();
 
   // Group sessions by date
   const sessionsByDate = useMemo(() => {
@@ -26,14 +40,44 @@ export const AssessmentTab = () => {
 
   const selectedSession = sessions.find(s => s.id === selectedSessionId);
 
-  const handleConfirm = () => {
-    if (!selectedSession) return;
-    
-    console.log("Assessment booking confirmed:", {
-      sessionId: selectedSession.id,
-      startTime: selectedSession.start_time,
-    });
-    // TODO: Create assessment booking via Supabase
+  const handleConfirm = async () => {
+    if (!selectedSession || !user || selectedSwimmers.length === 0) return;
+
+    setBookingInProgress(true);
+    setBookingError(null);
+    setBookingSuccess(false);
+
+    try {
+      // Use the first selected swimmer (for now - could be extended to handle multiple)
+      const swimmerId = selectedSwimmers[0].id;
+
+      const result = await assessmentsApi.create({
+        swimmer_id: swimmerId,
+        session_id: selectedSession.id,
+        scheduled_date: selectedSession.start_time,
+        status: 'scheduled',
+        approval_status: 'approved'
+      });
+
+      if (result.error) {
+        console.error("Failed to create assessment booking:", result.error);
+        setBookingError(result.error);
+      } else {
+        console.log("Assessment booking created successfully:", result.data);
+        setBookingSuccess(true);
+
+        // Reset selection after successful booking
+        setSelectedSessionId(null);
+
+        // TODO: In a real implementation, we would refresh the sessions list
+        // or redirect to a confirmation page
+      }
+    } catch (error) {
+      console.error("Error creating assessment booking:", error);
+      setBookingError("An unexpected error occurred");
+    } finally {
+      setBookingInProgress(false);
+    }
   };
 
   if (loading) {
