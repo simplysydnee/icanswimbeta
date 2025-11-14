@@ -81,7 +81,7 @@ export const SwimmerSelector = ({
   };
 
   return (
-    <Card className="mb-6">
+    <Card className="mb-6" data-testid="swimmer-selector">
       <CardHeader>
         <CardTitle>
           {swimmers.length === 1
@@ -128,6 +128,7 @@ export const SwimmerSelector = ({
                   isSelected ? "ring-2 ring-primary" : ""
                 } ${!canBook ? "opacity-60" : ""}`}
                 onClick={() => canBook && handleToggleSwimmer(swimmer.id)}
+                data-testid={`swimmer-${swimmer.id}`}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3 sm:gap-4">

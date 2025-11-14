@@ -6,8 +6,9 @@ import { Clock, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { format, parseISO, isSameDay } from "date-fns";
 import { useAssessmentSessions } from "@/hooks/useAssessmentSessions";
 import { Skeleton } from "@/components/ui/skeleton";
-import { assessmentsApi } from "@/lib/api-client";
+import { bookingsApi } from "@/lib/api-client";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/components/ui/use-toast";
 
 export interface AssessmentTabProps {
   selectedSwimmers?: Array<{
@@ -18,12 +19,13 @@ export interface AssessmentTabProps {
 }
 
 export const AssessmentTab = ({ selectedSwimmers = [] }: AssessmentTabProps) => {
-  const { sessions, loading, error } = useAssessmentSessions();
+  const { sessions, loading, error, refetch } = useAssessmentSessions();
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [bookingInProgress, setBookingInProgress] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   // Group sessions by date
   const sessionsByDate = useMemo(() => {
@@ -51,17 +53,20 @@ export const AssessmentTab = ({ selectedSwimmers = [] }: AssessmentTabProps) => 
       // Use the first selected swimmer (for now - could be extended to handle multiple)
       const swimmerId = selectedSwimmers[0].id;
 
-      const result = await assessmentsApi.create({
-        swimmer_id: swimmerId,
-        session_id: selectedSession.id,
-        scheduled_date: selectedSession.start_time,
-        status: 'scheduled',
-        approval_status: 'approved'
-      });
+      const result = await bookingsApi.createAssessment(
+        selectedSession.id,
+        swimmerId,
+        user.id
+      );
 
       if (result.error) {
         console.error("Failed to create assessment booking:", result.error);
         setBookingError(result.error);
+        toast({
+          title: "Booking Failed",
+          description: result.error,
+          variant: "destructive"
+        });
       } else {
         console.log("Assessment booking created successfully:", result.data);
         setBookingSuccess(true);
@@ -69,16 +74,48 @@ export const AssessmentTab = ({ selectedSwimmers = [] }: AssessmentTabProps) => 
         // Reset selection after successful booking
         setSelectedSessionId(null);
 
-        // TODO: In a real implementation, we would refresh the sessions list
-        // or redirect to a confirmation page
+        // Refresh the sessions list to show updated availability
+        await refetch();
+
+        toast({
+          title: "Assessment Booked Successfully!",
+          description: `Your initial assessment has been scheduled for ${format(parseISO(selectedSession.start_time), "EEEE, MMMM d, yyyy 'at' h:mm a")}`,
+        });
       }
     } catch (error) {
       console.error("Error creating assessment booking:", error);
-      setBookingError("An unexpected error occurred");
+      const errorMessage = "An unexpected error occurred while booking your assessment";
+      setBookingError(errorMessage);
+      toast({
+        title: "Booking Error",
+        description: errorMessage,
+        variant: "destructive"
+      });
     } finally {
       setBookingInProgress(false);
     }
   };
+
+  // Show message if no swimmer is selected
+  if (selectedSwimmers.length === 0) {
+    return (
+      <div className="space-y-6">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            🔑 Complete your Initial Assessment to unlock weekly and floating sessions
+          </AlertDescription>
+        </Alert>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center text-muted-foreground">
+              <p>Please select a swimmer from the dropdown above to book an assessment.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -208,7 +245,7 @@ export const AssessmentTab = ({ selectedSwimmers = [] }: AssessmentTabProps) => 
         </CardContent>
       </Card>
 
-      <Card>
+      <Card data-testid="assessment-sessions">
         <CardHeader>
           <CardTitle>Available Assessment Times</CardTitle>
           <CardDescription>
@@ -231,6 +268,7 @@ export const AssessmentTab = ({ selectedSwimmers = [] }: AssessmentTabProps) => 
                         variant={selectedSessionId === session.id ? "default" : "outline"}
                         onClick={() => setSelectedSessionId(session.id)}
                         className="justify-start gap-2"
+                        data-testid={`session-${session.id}`}
                       >
                         <Clock className="h-4 w-4" />
                         {format(parseISO(session.start_time), "h:mm a")}
@@ -260,8 +298,20 @@ export const AssessmentTab = ({ selectedSwimmers = [] }: AssessmentTabProps) => 
                   Initial Assessment (45 minutes)
                 </div>
               </div>
-              <Button size="lg" onClick={handleConfirm}>
-                Confirm Assessment
+              <Button
+                size="lg"
+                onClick={handleConfirm}
+                data-testid="confirm-assessment-button"
+                disabled={bookingInProgress || selectedSwimmers.length === 0}
+              >
+                {bookingInProgress ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Booking...
+                  </>
+                ) : (
+                  "Confirm Assessment"
+                )}
               </Button>
             </div>
           </CardContent>
