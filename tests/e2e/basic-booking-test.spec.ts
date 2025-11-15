@@ -7,6 +7,11 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Basic Booking Test', () => {
   test('should load booking page and show swimmer selector', async ({ page }) => {
+    // Set up dev authentication as parent user
+    await page.addInitScript(() => {
+      localStorage.setItem('dev_auth_user', 'parent');
+    });
+
     // Navigate to booking page
     await page.goto('/booking');
 
@@ -36,6 +41,11 @@ test.describe('Basic Booking Test', () => {
   });
 
   test('should show assessment tab when swimmer selected', async ({ page }) => {
+    // Set up dev authentication as parent user
+    await page.addInitScript(() => {
+      localStorage.setItem('dev_auth_user', 'parent');
+    });
+
     // Navigate to booking page
     await page.goto('/booking');
     await page.waitForLoadState('networkidle');
