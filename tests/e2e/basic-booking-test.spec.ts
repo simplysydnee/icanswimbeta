@@ -54,7 +54,7 @@ test.describe('Basic Booking Test', () => {
     await page.waitForTimeout(2000);
 
     // Check if Assessment tab is visible and enabled
-    const assessmentTab = page.locator('[role="tab"]:has-text("Assessment")');
+    const assessmentTab = page.locator('[data-state="inactive"]:has-text("Initial Assessment")');
 
     // Debug: take screenshot to see current state
     await page.screenshot({ path: 'test-results/after-swimmer-selection.png' });
