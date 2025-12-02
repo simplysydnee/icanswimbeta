@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "your-github-token-here"
+      }
+    },
+    "supabase": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-supabase"],
+      "env": {
+        "SUPABASE_URL": "your-supabase-url",
+        "SUPABASE_SERVICE_ROLE_KEY": "your-supabase-key"
+      }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-playwright"]
+    },
+    "airtable": {
+      "command": "npx",
+      "args": ["@felores/airtable-mcp-server"],
+      "env": {
+        "AIRTABLE_API_KEY": "pat9JPQugQ38aBaKa.fe4c58c25321567f6464b320286d33af3d7d152fedb80b60178ee7985e5f616"
+      }
+    }
+  }
+}

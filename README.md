@@ -1,73 +1,188 @@
-# Welcome to your Lovable project
+# Vibin Coders SaaS Accelerator
 
-## Project info
+A comprehensive Next.js 15+ SaaS foundation built with modern web technologies. Get your SaaS application up and running in minutes with authentication, payments, analytics, and more. 
 
-**URL**: https://lovable.dev/projects/4077a3b7-9ab1-42b5-b7e0-a4402c611f7c
+## ✨ Features
 
-## How can I edit this code?
+- 🚀 **Next.js 15+** with App Router and Turbopack
+- 💎 **TypeScript** for type safety
+- 🎨 **Tailwind CSS** with custom design system
+- 🧩 **shadcn/ui** component library
+- 🌙 **Dark/Light mode** with system detection
+- 📱 **Responsive design** with mobile-first approach
+- 🎯 **Modern architecture** with clean project structure
 
-There are several ways of editing your application.
+## 🏗️ What's Included
 
-**Use Lovable**
+### Current Implementation
+- ✅ Complete landing page with hero, features, and pricing
+- ✅ Responsive navigation with mobile menu
+- ✅ Theme switching (dark/light/system)
+- ✅ TypeScript setup with comprehensive type definitions
+- ✅ Development workflow with linting and formatting
+- ✅ Production-ready build configuration
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/4077a3b7-9ab1-42b5-b7e0-a4402c611f7c) and start prompting.
+### Ready for Implementation (Types Defined)
+- 🔐 Authentication system (OAuth, 2FA, session management)
+- 💳 Subscription management (Stripe integration)
+- 📊 Analytics dashboard
+- 🔧 API management and rate limiting
+- 👥 Team collaboration features
+- 📧 Email templates and notifications
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🚀 Quick Start
 
-**Use your preferred IDE**
+### Prerequisites
+- Node.js 18+ 
+- npm, yarn, or pnpm
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. **Clone or download this project**
+   ```bash
+   cd your-project-directory
+   ```
 
-Follow these steps:
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+3. **Start development server**
+   ```bash
+   npm run dev
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+4. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 📋 Available Scripts
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+# Development
+npm run dev              # Start development server with Turbopack
+npm run build           # Build for production
+npm run start           # Start production server
+
+# Code Quality
+npm run lint            # Run ESLint
+npm run lint:fix        # Fix ESLint issues
+npm run format          # Format code with Prettier
+npm run format:check    # Check formatting
+npm run type-check      # TypeScript type checking
+
+# Utilities
+npm run clean           # Clean build artifacts
 ```
 
-**Edit a file directly in GitHub**
+## 🏛️ Project Structure
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── (auth)/            # Auth pages (future)
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Landing page
+├── components/
+│   ├── ui/                # shadcn/ui components
+│   ├── layout/            # Header, Footer, Navigation
+│   ├── features/landing/  # Landing page sections
+│   └── common/            # Shared components
+├── lib/
+│   ├── utils.ts           # Utility functions
+│   ├── constants.ts       # App configuration
+│   └── types.ts           # Shared TypeScript types
+└── types/
+    ├── auth.ts            # Auth type definitions
+    └── subscription.ts    # Billing type definitions
+```
 
-**Use GitHub Codespaces**
+## 🎨 Customization
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Branding
+Update app configuration in `src/lib/constants.ts`:
+```typescript
+export const APP_CONFIG = {
+  name: 'Your SaaS Name',
+  description: 'Your SaaS description',
+  // ... other config
+}
+```
 
-## What technologies are used for this project?
+### Styling
+- Colors: Modify `tailwind.config.ts` for custom brand colors
+- Components: Extend shadcn/ui components in `src/components/ui/`
+- Global styles: Add custom styles to `src/styles/globals.css`
 
-This project is built with:
+### Content
+- Landing page: Edit components in `src/components/features/landing/`
+- Navigation: Update `src/components/layout/navigation.tsx`
+- Footer links: Modify `src/components/layout/footer.tsx`
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🔧 Tech Stack
 
-## How can I deploy this project?
+- **Framework**: Next.js 15+ with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Theming**: next-themes
+- **Icons**: Lucide React
+- **Development**: ESLint, Prettier, Turbopack
 
-Simply open [Lovable](https://lovable.dev/projects/4077a3b7-9ab1-42b5-b7e0-a4402c611f7c) and click on Share -> Publish.
+## 📦 Key Dependencies
 
-## Can I connect a custom domain to my Lovable project?
+```json
+{
+  "next": "15.3.4",
+  "react": "^19.0.0", 
+  "typescript": "^5",
+  "tailwindcss": "^4",
+  "next-themes": "^0.4.6",
+  "lucide-react": "^0.523.0"
+}
+```
 
-Yes, you can!
+## 🚀 Deployment
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Vercel (Recommended)
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Deploy automatically with zero configuration
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### Other Platforms
+This project works with any platform supporting Next.js:
+- Netlify
+- Railway
+- DigitalOcean App Platform
+- AWS Amplify
+
+## 🗺️ Roadmap
+
+### Phase 2: Authentication
+- [ ] NextAuth.js integration
+- [ ] OAuth providers (Google, GitHub)
+- [ ] User registration/login forms
+- [ ] Protected routes
+
+### Phase 3: Payments
+- [ ] Stripe integration
+- [ ] Subscription plans
+- [ ] Billing dashboard
+- [ ] Invoice management
+
+### Phase 4: Features
+- [ ] User dashboard
+- [ ] Analytics integration
+- [ ] API management
+- [ ] Team collaboration
+
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+---
+
+Built with ❤️ using Next.js, TypeScript, and Tailwind CSS
