@@ -1,41 +1,50 @@
-import { useState, useEffect } from "react";
-import { assessmentsApi } from "@/lib/api-client";
-import { Session } from "@/lib/api-client";
+'use client';
 
-export const useAssessmentSessions = () => {
+import { useState, useEffect } from 'react';
+import { AssessmentSession } from '@/lib/api-client';
+import { apiClient } from '@/lib/api-client';
+
+export function useAssessmentSessions() {
+  const [sessions, setSessions] = useState<AssessmentSession[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sessions, setSessions] = useState<Session[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchAssessmentSessions = async () => {
-      setLoading(true);
-      setError(null);
-
+    async function fetchSessions() {
       try {
-        const response = await assessmentsApi.getAvailableSessions();
-
-        if (response.error) {
-          console.error("Error fetching assessment sessions:", response.error);
-          setError(response.error);
-          setSessions([]);
-        } else {
-          setSessions(response.data || []);
-          if (!response.data || response.data.length === 0) {
-            setError("No assessment openings available at this time");
-          }
-        }
+        setLoading(true);
+        const availableSessions = await apiClient.getAvailableAssessmentSessions();
+        setSessions(availableSessions);
+        setError(null);
       } catch (err) {
-        console.error("Unexpected error:", err);
-        setError("An unexpected error occurred");
-        setSessions([]);
+        console.error('Error fetching assessment sessions:', err);
+        setError('Failed to load available assessment sessions');
       } finally {
         setLoading(false);
       }
-    };
+    }
 
-    fetchAssessmentSessions();
+    fetchSessions();
   }, []);
 
-  return { sessions, loading, error };
-};
+  const refetch = async () => {
+    try {
+      setLoading(true);
+      const availableSessions = await apiClient.getAvailableAssessmentSessions();
+      setSessions(availableSessions);
+      setError(null);
+    } catch (err) {
+      console.error('Error refetching assessment sessions:', err);
+      setError('Failed to load available assessment sessions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    sessions,
+    loading,
+    error,
+    refetch,
+  };
+}
