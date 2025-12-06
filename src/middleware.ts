@@ -1,8 +1,8 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: request.headers,
     },
@@ -13,26 +13,14 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
+        getAll() {
+          return request.cookies.getAll()
         },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({ name, value, ...options })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value, options)
+            response.cookies.set(name, value, options)
           })
-          response.cookies.set({ name, value, ...options })
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({ name, value: '', ...options })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({ name, value: '', ...options })
         },
       },
     }
@@ -63,15 +51,15 @@ export async function middleware(request: NextRequest) {
 
   // Check role-based access for parent routes
   if (pathname.startsWith('/parent') && user) {
-    // Fetch user role from profiles table
-    const { data: profile } = await supabase
-      .from('profiles')
+    // Fetch user role from user_roles table
+    const { data: roles } = await supabase
+      .from('user_roles')
       .select('role')
-      .eq('id', user.id)
-      .single()
+      .eq('user_id', user.id)
+      .eq('role', 'parent')
 
     // Redirect if user doesn't have parent role
-    if (!profile || profile.role !== 'parent') {
+    if (!roles || roles.length === 0) {
       return NextResponse.redirect(new URL('/unauthorized', request.url))
     }
   }

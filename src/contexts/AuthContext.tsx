@@ -67,56 +67,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Fetch user profile and role
     const fetchUserProfile = async (userId: string) => {
       try {
+        console.log('AuthContext: fetchUserProfile started for user', userId)
         setIsLoadingProfile(true)
 
-        // Fetch profile
-        const { data: profileData, error: profileError } = await supabase
+        // Get profile (for name, email, etc. - NOT for role)
+        console.log('AuthContext: fetching profile...')
+        const { data: profileData } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, email, full_name, phone, avatar_url, created_at, updated_at')
           .eq('id', userId)
           .single()
+        console.log('AuthContext: profile result', profileData)
 
-        if (profileError) throw profileError
-
-        // Fetch roles
+        // Get role from user_roles table ONLY
+        console.log('AuthContext: fetching roles...')
         const { data: rolesData, error: rolesError } = await supabase
           .from('user_roles')
           .select('*')
           .eq('user_id', userId)
+        console.log('AuthContext: roles result', { rolesData, rolesError })
 
-        if (rolesError) throw rolesError
+        let primaryRole: UserRole = 'parent'
+        const roles: UserRole[] = []
 
-        // Get primary role (first role in the array)
-        const primaryRole = rolesData[0]?.role || 'parent'
-
-        const userWithRole: UserWithRole = {
-          ...profileData,
-          role: primaryRole,
-          roles: rolesData
+        if (rolesError) {
+          console.error('AuthContext: Error fetching roles:', rolesError)
+        } else if (rolesData) {
+          roles.push(...rolesData.map(r => r.role))
+          // Get primary role (admin > instructor > parent)
+          primaryRole = roles.includes('admin') ? 'admin'
+            : roles.includes('instructor') ? 'instructor'
+            : 'parent'
         }
 
-        setProfile(userWithRole)
+        console.log('AuthContext: determined primaryRole', primaryRole)
+
+        // Create UserWithRole object if profile exists
+        if (profileData) {
+          const userWithRole: UserWithRole = {
+            ...profileData,
+            role: primaryRole,
+            roles: rolesData || []
+          }
+          console.log('AuthContext: setting profile', userWithRole)
+          setProfile(userWithRole)
+        } else {
+          console.log('AuthContext: setting profile to null')
+          setProfile(null)
+        }
+
+        console.log('AuthContext: setting role', primaryRole)
         setRole(primaryRole)
+
       } catch (error) {
-        console.error('Error fetching user profile:', error)
+        console.error('AuthContext: Error in fetchUserProfile:', error)
         setProfile(null)
-        setRole(null)
+        setRole('parent' as UserRole)
       } finally {
+        console.log('AuthContext: setIsLoadingProfile(false)')
         setIsLoadingProfile(false)
       }
     }
 
     const initializeAuth = async () => {
       try {
+        console.log('AuthContext: initializeAuth started')
         const { data: { session } } = await supabase.auth.getSession()
+        console.log('AuthContext: session check result', { hasSession: !!session, hasUser: !!session?.user })
         if (session?.user) {
           const authUser = transformUser(session.user)
+          console.log('AuthContext: setting user', authUser.email)
           setUser(authUser)
           await fetchUserProfile(session.user.id)
+        } else {
+          console.log('AuthContext: no session found')
         }
-      } catch {
+      } catch (error) {
+        console.error('AuthContext: initializeAuth error', error)
         setError('Failed to initialize authentication')
       } finally {
+        console.log('AuthContext: setLoading(false)')
         setLoading(false)
       }
     }
@@ -125,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         if (session?.user) {
           const authUser = transformUser(session.user)
           setUser(authUser)
@@ -136,7 +166,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setRole(null)
         }
         setLoading(false)
-        router.refresh()
+        // Don't refresh router here - it causes infinite loops
+        // router.refresh()
       }
     )
 

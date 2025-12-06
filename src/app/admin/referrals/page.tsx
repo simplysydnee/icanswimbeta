@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Search, Filter, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { RoleGuard } from '@/components/auth/RoleGuard';
 
 type VmrcReferralRequest = Awaited<ReturnType<typeof apiClient.getVmrcReferrals>>[0];
 
@@ -115,7 +116,8 @@ export default function AdminReferralsPage() {
   }
 
   return (
-    <div className="container py-8">
+    <RoleGuard allowedRoles={['admin']}>
+      <div className="container py-8">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">VMRC Referrals Management</CardTitle>
@@ -535,6 +537,7 @@ export default function AdminReferralsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </RoleGuard>
   );
 }

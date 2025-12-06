@@ -4,9 +4,11 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/common/theme-provider";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NavigationProvider } from "@/contexts/NavigationContext";
+import { ToastProvider } from "@/components/ui/toast-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { APP_CONFIG } from "@/lib/constants";
+import { Providers } from "./providers";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -79,11 +81,15 @@ export default function RootLayout({
         >
           <AuthProvider>
             <NavigationProvider>
-              <div className="relative flex min-h-screen flex-col">
-                <Header />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
+              <ToastProvider>
+                <Providers>
+                  <div className="relative flex min-h-screen flex-col">
+                    <Header />
+                    <main className="flex-1">{children}</main>
+                    <Footer />
+                  </div>
+                </Providers>
+              </ToastProvider>
             </NavigationProvider>
           </AuthProvider>
         </ThemeProvider>

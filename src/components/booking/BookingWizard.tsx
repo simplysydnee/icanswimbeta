@@ -1,0 +1,487 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+
+import type { Swimmer, AvailableSession, BookingStep, SessionType } from '@/types/booking';
+import { SwimmerSelectStep } from './steps/SwimmerSelectStep';
+import { SessionTypeStep } from './steps/SessionTypeStep';
+import InstructorStep from './steps/InstructorStep';
+import { DateSelectStep } from './steps/DateSelectStep';
+import { BookingSummary } from './BookingSummary';
+import { StatusBadge } from './StatusBadge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
+
+// Props interface
+interface BookingWizardProps {
+  // Can add props later if needed
+}
+
+export function BookingWizard({}: BookingWizardProps) {
+  // Step management
+  const [currentStep, setCurrentStep] = useState<BookingStep>('select-swimmer');
+
+  // Swimmer selection
+  const [selectedSwimmer, setSelectedSwimmer] = useState<Swimmer | null>(null);
+
+  // Session type (for enrolled swimmers)
+  const [sessionType, setSessionType] = useState<SessionType | null>(null);
+
+  // Instructor selection
+  const [selectedInstructorId, setSelectedInstructorId] = useState<string | null>(null);
+  const [instructorPreference, setInstructorPreference] = useState<'any' | 'specific'>('any');
+  const [instructorName, setInstructorName] = useState<string | null>(null);
+
+  // Single session selection
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [selectedSession, setSelectedSession] = useState<AvailableSession | null>(null);
+
+  // Recurring session selections
+  const [recurringDay, setRecurringDay] = useState<number | null>(null);
+  const [recurringTime, setRecurringTime] = useState<string | null>(null);
+  const [recurringStartDate, setRecurringStartDate] = useState<Date | null>(null);
+  const [recurringEndDate, setRecurringEndDate] = useState<Date | null>(null);
+  const [selectedRecurringSessions, setSelectedRecurringSessions] = useState<AvailableSession[]>([]);
+
+  // Submission
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Step flow logic
+  const getStepNumber = (step: BookingStep): number => {
+    const isWaitlist = selectedSwimmer?.enrollmentStatus === 'waitlist';
+
+    if (isWaitlist) {
+      // Waitlist flow: select-swimmer → assessment → confirm
+      const waitlistSteps = ['select-swimmer', 'assessment', 'confirm'];
+      return waitlistSteps.indexOf(step) + 1;
+    } else {
+      // Enrolled flow: select-swimmer → session-type → select-instructor → select-date → confirm
+      const enrolledSteps = ['select-swimmer', 'session-type', 'select-instructor', 'select-date', 'confirm'];
+      return enrolledSteps.indexOf(step) + 1;
+    }
+  };
+
+  const getTotalSteps = (): number => {
+    const isWaitlist = selectedSwimmer?.enrollmentStatus === 'waitlist';
+    return isWaitlist ? 3 : 5;
+  };
+
+  const getProgress = (): number => {
+    return (getStepNumber(currentStep) / getTotalSteps()) * 100;
+  };
+
+  // Navigation functions
+  const handleNext = () => {
+    const isWaitlist = selectedSwimmer?.enrollmentStatus === 'waitlist';
+
+    switch (currentStep) {
+      case 'select-swimmer':
+        setCurrentStep(isWaitlist ? 'assessment' : 'session-type');
+        break;
+      case 'session-type':
+        setCurrentStep('select-instructor');
+        break;
+      case 'select-instructor':
+        setCurrentStep('select-date');
+        break;
+      case 'select-date':
+      case 'assessment':
+        setCurrentStep('confirm');
+        break;
+    }
+  };
+
+  const handleBack = () => {
+    const isWaitlist = selectedSwimmer?.enrollmentStatus === 'waitlist';
+
+    switch (currentStep) {
+      case 'session-type':
+        setCurrentStep('select-swimmer');
+        break;
+      case 'select-instructor':
+        setCurrentStep('session-type');
+        break;
+      case 'select-date':
+        setCurrentStep('select-instructor');
+        break;
+      case 'assessment':
+        setCurrentStep('select-swimmer');
+        break;
+      case 'confirm':
+        setCurrentStep(isWaitlist ? 'assessment' : 'select-date');
+        break;
+    }
+  };
+
+  // Can proceed logic
+  const canProceed = useMemo(() => {
+    switch (currentStep) {
+      case 'select-swimmer':
+        return selectedSwimmer !== null;
+      case 'session-type':
+        return sessionType !== null;
+      case 'select-instructor':
+        return instructorPreference === 'any' || selectedInstructorId !== null;
+      case 'select-date':
+        if (sessionType === 'single') {
+          return selectedSessionId !== null;
+        } else {
+          return selectedRecurringSessions.length > 0;
+        }
+      case 'assessment':
+        return selectedSessionId !== null;
+      case 'confirm':
+        return true;
+      default:
+        return false;
+    }
+  }, [currentStep, selectedSwimmer, sessionType, instructorPreference, selectedInstructorId, selectedSessionId, selectedRecurringSessions]);
+
+  // Step titles
+  const getStepInfo = (step: BookingStep) => {
+    const stepInfo: Record<BookingStep, { title: string; description: string }> = {
+      'select-swimmer': { title: 'Select Swimmer', description: 'Choose which swimmer to book for' },
+      'session-type': { title: 'Session Type', description: 'Choose single or recurring sessions' },
+      'select-instructor': { title: 'Select Instructor', description: 'Choose your preferred instructor' },
+      'select-date': { title: 'Select Date & Time', description: 'Pick your session schedule' },
+      'assessment': { title: 'Book Assessment', description: 'Schedule your initial assessment' },
+      'confirm': { title: 'Confirm Booking', description: 'Review and confirm your booking' },
+    };
+    return stepInfo[step];
+  };
+
+  // Submit function (placeholder for now)
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      if (!selectedSwimmer) {
+        throw new Error('No swimmer selected');
+      }
+
+      let response: Response;
+      let result: any;
+
+      if (sessionType === 'single' || currentStep === 'assessment') {
+        // Single booking or assessment
+        if (!selectedSessionId) {
+          throw new Error('No session selected');
+        }
+
+        response = await fetch('/api/bookings/single', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            swimmerId: selectedSwimmer.id,
+            sessionId: selectedSessionId,
+          }),
+        });
+      } else {
+        // Recurring bookings
+        const sessionIds = selectedRecurringSessions.map(s => s.id);
+
+        if (sessionIds.length === 0) {
+          throw new Error('No sessions selected');
+        }
+
+        response = await fetch('/api/bookings/recurring', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            swimmerId: selectedSwimmer.id,
+            sessionIds: sessionIds,
+          }),
+        });
+      }
+
+      result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create booking');
+      }
+
+      // Success! Show confirmation
+      const sessionsBooked = sessionType === 'single' ? 1 : selectedRecurringSessions.length;
+
+      alert(`Success! Booked ${sessionsBooked} session${sessionsBooked > 1 ? 's' : ''} for ${selectedSwimmer.firstName}`);
+
+      // Reset wizard for new booking
+      resetWizard();
+
+    } catch (err) {
+      console.error('Booking error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create booking. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetWizard = () => {
+    setCurrentStep('select-swimmer');
+    setSelectedSwimmer(null);
+    setSessionType(null);
+    setSelectedInstructorId(null);
+    setInstructorPreference('any');
+    setInstructorName(null);
+    setSelectedSessionId(null);
+    setSelectedSession(null);
+    setRecurringDay(null);
+    setRecurringTime(null);
+    setRecurringStartDate(null);
+    setRecurringEndDate(null);
+    setSelectedRecurringSessions([]);
+    setError(null);
+  };
+
+  // Render step function
+  const renderStep = () => {
+    switch (currentStep) {
+      case 'select-swimmer':
+        return (
+          <SwimmerSelectStep
+            selectedSwimmerId={selectedSwimmer?.id || null}
+            onSelectSwimmer={(swimmer) => {
+              setSelectedSwimmer(swimmer);
+              // Auto-advance after selection
+              setTimeout(() => handleNext(), 150);
+            }}
+          />
+        );
+
+      case 'session-type':
+        return (
+          <SessionTypeStep
+            selectedType={sessionType}
+            isVmrcClient={selectedSwimmer?.isVmrcClient || false}
+            onSelectType={(type) => {
+              setSessionType(type);
+              setTimeout(() => handleNext(), 150);
+            }}
+          />
+        );
+
+      case 'select-instructor':
+        return (
+          <InstructorStep
+            selectedInstructorId={selectedInstructorId}
+            instructorPreference={instructorPreference}
+            onSelectInstructor={(id, preference) => {
+              setSelectedInstructorId(id);
+              setInstructorPreference(preference);
+              // We'll need to fetch instructor name if specific
+              // For now, set a placeholder name
+              if (id && preference === 'specific') {
+                setInstructorName('Instructor Name');
+              }
+              setTimeout(() => handleNext(), 150);
+            }}
+          />
+        );
+
+      case 'select-date':
+        return (
+          <DateSelectStep
+            sessionType={sessionType || 'single'}
+            instructorId={instructorPreference === 'specific' ? selectedInstructorId : null}
+            selectedSessionId={selectedSessionId}
+            recurringDay={recurringDay}
+            recurringTime={recurringTime}
+            recurringStartDate={recurringStartDate}
+            recurringEndDate={recurringEndDate}
+            selectedRecurringSessions={selectedRecurringSessions.map(s => s.id)}
+            onSelectSession={(sessionId) => {
+              setSelectedSessionId(sessionId);
+              // TODO: Also set selectedSession with full object
+              // For now, create a mock session
+              const mockSession: AvailableSession = {
+                id: sessionId,
+                startTime: new Date().toISOString(),
+                endTime: new Date(Date.now() + 3600000).toISOString(),
+                dayOfWeek: new Date().getDay(),
+                instructorId: selectedInstructorId || '',
+                instructorName: instructorName || 'Any Available',
+                location: 'Turlock Pool',
+                sessionType: 'single',
+                maxCapacity: 1,
+                currentBookings: 0,
+                isFull: false,
+                priceCents: 7500,
+              };
+              setSelectedSession(mockSession);
+            }}
+            onSetRecurring={(opts) => {
+              if (opts.day !== undefined) setRecurringDay(opts.day);
+              if (opts.time !== undefined) setRecurringTime(opts.time);
+              if (opts.startDate !== undefined) setRecurringStartDate(opts.startDate);
+              if (opts.endDate !== undefined) setRecurringEndDate(opts.endDate);
+              // TODO: Convert sessionIds to full session objects
+              // For now, create mock sessions
+              if (opts.sessionIds && opts.sessionIds.length > 0) {
+                const mockSessions: AvailableSession[] = opts.sessionIds.map((id, index) => ({
+                  id,
+                  startTime: new Date(Date.now() + index * 604800000).toISOString(), // Weekly intervals
+                  endTime: new Date(Date.now() + index * 604800000 + 3600000).toISOString(),
+                  dayOfWeek: opts.day || 0,
+                  instructorId: selectedInstructorId || '',
+                  instructorName: instructorName || 'Any Available',
+                  location: 'Turlock Pool',
+                  sessionType: 'recurring',
+                  maxCapacity: 1,
+                  currentBookings: 0,
+                  isFull: false,
+                  priceCents: 7500,
+                }));
+                setSelectedRecurringSessions(mockSessions);
+              }
+            }}
+          />
+        );
+
+      case 'assessment':
+        // TODO: Create AssessmentStep component
+        return (
+          <div className="text-center py-8 text-muted-foreground">
+            Assessment booking step - to be implemented
+          </div>
+        );
+
+      case 'confirm':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center gap-3 text-green-600">
+              <CheckCircle2 className="h-6 w-6" />
+              <div>
+                <p className="font-semibold">Ready to Book</p>
+                <p className="text-sm text-muted-foreground">Review your booking details</p>
+              </div>
+            </div>
+
+            {/* Show mobile summary on confirm step */}
+            <div className="lg:hidden">
+              <BookingSummary
+                swimmer={selectedSwimmer}
+                sessionType={sessionType}
+                instructorName={instructorName}
+                instructorPreference={instructorPreference}
+                selectedSession={selectedSession}
+                selectedRecurringSessions={selectedRecurringSessions}
+                recurringDay={recurringDay}
+                recurringTime={recurringTime}
+                recurringStartDate={recurringStartDate}
+                recurringEndDate={recurringEndDate}
+              />
+            </div>
+
+            {/* Cancellation policy notice */}
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                By confirming, you agree to the 24-hour cancellation policy.
+                Late cancellations may affect your booking privileges.
+              </AlertDescription>
+            </Alert>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="flex flex-col lg:flex-row gap-6">
+      {/* Main wizard card */}
+      <Card className="flex-1">
+        <CardHeader>
+          {/* Progress bar */}
+          <div className="space-y-2 mb-4">
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Step {getStepNumber(currentStep)} of {getTotalSteps()}</span>
+              <span>{Math.round(getProgress())}% complete</span>
+            </div>
+            {/* Simple progress bar since Progress component doesn't exist */}
+            <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all duration-300"
+                style={{ width: `${getProgress()}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Step title */}
+          <CardTitle>{getStepInfo(currentStep).title}</CardTitle>
+          <CardDescription>{getStepInfo(currentStep).description}</CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          {/* Error alert */}
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Step content */}
+          <div key={currentStep} className="transition-opacity duration-200">
+            {renderStep()}
+          </div>
+
+          {/* Navigation buttons */}
+          <div className="flex justify-between mt-8 pt-6 border-t">
+            <Button
+              variant="outline"
+              onClick={handleBack}
+              disabled={currentStep === 'select-swimmer' || isSubmitting}
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+
+            {currentStep === 'confirm' ? (
+              <Button onClick={handleSubmit} disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Booking...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Confirm Booking
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button onClick={handleNext} disabled={!canProceed}>
+                Continue
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Summary sidebar - hidden on mobile */}
+      <div className="hidden lg:block lg:w-80">
+        <BookingSummary
+          swimmer={selectedSwimmer}
+          sessionType={sessionType}
+          instructorName={instructorName}
+          instructorPreference={instructorPreference}
+          selectedSession={selectedSession}
+          selectedRecurringSessions={selectedRecurringSessions}
+          recurringDay={recurringDay}
+          recurringTime={recurringTime}
+          recurringStartDate={recurringStartDate}
+          recurringEndDate={recurringEndDate}
+        />
+      </div>
+    </div>
+  );
+}

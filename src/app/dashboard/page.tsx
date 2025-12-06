@@ -99,6 +99,11 @@ export default function DashboardPage() {
                 </Link>
               </Button>
               <Button variant="outline" asChild className="w-full">
+                <Link href="/admin/sessions">
+                  Session Generator
+                </Link>
+              </Button>
+              <Button variant="outline" asChild className="w-full">
                 <Link href="/admin/reports">
                   Reports
                 </Link>

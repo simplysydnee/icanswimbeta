@@ -141,7 +141,7 @@ export default function ParentDashboard() {
             </Link>
           </Button>
           <Button variant="outline" asChild>
-            <Link href="/booking">
+            <Link href="/parent/book">
               <Calendar className="h-4 w-4 mr-2" />
               Book Lesson
             </Link>

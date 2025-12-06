@@ -1,4 +1,9 @@
 import { createClient } from '@/lib/supabase/client';
+import {
+  GenerateSessionsRequest,
+  GenerateSessionsResponse,
+  GenerateSessionsRequestSchema
+} from '@/types/session-generator';
 
 export interface AssessmentSession {
   id: string;
@@ -272,6 +277,68 @@ export class ApiClient {
     return data;
   }
 
+  // ============================================
+  // SESSION GENERATOR METHODS
+  // ============================================
+
+  /**
+   * Generate sessions based on mode (single, repeating, or assessment)
+   * Validates data with Zod before sending to server
+   * @throws Error if validation fails or API returns error
+   */
+  async generateSessions(data: GenerateSessionsRequest): Promise<GenerateSessionsResponse> {
+    // Client-side validation before sending (fails fast)
+    const validated = GenerateSessionsRequestSchema.parse(data);
+
+    const response = await fetch('/api/admin/sessions/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validated),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to generate sessions');
+    }
+
+    return result;
+  }
+
+  /**
+   * Open all draft sessions in a batch (make available for booking)
+   */
+  async openSessionBatch(batchId: string): Promise<{ updated: number }> {
+    const response = await fetch(`/api/admin/sessions/batch/${batchId}/open`, {
+      method: 'POST',
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to open sessions');
+    }
+
+    return result;
+  }
+
+  /**
+   * Delete all sessions in a batch (only works if all are drafts)
+   */
+  async deleteSessionBatch(batchId: string): Promise<{ deleted: number }> {
+    const response = await fetch(`/api/admin/sessions/batch/${batchId}`, {
+      method: 'DELETE',
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to delete batch');
+    }
+
+    return result;
+  }
+
   // VMRC Referral Methods
   async createParentReferralRequest(data: {
     parent_name: string;
@@ -509,4 +576,77 @@ export class ApiClient {
   }
 }
 
+// ============================================
+// SESSION GENERATOR API (standalone)
+// ============================================
+
+export const sessionGeneratorApi = {
+  /**
+   * Generate sessions based on mode (single, repeating, or assessment)
+   * Validates data with Zod before sending to server
+   * @throws Error if validation fails or API returns error
+   */
+  async generate(data: GenerateSessionsRequest): Promise<GenerateSessionsResponse> {
+    // Client-side validation before sending (fails fast)
+    const validated = GenerateSessionsRequestSchema.parse(data);
+
+    const response = await fetch('/api/admin/sessions/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validated),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to generate sessions');
+    }
+
+    return result;
+  },
+
+  /**
+   * Open all draft sessions in a batch (make available for booking)
+   */
+  async openBatch(batchId: string): Promise<{ updated: number }> {
+    const response = await fetch(`/api/admin/sessions/batch/${batchId}/open`, {
+      method: 'POST',
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to open sessions');
+    }
+
+    return result;
+  },
+
+  /**
+   * Delete all sessions in a batch (only works if all are drafts)
+   */
+  async deleteBatch(batchId: string): Promise<{ deleted: number }> {
+    const response = await fetch(`/api/admin/sessions/batch/${batchId}`, {
+      method: 'DELETE',
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to delete batch');
+    }
+
+    return result;
+  },
+};
+
 export const apiClient = new ApiClient();
+
+// ============================================
+// COMBINED API OBJECT
+// ============================================
+
+export const api = {
+  sessionGenerator: sessionGeneratorApi,
+  // Add other API modules here as needed
+};
