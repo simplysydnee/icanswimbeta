@@ -2,12 +2,17 @@ import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { SESSION_STATUS } from '@/config/constants';
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ batchId: string }> }
-) {
+interface DeleteSessionsRequest {
+  sessionIds: string[];
+}
+
+interface DeleteSessionsResponse {
+  success: boolean;
+  count: number;
+}
+
+export async function POST(request: Request) {
   try {
-    const { batchId } = await params;
     const supabase = await createClient();
 
     // ========== STEP 1: Authentication ==========
@@ -35,68 +40,81 @@ export async function DELETE(
       );
     }
 
-    // ========== STEP 3: Check if sessions can be deleted ==========
-    // Only allow deletion if ALL sessions in batch are still drafts
+    // ========== STEP 3: Parse Request Body ==========
+    const body = await request.json();
+    const { sessionIds }: DeleteSessionsRequest = body;
+
+    if (!sessionIds || !Array.isArray(sessionIds) || sessionIds.length === 0) {
+      return NextResponse.json(
+        { error: 'Invalid request - sessionIds array is required' },
+        { status: 400 }
+      );
+    }
+
+    // ========== STEP 4: Validate Session IDs ==========
+    // Check if all sessions exist and are in draft status
     const { data: sessions, error: checkError } = await supabase
       .from('sessions')
       .select('id, status')
-      .eq('batch_id', batchId);
+      .in('id', sessionIds);
 
     if (checkError) {
-      console.error('Error checking batch:', checkError);
+      console.error('Error checking sessions:', checkError);
       return NextResponse.json(
-        { error: `Failed to check batch status: ${checkError.message}` },
+        { error: `Failed to validate sessions: ${checkError.message}` },
         { status: 500 }
       );
     }
 
     if (!sessions || sessions.length === 0) {
       return NextResponse.json(
-        { error: 'Batch not found or already deleted' },
+        { error: 'No sessions found with the provided IDs' },
         { status: 404 }
       );
     }
 
-    // Check if any sessions are not drafts
+    // Check if all sessions are drafts
     const nonDraftSessions = sessions.filter(s => s.status !== SESSION_STATUS.DRAFT);
     if (nonDraftSessions.length > 0) {
+      const nonDraftIds = nonDraftSessions.map(s => s.id);
       return NextResponse.json(
         {
-          error: 'Cannot delete batch - some sessions are not drafts',
-          nonDraftCount: nonDraftSessions.length,
-          statuses: [...new Set(nonDraftSessions.map(s => s.status))],
+          error: 'Cannot delete sessions - some sessions are not drafts',
+          nonDraftSessionIds: nonDraftIds,
         },
         { status: 400 }
       );
     }
 
-    // ========== STEP 4: Delete Sessions ==========
+    // ========== STEP 5: Delete Sessions ==========
     const { error: deleteError, count } = await supabase
       .from('sessions')
       .delete()
-      .eq('batch_id', batchId)
+      .in('id', sessionIds)
+      .eq('status', SESSION_STATUS.DRAFT)
       .select('id', { count: 'exact' });
 
     if (deleteError) {
-      console.error('Error deleting batch:', deleteError);
+      console.error('Error deleting sessions:', deleteError);
       return NextResponse.json(
         { error: `Failed to delete sessions: ${deleteError.message}` },
         { status: 500 }
       );
     }
 
-    // ========== STEP 5: Return Response ==========
+    // ========== STEP 6: Return Response ==========
     const deletedCount = count || 0;
-    console.log(`✅ Deleted ${deletedCount} sessions from batch ${batchId}`);
+    console.log(`✅ Deleted ${deletedCount} draft sessions`);
 
-    return NextResponse.json({
+    const response: DeleteSessionsResponse = {
       success: true,
-      deleted: deletedCount,
-      batchId,
-    });
+      count: deletedCount,
+    };
+
+    return NextResponse.json(response);
 
   } catch (error) {
-    console.error('Delete batch error:', error);
+    console.error('Delete sessions error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

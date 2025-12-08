@@ -64,65 +64,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize auth state
   useEffect(() => {
+    console.log('AuthContext: useEffect running')
+
     // Fetch user profile and role
     const fetchUserProfile = async (userId: string) => {
       try {
-        console.log('AuthContext: fetchUserProfile started for user', userId)
+        console.log('AuthContext: fetchUserProfile called for userId:', userId)
         setIsLoadingProfile(true)
 
-        // Get profile (for name, email, etc. - NOT for role)
-        console.log('AuthContext: fetching profile...')
-        const { data: profileData } = await supabase
+        // Fetch profile
+        console.log('AuthContext: fetching profile from profiles table')
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, email, full_name, phone, avatar_url, created_at, updated_at')
+          .select('*')
           .eq('id', userId)
           .single()
-        console.log('AuthContext: profile result', profileData)
 
-        // Get role from user_roles table ONLY
-        console.log('AuthContext: fetching roles...')
+        console.log('AuthContext: profile fetch result:', { profileData, profileError })
+        if (profileError) throw profileError
+
+        // Fetch roles
+        console.log('AuthContext: fetching roles from user_roles table')
         const { data: rolesData, error: rolesError } = await supabase
           .from('user_roles')
           .select('*')
           .eq('user_id', userId)
-        console.log('AuthContext: roles result', { rolesData, rolesError })
 
-        let primaryRole: UserRole = 'parent'
-        const roles: UserRole[] = []
+        console.log('AuthContext: roles fetch result:', { rolesData, rolesError })
+        if (rolesError) throw rolesError
 
-        if (rolesError) {
-          console.error('AuthContext: Error fetching roles:', rolesError)
-        } else if (rolesData) {
-          roles.push(...rolesData.map(r => r.role))
-          // Get primary role (admin > instructor > parent)
-          primaryRole = roles.includes('admin') ? 'admin'
-            : roles.includes('instructor') ? 'instructor'
-            : 'parent'
+        // Get primary role (first role in the array)
+        const primaryRole = rolesData[0]?.role || 'parent'
+        console.log('AuthContext: primaryRole determined as:', primaryRole)
+
+        const userWithRole: UserWithRole = {
+          ...profileData,
+          role: primaryRole,
+          roles: rolesData
         }
 
-        console.log('AuthContext: determined primaryRole', primaryRole)
-
-        // Create UserWithRole object if profile exists
-        if (profileData) {
-          const userWithRole: UserWithRole = {
-            ...profileData,
-            role: primaryRole,
-            roles: rolesData || []
-          }
-          console.log('AuthContext: setting profile', userWithRole)
-          setProfile(userWithRole)
-        } else {
-          console.log('AuthContext: setting profile to null')
-          setProfile(null)
-        }
-
-        console.log('AuthContext: setting role', primaryRole)
+        console.log('AuthContext: setting profile and role:', userWithRole)
+        setProfile(userWithRole)
         setRole(primaryRole)
-
       } catch (error) {
-        console.error('AuthContext: Error in fetchUserProfile:', error)
+        console.error('AuthContext: Error fetching user profile:', error)
         setProfile(null)
-        setRole('parent' as UserRole)
+        setRole(null)
       } finally {
         console.log('AuthContext: setIsLoadingProfile(false)')
         setIsLoadingProfile(false)
@@ -131,19 +118,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        console.log('AuthContext: initializeAuth started')
+        console.log('AuthContext: initializeAuth called')
         const { data: { session } } = await supabase.auth.getSession()
-        console.log('AuthContext: session check result', { hasSession: !!session, hasUser: !!session?.user })
+        console.log('AuthContext: session fetched:', { hasSession: !!session, user: session?.user?.email })
         if (session?.user) {
           const authUser = transformUser(session.user)
-          console.log('AuthContext: setting user', authUser.email)
+          console.log('AuthContext: transformed user:', authUser)
           setUser(authUser)
           await fetchUserProfile(session.user.id)
         } else {
           console.log('AuthContext: no session found')
         }
       } catch (error) {
-        console.error('AuthContext: initializeAuth error', error)
+        console.error('AuthContext: Failed to initialize authentication:', error)
         setError('Failed to initialize authentication')
       } finally {
         console.log('AuthContext: setLoading(false)')
@@ -155,19 +142,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
+        console.log('AuthContext: onAuthStateChange event:', event, 'session:', session?.user?.email)
         if (session?.user) {
           const authUser = transformUser(session.user)
+          console.log('AuthContext: auth state change - user logged in:', authUser)
           setUser(authUser)
           await fetchUserProfile(session.user.id)
         } else {
+          console.log('AuthContext: auth state change - user logged out')
           setUser(null)
           setProfile(null)
           setRole(null)
         }
         setLoading(false)
-        // Don't refresh router here - it causes infinite loops
-        // router.refresh()
+        router.refresh()
       }
     )
 

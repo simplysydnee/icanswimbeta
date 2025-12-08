@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
@@ -167,7 +168,17 @@ export function SessionGeneratorForm() {
         console.log('Response:', response);
         toast({
           title: 'Sessions Generated!',
-          description: `Successfully created ${response.sessionsCreated} sessions`,
+          description: (
+            <div className="space-y-1">
+              <p>Successfully created {response.sessionsCreated} sessions</p>
+              <Link
+                href="/admin/sessions/drafts"
+                className="text-primary hover:underline font-medium inline-flex items-center gap-1"
+              >
+                View Draft Sessions →
+              </Link>
+            </div>
+          ),
         });
         console.log('Toast shown, resetting form...');
         resetForm();

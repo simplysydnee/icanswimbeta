@@ -22,14 +22,13 @@ export async function POST(
 
     // ========== STEP 2: Authorization ==========
     // Check if user has admin role
-    const { data: roleData } = await supabase
-      .from('user_roles')
+    const { data: profileData } = await supabase
+      .from('profiles')
       .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
+      .eq('id', user.id)
       .single();
 
-    if (!roleData) {
+    if (!profileData || profileData.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }
@@ -38,7 +37,7 @@ export async function POST(
 
     // ========== STEP 3: Update Sessions ==========
     // Update all draft sessions in this batch to "available" status
-    const { data, error, count } = await supabase
+    const { error, count } = await supabase
       .from('sessions')
       .update({
         status: SESSION_STATUS.AVAILABLE,
