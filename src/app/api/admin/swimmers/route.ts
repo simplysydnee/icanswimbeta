@@ -118,8 +118,8 @@ export async function GET(request: Request) {
       limit: searchParams.get('limit') || '25'
     };
 
-    const page = parseInt(params.page) || 1;
-    const limit = parseInt(params.limit) || 25;
+    const page = parseInt(params.page || '1') || 1;
+    const limit = parseInt(params.limit || '25') || 25;
     const offset = (page - 1) * limit;
 
     // ========== STEP 4: Build Base Query ==========
@@ -244,8 +244,8 @@ export async function GET(request: Request) {
     }
 
     // ========== STEP 9: Transform Data ==========
-    const transformedSwimmers: SwimmerResponse[] = data.map(swimmer => {
-      const age = swimmer.date_of_birth ? calculateAge(swimmer.date_of_birth) : null;
+    const transformedSwimmers: SwimmerResponse[] = (data as any[]).map(swimmer => {
+      const age = swimmer.date_of_birth ? calculateAge(swimmer.date_of_birth) : undefined;
       const lessonsCompleted = swimmer.lessons_completed?.[0]?.count || 0;
       const nextSession = swimmer.next_session?.[0]?.session;
 

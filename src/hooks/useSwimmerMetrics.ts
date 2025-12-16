@@ -5,7 +5,7 @@ export interface SwimmerMetrics {
   waitlistedSwimmers: number;
   activeEnrolledSwimmers: number;
   averageLessons: number;
-  vmrcClients: number;
+  regionalCenterClients: number;
   lastUpdated: string;
 }
 

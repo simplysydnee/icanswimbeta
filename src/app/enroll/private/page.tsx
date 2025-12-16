@@ -206,7 +206,6 @@ export default function PrivatePayEnrollmentPage() {
   const hasSelfInjuriousBehavior = watch('self_injurious_behavior');
   const hasAggressiveBehavior = watch('aggressive_behavior');
   const hasElopementHistory = watch('elopement_history');
-  const hasBehaviorPlan = watch('has_behavior_plan');
   const otherAvailability = watch('availability_slots')?.includes('Other (please specify)');
 
   const onSubmit = async (data: PrivateEnrollmentFormData) => {

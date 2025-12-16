@@ -1,13 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Mail, Phone, AlertTriangle, User, Award, Calendar, ChevronDown, ChevronUp, Stethoscope, Target, Heart, Shield } from "lucide-react"
+import { Mail, Phone, AlertTriangle, User, Award, Calendar, ChevronDown, ChevronUp, Target, Shield } from "lucide-react"
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 

@@ -22,7 +22,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{ success: boo
   const supabase = createClient()
 
   try {
-    const { data, error } = await supabase.functions.invoke('send-enrollment-email', {
+    const { data: _data, error } = await supabase.functions.invoke('send-enrollment-email', {
       body: params,
     })
 

@@ -36,7 +36,7 @@ export default function InstructorSettingsPage() {
         title: 'Profile updated',
         description: 'Your profile has been saved successfully.',
       })
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to save profile',

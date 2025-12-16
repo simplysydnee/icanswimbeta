@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const profileResult = await Promise.race([profilePromise, queryTimeoutPromise, globalTimeoutPromise]) as any;
           profileData = profileResult.data;
           profileError = profileResult.error;
-        } catch (timeoutError) {
+        } catch {
           profileError = {
             code: 'TIMEOUT',
             message: 'Profile query timeout',
@@ -165,7 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const rolesResult = await Promise.race([rolesPromise, queryTimeoutPromise, globalTimeoutPromise]) as any;
           rolesData = rolesResult.data;
           rolesError = rolesResult.error;
-        } catch (timeoutError) {
+        } catch {
           rolesError = {
             code: 'TIMEOUT',
             message: 'Roles query timeout',
@@ -293,7 +293,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setRole('parent')
           })
         }
-      } catch (error) {
+      } catch {
         setError('Failed to initialize authentication')
       } finally {
         setLoading(false)

@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from './StatusBadge';
 import type { Swimmer } from '@/types/booking';
 import { cn } from '@/lib/utils';
-import { isRegionalCenter } from '@/lib/funding-utils';
 
 interface SwimmerCardProps {
   swimmer: Swimmer;

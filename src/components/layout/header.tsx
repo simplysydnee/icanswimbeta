@@ -34,7 +34,7 @@ export function Header() {
       await signIn(loginData);
       setIsLoginOpen(false);
       setLoginData({ email: '', password: '' });
-    } catch (error) {
+    } catch {
       setLoginError('Login failed. Please check your credentials.');
     } finally {
       setIsLoggingIn(false);
@@ -46,7 +46,7 @@ export function Header() {
     try {
       await signInWithGoogle();
       setIsLoginOpen(false);
-    } catch (error) {
+    } catch {
       setLoginError('Google login failed. Please try again.');
     } finally {
       setIsLoggingIn(false);

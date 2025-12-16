@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { GradientButton } from '@/components/ui/gradient-button'
 import { ExpandableSwimmerCard } from '@/components/parent/expandable-swimmer-card'
 import Link from 'next/link'
@@ -117,6 +116,10 @@ export default function SwimmersPage() {
             .select('phone, email')
             .eq('id', user.id)
             .single()
+
+          if (parentError) {
+            console.error('Error fetching parent info in fallback:', parentError)
+          }
 
           const parentPhone = parentData?.phone || ''
           const parentEmail = parentData?.email || ''

@@ -32,13 +32,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -56,7 +49,6 @@ import {
   User,
   Mail,
   Phone,
-  Loader2,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -65,7 +57,6 @@ import {
   BookOpen,
   X,
   AlertCircle,
-  Target,
   Stethoscope,
   Heart,
   ChevronsRight as ChevronsRightIcon,

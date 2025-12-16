@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { Save, Loader2, CheckCircle, AlertCircle, Calendar, Clock, MapPin, User } from 'lucide-react';
@@ -12,7 +12,6 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { SkillChecklist } from './SkillChecklist';
-import { cn } from '@/lib/utils';
 
 interface ProgressNoteFormProps {
   sessionId: string;
@@ -52,7 +51,6 @@ export function ProgressNoteForm({
   existingNote,
 }: ProgressNoteFormProps) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -155,14 +153,6 @@ export function ProgressNoteForm({
     { value: 'distracted', label: 'Distracted' },
   ];
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Loading session data...</span>
-      </div>
-    );
-  }
 
   if (success) {
     return (

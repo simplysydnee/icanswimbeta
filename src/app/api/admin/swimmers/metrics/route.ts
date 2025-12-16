@@ -123,7 +123,7 @@ export async function GET() {
         id,
         bookings!bookings_swimmer_id_fkey(
           count
-        ).filter(status.eq.completed)
+        )
       `)
       .in('funding_source_id', nonRegionalFundingSourceIds);
 

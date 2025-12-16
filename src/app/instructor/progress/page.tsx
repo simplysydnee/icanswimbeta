@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks } from 'date-fns';
-import { Calendar, ChevronLeft, ChevronRight, Loader2, AlertCircle, Filter, CheckCircle } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -88,7 +88,6 @@ export default function InstructorProgressPage() {
   };
 
   const sessionsWithNotes = sessions.filter(s => s.progressNote);
-  const sessionsWithoutNotes = sessions.filter(s => !s.progressNote);
   const completedSessionsWithoutNotes = sessions.filter(s => !s.progressNote && s.sessionStatus === 'completed');
 
   if (loading) {

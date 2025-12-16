@@ -379,7 +379,7 @@ export class ApiClient {
     // Note: parent_phone might be passed from form but not stored in table
   }): Promise<ParentReferralRequest> {
     // Filter out any extra fields not in the table (like parent_phone)
-    const { parent_phone, child_date_of_birth, ...insertData } = data as any;
+    const { parent_phone, child_date_of_birth, ...insertData } = data as any; // eslint-disable-line @typescript-eslint/no-unused-vars
 
     // Prepare insert data
     const insertPayload: any = {

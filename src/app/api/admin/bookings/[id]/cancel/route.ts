@@ -72,29 +72,29 @@ export async function POST(
       return NextResponse.json({ error: 'Already cancelled' }, { status: 400 })
     }
 
-    const sessionStart = new Date(booking.session.start_time)
+    const sessionStart = new Date(booking.session[0].start_time)
     const now = new Date()
     const hoursBeforeSession = (sessionStart.getTime() - now.getTime()) / (1000 * 60 * 60)
     const wasLateCancel = hoursBeforeSession < 24
 
     // Get instructor name
     let instructorName = null
-    if (booking.session.instructor_id) {
+    if (booking.session[0].instructor_id) {
       const { data: instructor } = await supabase
         .from('profiles')
         .select('full_name')
-        .eq('id', booking.session.instructor_id)
+        .eq('id', booking.session[0].instructor_id)
         .single()
       instructorName = instructor?.full_name
     }
 
     // Get funding source to determine if regional center
     let isRegionalCenter = false
-    if (booking.swimmer.funding_source_id) {
+    if (booking.swimmer[0].funding_source_id) {
       const { data: fundingSource } = await supabase
         .from('funding_sources')
         .select('type')
-        .eq('id', booking.swimmer.funding_source_id)
+        .eq('id', booking.swimmer[0].funding_source_id)
         .single()
       isRegionalCenter = fundingSource?.type === 'regional_center'
     }
@@ -114,10 +114,10 @@ export async function POST(
     await supabase
       .from('sessions')
       .update({
-        booking_count: Math.max(0, (booking.session.booking_count || 1) - 1),
+        booking_count: Math.max(0, (booking.session[0].booking_count || 1) - 1),
         is_full: false,
       })
-      .eq('id', booking.session.id)
+      .eq('id', booking.session[0].id)
 
     // If admin chose to mark as flexible swimmer
     if (markAsFlexibleSwimmer) {
@@ -129,19 +129,19 @@ export async function POST(
           flexible_swimmer_set_at: now.toISOString(),
           flexible_swimmer_set_by: user.id,
         })
-        .eq('id', booking.swimmer.id)
+        .eq('id', booking.swimmer[0].id)
     }
 
     // Create floating session if recurring and future
     let createdFloatingSession = false
     let floatingSessionId = null
-    if (booking.session.is_recurring && sessionStart > now) {
+    if (booking.session[0].is_recurring && sessionStart > now) {
       const { data: floatingSession } = await supabase
         .from('floating_sessions')
         .insert({
-          original_session_id: booking.session.id,
+          original_session_id: booking.session[0].id,
           original_booking_id: bookingId,
-          available_until: booking.session.start_time,
+          available_until: booking.session[0].start_time,
           month_year: sessionStart.toISOString().slice(0, 7),
           status: 'available',
         })
@@ -159,18 +159,18 @@ export async function POST(
       .from('cancellations')
       .insert({
         booking_id: bookingId,
-        session_id: booking.session.id,
-        swimmer_id: booking.swimmer.id,
-        parent_id: booking.swimmer.parent_id,
+        session_id: booking.session[0].id,
+        swimmer_id: booking.swimmer[0].id,
+        parent_id: booking.swimmer[0].parent_id,
         canceled_by: user.id,
         cancellation_type: booking.booking_type === 'assessment' ? 'assessment' : 'single',
-        session_date: booking.session.start_time,
-        session_start_time: booking.session.start_time,
-        session_end_time: booking.session.end_time,
-        session_location: booking.session.location,
-        instructor_id: booking.session.instructor_id,
+        session_date: booking.session[0].start_time,
+        session_start_time: booking.session[0].start_time,
+        session_end_time: booking.session[0].end_time,
+        session_location: booking.session[0].location,
+        instructor_id: booking.session[0].instructor_id,
         instructor_name: instructorName,
-        swimmer_name: `${booking.swimmer.first_name} ${booking.swimmer.last_name}`,
+        swimmer_name: `${booking.swimmer[0].first_name} ${booking.swimmer[0].last_name}`,
         swimmer_is_regional_center: isRegionalCenter,
         hours_before_session: Math.round(hoursBeforeSession * 100) / 100,
         was_late_cancellation: wasLateCancel,
@@ -192,7 +192,7 @@ export async function POST(
       await supabase
         .from('swimmers')
         .update({ assessment_status: 'not_scheduled' })
-        .eq('id', booking.swimmer.id)
+        .eq('id', booking.swimmer[0].id)
     }
 
     return NextResponse.json({
@@ -203,10 +203,11 @@ export async function POST(
       createdFloatingSession,
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Admin cancel error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to cancel'
     return NextResponse.json(
-      { error: error.message || 'Failed to cancel' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

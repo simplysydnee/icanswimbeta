@@ -86,13 +86,25 @@ export async function POST(request: Request) {
       );
     }
 
-    // ========== STEP 5: Delete Sessions ==========
-    const { error: deleteError, count } = await supabase
+    // ========== STEP 5: Get count before deleting ==========
+    const { count, error: countError } = await supabase
+      .from('sessions')
+      .select('*', { count: 'exact', head: true })
+      .in('id', sessionIds)
+      .eq('status', SESSION_STATUS.DRAFT);
+
+    if (countError) {
+      console.error('Error counting sessions to delete:', countError);
+    }
+
+    const sessionCount = count || 0;
+
+    // ========== STEP 6: Delete Sessions ==========
+    const { error: deleteError } = await supabase
       .from('sessions')
       .delete()
       .in('id', sessionIds)
-      .eq('status', SESSION_STATUS.DRAFT)
-      .select('id', { count: 'exact' });
+      .eq('status', SESSION_STATUS.DRAFT);
 
     if (deleteError) {
       console.error('Error deleting sessions:', deleteError);
@@ -102,8 +114,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // ========== STEP 6: Return Response ==========
-    const deletedCount = count || 0;
+    // ========== STEP 7: Return Response ==========
+    const deletedCount = sessionCount;
     console.log(`✅ Deleted ${deletedCount} draft sessions`);
 
     const response: DeleteSessionsResponse = {

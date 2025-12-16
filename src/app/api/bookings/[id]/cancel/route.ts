@@ -54,7 +54,7 @@ export async function POST(
     }
 
     // Verify parent owns this swimmer
-    if (booking.swimmer.parent_id !== user.id) {
+    if ((booking.swimmer as any).parent_id !== user.id) {
       return NextResponse.json(
         { error: 'You do not have permission to cancel this booking' },
         { status: 403 }
@@ -69,7 +69,7 @@ export async function POST(
     }
 
     // Calculate hours before session
-    const sessionStart = new Date(booking.session.start_time)
+    const sessionStart = new Date((booking.session as any).start_time)
     const now = new Date()
     const hoursBeforeSession = (sessionStart.getTime() - now.getTime()) / (1000 * 60 * 60)
 
@@ -88,11 +88,11 @@ export async function POST(
 
     // Get instructor name for tracking
     let instructorName = null
-    if (booking.session.instructor_id) {
+    if ((booking.session as any).instructor_id) {
       const { data: instructor } = await supabase
         .from('profiles')
         .select('full_name')
-        .eq('id', booking.session.instructor_id)
+        .eq('id', (booking.session as any).instructor_id)
         .single()
       instructorName = instructor?.full_name
     }
@@ -116,21 +116,21 @@ export async function POST(
     await supabase
       .from('sessions')
       .update({
-        booking_count: Math.max(0, (booking.session.booking_count || 1) - 1),
+        booking_count: Math.max(0, ((booking.session as any).booking_count || 1) - 1),
         is_full: false,
       })
-      .eq('id', booking.session.id)
+      .eq('id', (booking.session as any).id)
 
     // Create floating session if recurring and future
     let createdFloatingSession = false
     let floatingSessionId = null
-    if (booking.session.is_recurring && sessionStart > now) {
+    if ((booking.session as any).is_recurring && sessionStart > now) {
       const { data: floatingSession } = await supabase
         .from('floating_sessions')
         .insert({
-          original_session_id: booking.session.id,
+          original_session_id: (booking.session as any).id,
           original_booking_id: bookingId,
-          available_until: booking.session.start_time,
+          available_until: (booking.session as any).start_time,
           month_year: sessionStart.toISOString().slice(0, 7),
           status: 'available',
         })
@@ -148,19 +148,19 @@ export async function POST(
       .from('cancellations')
       .insert({
         booking_id: bookingId,
-        session_id: booking.session.id,
-        swimmer_id: booking.swimmer.id,
-        parent_id: booking.swimmer.parent_id,
+        session_id: (booking.session as any).id,
+        swimmer_id: (booking.swimmer as any).id,
+        parent_id: (booking.swimmer as any).parent_id,
         canceled_by: user.id,
         cancellation_type: booking.booking_type === 'assessment' ? 'assessment' : 'single',
-        session_date: booking.session.start_time,
-        session_start_time: booking.session.start_time,
-        session_end_time: booking.session.end_time,
-        session_location: booking.session.location,
-        instructor_id: booking.session.instructor_id,
+        session_date: (booking.session as any).start_time,
+        session_start_time: (booking.session as any).start_time,
+        session_end_time: (booking.session as any).end_time,
+        session_location: (booking.session as any).location,
+        instructor_id: (booking.session as any).instructor_id,
         instructor_name: instructorName,
-        swimmer_name: `${booking.swimmer.first_name} ${booking.swimmer.last_name}`,
-        swimmer_has_funding_source: !!booking.swimmer.funding_source_id,
+        swimmer_name: `${(booking.swimmer as any).first_name} ${(booking.swimmer as any).last_name}`,
+        swimmer_has_funding_source: !!(booking.swimmer as any).funding_source_id,
         hours_before_session: Math.round(hoursBeforeSession * 100) / 100,
         was_late_cancellation: false,
         cancel_reason: reason,
@@ -179,7 +179,7 @@ export async function POST(
       await supabase
         .from('swimmers')
         .update({ assessment_status: 'not_scheduled' })
-        .eq('id', booking.swimmer.id)
+        .eq('id', (booking.swimmer as any).id)
     }
 
     return NextResponse.json({
@@ -189,10 +189,11 @@ export async function POST(
       createdFloatingSession,
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Cancel booking error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to cancel booking'
     return NextResponse.json(
-      { error: error.message || 'Failed to cancel booking' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

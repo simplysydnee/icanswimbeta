@@ -70,12 +70,23 @@ export async function DELETE(
       );
     }
 
-    // ========== STEP 4: Delete Sessions ==========
-    const { error: deleteError, count } = await supabase
+    // ========== STEP 4: Get count before deleting ==========
+    const { count, error: countError } = await supabase
+      .from('sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('batch_id', batchId);
+
+    if (countError) {
+      console.error('Error counting sessions to delete:', countError);
+    }
+
+    const sessionCount = count || 0;
+
+    // ========== STEP 5: Delete Sessions ==========
+    const { error: deleteError } = await supabase
       .from('sessions')
       .delete()
-      .eq('batch_id', batchId)
-      .select('id', { count: 'exact' });
+      .eq('batch_id', batchId);
 
     if (deleteError) {
       console.error('Error deleting batch:', deleteError);
@@ -85,8 +96,7 @@ export async function DELETE(
       );
     }
 
-    // ========== STEP 5: Return Response ==========
-    const deletedCount = count || 0;
+    const deletedCount = sessionCount;
     console.log(`✅ Deleted ${deletedCount} sessions from batch ${batchId}`);
 
     return NextResponse.json({

@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     // Filter to only bookings in this batch
     const blockBookings = (bookings || []).filter(
-      b => b.session?.batch_id === batchId
+      b => (b.session as any)?.batch_id === batchId
     )
 
     if (blockBookings.length === 0) {
@@ -88,16 +88,16 @@ export async function POST(request: NextRequest) {
     // Check if first session has already started
     const now = new Date()
     const sortedBookings = blockBookings.sort(
-      (a, b) => new Date(a.session.start_time).getTime() - new Date(b.session.start_time).getTime()
+      (a, b) => new Date((a.session as any).start_time).getTime() - new Date((b.session as any).start_time).getTime()
     )
     const firstSession = sortedBookings[0]
-    const firstSessionStart = new Date(firstSession.session.start_time)
+    const firstSessionStart = new Date((firstSession.session as any).start_time)
 
     if (firstSessionStart <= now && !isAdmin) {
       return NextResponse.json({
         error: 'Cannot cancel block after first session has started',
         message: 'The first session in this block has already occurred. You can only cancel individual future sessions.',
-        firstSessionDate: firstSession.session.start_time,
+        firstSessionDate: (firstSession.session as any).start_time,
       }, { status: 400 })
     }
 
@@ -182,8 +182,9 @@ export async function POST(request: NextRequest) {
           })
 
         results.canceled++
-      } catch (err: any) {
-        results.errors.push(`Failed to cancel booking ${booking.id}: ${err.message}`)
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+        results.errors.push(`Failed to cancel booking ${booking.id}: ${errorMessage}`)
       }
     }
 
@@ -194,10 +195,11 @@ export async function POST(request: NextRequest) {
       results,
     })
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Block cancel error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to cancel block'
     return NextResponse.json(
-      { error: error.message || 'Failed to cancel block' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

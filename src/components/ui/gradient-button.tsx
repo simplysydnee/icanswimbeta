@@ -3,7 +3,6 @@
 import React from "react";
 import { HoverBorderGradient } from "@/components/aceternity/hover-border-gradient";
 import { cn } from "@/lib/utils";
-import { Slot } from "@radix-ui/react-slot";
 
 interface GradientButtonProps {
   children: React.ReactNode;

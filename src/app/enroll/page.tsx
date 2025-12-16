@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CalendarIcon, Phone, Mail, CreditCard, Building, Gift } from 'lucide-react';
+import { CalendarIcon, Phone, Mail, CreditCard, Building } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 interface FundingSource {

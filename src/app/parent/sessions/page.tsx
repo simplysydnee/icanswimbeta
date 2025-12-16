@@ -7,7 +7,6 @@ import { RoleGuard } from '@/components/auth/RoleGuard'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { getSwimmerFundingSource } from '@/lib/funding-utils'
 import {
   Dialog,
   DialogContent,

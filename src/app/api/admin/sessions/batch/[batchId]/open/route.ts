@@ -37,15 +37,14 @@ export async function POST(
 
     // ========== STEP 3: Update Sessions ==========
     // Update all draft sessions in this batch to "available" status
-    const { error, count } = await supabase
+    const { error } = await supabase
       .from('sessions')
       .update({
         status: SESSION_STATUS.AVAILABLE,
         updated_at: new Date().toISOString(),
       })
       .eq('batch_id', batchId)
-      .eq('status', SESSION_STATUS.DRAFT)
-      .select('id', { count: 'exact' });
+      .eq('status', SESSION_STATUS.DRAFT);
 
     if (error) {
       console.error('Error opening batch:', error);
@@ -53,6 +52,17 @@ export async function POST(
         { error: `Failed to open sessions: ${error.message}` },
         { status: 500 }
       );
+    }
+
+    // Get count of updated sessions
+    const { count, error: countError } = await supabase
+      .from('sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('batch_id', batchId)
+      .eq('status', SESSION_STATUS.AVAILABLE);
+
+    if (countError) {
+      console.error('Error counting opened sessions:', countError);
     }
 
     // ========== STEP 4: Return Response ==========

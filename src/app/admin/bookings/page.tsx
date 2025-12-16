@@ -63,14 +63,14 @@ interface Booking {
       id: string
       full_name: string
     } | null
-  }
+  } | null
   swimmer: {
     id: string
     first_name: string
     last_name: string
     funding_source_id: string | null
     flexible_swimmer: boolean
-  }
+  } | null
   parent: {
     id: string
     full_name: string
@@ -78,13 +78,17 @@ interface Booking {
   } | null
 }
 
+interface FundingSource {
+  id: string
+  type: string
+}
+
 export default function AdminBookingsPage() {
-  const { user: _user } = useAuth()
   const { toast } = useToast()
   const supabase = createClient()
 
   const [bookings, setBookings] = useState<Booking[]>([])
-  const [fundingSources, setFundingSources] = useState<any[]>([])
+  const [fundingSources, setFundingSources] = useState<FundingSource[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('confirmed')
@@ -141,9 +145,13 @@ export default function AdminBookingsPage() {
 
       if (error) throw error
 
-      const validBookings = (data || []).filter(
-        (b): b is Booking => b.session !== null && b.swimmer !== null
-      )
+      const dataArray = (data as unknown) as unknown[]
+      const validBookings = (dataArray || []).filter(
+        (b: unknown) => {
+          const booking = b as Booking
+          return booking.session !== null && booking.swimmer !== null
+        }
+      ) as Booking[]
       setBookings(validBookings)
     } catch (err) {
       console.error('Error fetching bookings:', err)
@@ -179,6 +187,8 @@ export default function AdminBookingsPage() {
   const filteredBookings = bookings.filter(booking => {
     if (!searchTerm) return true
     const search = searchTerm.toLowerCase()
+    // These should not be null due to earlier filtering, but check anyway
+    if (!booking.swimmer || !booking.session) return false
     return (
       booking.swimmer.first_name.toLowerCase().includes(search) ||
       booking.swimmer.last_name.toLowerCase().includes(search) ||
@@ -212,7 +222,9 @@ export default function AdminBookingsPage() {
     setSelectedBooking(booking)
     setCancelReason('')
     setAdminNotes('')
-    setMarkAsFlexible(isLateCancel(booking.session.start_time))
+    if (booking.session) {
+      setMarkAsFlexible(isLateCancel(booking.session.start_time))
+    }
     setShowCancelDialog(true)
   }
 
@@ -239,7 +251,7 @@ export default function AdminBookingsPage() {
 
       toast({
         title: 'Booking Cancelled ✓',
-        description: markAsFlexible
+        description: markAsFlexible && selectedBooking.swimmer
           ? `Booking cancelled and ${selectedBooking.swimmer.first_name} marked as flexible swimmer.`
           : 'Booking cancelled successfully.',
       })
@@ -348,6 +360,7 @@ export default function AdminBookingsPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredBookings.map((booking) => {
+                      if (!booking.session || !booking.swimmer) return null
                       const hoursUntil = getHoursUntilSession(booking.session.start_time)
                       const isPast = isPastSession(booking.session.start_time)
                       const isLate = isLateCancel(booking.session.start_time)
@@ -445,25 +458,25 @@ export default function AdminBookingsPage() {
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-gray-400" />
                     <span className="font-medium">
-                      {selectedBooking.swimmer.first_name} {selectedBooking.swimmer.last_name}
+                      {selectedBooking.swimmer?.first_name} {selectedBooking.swimmer?.last_name}
                     </span>
-                    {selectedBooking && isRegionalCenterClient(selectedBooking.swimmer.funding_source_id) && (
+                    {selectedBooking && selectedBooking.swimmer && isRegionalCenterClient(selectedBooking.swimmer.funding_source_id) && (
                       <Badge variant="outline" className="text-xs bg-green-50 text-green-700">Regional Center</Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-gray-400" />
-                    <span>{format(new Date(selectedBooking.session.start_time), 'EEEE, MMMM d, yyyy')}</span>
+                    <span>{selectedBooking.session && format(new Date(selectedBooking.session.start_time), 'EEEE, MMMM d, yyyy')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-gray-400" />
-                    <span>{format(new Date(selectedBooking.session.start_time), 'h:mm a')}</span>
+                    <span>{selectedBooking.session && format(new Date(selectedBooking.session.start_time), 'h:mm a')}</span>
                   </div>
                   <p className="text-gray-500">Parent: {selectedBooking.parent?.full_name}</p>
                 </div>
 
                 {/* Late Cancel Warning */}
-                {isLateCancel(selectedBooking.session.start_time) && (
+                {selectedBooking.session && isLateCancel(selectedBooking.session.start_time) && (
                   <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                     <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
                     <div>
@@ -516,7 +529,7 @@ export default function AdminBookingsPage() {
                     <p className="text-xs text-gray-600 mt-1">
                       Flexible swimmers cannot book recurring lessons and can only book single/floating sessions.
                     </p>
-                    {selectedBooking.swimmer.flexible_swimmer && (
+                    {selectedBooking.swimmer?.flexible_swimmer && (
                       <p className="text-xs text-amber-600 mt-1 font-medium">
                         ⚠️ This swimmer is already marked as flexible.
                       </p>

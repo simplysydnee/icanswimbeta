@@ -105,7 +105,7 @@ export async function PATCH(
     }
 
     // ========== STEP 7: Build Update Object ==========
-    const updates: Record<string, any> = {
+    const updates: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     };
 
