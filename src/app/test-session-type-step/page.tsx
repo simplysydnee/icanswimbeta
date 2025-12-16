@@ -6,7 +6,8 @@ import { SessionType } from '@/types/booking';
 
 export default function TestSessionTypeStepPage() {
   const [selectedType, setSelectedType] = useState<SessionType | null>(null);
-  const [isVmrcClient, setIsVmrcClient] = useState(false);
+  const [hasFundingSource, setHasFundingSource] = useState(false);
+  const [fundingSourceName, setFundingSourceName] = useState('VMRC');
 
   return (
     <div className="container mx-auto py-8 max-w-4xl">
@@ -23,7 +24,9 @@ export default function TestSessionTypeStepPage() {
             <div className="rounded-lg border p-6">
               <SessionTypeStep
                 selectedType={selectedType}
-                isVmrcClient={isVmrcClient}
+                hasFundingSource={hasFundingSource}
+                fundingSourceName={fundingSourceName}
+                isFlexibleSwimmer={false}
                 onSelectType={setSelectedType}
               />
             </div>
@@ -34,21 +37,21 @@ export default function TestSessionTypeStepPage() {
               <h3 className="font-semibold">Test Controls</h3>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">VMRC Client Status</label>
+                <label className="text-sm font-medium">Funding Source Status</label>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setIsVmrcClient(false)}
-                    className={`px-3 py-1.5 text-sm rounded-md ${!isVmrcClient ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    onClick={() => setHasFundingSource(false)}
+                    className={`px-3 py-1.5 text-sm rounded-md ${!hasFundingSource ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
                   >
                     Private Pay
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsVmrcClient(true)}
-                    className={`px-3 py-1.5 text-sm rounded-md ${isVmrcClient ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    onClick={() => setHasFundingSource(true)}
+                    className={`px-3 py-1.5 text-sm rounded-md ${hasFundingSource ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
                   >
-                    VMRC Client
+                    Authorized Client
                   </button>
                 </div>
               </div>
@@ -66,7 +69,7 @@ export default function TestSessionTypeStepPage() {
                 <label className="text-sm font-medium">Price Display</label>
                 <div className="p-3 rounded-md bg-muted">
                   <code className="text-sm">
-                    {isVmrcClient ? '$0 - State Funded' : '$75.00 per session'}
+                    {hasFundingSource ? `$0 - ${fundingSourceName} Funded` : '$75.00 per session'}
                   </code>
                 </div>
               </div>
@@ -84,9 +87,21 @@ export default function TestSessionTypeStepPage() {
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium mb-1">isVmrcClient</h4>
+                  <h4 className="text-sm font-medium mb-1">hasFundingSource</h4>
                   <p className="text-sm text-muted-foreground">
-                    Boolean indicating if swimmer is VMRC-funded
+                    Boolean indicating if swimmer has a funding source
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium mb-1">fundingSourceName</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Name of the funding source (e.g., VMRC, Regional Center)
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium mb-1">isFlexibleSwimmer</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Boolean indicating if swimmer has flexible status
                   </p>
                 </div>
 

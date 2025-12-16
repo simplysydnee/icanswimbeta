@@ -86,7 +86,7 @@ function SwimmerSelectStepDemo() {
                     <span>Status: {swimmer.enrollmentStatus}</span>
                     <span>•</span>
                     <span>Payment: {swimmer.paymentType}</span>
-                    {swimmer.isVmrcClient && (
+                    {swimmer.hasFundingAuthorization && (
                       <>
                         <span>•</span>
                         <span className="text-blue-600">VMRC</span>
@@ -132,7 +132,7 @@ const [selectedId, setSelectedId] = useState<string | null>(null);
             <h3 className="mb-2 font-semibold text-blue-800">Props</h3>
             <ul className="space-y-1 text-sm text-blue-700">
               <li><code>selectedSwimmerId: string | null</code></li>
-              <li><code>onSelectSwimmer: (swimmer: Swimmer) => void</code></li>
+              <li><code>onSelectSwimmer: (swimmer: Swimmer) =&gt; void</code></li>
             </ul>
           </div>
           <div className="rounded-lg bg-green-50 p-4">

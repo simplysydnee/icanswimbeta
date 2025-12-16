@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { InstructorAvatar } from '@/components/ui/instructor-avatar';
 import { cn } from '@/lib/utils';
 
 // Convert "16:00" to "4:00 PM"
@@ -37,6 +38,7 @@ interface DateSelectStepProps {
   recurringStartDate: Date | null;
   recurringEndDate: Date | null;
   selectedRecurringSessions: string[];
+  swimmerId: string | null; // Add swimmerId for flexible_swimmer check
   onSelectSession: (sessionId: string) => void;
   onSetRecurring: (opts: {
     day?: number;
@@ -56,6 +58,7 @@ export function DateSelectStep({
   recurringStartDate,
   recurringEndDate,
   selectedRecurringSessions,
+  swimmerId,
   onSelectSession,
   onSetRecurring,
 }: DateSelectStepProps) {
@@ -81,14 +84,18 @@ export function DateSelectStep({
 
   // Fetch available sessions for single mode week
   const { data: weekSessions = [], isLoading: isLoadingWeek } = useQuery({
-    queryKey: ['available-sessions', instructorId, currentWeekStart.toISOString()],
+    queryKey: ['available-sessions', instructorId, currentWeekStart.toISOString(), swimmerId, 'single'],
     queryFn: async () => {
       const params = new URLSearchParams({
         startDate: currentWeekStart.toISOString(),
         endDate: weekEnd.toISOString(),
+        bookingType: 'single', // Specify booking type
       });
       if (instructorId) {
         params.append('instructorId', instructorId);
+      }
+      if (swimmerId) {
+        params.append('swimmerId', swimmerId); // For flexible_swimmer check
       }
 
       const response = await fetch(`/api/sessions/available?${params}`);
@@ -102,16 +109,20 @@ export function DateSelectStep({
 
   // Fetch available sessions for recurring mode date range
   const { data: rangeSessions = [], isLoading: isLoadingRange } = useQuery({
-    queryKey: ['available-sessions-recurring', instructorId, localStartDate?.toISOString(), localEndDate?.toISOString()],
+    queryKey: ['available-sessions-recurring', instructorId, localStartDate?.toISOString(), localEndDate?.toISOString(), swimmerId],
     queryFn: async () => {
       if (!localStartDate || !localEndDate) return [];
 
       const params = new URLSearchParams({
         startDate: localStartDate.toISOString(),
         endDate: localEndDate.toISOString(),
+        bookingType: 'recurring', // Specify booking type
       });
       if (instructorId) {
         params.append('instructorId', instructorId);
+      }
+      if (swimmerId) {
+        params.append('swimmerId', swimmerId); // For flexible_swimmer check
       }
 
       const response = await fetch(`/api/sessions/available?${params}`);
@@ -313,15 +324,23 @@ export function DateSelectStep({
           <div className="rounded-lg border border-green-200 bg-green-50 p-4">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
-              <div>
+              <div className="flex-1">
                 <h4 className="font-medium text-green-800">Session Selected</h4>
                 <p className="text-sm text-green-700">
                   {format(parseISO(selectedSession.startTime), 'EEEE, MMMM d, yyyy')} at{' '}
                   {format(parseISO(selectedSession.startTime), 'h:mm a')}
                 </p>
-                <p className="text-xs text-green-600 mt-1">
-                  Instructor: {selectedSession.instructorName}
-                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <InstructorAvatar
+                    name={selectedSession.instructorName}
+                    avatarUrl={selectedSession.instructorAvatarUrl}
+                    size="sm"
+                    showName={false}
+                  />
+                  <span className="text-xs text-green-600">
+                    Instructor: {selectedSession.instructorName}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

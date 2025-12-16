@@ -55,7 +55,7 @@ export default function TestApiSwimmersPage() {
       <div className="mb-8 rounded-lg border p-6">
         <h2 className="mb-4 text-xl font-semibold">Test Command</h2>
         <pre className="mb-4 rounded bg-gray-100 p-4 text-sm">
-          fetch('/api/swimmers').then(r => r.json()).then(console.log)
+          fetch('/api/swimmers').then(r =&gt; r.json()).then(console.log)
         </pre>
         <button
           onClick={handleTestFetch}
@@ -103,8 +103,8 @@ export default function TestApiSwimmersPage() {
                     {swimmer.currentLevelName && (
                       <p>Level: {swimmer.currentLevelName}</p>
                     )}
-                    {swimmer.isVmrcClient && (
-                      <p className="text-blue-600">VMRC Client</p>
+                    {swimmer.fundingSourceId && (
+                      <p className="text-blue-600">Authorized Client ({swimmer.fundingSourceShortName || 'Funding Source'})</p>
                     )}
                   </div>
                 </div>

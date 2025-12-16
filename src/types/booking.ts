@@ -13,9 +13,7 @@ export type EnrollmentStatus =
 // Payment type options
 export type PaymentType =
   | 'private_pay'
-  | 'vmrc'
-  | 'scholarship'
-  | 'other';
+  | 'funding_source';
 
 // Session type options
 export type SessionType =
@@ -42,10 +40,17 @@ export interface Swimmer {
   currentLevelId: string | null;
   currentLevelName?: string;
   paymentType: PaymentType;
-  isVmrcClient: boolean;
+  fundingSourceId?: string | null;
+  fundingSourceName?: string;
+  fundingSourceShortName?: string;
+  coordinatorName?: string;
+  coordinatorEmail?: string;
+  coordinatorPhone?: string;
+  sessionsUsed?: number;
+  sessionsAuthorized?: number;
+  currentPosNumber?: string;
+  posExpiresAt?: string;
   photoUrl?: string;
-  vmrcSessionsUsed?: number;
-  vmrcSessionsAuthorized?: number;
 }
 
 // Instructor interface
@@ -64,12 +69,15 @@ export interface AvailableSession {
   dayOfWeek: number; // 0-6 (Sunday-Saturday)
   instructorId: string;
   instructorName: string;
+  instructorAvatarUrl?: string | null;
   location: string;
   sessionType: SessionType;
   maxCapacity: number;
   currentBookings: number;
   isFull: boolean;
   priceCents: number;
+  isRecurring?: boolean; // Added for session type enforcement
+  spotsRemaining?: number; // Added for availability display
 }
 
 // Booking wizard state
@@ -90,8 +98,9 @@ export interface BookingRequest {
   sessionIds: string[];
   parentId: string;
   notes?: string;
-  paymentMethod?: 'card' | 'vmrc_po';
-  vmrcPoNumber?: string; // For VMRC clients
+  paymentMethod?: 'card' | 'funding_source_po';
+  poNumber?: string; // For funding source clients
+  fundingSourceId?: string; // For funding source clients
 }
 
 // Booking confirmation response

@@ -1,6 +1,6 @@
 // Authentication-related types for Supabase auth implementation
 
-export type UserRole = 'parent' | 'instructor' | 'admin' | 'vmrc_coordinator';
+export type UserRole = 'parent' | 'instructor' | 'admin' | 'coordinator' | 'vmrc_coordinator';
 
 export interface Profile {
   id: string;
@@ -42,14 +42,17 @@ export interface AuthState {
 export interface LoginCredentials {
   email: string;
   password: string;
+  redirectTo?: string | null;
 }
 
 export interface RegisterCredentials {
   email: string;
   password: string;
   name: string;
+  phone?: string;
   confirm_password: string;
   terms_accepted: boolean;
+  redirect_url?: string;
 }
 
 export interface ResetPasswordRequest {

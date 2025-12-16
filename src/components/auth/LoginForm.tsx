@@ -1,14 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 export default function LoginForm() {
   const { signIn, signInWithGoogle, loading, error } = useAuth()
@@ -17,6 +18,17 @@ export default function LoginForm() {
     password: '',
   })
   const [formError, setFormError] = useState<string | null>(null)
+  const [redirectTo, setRedirectTo] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    // Get redirect parameter from URL
+    const redirect = searchParams.get('redirect')
+    if (redirect) {
+      setRedirectTo(redirect)
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,7 +40,7 @@ export default function LoginForm() {
     }
 
     try {
-      await signIn(formData)
+      await signIn({ ...formData, redirectTo })
     } catch {
       // Error is handled by AuthContext
     }
@@ -120,23 +132,39 @@ export default function LoginForm() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
-              <Link 
-                href="/forgot-password" 
+              <Link
+                href="/forgot-password"
                 className="text-sm text-primary hover:underline"
               >
                 Forgot password?
               </Link>
             </div>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={handleChange}
-              disabled={loading}
-              required
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleChange}
+                disabled={loading}
+                required
+                className="pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
           
           {(error || formError) && (
@@ -164,7 +192,7 @@ export default function LoginForm() {
 
           <div className="text-center text-sm">
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-primary hover:underline">
+            <Link href={`/signup${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`} className="text-primary hover:underline">
               Sign up
             </Link>
           </div>

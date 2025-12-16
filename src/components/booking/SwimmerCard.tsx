@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from './StatusBadge';
 import type { Swimmer } from '@/types/booking';
 import { cn } from '@/lib/utils';
+import { isRegionalCenter } from '@/lib/funding-utils';
 
 interface SwimmerCardProps {
   swimmer: Swimmer;
@@ -59,9 +60,9 @@ export function SwimmerCard({ swimmer, isSelected, disabled, onClick }: SwimmerC
           <h3 className="font-semibold">
             {swimmer.firstName} {swimmer.lastName}
           </h3>
-          {swimmer.isVmrcClient && (
+          {swimmer.fundingSourceShortName && (
             <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-              VMRC
+              {swimmer.fundingSourceShortName}
             </Badge>
           )}
         </div>
@@ -76,10 +77,10 @@ export function SwimmerCard({ swimmer, isSelected, disabled, onClick }: SwimmerC
             </Badge>
           )}
 
-          {/* VMRC session info */}
-          {swimmer.isVmrcClient && swimmer.vmrcSessionsAuthorized && (
+          {/* Funding source session info */}
+          {swimmer.fundingSourceId && swimmer.sessionsAuthorized && (
             <span className="text-xs text-muted-foreground">
-              {swimmer.vmrcSessionsUsed || 0}/{swimmer.vmrcSessionsAuthorized} sessions
+              {swimmer.sessionsUsed || 0}/{swimmer.sessionsAuthorized} sessions
             </span>
           )}
         </div>

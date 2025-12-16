@@ -16,18 +16,26 @@ export async function POST(request: Request) {
     // Validate swimmer belongs to parent
     const { data: swimmer } = await supabase
       .from('swimmers')
-      .select('id, is_vmrc_client')
+      .select('id, funding_source_id, flexible_swimmer, enrollment_status')
       .eq('id', swimmerId)
       .eq('parent_id', parentId)
       .single();
     if (!swimmer) return NextResponse.json({ error: 'Swimmer not authorized' }, { status: 403 });
 
-    const isVmrcClient = swimmer.is_vmrc_client;
+    const fundingSourceId = swimmer.funding_source_id;
 
-    // Validate all sessions are available
+    // Check if swimmer is flexible - block from recurring bookings
+    if (swimmer.flexible_swimmer === true) {
+      return NextResponse.json({
+        error: 'FLEXIBLE_SWIMMER_RECURRING_BLOCKED',
+        message: 'Flexible swimmers can only book single lessons. Please select Single Lesson option.'
+      }, { status: 400 });
+    }
+
+    // Validate all sessions are available and are recurring
     const { data: sessions } = await supabase
       .from('sessions')
-      .select('id, start_time, end_time, status, is_full, max_capacity, booking_count, instructor_id, location')
+      .select('id, start_time, end_time, status, is_full, max_capacity, booking_count, instructor_id, location, is_recurring')
       .in('id', sessionIds)
       .in('status', ['available', 'open'])
       .eq('is_full', false);
@@ -42,31 +50,50 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    // VMRC POS validation
+    // Business rule: Recurring bookings must only include recurring sessions
+    const nonRecurringSessions = sessions?.filter(s => !s.is_recurring) || [];
+    if (nonRecurringSessions.length > 0) {
+      return NextResponse.json({
+        error: 'Recurring bookings can only include weekly recurring sessions. Floating sessions must be booked individually.',
+        nonRecurringSessionIds: nonRecurringSessions.map(s => s.id),
+        code: 'NON_RECURRING_SESSION_IN_RECURRING_BOOKING'
+      }, { status: 400 });
+    }
+
+    // Funding source authorization validation
     let activePoId: string | null = null;
-    if (isVmrcClient) {
-      const { data: purchaseOrders } = await supabase
-        .from('purchase_orders')
-        .select('id, allowed_lessons, lessons_booked')
-        .eq('swimmer_id', swimmerId)
-        .eq('status', 'approved')
-        .order('end_date', { ascending: true })
-        .limit(1);
+    if (fundingSourceId) {
+      // First check if funding source requires authorization
+      const { data: fundingSource } = await supabase
+        .from('funding_sources')
+        .select('requires_authorization')
+        .eq('id', fundingSourceId)
+        .single();
 
-      if (!purchaseOrders || purchaseOrders.length === 0) {
-        return NextResponse.json({ error: 'No valid VMRC authorization' }, { status: 400 });
-      }
+      if (fundingSource?.requires_authorization) {
+        const { data: purchaseOrders } = await supabase
+          .from('purchase_orders')
+          .select('id, allowed_lessons, lessons_booked')
+          .eq('swimmer_id', swimmerId)
+          .eq('status', 'approved')
+          .order('end_date', { ascending: true })
+          .limit(1);
 
-      const activePo = purchaseOrders[0];
-      const remainingSessions = activePo.allowed_lessons - (activePo.lessons_booked || 0);
-      if (remainingSessions < sessionIds.length) {
-        return NextResponse.json({
-          error: 'Not enough VMRC sessions available',
-          remainingSessions,
-          requestedSessions: sessionIds.length,
-        }, { status: 400 });
+        if (!purchaseOrders || purchaseOrders.length === 0) {
+          return NextResponse.json({ error: 'No valid funding source authorization' }, { status: 400 });
+        }
+
+        const activePo = purchaseOrders[0];
+        const remainingSessions = activePo.allowed_lessons - (activePo.lessons_booked || 0);
+        if (remainingSessions < sessionIds.length) {
+          return NextResponse.json({
+            error: 'Not enough funding source sessions available',
+            remainingSessions,
+            requestedSessions: sessionIds.length,
+          }, { status: 400 });
+        }
+        activePoId = activePo.id;
       }
-      activePoId = activePo.id;
     }
 
     // Create bookings
@@ -117,8 +144,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // Update VMRC PO if applicable
-    if (isVmrcClient && activePoId) {
+    // Update funding source PO if applicable
+    if (fundingSourceId && activePoId) {
       await supabase
         .from('purchase_orders')
         .update({ lessons_booked: supabase.raw(`lessons_booked + ${sessionIds.length}`) })
@@ -135,7 +162,7 @@ export async function POST(request: Request) {
         createdAt: b.created_at,
       })),
       totalSessions: sessionIds.length,
-      isVmrcClient,
+      fundingSourceId,
     });
 
   } catch (error) {

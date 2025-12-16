@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,19 +9,43 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 
 export default function SignupForm() {
+  const searchParams = useSearchParams()
   const { signUp, signInWithGoogle, loading, error } = useAuth()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
     fullName: '',
+    phone: '',
     termsAccepted: false,
   })
   const [formError, setFormError] = useState<string | null>(null)
+  const [isFromReferral, setIsFromReferral] = useState(false)
+  const [childName, setChildName] = useState('')
+  const [redirectUrl, setRedirectUrl] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  useEffect(() => {
+    const emailParam = searchParams.get('email')
+    const childParam = searchParams.get('child')
+    const redirectParam = searchParams.get('redirect')
+
+    if (emailParam) {
+      setFormData(prev => ({ ...prev, email: decodeURIComponent(emailParam) }))
+      setIsFromReferral(true)
+    }
+    if (childParam) {
+      setChildName(decodeURIComponent(childParam))
+    }
+    if (redirectParam) {
+      setRedirectUrl(decodeURIComponent(redirectParam))
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,8 +77,10 @@ export default function SignupForm() {
         email: formData.email,
         password: formData.password,
         name: formData.fullName,
+        phone: formData.phone,
         confirm_password: formData.confirmPassword,
         terms_accepted: formData.termsAccepted,
+        redirect_url: redirectUrl || (isFromReferral ? '/dashboard' : undefined),
       })
     } catch {
       // Error is handled by AuthContext
@@ -81,10 +108,24 @@ export default function SignupForm() {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl text-center">Create Account</CardTitle>
         <CardDescription className="text-center">
-          Enter your information to create your account
+          {isFromReferral
+            ? `Sign up to complete enrollment for ${childName}`
+            : 'Enter your information to create your account'
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {isFromReferral && (
+          <div className="mb-6 p-4 bg-[#2a5e84]/10 border border-[#2a5e84]/20 rounded-lg">
+            <p className="text-[#2a5e84] font-medium text-sm">
+              🏊 Welcome! You're signing up to complete enrollment for {childName}.
+            </p>
+            <p className="text-xs text-gray-600 mt-1">
+              After signing up, you'll be able to complete the enrollment form.
+            </p>
+          </div>
+        )}
+
         <div className="space-y-4">
           <Button
             type="button"
@@ -154,37 +195,89 @@ export default function SignupForm() {
               placeholder="you@example.com"
               value={formData.email}
               onChange={handleChange}
-              disabled={loading}
+              disabled={loading || isFromReferral}
+              readOnly={isFromReferral}
+              className={isFromReferral ? 'bg-gray-50 cursor-not-allowed' : ''}
               required
+            />
+            {isFromReferral && (
+              <p className="text-xs text-gray-500 mt-1">
+                This email is linked to your referral and cannot be changed.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number</Label>
+            <Input
+              id="phone"
+              name="phone"
+              type="tel"
+              placeholder="(209) 555-1234"
+              value={formData.phone}
+              onChange={handleChange}
+              disabled={loading}
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="password">Password *</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="At least 8 characters"
-              value={formData.password}
-              onChange={handleChange}
-              disabled={loading}
-              required
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="At least 8 characters"
+                value={formData.password}
+                onChange={handleChange}
+                disabled={loading}
+                required
+                className="pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm Password *</Label>
-            <Input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              placeholder="Confirm your password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              disabled={loading}
-              required
-            />
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm your password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                disabled={loading}
+                required
+                className="pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                disabled={loading}
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">

@@ -1,0 +1,2 @@
+[functions.add-instructor]
+verify_jwt = true

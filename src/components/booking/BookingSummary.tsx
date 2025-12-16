@@ -5,6 +5,7 @@ import { User, Calendar, Clock, MapPin, CreditCard } from 'lucide-react';
 
 import type { Swimmer, AvailableSession } from '@/types/booking';
 import { StatusBadge } from './StatusBadge';
+import { InstructorAvatar } from '@/components/ui/instructor-avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/utils';
@@ -52,8 +53,10 @@ export function BookingSummary({
     ? (selectedSession ? 1 : 0)
     : selectedRecurringSessions.length;
 
-  const isVmrcClient = swimmer?.isVmrcClient ?? false;
-  const sessionPrice = isVmrcClient ? PRICING.VMRC_LESSON : PRICING.LESSON_PRIVATE_PAY;
+  const hasFundingSource = !!swimmer?.fundingSourceId;
+  const fundingSourceName = swimmer?.fundingSourceName || swimmer?.fundingSourceShortName;
+  // TODO: Get session price from funding source instead of hardcoded
+  const sessionPrice = hasFundingSource ? 0 : PRICING.LESSON_PRIVATE_PAY;
   const totalPrice = sessionCount * sessionPrice;
 
   // Helper to format date range
@@ -89,9 +92,9 @@ export function BookingSummary({
             </div>
             <div className="flex items-center gap-2">
               <StatusBadge status={swimmer.enrollmentStatus} size="sm" />
-              {swimmer.isVmrcClient && (
+              {hasFundingSource && (
                 <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                  VMRC Client - State Funded
+                  {fundingSourceName ? `${fundingSourceName} Funded` : 'Funding Source'}
                 </Badge>
               )}
             </div>
@@ -131,7 +134,16 @@ export function BookingSummary({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-muted-foreground" />
+                    {instructorPreference === 'specific' && selectedSession?.instructorAvatarUrl ? (
+                      <InstructorAvatar
+                        name={selectedSession.instructorName}
+                        avatarUrl={selectedSession.instructorAvatarUrl}
+                        size="sm"
+                        showName={false}
+                      />
+                    ) : (
+                      <User className="h-4 w-4 text-muted-foreground" />
+                    )}
                     <span>{instructorPreference === 'specific' && instructorName ? instructorName : 'Any Available'}</span>
                   </div>
                 </div>
@@ -155,7 +167,16 @@ export function BookingSummary({
                   )}
 
                   <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-muted-foreground" />
+                    {instructorPreference === 'specific' && selectedRecurringSessions[0]?.instructorAvatarUrl ? (
+                      <InstructorAvatar
+                        name={selectedRecurringSessions[0].instructorName}
+                        avatarUrl={selectedRecurringSessions[0].instructorAvatarUrl}
+                        size="sm"
+                        showName={false}
+                      />
+                    ) : (
+                      <User className="h-4 w-4 text-muted-foreground" />
+                    )}
                     <span>{instructorPreference === 'specific' && instructorName ? instructorName : 'Any Available'}</span>
                   </div>
 
@@ -181,17 +202,17 @@ export function BookingSummary({
               <span className="font-medium">Payment</span>
             </div>
 
-            {isVmrcClient ? (
+            {hasFundingSource ? (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">State Funded</span>
+                  <span className="text-sm">{fundingSourceName || 'Funding Source'} Funded</span>
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    $0.00
+                    ${(sessionPrice / 100).toFixed(2)}
                   </Badge>
                 </div>
-                {swimmer.vmrcSessionsUsed !== undefined && swimmer.vmrcSessionsAuthorized !== undefined && (
+                {swimmer.sessionsUsed !== undefined && swimmer.sessionsAuthorized !== undefined && (
                   <div className="text-xs text-muted-foreground">
-                    {sessionCount} of {swimmer.vmrcSessionsAuthorized} authorized sessions will be used
+                    {sessionCount} of {swimmer.sessionsAuthorized} authorized sessions will be used
                   </div>
                 )}
               </div>

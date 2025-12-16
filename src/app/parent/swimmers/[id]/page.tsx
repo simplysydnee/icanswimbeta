@@ -8,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { LevelBadge } from '@/components/parent/level-badge'
+import { LessonCountBadge } from '@/components/parent/lesson-count-badge'
 import { UpcomingSessions } from '@/components/parent/upcoming-sessions'
 import Link from 'next/link'
-import { ArrowLeft, Calendar, Edit, Users } from 'lucide-react'
+import { ArrowLeft, Calendar, Edit, Users, Award, FileText, Activity } from 'lucide-react'
 
 interface Swimmer {
   id: string
@@ -37,10 +38,18 @@ interface Swimmer {
   previous_swim_lessons: boolean
   comfortable_in_water: string
   swim_goals?: string[]
-  // VMRC info
+  // Funding source info
   payment_type: string
-  is_vmrc_client: boolean
-  vmrc_coordinator_name?: string
+  funding_source_id?: string
+  funding_source_name?: string
+  funding_source_short_name?: string
+  coordinator_name?: string
+  coordinator_email?: string
+  coordinator_phone?: string
+  sessions_used?: number
+  sessions_authorized?: number
+  // Progress tracking
+  lessons_completed?: number
 }
 
 interface Booking {
@@ -60,6 +69,7 @@ interface Booking {
   }
 }
 
+
 export default function SwimmerDetailPage() {
   const { user } = useAuth()
   const params = useParams()
@@ -76,18 +86,27 @@ export default function SwimmerDetailPage() {
       if (!user || !swimmerId) return
 
       try {
-        // Fetch swimmer details
+        // Fetch swimmer details - use .maybeSingle() instead of .single() to handle no results
         const { data: swimmerData, error: swimmerError } = await supabase
           .from('swimmers')
           .select(`
             *,
-            current_level:swim_levels(name, display_name, color)
+            current_level:swim_levels(name, display_name, color),
           `)
           .eq('id', swimmerId)
           .eq('parent_id', user.id)
-          .single()
+          .maybeSingle() // Use maybeSingle instead of single to handle no results
 
-        if (swimmerError) throw swimmerError
+        if (swimmerError) {
+          console.error('Swimmer query error:', swimmerError)
+          throw swimmerError
+        }
+
+        if (!swimmerData) {
+          console.error('No swimmer found with ID:', swimmerId, 'for user:', user.id)
+          router.push('/parent/swimmers')
+          return
+        }
 
         // Fetch swimmer's upcoming bookings
         const { data: bookingsData, error: bookingsError } = await supabase
@@ -105,15 +124,62 @@ export default function SwimmerDetailPage() {
           `)
           .eq('swimmer_id', swimmerId)
           .eq('status', 'confirmed')
-          .gte('sessions.start_time', new Date().toISOString())
-          .order('sessions.start_time', { ascending: true })
+          .gte('session.start_time', new Date().toISOString())
+          // .order('session.start_time', { ascending: true }) // Temporarily removed to test
 
-        if (bookingsError) throw bookingsError
+        if (bookingsError) {
+          console.error('Bookings query error:', bookingsError)
+          throw bookingsError
+        }
 
-        setSwimmer(swimmerData)
-        setBookings(bookingsData || [])
+        // Fetch completed bookings count
+        const { count: completedCount, error: countError } = await supabase
+          .from('bookings')
+          .select('*', { count: 'exact', head: true })
+          .eq('swimmer_id', swimmerId)
+          .eq('status', 'completed')
+
+        if (countError) {
+          console.error('Error fetching completed bookings count:', countError)
+          // Continue with 0 count
+        }
+
+        // Transform swimmer data
+        const transformedSwimmer = {
+          ...(swimmerData as any),
+          lessons_completed: completedCount || 0
+        }
+
+        // Transform bookings data to match the Booking interface
+        const transformedBookings: Booking[] = (bookingsData || []).map((rawBooking: any) => ({
+          id: rawBooking.id,
+          session: {
+            id: rawBooking.session[0]?.id || '',
+            start_time: rawBooking.session[0]?.start_time || '',
+            end_time: rawBooking.session[0]?.end_time || '',
+            location: rawBooking.session[0]?.location || '',
+            instructor: rawBooking.session[0]?.instructor?.[0] ? {
+              full_name: rawBooking.session[0]?.instructor[0]?.full_name
+            } : undefined
+          },
+          swimmer: {
+            first_name: rawBooking.swimmer[0]?.first_name || '',
+            last_name: rawBooking.swimmer[0]?.last_name || ''
+          }
+        }))
+
+        // Sort bookings by session start time (since we can't use .order() with joined tables)
+        transformedBookings.sort((a, b) =>
+          new Date(a.session.start_time).getTime() - new Date(b.session.start_time).getTime()
+        )
+
+        setSwimmer(transformedSwimmer)
+        setBookings(transformedBookings)
       } catch (error) {
         console.error('Error fetching swimmer data:', error)
+        console.error('Error details:', JSON.stringify(error, null, 2))
+        console.error('Swimmer ID:', swimmerId)
+        console.error('User ID:', user?.id)
         router.push('/parent/swimmers')
       } finally {
         setLoading(false)
@@ -222,6 +288,11 @@ export default function SwimmerDetailPage() {
               {swimmer.current_level && (
                 <LevelBadge level={swimmer.current_level} />
               )}
+              {swimmer.funding_source_short_name && (
+                <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
+                  {swimmer.funding_source_short_name} Client
+                </Badge>
+              )}
             </div>
           </div>
         </div>
@@ -238,6 +309,38 @@ export default function SwimmerDetailPage() {
           </Button>
         </div>
       </div>
+
+      {/* Progress Summary */}
+      {swimmer.lessons_completed !== undefined && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-100 rounded-full">
+                  <Award className="h-8 w-8 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Swim Progress</h3>
+                  <p className="text-muted-foreground">
+                    Track {swimmer.first_name}'s swimming journey
+                  </p>
+                </div>
+              </div>
+              <div className="text-center md:text-right">
+                <div className="text-3xl font-bold text-blue-600">
+                  {swimmer.lessons_completed}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  lessons completed
+                </div>
+              </div>
+              <div>
+                <LessonCountBadge count={swimmer.lessons_completed} size="lg" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
@@ -367,7 +470,7 @@ export default function SwimmerDetailPage() {
               <CardTitle>Payment Information</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
                     Payment Type
@@ -376,15 +479,43 @@ export default function SwimmerDetailPage() {
                     {swimmer.payment_type?.replace('_', ' ') || 'Private Pay'}
                   </p>
                 </div>
-                {swimmer.is_vmrc_client && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      VMRC Coordinator
-                    </label>
-                    <p className="text-sm">
-                      {swimmer.vmrc_coordinator_name || 'Not specified'}
-                    </p>
-                  </div>
+                {swimmer.funding_source_id && (
+                  <>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        {swimmer.funding_source_name || 'Funding Source'} Coordinator
+                      </label>
+                      <p className="text-sm">
+                        {swimmer.coordinator_name || 'Not specified'}
+                      </p>
+                    </div>
+                    {swimmer.sessions_authorized !== undefined && swimmer.sessions_used !== undefined && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          {swimmer.funding_source_name || 'Funding Source'} Session Usage
+                        </label>
+                        <div className="mt-2">
+                          <div className="flex justify-between text-sm mb-1">
+                            <span>Sessions used</span>
+                            <span className="font-medium">
+                              {swimmer.sessions_used} / {swimmer.sessions_authorized}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-green-600 h-2 rounded-full"
+                              style={{
+                                width: `${Math.min(100, (swimmer.sessions_used / swimmer.sessions_authorized) * 100)}%`
+                              }}
+                            ></div>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {swimmer.sessions_authorized - swimmer.sessions_used} sessions remaining
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </CardContent>
@@ -412,8 +543,24 @@ export default function SwimmerDetailPage() {
                 Edit Profile
               </Button>
               <Button variant="outline" className="w-full">
+                <Activity className="h-4 w-4 mr-2" />
                 View Progress
               </Button>
+              <Button variant="outline" className="w-full">
+                <FileText className="h-4 w-4 mr-2" />
+                View Notes
+              </Button>
+              {swimmer.funding_source_id && swimmer.sessions_authorized && swimmer.sessions_used && (
+                <div className="pt-2 border-t">
+                  <div className="text-xs text-muted-foreground mb-2">{swimmer.funding_source_name || 'Funding Source'} Status</div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Sessions remaining:</span>
+                    <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
+                      {swimmer.sessions_authorized - swimmer.sessions_used}
+                    </Badge>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

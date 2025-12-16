@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { Instructor } from '@/types/booking'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { InstructorAvatar } from '@/components/ui/instructor-avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Users, User, AlertCircle, Check } from 'lucide-react'
@@ -36,15 +36,6 @@ export default function InstructorStep({
     staleTime: 10 * 60 * 1000, // 10 minutes
   })
 
-  // Get initials from full name
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
 
   // Loading state
   if (isLoading) {
@@ -169,12 +160,12 @@ export default function InstructorStep({
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={instructor.avatarUrl} />
-                    <AvatarFallback>
-                      {getInitials(instructor.fullName)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <InstructorAvatar
+                    name={instructor.fullName}
+                    avatarUrl={instructor.avatarUrl}
+                    size="sm"
+                    showName={false}
+                  />
                   <div>
                     <p className="font-medium">{instructor.fullName}</p>
                   </div>

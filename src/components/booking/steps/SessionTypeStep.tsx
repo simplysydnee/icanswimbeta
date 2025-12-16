@@ -1,42 +1,53 @@
 'use client';
 
-import { Calendar, Repeat, Check } from 'lucide-react';
+import { Calendar, Repeat, Check, AlertCircle } from 'lucide-react';
 import { SessionType } from '@/types/booking';
 import { PRICING } from '@/lib/constants';
 import { formatPrice, cn } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 interface SessionTypeStepProps {
   selectedType: SessionType | null;
-  isVmrcClient: boolean;
+  hasFundingSource: boolean;
+  fundingSourceName?: string;
+  isFlexibleSwimmer: boolean; // Add flexible swimmer status
   onSelectType: (type: SessionType) => void;
 }
 
-export function SessionTypeStep({ selectedType, isVmrcClient, onSelectType }: SessionTypeStepProps) {
-  const sessionPrice = isVmrcClient ? PRICING.VMRC_LESSON : PRICING.LESSON_PRIVATE_PAY;
-  const priceDisplay = isVmrcClient ? '$0 - State Funded' : formatPrice(sessionPrice);
+export function SessionTypeStep({ selectedType, hasFundingSource, fundingSourceName, isFlexibleSwimmer, onSelectType }: SessionTypeStepProps) {
+  const sessionPrice = hasFundingSource ? PRICING.FUNDING_SOURCE_LESSON : PRICING.LESSON_PRIVATE_PAY;
+  const priceDisplay = hasFundingSource ?
+    `$0 - ${fundingSourceName || 'Funding Source'} Funded` :
+    formatPrice(sessionPrice);
 
   const sessionTypes = [
     {
       id: 'single' as SessionType,
-      title: 'Single Session',
-      description: 'Book one lesson at a time',
+      title: 'Single Lesson',
+      description: 'Book a one-time floating session (canceled slots made available)',
       icon: Calendar,
       benefits: [
+        'Canceled weekly slots released back',
         'Flexible scheduling',
         'Great for trying out',
         'No commitment required',
       ],
+      note: 'Available to all enrolled swimmers',
+      disabled: false,
     },
     {
       id: 'recurring' as SessionType,
-      title: 'Recurring Weekly',
-      description: 'Same day and time each week',
+      title: 'Weekly Recurring',
+      description: 'Book the same time slot every week',
       icon: Repeat,
       benefits: [
         'Consistent schedule',
         'Guaranteed time slot',
         'Better skill progression',
       ],
+      note: 'For enrolled swimmers with active status',
+      disabled: isFlexibleSwimmer, // Disabled for flexible swimmers
     },
   ];
 
@@ -49,36 +60,39 @@ export function SessionTypeStep({ selectedType, isVmrcClient, onSelectType }: Se
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <RadioGroup
+        value={selectedType || ''}
+        onValueChange={(value) => onSelectType(value as SessionType)}
+        className="space-y-4"
+      >
         {sessionTypes.map((type) => {
           const Icon = type.icon;
           const isSelected = selectedType === type.id;
 
           return (
-            <button
+            <div
               key={type.id}
-              type="button"
-              onClick={() => onSelectType(type.id)}
               className={cn(
-                'relative p-5 rounded-lg border-2 cursor-pointer transition-all text-left',
+                'relative p-5 rounded-lg border-2 transition-all text-left cursor-pointer',
                 'hover:border-primary/50 hover:bg-muted/50',
                 isSelected
                   ? 'border-primary bg-primary/5'
-                  : 'border-muted bg-background'
+                  : 'border-muted bg-background',
+                type.disabled && 'opacity-60 cursor-not-allowed hover:border-muted hover:bg-background'
               )}
+              onClick={() => !type.disabled && onSelectType(type.id)}
             >
-              {/* Selection indicator */}
+              {/* Radio button */}
               <div className="absolute top-3 right-3">
-                <div className={cn(
-                  'h-5 w-5 rounded-full border-2 flex items-center justify-center',
-                  isSelected
-                    ? 'border-primary bg-primary'
-                    : 'border-muted bg-background'
-                )}>
-                  {isSelected && (
-                    <div className="h-2 w-2 rounded-full bg-white" />
+                <RadioGroupItem
+                  value={type.id}
+                  id={type.id}
+                  disabled={type.disabled}
+                  className={cn(
+                    'h-5 w-5',
+                    type.disabled && 'cursor-not-allowed'
                   )}
-                </div>
+                />
               </div>
 
               {/* Icon */}
@@ -87,11 +101,19 @@ export function SessionTypeStep({ selectedType, isVmrcClient, onSelectType }: Se
               </div>
 
               {/* Title & Description */}
-              <h4 className="text-lg font-semibold mb-1">{type.title}</h4>
+              <Label
+                htmlFor={type.id}
+                className={cn(
+                  'text-lg font-semibold mb-1 block',
+                  type.disabled && 'text-muted-foreground cursor-not-allowed'
+                )}
+              >
+                {type.title}
+              </Label>
               <p className="text-sm text-muted-foreground mb-4">{type.description}</p>
 
               {/* Benefits list */}
-              <ul className="space-y-2 mb-4">
+              <ul className="space-y-2 mb-3">
                 {type.benefits.map((benefit, index) => (
                   <li key={index} className="flex items-start gap-2">
                     <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
@@ -100,14 +122,52 @@ export function SessionTypeStep({ selectedType, isVmrcClient, onSelectType }: Se
                 ))}
               </ul>
 
+              {/* Flexible swimmer warning for recurring */}
+              {type.id === 'recurring' && type.disabled && (
+                <div className="mb-3 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium">⚠️ Not available - Flexible swimmers can only book single lessons</p>
+                      <p>Flexible swimmers can only book single lessons (floating sessions). Please select Single Lesson option.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Note for non-disabled options */}
+              {type.note && !type.disabled && (
+                <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+                  {type.note}
+                </div>
+              )}
+
               {/* Price footer */}
               <div className="pt-4 border-t">
                 <p className="text-sm font-medium">{priceDisplay} per session</p>
               </div>
-            </button>
+            </div>
           );
         })}
-      </div>
+      </RadioGroup>
+
+      {/* Flexible swimmer info box */}
+      {isFlexibleSwimmer && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="space-y-1">
+              <h4 className="font-medium text-amber-800">Flexible Swimmer Status</h4>
+              <p className="text-sm text-amber-700">
+                Your swimmer has flexible status due to a late cancellation. Flexible swimmers can ONLY book single lessons (floating sessions) and cannot book weekly recurring sessions.
+              </p>
+              <p className="text-xs text-amber-600 mt-2">
+                To regain weekly recurring booking privileges, please contact the office.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tip box */}
       <div className="bg-muted/50 rounded-lg p-4">

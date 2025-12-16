@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('Smoke test - app loads', async ({ page }) => {
   console.log('🚀 Starting smoke test...');
 
-  await page.goto('http://localhost:3000');
+  await page.goto('/');
   console.log('✓ Navigated to homepage');
 
   const title = await page.title();
@@ -19,7 +19,7 @@ test('Smoke test - app loads', async ({ page }) => {
 test('Check booking page redirects to login', async ({ page }) => {
   console.log('\n🔐 Testing booking page authentication...');
 
-  await page.goto('http://localhost:3000/parent/book');
+  await page.goto('/parent/book');
   console.log('✓ Navigated to /parent/book');
 
   const currentUrl = page.url();

@@ -18,7 +18,9 @@ export default function TestSwimmerCardPage() {
       currentLevelId: null,
       currentLevelName: 'White',
       paymentType: 'private_pay',
-      isVmrcClient: false,
+      fundingSourceId: null,
+      fundingSourceName: undefined,
+      fundingSourceShortName: undefined,
     },
     {
       id: '2',
@@ -29,10 +31,12 @@ export default function TestSwimmerCardPage() {
       assessmentStatus: 'completed',
       currentLevelId: 'level-2',
       currentLevelName: 'Red',
-      paymentType: 'vmrc',
-      isVmrcClient: true,
-      vmrcSessionsUsed: 3,
-      vmrcSessionsAuthorized: 12,
+      paymentType: 'funding_source',
+      fundingSourceId: 'funding-source-1',
+      fundingSourceName: 'Valley Mountain Regional Center',
+      fundingSourceShortName: 'VMRC',
+      sessionsUsed: 3,
+      sessionsAuthorized: 12,
     },
     {
       id: '3',
@@ -43,7 +47,9 @@ export default function TestSwimmerCardPage() {
       assessmentStatus: 'scheduled',
       currentLevelId: null,
       paymentType: 'private_pay',
-      isVmrcClient: false,
+      fundingSourceId: null,
+      fundingSourceName: undefined,
+      fundingSourceShortName: undefined,
       photoUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Olivia',
     },
     {
@@ -55,8 +61,10 @@ export default function TestSwimmerCardPage() {
       assessmentStatus: null,
       currentLevelId: 'level-1',
       currentLevelName: 'White',
-      paymentType: 'scholarship',
-      isVmrcClient: false,
+      paymentType: 'private_pay',
+      fundingSourceId: null,
+      fundingSourceName: undefined,
+      fundingSourceShortName: undefined,
     },
     {
       id: '5',
@@ -66,10 +74,12 @@ export default function TestSwimmerCardPage() {
       enrollmentStatus: 'declined',
       assessmentStatus: 'failed',
       currentLevelId: null,
-      paymentType: 'other',
-      isVmrcClient: true,
-      vmrcSessionsUsed: 0,
-      vmrcSessionsAuthorized: 1,
+      paymentType: 'funding_source',
+      fundingSourceId: 'funding-source-1',
+      fundingSourceName: 'Valley Mountain Regional Center',
+      fundingSourceShortName: 'VMRC',
+      sessionsUsed: 0,
+      sessionsAuthorized: 1,
     },
   ];
 
@@ -110,16 +120,16 @@ export default function TestSwimmerCardPage() {
             <strong>Emma Smith:</strong> Private pay, enrolled, White level, no photo
           </li>
           <li>
-            <strong>Liam Johnson:</strong> VMRC client, waitlist, Red level, session counter
+            <strong>Liam Johnson:</strong> Authorized client (VMRC), waitlist, Red level, session counter
           </li>
           <li>
             <strong>Olivia Williams:</strong> Private pay, pending enrollment, has avatar photo
           </li>
           <li>
-            <strong>Noah Brown:</strong> Scholarship, inactive, White level
+            <strong>Noah Brown:</strong> Private pay, inactive, White level
           </li>
           <li>
-            <strong>Ava Jones:</strong> VMRC client, declined, assessment failed
+            <strong>Ava Jones:</strong> Authorized client (VMRC), declined, assessment failed
           </li>
         </ul>
       </div>

@@ -254,7 +254,36 @@ export class ApiClient {
       .single();
 
     if (error) {
-      console.error('Error creating swimmer:', error);
+      console.error('Error creating swimmer:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        swimmerData: JSON.stringify(swimmerData, null, 2)
+      });
+      throw error;
+    }
+
+    return data;
+  }
+
+  async updateProfile(userId: string, profileData: Record<string, unknown>) {
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .update(profileData)
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating profile:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        userId,
+        profileData: JSON.stringify(profileData, null, 2)
+      });
       throw error;
     }
 
@@ -347,19 +376,48 @@ export class ApiClient {
     child_date_of_birth?: string;
     coordinator_name: string;
     coordinator_email: string;
+    // Note: parent_phone might be passed from form but not stored in table
   }): Promise<ParentReferralRequest> {
+    // Filter out any extra fields not in the table (like parent_phone)
+    const { parent_phone, child_date_of_birth, ...insertData } = data as any;
+
+    // Prepare insert data
+    const insertPayload: any = {
+      ...insertData,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+    };
+
+    // Format date if provided (convert to YYYY-MM-DD format for PostgreSQL DATE type)
+    if (child_date_of_birth) {
+      try {
+        // Try to parse and format the date
+        const date = new Date(child_date_of_birth);
+        if (!isNaN(date.getTime())) {
+          // Format as YYYY-MM-DD for PostgreSQL DATE type
+          const formattedDate = date.toISOString().split('T')[0];
+          insertPayload.child_date_of_birth = formattedDate;
+        } else {
+          // If parsing fails, try to use as-is (might already be in correct format)
+          insertPayload.child_date_of_birth = child_date_of_birth;
+        }
+      } catch (e) {
+        console.warn('Failed to parse date:', child_date_of_birth, e);
+        insertPayload.child_date_of_birth = child_date_of_birth;
+      }
+    }
+
     const { data: referral, error } = await this.supabase
       .from('parent_referral_requests')
-      .insert({
-        ...data,
-        status: 'pending',
-        created_at: new Date().toISOString(),
-      })
+      .insert(insertPayload)
       .select()
       .single();
 
     if (error) {
       console.error('Error creating parent referral request:', error);
+      console.error('Error details:', error.details);
+      console.error('Error hint:', error.hint);
+      console.error('Error code:', error.code);
       throw error;
     }
 
@@ -408,7 +466,7 @@ export class ApiClient {
     additional_info?: string;
   }): Promise<VmrcReferralRequest> {
     const { data: referral, error } = await this.supabase
-      .from('vmrc_referral_requests')
+      .from('referral_requests')
       .insert({
         ...data,
         status: 'pending',
@@ -428,7 +486,7 @@ export class ApiClient {
 
   async getVmrcReferrals(status?: string): Promise<VmrcReferralRequest[]> {
     let query = this.supabase
-      .from('vmrc_referral_requests')
+      .from('referral_requests')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -448,7 +506,7 @@ export class ApiClient {
 
   async getVmrcReferralById(id: string): Promise<VmrcReferralRequest> {
     const { data, error } = await this.supabase
-      .from('vmrc_referral_requests')
+      .from('referral_requests')
       .select('*')
       .eq('id', id)
       .single();
@@ -505,9 +563,9 @@ export class ApiClient {
         has_behavior_plan: referral.has_safety_plan === 'yes',
         // VMRC
         payment_type: referral.referral_type === 'vmrc_client' ? 'vmrc' : 'private_pay',
-        is_vmrc_client: referral.referral_type === 'vmrc_client',
-        vmrc_coordinator_name: referral.coordinator_name,
-        vmrc_coordinator_email: referral.coordinator_email,
+        funding_source_id: referral.referral_type === 'vmrc_client',
+        funding_coordinator_name: referral.coordinator_name,
+        funding_coordinator_email: referral.coordinator_email,
         // Consent
         photo_video_permission: referral.photo_release === 'yes',
         signed_waiver: referral.liability_agreement,
@@ -528,7 +586,7 @@ export class ApiClient {
 
     // Update referral
     const { data: updatedReferral, error: updateError } = await this.supabase
-      .from('vmrc_referral_requests')
+      .from('referral_requests')
       .update({
         status: 'approved',
         reviewed_by: adminId,
@@ -555,7 +613,7 @@ export class ApiClient {
     reason: string
   ): Promise<VmrcReferralRequest> {
     const { data, error } = await this.supabase
-      .from('vmrc_referral_requests')
+      .from('referral_requests')
       .update({
         status: 'declined',
         reviewed_by: adminId,

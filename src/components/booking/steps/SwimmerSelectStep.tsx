@@ -62,7 +62,7 @@ export function SwimmerSelectStep({ selectedSwimmerId, onSelectSwimmer }: Swimme
           </p>
         </div>
         <Button asChild>
-          <Link href="/parent/swimmers/new">Add New Swimmer</Link>
+          <Link href="/enroll/private">Add New Swimmer</Link>
         </Button>
       </div>
     );

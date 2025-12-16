@@ -17,6 +17,7 @@ export async function GET(request: Request) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const instructorId = searchParams.get('instructorId');
+    const bookingType = searchParams.get('bookingType'); // 'single' or 'recurring'
 
     // Validate required parameters
     if (!startDate || !endDate) {
@@ -25,6 +26,11 @@ export async function GET(request: Request) {
         { status: 400 }
       );
     }
+
+    // Note: Flexible swimmer validation is handled in:
+    // 1. UI level (SessionTypeStep disables recurring option for flexible swimmers)
+    // 2. API level (recurring booking API blocks flexible swimmers)
+    // This endpoint just filters sessions based on booking type
 
     // Build query
     let query = supabase
@@ -40,7 +46,8 @@ export async function GET(request: Request) {
         price_cents,
         max_capacity,
         booking_count,
-        profiles!instructor_id(full_name)
+        is_recurring,
+        profiles!instructor_id(full_name, avatar_url)
       `)
       .eq('session_type', 'lesson')
       .in('status', ['available', 'open'])
@@ -48,6 +55,19 @@ export async function GET(request: Request) {
       .gte('start_time', startDate)
       .lte('start_time', endDate)
       .order('start_time', { ascending: true });
+
+    // Apply session type filtering based on booking type
+    if (bookingType === 'single') {
+      // For single lesson booking - show floating sessions (non-recurring)
+      // These are canceled weekly slots now available for one-time booking
+      // Available to ALL enrolled swimmers (regular AND flexible)
+      query = query.eq('is_recurring', false);
+    } else if (bookingType === 'recurring') {
+      // For recurring booking - show recurring sessions
+      // Only for non-flexible swimmers (flexible swimmers blocked in UI and API)
+      query = query.eq('is_recurring', true);
+    }
+    // If bookingType not specified, show all available sessions
 
     // Apply instructor filter if provided
     if (instructorId) {
@@ -75,9 +95,12 @@ export async function GET(request: Request) {
       location: session.location,
       priceCents: session.price_cents,
       maxCapacity: session.max_capacity,
-      bookingCount: session.booking_count,
+      currentBookings: session.booking_count,
+      isFull: session.booking_count >= session.max_capacity,
       spotsRemaining: session.max_capacity - session.booking_count,
-      instructorName: session.profiles?.full_name || 'Unknown Instructor',
+      isRecurring: session.is_recurring,
+      instructorName: session.profiles?.[0]?.full_name || 'Unknown Instructor',
+      instructorAvatarUrl: session.profiles?.[0]?.avatar_url || null,
     }));
 
     return NextResponse.json(transformedData);

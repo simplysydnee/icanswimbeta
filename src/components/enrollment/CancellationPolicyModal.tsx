@@ -1,0 +1,48 @@
+'use client'
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { CANCELLATION_POLICY_TEXT } from '@/lib/constants'
+import { FileText } from 'lucide-react'
+
+interface CancellationPolicyModalProps {
+  trigger?: React.ReactNode
+}
+
+export function CancellationPolicyModal({ trigger }: CancellationPolicyModalProps) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        {trigger || (
+          <Button variant="link" className="text-[#0077B6] p-0 h-auto font-medium">
+            <FileText className="h-4 w-4 mr-1" />
+            View Cancellation Policy
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[80vh]">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold text-[#0077B6]">
+            Cancellation Policy
+          </DialogTitle>
+          <DialogDescription>
+            Please read the complete cancellation policy below.
+          </DialogDescription>
+        </DialogHeader>
+        <ScrollArea className="h-[60vh] pr-4">
+          <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
+            {CANCELLATION_POLICY_TEXT}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  )
+}

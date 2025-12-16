@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { InstructorAvatar } from '@/components/ui/instructor-avatar'
 
 interface UpcomingSessionsProps {
   bookings: Array<{
@@ -13,6 +14,7 @@ interface UpcomingSessionsProps {
       location: string
       instructor?: {
         full_name?: string
+        avatar_url?: string
       }
     }
     swimmer: {
@@ -86,8 +88,16 @@ export function UpcomingSessions({ bookings }: UpcomingSessionsProps) {
                 {formatDate(booking.session.start_time)} • {formatTime(booking.session.start_time)}
               </div>
               {booking.session.instructor?.full_name && (
-                <div className="text-xs text-muted-foreground mt-1">
-                  Instructor: {booking.session.instructor.full_name}
+                <div className="flex items-center gap-2 mt-1">
+                  <InstructorAvatar
+                    name={booking.session.instructor.full_name}
+                    avatarUrl={booking.session.instructor.avatar_url}
+                    size="sm"
+                    showName={false}
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    Instructor: {booking.session.instructor.full_name}
+                  </span>
                 </div>
               )}
             </div>

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Navigation } from './navigation';
@@ -107,7 +107,12 @@ export function Header() {
         <div className="hidden md:flex items-center space-x-4">
           {!loading && (
             user ? (
-              <UserMenu />
+              <>
+                <Button variant="outline" onClick={() => signOut()}>
+                  Sign Out
+                </Button>
+                <UserMenu />
+              </>
             ) : (
               <>
                 <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
@@ -117,7 +122,7 @@ export function Header() {
                   <DialogContent className="sm:max-w-[425px]">
                     <div className="space-y-4">
                       <div>
-                        <h2 className="text-2xl font-bold">Welcome back</h2>
+                        <DialogTitle className="text-2xl font-bold">Welcome back</DialogTitle>
                         <p className="text-sm text-gray-500 mt-1">
                           Sign in to your I Can Swim account
                         </p>
@@ -223,17 +228,21 @@ export function Header() {
               <div className="border-t pt-4 space-y-2">
                 {!loading && (
                   user ? (
-                    <div className="space-y-2">
-                      <div className="text-sm font-medium">{user.fullName || user.email}</div>
-                      <Button variant="ghost" className="w-full justify-start" asChild>
-                        <Link href="/dashboard">Dashboard</Link>
-                      </Button>
-                      <Button variant="ghost" className="w-full justify-start" asChild>
-                        <Link href="/settings">Settings</Link>
-                      </Button>
-                      <Button variant="outline" className="w-full" onClick={() => signOut()}>
-                        Sign Out
-                      </Button>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <div className="text-sm font-medium">{user.fullName || user.email}</div>
+                        <Button variant="ghost" className="w-full justify-start" asChild>
+                          <Link href="/dashboard">Dashboard</Link>
+                        </Button>
+                        <Button variant="ghost" className="w-full justify-start" asChild>
+                          <Link href="/settings">Settings</Link>
+                        </Button>
+                      </div>
+                      <div className="border-t pt-4">
+                        <Button variant="outline" className="w-full" onClick={() => signOut()}>
+                          Sign Out
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <>
@@ -246,7 +255,7 @@ export function Header() {
                         <DialogContent className="sm:max-w-[425px]">
                           <div className="space-y-4">
                             <div>
-                              <h2 className="text-2xl font-bold">Welcome back</h2>
+                              <DialogTitle className="text-2xl font-bold">Welcome back</DialogTitle>
                               <p className="text-sm text-gray-500 mt-1">
                                 Sign in to your I Can Swim account
                               </p>

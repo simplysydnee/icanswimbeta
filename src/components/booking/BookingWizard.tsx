@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 import type { Swimmer, AvailableSession, BookingStep, SessionType } from '@/types/booking';
@@ -9,11 +9,10 @@ import { SessionTypeStep } from './steps/SessionTypeStep';
 import InstructorStep from './steps/InstructorStep';
 import { DateSelectStep } from './steps/DateSelectStep';
 import { BookingSummary } from './BookingSummary';
-import { StatusBadge } from './StatusBadge';
+import { AssessmentTab } from '@/components/features/booking/AssessmentTab';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { cn } from '@/lib/utils';
 
 // Props interface
 interface BookingWizardProps {
@@ -21,6 +20,9 @@ interface BookingWizardProps {
 }
 
 export function BookingWizard({}: BookingWizardProps) {
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
   // Step management
   const [currentStep, setCurrentStep] = useState<BookingStep>('select-swimmer');
 
@@ -165,10 +167,25 @@ export function BookingWizard({}: BookingWizardProps) {
       }
 
       let response: Response;
-      let result: any;
 
-      if (sessionType === 'single' || currentStep === 'assessment') {
-        // Single booking or assessment
+      if (currentStep === 'assessment') {
+        // Assessment booking - should use assessment API
+        // Note: This shouldn't be called since AssessmentTab handles booking
+        // But keeping it as fallback
+        if (!selectedSessionId) {
+          throw new Error('No session selected');
+        }
+
+        response = await fetch('/api/bookings/assessment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: selectedSessionId,
+            swimmerId: selectedSwimmer.id,
+          }),
+        });
+      } else if (sessionType === 'single') {
+        // Single lesson booking
         if (!selectedSessionId) {
           throw new Error('No session selected');
         }
@@ -199,16 +216,19 @@ export function BookingWizard({}: BookingWizardProps) {
         });
       }
 
-      result = await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to create booking');
       }
 
       // Success! Show confirmation
-      const sessionsBooked = sessionType === 'single' ? 1 : selectedRecurringSessions.length;
-
-      alert(`Success! Booked ${sessionsBooked} session${sessionsBooked > 1 ? 's' : ''} for ${selectedSwimmer.firstName}`);
+      if (currentStep === 'assessment') {
+        alert(`Success! Assessment booked for ${selectedSwimmer.firstName}. Check your email for confirmation.`);
+      } else {
+        const sessionsBooked = sessionType === 'single' ? 1 : selectedRecurringSessions.length;
+        alert(`Success! Booked ${sessionsBooked} session${sessionsBooked > 1 ? 's' : ''} for ${selectedSwimmer.firstName}`);
+      }
 
       // Reset wizard for new booking
       resetWizard();
@@ -257,7 +277,9 @@ export function BookingWizard({}: BookingWizardProps) {
         return (
           <SessionTypeStep
             selectedType={sessionType}
-            isVmrcClient={selectedSwimmer?.isVmrcClient || false}
+            hasFundingSource={selectedSwimmer?.fundingSourceId ? true : false}
+            fundingSourceName={selectedSwimmer?.fundingSourceName}
+            isFlexibleSwimmer={selectedSwimmer?.flexibleSwimmer || false}
             onSelectType={(type) => {
               setSessionType(type);
               setTimeout(() => handleNext(), 150);
@@ -294,6 +316,7 @@ export function BookingWizard({}: BookingWizardProps) {
             recurringStartDate={recurringStartDate}
             recurringEndDate={recurringEndDate}
             selectedRecurringSessions={selectedRecurringSessions.map(s => s.id)}
+            swimmerId={selectedSwimmer?.id || null} // Pass swimmerId for flexible_swimmer check
             onSelectSession={(sessionId) => {
               setSelectedSessionId(sessionId);
               // TODO: Also set selectedSession with full object
@@ -343,145 +366,250 @@ export function BookingWizard({}: BookingWizardProps) {
         );
 
       case 'assessment':
-        // TODO: Create AssessmentStep component
         return (
-          <div className="text-center py-8 text-muted-foreground">
-            Assessment booking step - to be implemented
-          </div>
+          <AssessmentTab
+            selectedSwimmerId={selectedSwimmer?.id}
+            onBookingComplete={() => {
+              // After assessment is booked, move to confirmation
+              setTimeout(() => handleNext(), 150);
+            }}
+          />
         );
 
       case 'confirm':
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 text-green-600">
-              <CheckCircle2 className="h-6 w-6" />
-              <div>
-                <p className="font-semibold">Ready to Book</p>
-                <p className="text-sm text-muted-foreground">Review your booking details</p>
+        const isAssessment = selectedSwimmer?.enrollmentStatus === 'waitlist';
+
+        if (isAssessment) {
+          // Assessment already booked, show confirmation
+          return (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 text-green-600">
+                <CheckCircle2 className="h-6 w-6" />
+                <div>
+                  <p className="font-semibold">Assessment Booked Successfully! 🎉</p>
+                  <p className="text-sm text-muted-foreground">
+                    Your assessment has been scheduled. Check your email for confirmation.
+                  </p>
+                </div>
+              </div>
+
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <p className="font-medium mb-1">What happens next:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>You'll receive a confirmation email with assessment details</li>
+                    <li>Our team will review and approve the assessment</li>
+                    <li>Once approved, you can book regular lessons</li>
+                    <li>For regional center clients: Coordinator approval is required</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-900 mb-2">Assessment Details</h3>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• 45-minute one-on-one evaluation</li>
+                  <li>• Assessment of current swimming abilities</li>
+                  <li>• Personalized lesson plan recommendation</li>
+                  <li>• Required before starting regular swim lessons</li>
+                </ul>
               </div>
             </div>
+          );
+        } else {
+          // Regular booking confirmation
+          return (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 text-green-600">
+                <CheckCircle2 className="h-6 w-6" />
+                <div>
+                  <p className="font-semibold">Ready to Book</p>
+                  <p className="text-sm text-muted-foreground">Review your booking details</p>
+                </div>
+              </div>
 
-            {/* Show mobile summary on confirm step */}
-            <div className="lg:hidden">
-              <BookingSummary
-                swimmer={selectedSwimmer}
-                sessionType={sessionType}
-                instructorName={instructorName}
-                instructorPreference={instructorPreference}
-                selectedSession={selectedSession}
-                selectedRecurringSessions={selectedRecurringSessions}
-                recurringDay={recurringDay}
-                recurringTime={recurringTime}
-                recurringStartDate={recurringStartDate}
-                recurringEndDate={recurringEndDate}
-              />
+              {/* Show mobile summary on confirm step */}
+              <div className="lg:hidden">
+                <BookingSummary
+                  swimmer={selectedSwimmer}
+                  sessionType={sessionType}
+                  instructorName={instructorName}
+                  instructorPreference={instructorPreference}
+                  selectedSession={selectedSession}
+                  selectedRecurringSessions={selectedRecurringSessions}
+                  recurringDay={recurringDay}
+                  recurringTime={recurringTime}
+                  recurringStartDate={recurringStartDate}
+                  recurringEndDate={recurringEndDate}
+                />
+              </div>
+
+              {/* Cancellation policy notice */}
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  By confirming, you agree to the 24-hour cancellation policy.
+                  Late cancellations may affect your booking privileges.
+                </AlertDescription>
+              </Alert>
             </div>
-
-            {/* Cancellation policy notice */}
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                By confirming, you agree to the 24-hour cancellation policy.
-                Late cancellations may affect your booking privileges.
-              </AlertDescription>
-            </Alert>
-          </div>
-        );
+          );
+        }
 
       default:
         return null;
     }
   };
 
-  return (
-    <div className="flex flex-col lg:flex-row gap-6">
-      {/* Main wizard card */}
-      <Card className="flex-1">
-        <CardHeader>
-          {/* Progress bar */}
-          <div className="space-y-2 mb-4">
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>Step {getStepNumber(currentStep)} of {getTotalSteps()}</span>
-              <span>{Math.round(getProgress())}% complete</span>
-            </div>
-            {/* Simple progress bar since Progress component doesn't exist */}
-            <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary transition-all duration-300"
-                style={{ width: `${getProgress()}%` }}
-              />
-            </div>
-          </div>
+  // Add error boundary effect
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('BookingWizard caught error:', event.error);
+      setHasError(true);
+      setErrorMessage(event.error?.message || 'Unknown error');
+    };
 
-          {/* Step title */}
-          <CardTitle>{getStepInfo(currentStep).title}</CardTitle>
-          <CardDescription>{getStepInfo(currentStep).description}</CardDescription>
-        </CardHeader>
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
 
-        <CardContent>
-          {/* Error alert */}
-          {error && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Step content */}
-          <div key={currentStep} className="transition-opacity duration-200">
-            {renderStep()}
-          </div>
-
-          {/* Navigation buttons */}
-          <div className="flex justify-between mt-8 pt-6 border-t">
-            <Button
-              variant="outline"
-              onClick={handleBack}
-              disabled={currentStep === 'select-swimmer' || isSubmitting}
-            >
-              <ChevronLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-
-            {currentStep === 'confirm' ? (
-              <Button onClick={handleSubmit} disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Booking...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Confirm Booking
-                  </>
-                )}
-              </Button>
-            ) : (
-              <Button onClick={handleNext} disabled={!canProceed}>
-                Continue
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Summary sidebar - hidden on mobile */}
-      <div className="hidden lg:block lg:w-80">
-        <BookingSummary
-          swimmer={selectedSwimmer}
-          sessionType={sessionType}
-          instructorName={instructorName}
-          instructorPreference={instructorPreference}
-          selectedSession={selectedSession}
-          selectedRecurringSessions={selectedRecurringSessions}
-          recurringDay={recurringDay}
-          recurringTime={recurringTime}
-          recurringStartDate={recurringStartDate}
-          recurringEndDate={recurringEndDate}
-        />
+  if (hasError) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 border border-destructive rounded-lg bg-destructive/10">
+        <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-bold text-destructive mb-2">Error Loading Booking Wizard</h2>
+        <p className="text-muted-foreground mb-4">{errorMessage}</p>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setHasError(false);
+            setErrorMessage('');
+            window.location.reload();
+          }}
+        >
+          Try Again
+        </Button>
       </div>
-    </div>
-  );
+    );
+  }
+
+  try {
+    return (
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Main wizard card */}
+        <Card className="flex-1">
+          <CardHeader>
+            {/* Progress bar */}
+            <div className="space-y-2 mb-4">
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Step {getStepNumber(currentStep)} of {getTotalSteps()}</span>
+                <span>{Math.round(getProgress())}% complete</span>
+              </div>
+              {/* Simple progress bar since Progress component doesn't exist */}
+              <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all duration-300"
+                  style={{ width: `${getProgress()}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Step title */}
+            <CardTitle>{getStepInfo(currentStep).title}</CardTitle>
+            <CardDescription>{getStepInfo(currentStep).description}</CardDescription>
+          </CardHeader>
+
+          <CardContent>
+            {/* Error alert */}
+            {error && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Step content */}
+            <div key={currentStep} className="transition-opacity duration-200">
+              {renderStep()}
+            </div>
+
+            {/* Navigation buttons */}
+            <div className="flex justify-between mt-8 pt-6 border-t">
+              <Button
+                variant="outline"
+                onClick={handleBack}
+                disabled={currentStep === 'select-swimmer' || isSubmitting}
+              >
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+
+              {currentStep === 'confirm' ? (
+                selectedSwimmer?.enrollmentStatus === 'waitlist' ? (
+                  // For assessments, show "Done" button instead of submit
+                  <Button onClick={() => resetWizard()}>
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Done
+                  </Button>
+                ) : (
+                  <Button onClick={handleSubmit} disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Booking...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Confirm Booking
+                      </>
+                    )}
+                  </Button>
+                )
+              ) : (
+                <Button onClick={handleNext} disabled={!canProceed}>
+                  Continue
+                  <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Summary sidebar - hidden on mobile */}
+        <div className="hidden lg:block lg:w-80">
+          <BookingSummary
+            swimmer={selectedSwimmer}
+            sessionType={sessionType}
+            instructorName={instructorName}
+            instructorPreference={instructorPreference}
+            selectedSession={selectedSession}
+            selectedRecurringSessions={selectedRecurringSessions}
+            recurringDay={recurringDay}
+            recurringTime={recurringTime}
+            recurringStartDate={recurringStartDate}
+            recurringEndDate={recurringEndDate}
+          />
+        </div>
+      </div>
+    );
+  } catch (err) {
+    console.error('BookingWizard render error:', err);
+    setHasError(true);
+    setErrorMessage(err instanceof Error ? err.message : 'Render error');
+    return (
+      <div className="flex flex-col items-center justify-center p-8 border border-destructive rounded-lg bg-destructive/10">
+        <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-bold text-destructive mb-2">Error Loading Booking Wizard</h2>
+        <p className="text-muted-foreground mb-4">{errorMessage}</p>
+        <Button
+          variant="outline"
+          onClick={() => window.location.reload()}
+        >
+          Reload Page
+        </Button>
+      </div>
+    );
+  }
 }

@@ -14,8 +14,11 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { Loader2 } from 'lucide-react';
 import { SWIM_GOALS, AVAILABILITY_SLOTS, DIAGNOSIS_OPTIONS } from '@/lib/constants';
+import { LiabilityWaiverModal, CancellationPolicyModal } from '@/components/enrollment';
+import { getAllFundingSources } from '@/lib/funding-utils';
 
 // Form validation schema
 const privateEnrollmentSchema = z.object({
@@ -52,7 +55,8 @@ const privateEnrollmentSchema = z.object({
   elopement_history: z.enum(['yes', 'no']),
   elopement_description: z.string().optional(),
   has_behavior_plan: z.enum(['yes', 'no']),
-  behavior_plan_description: z.string().optional(),
+  // Note: behavior_plan_description field doesn't exist in database
+  // behavior_plan_description: z.string().optional(),
 
   // Section 5: Swimming Background
   previous_swim_lessons: z.enum(['yes', 'no']),
@@ -61,7 +65,6 @@ const privateEnrollmentSchema = z.object({
   swim_goals: z.array(z.string()).min(1, 'At least one swim goal is required'),
 
   // Section 6: Scheduling & Availability
-  preferred_location: z.enum(['turlock', 'modesto', 'either']),
   availability_slots: z.array(z.string()).min(1, 'At least one availability slot is required'),
   other_availability: z.string().optional(),
   flexible_swimmer: z.boolean(),
@@ -70,14 +73,40 @@ const privateEnrollmentSchema = z.object({
   signed_waiver: z.boolean().refine(val => val === true, {
     message: 'You must agree to the liability waiver',
   }),
+  liability_waiver_signature: z.string().optional(),
   photo_release: z.boolean(),
   cancellation_policy_agreement: z.boolean().refine(val => val === true, {
     message: 'You must agree to the cancellation policy',
   }),
+  cancellation_policy_signature: z.string().optional(),
   emergency_contact_name: z.string().min(1, 'Emergency contact name is required'),
   emergency_contact_phone: z.string().min(10, 'Emergency contact phone is required'),
   emergency_contact_relationship: z.string().min(1, 'Relationship is required'),
-});
+}).refine(
+  (data) => {
+    // Signature required only when waiver is signed
+    if (data.signed_waiver && (!data.liability_waiver_signature || data.liability_waiver_signature.trim() === '')) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: 'Liability waiver signature is required when agreeing to the waiver',
+    path: ['liability_waiver_signature'],
+  }
+).refine(
+  (data) => {
+    // Signature required only when cancellation policy is agreed to
+    if (data.cancellation_policy_agreement && (!data.cancellation_policy_signature || data.cancellation_policy_signature.trim() === '')) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: 'Cancellation policy signature is required when agreeing to the policy',
+    path: ['cancellation_policy_signature'],
+  }
+);
 
 type PrivateEnrollmentFormData = z.infer<typeof privateEnrollmentSchema>;
 
@@ -85,8 +114,41 @@ export default function PrivatePayEnrollmentPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState<{ success: boolean; message: string } | null>(null);
   const [currentSection, setCurrentSection] = useState(1);
+  const [privatePayFundingSourceId, setPrivatePayFundingSourceId] = useState<string | null>(null);
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const [queryParams, setQueryParams] = useState<{ firstName?: string; lastName?: string; dob?: string }>({});
+
+  // Read query parameters on component mount
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const params = {
+      firstName: searchParams.get('firstName') || undefined,
+      lastName: searchParams.get('lastName') || undefined,
+      dob: searchParams.get('dob') || undefined,
+    };
+    setQueryParams(params);
+    console.log('Query parameters:', params);
+  }, []);
+
+  // Load private pay funding source
+  useEffect(() => {
+    const loadPrivatePayFundingSource = async () => {
+      try {
+        const fundingSources = await getAllFundingSources();
+        const privatePaySource = fundingSources.find(source => source.type === 'private_pay');
+        if (privatePaySource) {
+          setPrivatePayFundingSourceId(privatePaySource.id);
+        } else {
+          console.error('Private pay funding source not found');
+        }
+      } catch (error) {
+        console.error('Error loading funding sources:', error);
+      }
+    };
+
+    loadPrivatePayFundingSource();
+  }, []);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -99,11 +161,14 @@ export default function PrivatePayEnrollmentPage() {
     register,
     handleSubmit,
     watch,
-    setValue,
     formState: { errors },
+    reset,
   } = useForm<PrivateEnrollmentFormData>({
-    resolver: zodResolver(privateEnrollmentSchema) as any,
+    resolver: zodResolver(privateEnrollmentSchema),
     defaultValues: {
+      child_first_name: queryParams.firstName || '',
+      child_last_name: queryParams.lastName || '',
+      child_date_of_birth: queryParams.dob || '',
       has_allergies: 'no',
       has_medical_conditions: 'no',
       history_of_seizures: 'no',
@@ -115,13 +180,25 @@ export default function PrivatePayEnrollmentPage() {
       has_behavior_plan: 'no',
       previous_swim_lessons: 'no',
       comfortable_in_water: 'somewhat',
-      preferred_location: 'either',
       flexible_swimmer: false,
       signed_waiver: false,
+      liability_waiver_signature: '',
       photo_release: false,
       cancellation_policy_agreement: false,
+      cancellation_policy_signature: '',
     },
   });
+
+  // Update form values when query params are loaded
+  useEffect(() => {
+    if (queryParams.firstName || queryParams.lastName || queryParams.dob) {
+      reset({
+        child_first_name: queryParams.firstName || '',
+        child_last_name: queryParams.lastName || '',
+        child_date_of_birth: queryParams.dob || '',
+      });
+    }
+  }, [queryParams, reset]);
 
   // Watch values for conditional fields
   const hasAllergies = watch('has_allergies');
@@ -133,6 +210,13 @@ export default function PrivatePayEnrollmentPage() {
   const otherAvailability = watch('availability_slots')?.includes('Other (please specify)');
 
   const onSubmit = async (data: PrivateEnrollmentFormData) => {
+    console.log('=== FORM SUBMISSION DEBUG ===');
+    console.log('signed_waiver:', data.signed_waiver);
+    console.log('liability_waiver_signature:', data.liability_waiver_signature);
+    console.log('cancellation_policy_agreement:', data.cancellation_policy_agreement);
+    console.log('cancellation_policy_signature:', data.cancellation_policy_signature);
+    console.log('Full formData:', data);
+
     if (!user) {
       setSubmitResult({
         success: false,
@@ -145,6 +229,12 @@ export default function PrivatePayEnrollmentPage() {
     setSubmitResult(null);
 
     try {
+      // Generate a unique client number (format: ICS-YYYYMMDD-XXXX)
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0].replace(/-/g, '');
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      const clientNumber = `ICS-${dateStr}-${randomNum}`;
+
       // Prepare swimmer data - mapping form fields to database columns
       const swimmerData = {
         parent_id: user.id,
@@ -152,6 +242,7 @@ export default function PrivatePayEnrollmentPage() {
         last_name: data.child_last_name,
         date_of_birth: data.child_date_of_birth,
         gender: data.child_gender,
+        client_number: clientNumber,
 
         // Medical/Safety
         has_allergies: data.has_allergies === 'yes',
@@ -160,16 +251,16 @@ export default function PrivatePayEnrollmentPage() {
         medical_conditions_description: data.medical_conditions_description,
         diagnosis: data.diagnosis || [],
         history_of_seizures: data.history_of_seizures === 'yes',
-        toilet_trained: data.toilet_trained,
+        toilet_trained: data.toilet_trained === 'sometimes' ? 'in_progress' : data.toilet_trained,
         non_ambulatory: data.non_ambulatory === 'yes',
 
         // Behavioral
         self_injurious_behavior: data.self_injurious_behavior === 'yes',
-        self_injurious_behavior_description: data.self_injurious_description,
+        self_injurious_description: data.self_injurious_description,
         aggressive_behavior: data.aggressive_behavior === 'yes',
         aggressive_behavior_description: data.aggressive_behavior_description,
         elopement_history: data.elopement_history === 'yes',
-        elopement_history_description: data.elopement_description,
+        elopement_description: data.elopement_description,
         has_behavior_plan: data.has_behavior_plan === 'yes',
         // Note: behavior_plan_description field doesn't exist in database
 
@@ -180,41 +271,40 @@ export default function PrivatePayEnrollmentPage() {
         swim_goals: data.swim_goals,
 
         // Scheduling
-        // Note: preferred_location field doesn't exist in database
-        availability: data.availability_slots,
-        // Note: other_availability field doesn't exist in database
+        // Note: availability field doesn't exist in database
         flexible_swimmer: data.flexible_swimmer,
 
         // Payment & Status
         payment_type: 'private_pay',
-        is_vmrc_client: false,
+        funding_source_id: privatePayFundingSourceId,
 
         // Legal - mapping to correct database column names
         signed_waiver: data.signed_waiver,
-        signed_liability: data.signed_waiver, // Map signed_waiver to signed_liability
+        signed_liability: data.signed_waiver, // Map to both fields
         photo_video_permission: data.photo_release,
-        // Note: cancellation_policy_signature field exists but we don't have form field for it
+        liability_waiver_signature: data.liability_waiver_signature,
+        cancellation_policy_signature: data.cancellation_policy_signature,
+        // Note: photo_video_signature field exists but not collected in form
 
         // Status
         enrollment_status: 'pending_enrollment',
         assessment_status: 'not_started',
         approval_status: 'pending',
-
-        // Emergency Contact - these fields don't exist in database
-        // emergency_contact_name: data.emergency_contact_name,
-        // emergency_contact_phone: data.emergency_contact_phone,
-        // emergency_contact_relationship: data.emergency_contact_relationship,
-
-        // Parent Contact Info - these fields don't exist in database
-        // parent_name: data.parent_name,
-        // parent_email: data.parent_email,
-        // parent_phone: data.parent_phone,
-        // parent_address: data.parent_address,
-        // parent_city: data.parent_city,
-        // parent_state: data.parent_state,
-        // parent_zip: data.parent_zip,
       };
 
+      console.log('Swimmer data being submitted:', swimmerData);
+
+      // Update parent profile information
+      const profileData = {
+        full_name: data.parent_name,
+        phone: data.parent_phone,
+        // Note: email is already in auth.users, but we can update it in profiles too
+      };
+
+      console.log('Profile data being submitted:', profileData);
+
+      // Update profile first, then create swimmer
+      await apiClient.updateProfile(user.id, profileData);
       await apiClient.createSwimmer(swimmerData);
 
       setSubmitResult({
@@ -222,7 +312,12 @@ export default function PrivatePayEnrollmentPage() {
         message: 'Enrollment submitted successfully! Our team will review your application and contact you within 2-3 business days.',
       });
     } catch (error) {
-      console.error('Error submitting enrollment:', error);
+      console.error('Error submitting enrollment:', {
+        error,
+        errorString: String(error),
+        errorJSON: JSON.stringify(error, null, 2),
+        user: user?.id
+      });
       setSubmitResult({
         success: false,
         message: 'Failed to submit enrollment. Please try again or contact support.',
@@ -244,11 +339,40 @@ export default function PrivatePayEnrollmentPage() {
     }
   };
 
-  // Show loading while checking auth
+  // Show loading while checking auth, but with a timeout
+  const [showAuthTimeout, setShowAuthTimeout] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (authLoading) {
+        setShowAuthTimeout(true);
+        console.warn('Auth loading is taking too long, showing timeout message');
+      }
+    }, 5000); // 5 second timeout
+
+    return () => clearTimeout(timer);
+  }, [authLoading]);
+
   if (authLoading) {
     return (
-      <div className="container max-w-4xl py-8 flex justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="container max-w-4xl py-8">
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-gray-600">Checking authentication...</p>
+          {showAuthTimeout && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md max-w-md">
+              <p className="text-yellow-800 text-sm">
+                Authentication is taking longer than expected. You may need to refresh the page or check your connection.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-2 text-sm text-yellow-700 underline"
+              >
+                Refresh page
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -274,9 +398,9 @@ export default function PrivatePayEnrollmentPage() {
               <h3 className="font-semibold">What happens next?</h3>
               <ul className="list-disc list-inside space-y-2 text-sm text-gray-600">
                 <li>Our team reviews all applications within 2-3 business days</li>
-                <li>You'll receive an email with next steps</li>
-                <li>Once approved, you'll be invited to schedule an assessment session</li>
-                <li>Assessment sessions are 45 minutes and help determine appropriate swim level</li>
+                <li>You&apos;ll receive an email with next steps</li>
+                <li>Once approved, you&apos;ll be invited to schedule an assessment session</li>
+                <li>Assessment sessions are 30 minutes and help determine appropriate swim level</li>
                 <li>After assessment, you can book regular weekly lessons</li>
               </ul>
               <div className="pt-4">
@@ -555,8 +679,11 @@ export default function PrivatePayEnrollmentPage() {
                     </div>
                   </div>
 
-                  <div>
-                    <Label>History of seizures? *</Label>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1">
+                      History of seizures?
+                      <HelpTooltip content="Has your child ever had a seizure or been diagnosed with epilepsy? This helps our instructors provide appropriate supervision and respond effectively if needed." />
+                    </Label>
                     <div className="flex space-x-4 mt-2">
                       <label className="flex items-center space-x-2">
                         <input type="radio" value="yes" {...register('history_of_seizures')} />
@@ -587,8 +714,11 @@ export default function PrivatePayEnrollmentPage() {
                     </div>
                   </div>
 
-                  <div>
-                    <Label>Is your child non-ambulatory? *</Label>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1">
+                      Is your child non-ambulatory?
+                      <HelpTooltip content="Non-ambulatory means your child cannot walk independently or has limited mobility. This includes children who use wheelchairs, walkers, or need physical assistance to move around." />
+                    </Label>
                     <div className="flex space-x-4 mt-2">
                       <label className="flex items-center space-x-2">
                         <input type="radio" value="yes" {...register('non_ambulatory')} />
@@ -610,8 +740,11 @@ export default function PrivatePayEnrollmentPage() {
                 <h3 className="text-xl font-semibold">4. Behavioral Information</h3>
 
                 <div className="space-y-4">
-                  <div>
-                    <Label>Does your child exhibit self-injurious behavior? *</Label>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1">
+                      Does your child exhibit self-injurious behavior?
+                      <HelpTooltip content="Self-injurious behavior includes head-banging, biting self, scratching, or other behaviors that may cause self-harm. Helps us implement appropriate safety measures and support strategies." />
+                    </Label>
                     <div className="flex space-x-4 mt-2">
                       <label className="flex items-center space-x-2">
                         <input type="radio" value="yes" {...register('self_injurious_behavior')} />
@@ -634,8 +767,11 @@ export default function PrivatePayEnrollmentPage() {
                     )}
                   </div>
 
-                  <div>
-                    <Label>Does your child exhibit aggressive behavior? *</Label>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1">
+                      Does your child exhibit aggressive behavior toward others?
+                      <HelpTooltip content="Aggressive behavior includes hitting, biting, kicking, throwing objects, or other behaviors that may pose risk to others. Helps create a safe environment for all swimmers." />
+                    </Label>
                     <div className="flex space-x-4 mt-2">
                       <label className="flex items-center space-x-2">
                         <input type="radio" value="yes" {...register('aggressive_behavior')} />
@@ -658,8 +794,11 @@ export default function PrivatePayEnrollmentPage() {
                     )}
                   </div>
 
-                  <div>
-                    <Label>Does your child have a history of elopement (wandering/running away)? *</Label>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1">
+                      Does your child have a history of elopement (wandering/running away)?
+                      <HelpTooltip content="Elopement means a tendency to wander or run away, especially in unfamiliar environments or near water. Critical for water safety and helps us implement appropriate supervision strategies." />
+                    </Label>
                     <div className="flex space-x-4 mt-2">
                       <label className="flex items-center space-x-2">
                         <input type="radio" value="yes" {...register('elopement_history')} />
@@ -682,8 +821,11 @@ export default function PrivatePayEnrollmentPage() {
                     )}
                   </div>
 
-                  <div>
-                    <Label>Does your child have a behavior plan? *</Label>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1">
+                      Does your child have a behavior plan?
+                      <HelpTooltip content="A behavior plan is a formal document from professionals (therapists, school teams) outlining strategies to address challenging behaviors. Share relevant info to help us provide consistent support." />
+                    </Label>
                     <div className="flex space-x-4 mt-2">
                       <label className="flex items-center space-x-2">
                         <input type="radio" value="yes" {...register('has_behavior_plan')} />
@@ -694,6 +836,7 @@ export default function PrivatePayEnrollmentPage() {
                         <span>No</span>
                       </label>
                     </div>
+                    {/* Note: behavior_plan_description field doesn't exist in database
                     {hasBehaviorPlan === 'yes' && (
                       <div className="mt-2">
                         <Label htmlFor="behavior_plan_description">Please describe behavior plan</Label>
@@ -703,7 +846,7 @@ export default function PrivatePayEnrollmentPage() {
                           placeholder="Please describe behavior plan..."
                         />
                       </div>
-                    )}
+                    )} */}
                   </div>
                 </div>
               </div>
@@ -788,24 +931,6 @@ export default function PrivatePayEnrollmentPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <Label>Preferred Location *</Label>
-                    <div className="flex space-x-4 mt-2">
-                      <label className="flex items-center space-x-2">
-                        <input type="radio" value="turlock" {...register('preferred_location')} />
-                        <span>Turlock (2705 Sebastian Drive)</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input type="radio" value="modesto" {...register('preferred_location')} />
-                        <span>Modesto (1212 Kansas Ave)</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input type="radio" value="either" {...register('preferred_location')} />
-                        <span>Either location</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div>
                     <Label htmlFor="availability_slots">Availability Slots *</Label>
                     <div className="text-sm text-gray-500 mb-2">
                       Select all that apply
@@ -841,7 +966,7 @@ export default function PrivatePayEnrollmentPage() {
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="flexible_swimmer"
-                      {...register('flexible_swimmer')}
+                      {...register('flexible_swimmer', { value: true })}
                     />
                     <Label htmlFor="flexible_swimmer" className="font-normal">
                       I understand that I may need to be flexible with my schedule to secure a spot
@@ -856,102 +981,152 @@ export default function PrivatePayEnrollmentPage() {
               <div className="space-y-6">
                 <h3 className="text-xl font-semibold">7. Consent & Agreement</h3>
 
-                <div className="space-y-4">
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    <div className="flex items-start space-x-2">
+                {/* Liability Waiver */}
+                <div className="border rounded-lg p-4 bg-gray-50">
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3">
                       <Checkbox
                         id="signed_waiver"
-                        {...register('signed_waiver')}
+                        {...register('signed_waiver', { value: true })}
                       />
-                      <div>
+                      <div className="space-y-1">
                         <Label htmlFor="signed_waiver" className="font-semibold">
                           Liability Waiver Agreement *
                         </Label>
-                        <p className="text-sm text-gray-600 mt-1">
-                          I have read and agree to the liability waiver. I understand the risks associated with swim lessons and release I Can Swim from liability for any injuries that may occur.
+                        <p className="text-sm text-gray-600">
+                          I have read and agree to the{' '}
+                          <LiabilityWaiverModal />
+                          . I understand the risks associated with swim lessons and release I Can Swim from liability.
                         </p>
                         {errors.signed_waiver && (
                           <p className="text-sm text-red-600 mt-1">{errors.signed_waiver.message}</p>
                         )}
                       </div>
                     </div>
-                  </div>
 
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    <div className="flex items-start space-x-2">
-                      <Checkbox
-                        id="photo_release"
-                        {...register('photo_release')}
-                      />
-                      <div>
-                        <Label htmlFor="photo_release" className="font-semibold">
-                          Photo/Video Release (Optional)
+                    {watch('signed_waiver') && (
+                      <div className="ml-6 space-y-2">
+                        <Label htmlFor="liability_waiver_signature">
+                          Parent/Guardian Signature *
                         </Label>
-                        <p className="text-sm text-gray-600 mt-1">
-                          I grant permission for I Can Swim to use photos/videos of my child for promotional materials, website, and social media.
+                        <Input
+                          id="liability_waiver_signature"
+                          {...register('liability_waiver_signature')}
+                          placeholder="Type your full legal name as signature"
+                          className="max-w-md"
+                        />
+                        {errors.liability_waiver_signature && (
+                          <p className="text-sm text-red-600 mt-1">{errors.liability_waiver_signature.message}</p>
+                        )}
+                        <p className="text-xs text-gray-500">
+                          By typing your name, you are electronically signing this waiver.
                         </p>
                       </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Photo/Video Release */}
+                <div className="border rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-start space-x-3">
+                    <Checkbox
+                      id="photo_release"
+                      {...register('photo_release', { value: true })}
+                    />
+                    <div className="space-y-1">
+                      <Label htmlFor="photo_release" className="font-semibold">
+                        Photo/Video Release (Optional)
+                      </Label>
+                      <p className="text-sm text-gray-600">
+                        I grant permission for I Can Swim to use photos/videos of my child for promotional materials, website, and social media.
+                      </p>
                     </div>
                   </div>
+                </div>
 
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    <div className="flex items-start space-x-2">
+                {/* Cancellation Policy */}
+                <div className="border rounded-lg p-4 bg-gray-50">
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3">
                       <Checkbox
                         id="cancellation_policy_agreement"
-                        {...register('cancellation_policy_agreement')}
+                        {...register('cancellation_policy_agreement', { value: true })}
                       />
-                      <div>
+                      <div className="space-y-1">
                         <Label htmlFor="cancellation_policy_agreement" className="font-semibold">
                           Cancellation Policy Agreement *
                         </Label>
-                        <p className="text-sm text-gray-600 mt-1">
-                          I understand and agree to the 24-hour cancellation policy. Cancellations made less than 24 hours before a session may result in a fee or loss of session.
+                        <p className="text-sm text-gray-600">
+                          I have read and agree to the{' '}
+                          <CancellationPolicyModal />
+                          . I understand that cancellations made less than 24 hours before a session may result in Flexible Swimmer status.
                         </p>
                         {errors.cancellation_policy_agreement && (
                           <p className="text-sm text-red-600 mt-1">{errors.cancellation_policy_agreement.message}</p>
                         )}
                       </div>
                     </div>
+
+                    {watch('cancellation_policy_agreement') && (
+                      <div className="ml-6 space-y-2">
+                        <Label htmlFor="cancellation_policy_signature">
+                          Parent/Guardian Signature *
+                        </Label>
+                        <Input
+                          id="cancellation_policy_signature"
+                          {...register('cancellation_policy_signature')}
+                          placeholder="Type your full legal name as signature"
+                          className="max-w-md"
+                        />
+                        {errors.cancellation_policy_signature && (
+                          <p className="text-sm text-red-600 mt-1">{errors.cancellation_policy_signature.message}</p>
+                        )}
+                        <p className="text-xs text-gray-500">
+                          By typing your name, you are electronically signing this agreement.
+                        </p>
+                      </div>
+                    )}
                   </div>
+                </div>
 
-                  <div className="space-y-4">
-                    <h4 className="font-semibold">Emergency Contact Information</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="emergency_contact_name">Emergency Contact Name *</Label>
-                        <Input
-                          id="emergency_contact_name"
-                          {...register('emergency_contact_name')}
-                          placeholder="Full name"
-                        />
-                        {errors.emergency_contact_name && (
-                          <p className="text-sm text-red-600 mt-1">{errors.emergency_contact_name.message}</p>
-                        )}
-                      </div>
+                {/* Emergency Contact */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold">Emergency Contact Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="emergency_contact_name">Emergency Contact Name *</Label>
+                      <Input
+                        id="emergency_contact_name"
+                        {...register('emergency_contact_name')}
+                        placeholder="Full name"
+                      />
+                      {errors.emergency_contact_name && (
+                        <p className="text-sm text-red-600 mt-1">{errors.emergency_contact_name.message}</p>
+                      )}
+                    </div>
 
-                      <div>
-                        <Label htmlFor="emergency_contact_phone">Emergency Contact Phone *</Label>
-                        <Input
-                          id="emergency_contact_phone"
-                          {...register('emergency_contact_phone')}
-                          placeholder="(209) 555-1234"
-                        />
-                        {errors.emergency_contact_phone && (
-                          <p className="text-sm text-red-600 mt-1">{errors.emergency_contact_phone.message}</p>
-                        )}
-                      </div>
+                    <div>
+                      <Label htmlFor="emergency_contact_phone">Emergency Contact Phone *</Label>
+                      <Input
+                        id="emergency_contact_phone"
+                        {...register('emergency_contact_phone')}
+                        placeholder="(209) 555-1234"
+                      />
+                      {errors.emergency_contact_phone && (
+                        <p className="text-sm text-red-600 mt-1">{errors.emergency_contact_phone.message}</p>
+                      )}
+                    </div>
 
-                      <div className="md:col-span-2">
-                        <Label htmlFor="emergency_contact_relationship">Relationship to Child *</Label>
-                        <Input
-                          id="emergency_contact_relationship"
-                          {...register('emergency_contact_relationship')}
-                          placeholder="e.g., Mother, Father, Grandparent, etc."
-                        />
-                        {errors.emergency_contact_relationship && (
-                          <p className="text-sm text-red-600 mt-1">{errors.emergency_contact_relationship.message}</p>
-                        )}
-                      </div>
+                    <div className="md:col-span-2">
+                      <Label htmlFor="emergency_contact_relationship">Relationship to Child *</Label>
+                      <Input
+                        id="emergency_contact_relationship"
+                        {...register('emergency_contact_relationship')}
+                        placeholder="e.g., Mother, Father, Grandparent, etc."
+                      />
+                      {errors.emergency_contact_relationship && (
+                        <p className="text-sm text-red-600 mt-1">{errors.emergency_contact_relationship.message}</p>
+                      )}
                     </div>
                   </div>
                 </div>

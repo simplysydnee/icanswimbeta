@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import { Loader2, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ResetPasswordForm() {
@@ -22,6 +22,8 @@ export default function ResetPasswordForm() {
   const [formError, setFormError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [validToken, setValidToken] = useState<boolean | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   useEffect(() => {
     const checkAuthState = async () => {
@@ -187,30 +189,62 @@ export default function ResetPasswordForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="password">New Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="At least 8 characters"
-              value={formData.password}
-              onChange={handleChange}
-              disabled={loading}
-              required
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="At least 8 characters"
+                value={formData.password}
+                onChange={handleChange}
+                disabled={loading}
+                required
+                className="pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm New Password</Label>
-            <Input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              placeholder="Confirm your new password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              disabled={loading}
-              required
-            />
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm your new password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                disabled={loading}
+                required
+                className="pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                disabled={loading}
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
           
           {(error || formError) && (

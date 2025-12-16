@@ -1,0 +1,68 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "I Can Swim" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - heading "I Can Swim" [level=1] [ref=e7] [cursor=pointer]
+          - img [ref=e9] [cursor=pointer]
+        - generic [ref=e11]:
+          - button "Login" [ref=e12]
+          - link "Get Started" [ref=e13] [cursor=pointer]:
+            - /url: /signup
+    - main [ref=e14]
+    - contentinfo [ref=e17]:
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - generic [ref=e20]:
+            - img "I Can Swim" [ref=e22]
+            - paragraph [ref=e23]: Building confidence, safety, and joy in the water through personalized, adaptive instruction tailored to each swimmer's unique needs. Serving Central Valley families since 2015.
+            - generic [ref=e24]:
+              - generic [ref=e25]:
+                - img [ref=e26]
+                - generic [ref=e28]: (209) 778-7877
+              - generic [ref=e29]:
+                - img [ref=e30]
+                - generic [ref=e33]: info@icanswim209.com
+              - generic [ref=e34]:
+                - link [ref=e35] [cursor=pointer]:
+                  - /url: https://facebook.com/icanswim209
+                  - img [ref=e36] [cursor=pointer]
+                - link [ref=e38] [cursor=pointer]:
+                  - /url: https://instagram.com/icanswim209
+                  - img [ref=e39] [cursor=pointer]
+          - generic [ref=e42]:
+            - heading "Our Location" [level=3] [ref=e43]
+            - list [ref=e44]:
+              - listitem [ref=e45]:
+                - generic [ref=e46]:
+                  - img [ref=e47]
+                  - generic [ref=e50]:
+                    - strong [ref=e51]: Modesto
+                    - text: 1212 Kansas Ave
+                    - text: Modesto, CA 95351
+          - generic [ref=e52]:
+            - heading "Quick Links" [level=3] [ref=e53]
+            - list [ref=e54]:
+              - listitem [ref=e55]:
+                - link "Book Assessment" [ref=e56] [cursor=pointer]:
+                  - /url: /signup
+              - listitem [ref=e57]:
+                - link "Parent Dashboard" [ref=e58] [cursor=pointer]:
+                  - /url: /login
+              - listitem [ref=e59]:
+                - link "About Our Program" [ref=e60] [cursor=pointer]:
+                  - /url: /about
+              - listitem [ref=e61]:
+                - link "Contact Us" [ref=e62] [cursor=pointer]:
+                  - /url: /contact
+        - generic [ref=e63]:
+          - paragraph [ref=e64]: © 2024 I Can Swim, LLC. All rights reserved.
+          - paragraph [ref=e65]: Adaptive Swim Lessons for Every Child
+  - alert [ref=e66]
+  - button "Open Next.js Dev Tools" [ref=e72] [cursor=pointer]:
+    - img [ref=e73] [cursor=pointer]
+```

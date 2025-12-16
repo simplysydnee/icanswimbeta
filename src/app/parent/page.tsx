@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SwimmerCard } from '@/components/parent/swimmer-card'
 import { UpcomingSessions } from '@/components/parent/upcoming-sessions'
+import { PendingEnrollmentAlert } from '@/components/dashboard/PendingEnrollmentAlert'
 import Link from 'next/link'
 import { Plus, Calendar, Users } from 'lucide-react'
 
@@ -66,32 +67,44 @@ export default function ParentDashboard() {
           .eq('parent_id', user.id)
           .order('first_name')
 
-        if (swimmersError) throw swimmersError
+        if (swimmersError) {
+          console.error('Error fetching swimmers:', swimmersError)
+          // Continue with empty swimmers array
+        } else {
+          setSwimmers(swimmersData || [])
+        }
 
         // Fetch upcoming bookings
-        const { data: bookingsData, error: bookingsError } = await supabase
-          .from('bookings')
-          .select(`
-            id,
-            session:sessions(
+        try {
+          const { data: bookingsData, error: bookingsError } = await supabase
+            .from('bookings')
+            .select(`
               id,
-              start_time,
-              end_time,
-              location,
-              instructor:profiles(full_name)
-            ),
-            swimmer:swimmers(first_name, last_name)
-          `)
-          .eq('parent_id', user.id)
-          .eq('status', 'confirmed')
-          .gte('sessions.start_time', new Date().toISOString())
-          .order('sessions.start_time', { ascending: true })
-          .limit(5)
+              session:sessions(
+                id,
+                start_time,
+                end_time,
+                location,
+                instructor:profiles(full_name)
+              ),
+              swimmer:swimmers(first_name, last_name)
+            `)
+            .eq('parent_id', user.id)
+            .eq('status', 'confirmed')
+            .gte('sessions.start_time', new Date().toISOString())
+            .order('sessions.start_time', { ascending: true })
+            .limit(5)
 
-        if (bookingsError) throw bookingsError
-
-        setSwimmers(swimmersData || [])
-        setBookings(bookingsData || [])
+          if (bookingsError) {
+            console.error('Error fetching bookings:', bookingsError)
+            // Continue with empty bookings array
+          } else {
+            setBookings(bookingsData || [])
+          }
+        } catch (error) {
+          console.error('Error in bookings fetch:', error)
+          // Continue with empty bookings array
+        }
       } catch (error) {
         console.error('Error fetching data:', error)
       } finally {
@@ -135,7 +148,7 @@ export default function ParentDashboard() {
         </div>
         <div className="flex gap-2">
           <Button asChild>
-            <Link href="/parent/swimmers/new">
+            <Link href="/enroll/private">
               <Plus className="h-4 w-4 mr-2" />
               Add Swimmer
             </Link>
@@ -149,8 +162,11 @@ export default function ParentDashboard() {
         </div>
       </div>
 
+      {/* Pending enrollment alert */}
+      <PendingEnrollmentAlert />
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Swimmers</CardTitle>
@@ -191,6 +207,21 @@ export default function ParentDashboard() {
             </p>
           </CardContent>
         </Card>
+
+        <Link href="/parent/sessions">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Manage Sessions</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">View All</div>
+              <p className="text-xs text-muted-foreground">
+                Cancel or reschedule
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -215,7 +246,7 @@ export default function ParentDashboard() {
                     Add your first swimmer to get started with lessons
                   </p>
                   <Button asChild>
-                    <Link href="/parent/swimmers/new">
+                    <Link href="/enroll/private">
                       <Plus className="h-4 w-4 mr-2" />
                       Add First Swimmer
                     </Link>
