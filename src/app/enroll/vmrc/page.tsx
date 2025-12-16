@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Edit, User, Mail, Phone } from 'lucide-react';
+import { Loader2, Edit, User, Mail } from 'lucide-react';
 
 // Form validation schema
 const parentReferralSchema = z.object({
@@ -27,7 +27,7 @@ const parentReferralSchema = z.object({
 
 type ParentReferralFormData = z.infer<typeof parentReferralSchema>;
 
-export default function ParentVMRCReferralPage() {
+function ParentVMRCReferralContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading, profile } = useAuth();
@@ -357,5 +357,17 @@ export default function ParentVMRCReferralPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function ParentVMRCReferralPage() {
+  return (
+    <Suspense fallback={
+      <div className="container max-w-2xl py-8 flex justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    }>
+      <ParentVMRCReferralContent />
+    </Suspense>
   );
 }

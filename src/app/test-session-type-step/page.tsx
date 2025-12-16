@@ -57,6 +57,33 @@ export default function TestSessionTypeStepPage() {
               </div>
 
               <div className="space-y-2">
+                <label className="text-sm font-medium">Funding Source Name</label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFundingSourceName('VMRC')}
+                    className={`px-3 py-1.5 text-sm rounded-md ${fundingSourceName === 'VMRC' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                  >
+                    VMRC
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFundingSourceName('Regional Center')}
+                    className={`px-3 py-1.5 text-sm rounded-md ${fundingSourceName === 'Regional Center' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                  >
+                    Regional Center
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFundingSourceName('Insurance')}
+                    className={`px-3 py-1.5 text-sm rounded-md ${fundingSourceName === 'Insurance' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                  >
+                    Insurance
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
                 <label className="text-sm font-medium">Selected Type</label>
                 <div className="p-3 rounded-md bg-muted">
                   <code className="text-sm">
