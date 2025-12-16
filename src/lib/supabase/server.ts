@@ -3,55 +3,17 @@ import { cookies } from 'next/headers'
 
 export const createClient = async () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // Return null during build if env vars not available
   if (!supabaseUrl || !supabaseKey) {
-    console.warn('Supabase env vars not available during build')
-    // Return a more complete mock client that won't crash during build
-    return {
-      auth: {
-        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
-        getSession: () => Promise.resolve({ data: { session: null }, error: null }),
-        signIn: () => Promise.resolve({ data: { user: null, session: null }, error: null }),
-        signUp: () => Promise.resolve({ data: { user: null, session: null }, error: null }),
-        signOut: () => Promise.resolve({ error: null }),
-        signInWithOAuth: () => Promise.resolve({ data: { provider: 'google', url: '' }, error: null }),
-        resetPasswordForEmail: () => Promise.resolve({ data: {}, error: null }),
-        updateUser: () => Promise.resolve({ data: { user: null }, error: null }),
-        onAuthStateChange: () => ({
-          data: {
-            subscription: {
-              unsubscribe: () => {}
-            }
-          }
-        }),
-      },
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            single: () => Promise.resolve({ data: null, error: null }),
-            maybeSingle: () => Promise.resolve({ data: null, error: null }),
-          }),
-          maybeSingle: () => Promise.resolve({ data: null, error: null }),
-        }),
-        insert: () => ({
-          select: () => ({
-            single: () => Promise.resolve({ data: null, error: null }),
-          }),
-        }),
-        update: () => ({
-          eq: () => ({
-            select: () => ({
-              single: () => Promise.resolve({ data: null, error: null }),
-            }),
-          }),
-        }),
-        delete: () => ({
-          eq: () => Promise.resolve({ data: null, error: null }),
-        }),
-      }),
-    } as any
+    // Log for debugging
+    console.error('Supabase env vars missing in server:', {
+      url: !!supabaseUrl,
+      key: !!supabaseKey
+    })
+
+    // Throw error so we know something is wrong
+    throw new Error('Supabase environment variables are not configured. Please check your .env.local file.')
   }
 
   const cookieStore = await cookies()
