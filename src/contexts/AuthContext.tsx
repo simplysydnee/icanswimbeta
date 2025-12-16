@@ -337,17 +337,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true)
       setError(null)
 
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Attempting login for:', email)
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) throw error
+      console.log('Login response:', { data, error })
 
+      if (error) {
+        console.error('Login error:', error)
+        throw error
+      }
+
+      console.log('Login successful, redirecting...')
       // Redirect to specified path or default to dashboard
       const redirectPath = redirectTo || '/dashboard'
       router.push(redirectPath)
     } catch (err) {
+      console.error('Login catch error:', err)
       setError(err instanceof Error ? err.message : 'Login failed')
       throw err
     } finally {
