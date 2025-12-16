@@ -3,11 +3,12 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: any
 ) {
+  const { params } = await context.params
+  const bookingId = params.id
   try {
     const supabase = await createClient()
-    const bookingId = params.id
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {

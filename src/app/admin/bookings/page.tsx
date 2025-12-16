@@ -174,7 +174,7 @@ export default function AdminBookingsPage() {
   useEffect(() => {
     fetchBookings()
     fetchFundingSources()
-  }, [statusFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [statusFilter])
 
   const filteredBookings = bookings.filter(booking => {
     if (!searchTerm) return true

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks } from 'date-fns';
-import { Calendar, ChevronLeft, ChevronRight, Loader2, AlertCircle, Filter } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Loader2, AlertCircle, Filter, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
