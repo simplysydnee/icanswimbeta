@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { RoleGuard } from '@/components/auth/RoleGuard'
@@ -144,7 +144,7 @@ const getStatusBadge = (status: string, parentCompletedAt: string | null) => {
   return <Badge variant="outline">{status}</Badge>
 }
 
-export default function AdminReferralsPage() {
+function AdminReferralsContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [referrals, setReferrals] = useState<Referral[]>([])
@@ -1111,5 +1111,17 @@ export default function AdminReferralsPage() {
         </Dialog>
       </div>
     </RoleGuard>
+  )
+}
+
+export default function AdminReferralsPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-8 flex justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    }>
+      <AdminReferralsContent />
+    </Suspense>
   )
 }
