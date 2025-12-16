@@ -2,15 +2,17 @@ import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
-// Admin client with service role key for privileged operations
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SECRET_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-)
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
+    // Admin client with service role key for privileged operations
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SECRET_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
     // 1. Verify requesting user is admin (using server client with cookies)
     const supabase = await createServerClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -41,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     // 3. Check if user already exists
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
-    const userExists = existingUsers?.users?.some((u: any) => u.email === email)
+    const userExists = existingUsers?.users?.some((u) => u.email === email)
 
     if (userExists) {
       return NextResponse.json({ error: 'User with this email already exists' }, { status: 400 })
