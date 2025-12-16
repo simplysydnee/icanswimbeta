@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ProgressNoteForm } from '@/components/instructor/ProgressNoteForm';
 
-export default function SessionProgressPage() {
+function SessionProgressContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const sessionId = params.sessionId as string;
@@ -189,5 +189,17 @@ export default function SessionProgressPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function SessionProgressPage() {
+  return (
+    <Suspense fallback={
+      <div className="container max-w-4xl py-8 px-4 flex justify-center items-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    }>
+      <SessionProgressContent />
+    </Suspense>
   );
 }
