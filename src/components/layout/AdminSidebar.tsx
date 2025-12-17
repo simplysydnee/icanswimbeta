@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -12,13 +12,13 @@ import {
   ClipboardList,
   Settings,
   ChevronLeft,
-  ChevronRight,
   LayoutDashboard,
   CalendarPlus,
   UserCog,
   Building2,
   CreditCard,
-  CheckCircle
+  CheckCircle,
+  Menu
 } from 'lucide-react';
 
 const navItems = [
@@ -36,8 +36,17 @@ const navItems = [
 ];
 
 export function AdminSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+  // Collapsed by default
+  const [collapsed, setCollapsed] = useState(true);
   const pathname = usePathname();
+
+  // Update CSS variable for main content margin
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--sidebar-width',
+      collapsed ? '4rem' : '14rem'
+    );
+  }, [collapsed]);
 
   return (
     <aside
@@ -46,17 +55,38 @@ export function AdminSidebar() {
         collapsed ? "w-16" : "w-56"
       )}
     >
-      {/* Logo */}
+      {/* Header */}
       <div className={cn(
-        "flex items-center h-16 px-4 border-b",
-        collapsed ? "justify-center" : ""
+        "flex items-center h-16 px-3 border-b",
+        collapsed ? "justify-center" : "justify-between"
       )}>
-        <Link href="/admin" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full bg-cyan-600 flex items-center justify-center flex-shrink-0">
-            <span className="text-white font-bold text-sm">ICS</span>
-          </div>
-          {!collapsed && <span className="font-semibold text-cyan-700">I Can Swim</span>}
-        </Link>
+        {collapsed ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCollapsed(false)}
+            className="h-10 w-10"
+          >
+            <Menu className="h-5 w-5 text-cyan-600" />
+          </Button>
+        ) : (
+          <>
+            <Link href="/admin" className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-cyan-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-sm">ICS</span>
+              </div>
+              <span className="font-semibold text-cyan-700">I Can Swim</span>
+            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCollapsed(true)}
+              className="h-8 w-8"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          </>
+        )}
       </div>
 
       {/* Navigation */}
@@ -84,25 +114,6 @@ export function AdminSidebar() {
           );
         })}
       </nav>
-
-      {/* Collapse Toggle */}
-      <div className="absolute bottom-4 left-0 right-0 px-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setCollapsed(!collapsed)}
-          className={cn("w-full flex items-center gap-2", collapsed && "justify-center")}
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <>
-              <ChevronLeft className="h-4 w-4" />
-              <span className="text-sm">Collapse</span>
-            </>
-          )}
-        </Button>
-      </div>
     </aside>
   );
 }
