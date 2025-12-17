@@ -61,6 +61,8 @@ export default function UsersPage() {
     const supabase = createClient();
 
     try {
+      console.log('Starting fetchUsers...');
+
       // Fetch profiles with roles from user_roles table
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
@@ -74,35 +76,68 @@ export default function UsersPage() {
         `)
         .order('created_at', { ascending: false });
 
-      if (profilesError) throw profilesError;
+      console.log('Profiles fetch result:', {
+        dataCount: profilesData?.length || 0,
+        error: profilesError,
+        sampleData: profilesData?.slice(0, 2)
+      });
+
+      if (profilesError) {
+        console.error('Profiles fetch error:', profilesError);
+        throw profilesError;
+      }
 
       // Fetch roles separately
       const { data: rolesData, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role');
 
-      if (rolesError) throw rolesError;
+      console.log('Roles fetch result:', {
+        dataCount: rolesData?.length || 0,
+        error: rolesError,
+        sampleData: rolesData?.slice(0, 5)
+      });
+
+      if (rolesError) {
+        console.error('Roles fetch error:', rolesError);
+        throw rolesError;
+      }
 
       // Fetch swimmers
       const { data: swimmersData, error: swimmersError } = await supabase
         .from('swimmers')
         .select('id, first_name, last_name, parent_id, coordinator_id, coordinator_email');
 
-      if (swimmersError) throw swimmersError;
+      console.log('Swimmers fetch result:', {
+        dataCount: swimmersData?.length || 0,
+        error: swimmersError,
+        sampleData: swimmersData?.slice(0, 2)
+      });
+
+      if (swimmersError) {
+        console.error('Swimmers fetch error:', swimmersError);
+        // Don't throw - swimmers are optional for user display
+      }
 
       // Merge profiles with roles
       const usersWithRoles = (profilesData || []).map(profile => {
         const userRole = rolesData?.find(r => r.user_id === profile.id);
+        const role = userRole?.role || 'parent'; // Default to parent if no role
+        console.log(`Profile ${profile.email} (${profile.id}) -> role: ${role}`);
         return {
           ...profile,
-          role: userRole?.role || 'parent', // Default to parent if no role
+          role: role,
         };
       });
+
+      console.log('Final usersWithRoles:', usersWithRoles);
+      console.log('Total users:', usersWithRoles.length);
 
       setUsers(usersWithRoles);
       setAllSwimmers(swimmersData || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error in fetchUsers:', error);
+      alert('Error loading users. Check console for details.');
     } finally {
       setLoading(false);
     }
