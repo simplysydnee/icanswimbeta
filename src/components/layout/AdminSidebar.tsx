@@ -17,7 +17,8 @@ import {
   CalendarPlus,
   UserCog,
   Building2,
-  CreditCard
+  CreditCard,
+  CheckCircle
 } from 'lucide-react';
 
 const navItems = [
@@ -25,6 +26,7 @@ const navItems = [
   { title: 'Swimmers', href: '/admin/swimmers', icon: Users },
   { title: 'Schedule', href: '/admin/schedule', icon: Calendar },
   { title: 'Session Generator', href: '/admin/sessions/generate', icon: CalendarPlus },
+  { title: 'Complete Assessment', href: '/admin/assessments/complete', icon: CheckCircle },
   { title: 'Bookings', href: '/admin/bookings', icon: ClipboardList },
   { title: 'Referrals', href: '/admin/referrals', icon: FileText },
   { title: 'Purchase Orders', href: '/admin/pos', icon: CreditCard },

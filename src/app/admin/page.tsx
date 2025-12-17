@@ -201,20 +201,20 @@ export default function AdminDashboard() {
           </Card>
         </Link>
 
-        {/* Total Swimmers - Links to Swimmer Management */}
+        {/* Waitlisted - Links to Swimmer Management */}
         <Link href="/admin/swimmers" className="block">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-green-300">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-yellow-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total Swimmers</p>
-                  <p className="text-3xl font-bold">{stats?.totalSwimmers || 0}</p>
+                  <p className="text-sm text-muted-foreground">Waitlisted</p>
+                  <p className="text-3xl font-bold">{stats?.waitlistedSwimmers || 0}</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {stats?.privatePayCount} private • {stats?.fundedCount} funded
+                    Pending enrollment
                   </p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-green-600" />
+                <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-yellow-600" />
                 </div>
               </div>
             </CardContent>
@@ -235,7 +235,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="space-y-3">
             {stats?.pendingPOs ? (
-              <Link href="/coordinator/pos" className="block">
+              <Link href="/admin/pos" className="block">
                 <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors cursor-pointer">
                   <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-yellow-600" />
@@ -312,7 +312,7 @@ export default function AdminDashboard() {
               </Button>
             </Link>
 
-            <Link href="/coordinator/pos" className="block">
+            <Link href="/admin/pos" className="block">
               <Button variant="outline" className="w-full justify-start h-auto py-3">
                 <FileText className="h-4 w-4 mr-2" />
                 <div className="text-left">
@@ -330,7 +330,7 @@ export default function AdminDashboard() {
               </Button>
             </Link>
 
-            <Link href="/settings" className="block">
+            <Link href="/admin/settings" className="block">
               <Button variant="outline" className="w-full justify-start h-auto py-3">
                 <Settings className="h-4 w-4 mr-2" />
                 <div className="text-left">
@@ -349,37 +349,45 @@ export default function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-              <div className="flex items-center gap-2 mb-1">
-                <CreditCard className="h-4 w-4 text-emerald-600" />
-                <span className="text-sm text-emerald-700">Private Pay</span>
+            <Link href="/admin/swimmers?filter=private_pay" className="block">
+              <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200 hover:bg-emerald-100 cursor-pointer transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <CreditCard className="h-4 w-4 text-emerald-600" />
+                  <span className="text-sm text-emerald-700">Private Pay</span>
+                </div>
+                <p className="text-2xl font-bold text-emerald-800">{stats?.privatePayCount || 0}</p>
               </div>
-              <p className="text-2xl font-bold text-emerald-800">{stats?.privatePayCount || 0}</p>
-            </div>
+            </Link>
 
-            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex items-center gap-2 mb-1">
-                <Building2 className="h-4 w-4 text-blue-600" />
-                <span className="text-sm text-blue-700">Funded</span>
+            <Link href="/admin/swimmers?filter=funded" className="block">
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 cursor-pointer transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <Building2 className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm text-blue-700">Funded</span>
+                </div>
+                <p className="text-2xl font-bold text-blue-800">{stats?.fundedCount || 0}</p>
               </div>
-              <p className="text-2xl font-bold text-blue-800">{stats?.fundedCount || 0}</p>
-            </div>
+            </Link>
 
-            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="flex items-center gap-2 mb-1">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-700">Enrolled</span>
+            <Link href="/admin/swimmers?filter=enrolled" className="block">
+              <div className="p-4 bg-green-50 rounded-lg border border-green-200 hover:bg-green-100 cursor-pointer transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <span className="text-sm text-green-700">Enrolled</span>
+                </div>
+                <p className="text-2xl font-bold text-green-800">{stats?.activeSwimmers || 0}</p>
               </div>
-              <p className="text-2xl font-bold text-green-800">{stats?.activeSwimmers || 0}</p>
-            </div>
+            </Link>
 
-            <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-              <div className="flex items-center gap-2 mb-1">
-                <Clock className="h-4 w-4 text-yellow-600" />
-                <span className="text-sm text-yellow-700">Waitlisted</span>
+            <Link href="/admin/swimmers?filter=waitlist" className="block">
+              <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 cursor-pointer transition-colors">
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock className="h-4 w-4 text-yellow-600" />
+                  <span className="text-sm text-yellow-700">Waitlisted</span>
+                </div>
+                <p className="text-2xl font-bold text-yellow-800">{stats?.waitlistedSwimmers || 0}</p>
               </div>
-              <p className="text-2xl font-bold text-yellow-800">{stats?.waitlistedSwimmers || 0}</p>
-            </div>
+            </Link>
           </div>
         </CardContent>
       </Card>
