@@ -47,6 +47,7 @@ export default function UsersPage() {
   const [transferSwimmerId, setTransferSwimmerId] = useState<string>('');
   const [newCoordinatorEmail, setNewCoordinatorEmail] = useState('');
   const [newCoordinatorName, setNewCoordinatorName] = useState('');
+  const [showNewCoordinatorForm, setShowNewCoordinatorForm] = useState(false);
 
   const [newUser, setNewUser] = useState({
     email: '',
@@ -291,38 +292,50 @@ export default function UsersPage() {
   };
 
   const handleTransferClient = async () => {
-    if (!transferSwimmerId || !newCoordinatorEmail) return;
+    if (!transferSwimmerId || !newCoordinatorEmail || !selectedUser) return;
 
     setSaving(true);
     const supabase = createClient();
 
     try {
-      // Check if coordinator exists
-      const { data: existingCoordinator } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .eq('email', newCoordinatorEmail.toLowerCase())
-        .single();
-
       let coordinatorId: string;
       let isNewCoordinator = false;
 
-      if (existingCoordinator) {
-        coordinatorId = existingCoordinator.id;
-      } else {
-        // Create new coordinator profile
+      // Check if selecting existing coordinator or creating new one
+      if (showNewCoordinatorForm) {
+        // Creating new coordinator
+        if (!newCoordinatorName) {
+          alert('Please enter the coordinator name');
+          setSaving(false);
+          return;
+        }
+
+        // Check if email already exists
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', newCoordinatorEmail.toLowerCase())
+          .single();
+
+        if (existingUser) {
+          alert('A user with this email already exists. Please select them from the dropdown.');
+          setSaving(false);
+          return;
+        }
+
+        // Create new profile
         const newId = crypto.randomUUID();
-        const { error: createError } = await supabase
+        const { error: profileError } = await supabase
           .from('profiles')
           .insert({
             id: newId,
             email: newCoordinatorEmail.toLowerCase(),
-            full_name: newCoordinatorName || null,
+            full_name: newCoordinatorName,
           });
 
-        if (createError) throw createError;
+        if (profileError) throw profileError;
 
-        // Create role in user_roles table
+        // Create role
         const { error: roleError } = await supabase
           .from('user_roles')
           .insert({
@@ -334,7 +347,29 @@ export default function UsersPage() {
 
         coordinatorId = newId;
         isNewCoordinator = true;
+      } else {
+        // Using existing coordinator - find their ID
+        const { data: existingCoord } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .eq('email', newCoordinatorEmail.toLowerCase())
+          .single();
+
+        if (!existingCoord) {
+          alert('Coordinator not found');
+          setSaving(false);
+          return;
+        }
+
+        coordinatorId = existingCoord.id;
       }
+
+      // Get coordinator name for the swimmer record
+      const { data: coordProfile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', coordinatorId)
+        .single();
 
       // Update swimmer with new coordinator
       const { error: updateError } = await supabase
@@ -342,23 +377,29 @@ export default function UsersPage() {
         .update({
           coordinator_id: coordinatorId,
           vmrc_coordinator_email: newCoordinatorEmail.toLowerCase(),
-          vmrc_coordinator_name: newCoordinatorName || existingCoordinator?.full_name || null,
+          vmrc_coordinator_name: coordProfile?.full_name || newCoordinatorName || null,
         })
         .eq('id', transferSwimmerId);
 
       if (updateError) throw updateError;
 
+      // Refresh data
       await fetchUsers();
+
+      // Close dialog and reset
       setTransferDialogOpen(false);
+      setSelectedUser(null);
       setTransferSwimmerId('');
       setNewCoordinatorEmail('');
       setNewCoordinatorName('');
+      setShowNewCoordinatorForm(false);
 
-      if (isNewCoordinator) {
-        alert(`Client transferred! New coordinator account created for ${newCoordinatorEmail}. They will need to sign up.`);
-      } else {
-        alert('Client transferred successfully!');
-      }
+      const swimmer = allSwimmers.find(s => s.id === transferSwimmerId);
+      alert(
+        isNewCoordinator
+          ? `${swimmer?.first_name} transferred! New coordinator account created for ${newCoordinatorEmail}.`
+          : `${swimmer?.first_name} transferred successfully!`
+      );
     } catch (error) {
       console.error('Error transferring client:', error);
       alert('Failed to transfer client');
@@ -393,10 +434,6 @@ export default function UsersPage() {
           <p className="text-muted-foreground">Manage all users, link swimmers, and transfer clients</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setTransferDialogOpen(true)}>
-            <ArrowRightLeft className="h-4 w-4 mr-2" />
-            Transfer Client
-          </Button>
           <Button onClick={() => setAddDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add User
@@ -482,6 +519,15 @@ export default function UsersPage() {
                             }}>
                               <Users className="h-4 w-4 mr-2" />
                               Link Swimmer
+                            </DropdownMenuItem>
+                          )}
+                          {user.role === 'vmrc_coordinator' && (
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedUser(user);
+                              setTransferDialogOpen(true);
+                            }}>
+                              <ArrowRightLeft className="h-4 w-4 mr-2" />
+                              Transfer Client
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem
@@ -725,57 +771,114 @@ export default function UsersPage() {
       </Dialog>
 
       {/* Transfer Client Dialog */}
-      <Dialog open={transferDialogOpen} onOpenChange={setTransferDialogOpen}>
-        <DialogContent>
+      <Dialog open={transferDialogOpen} onOpenChange={(open) => {
+        setTransferDialogOpen(open);
+        if (!open) {
+          setTransferSwimmerId('');
+          setNewCoordinatorEmail('');
+          setNewCoordinatorName('');
+          setShowNewCoordinatorForm(false);
+        }
+      }}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Transfer Client to Coordinator</DialogTitle>
+            <DialogTitle>Transfer Client</DialogTitle>
             <DialogDescription>
-              Move a swimmer to a different coordinator. If the coordinator doesn't have an account, one will be created.
+              Transfer a client from {selectedUser?.full_name || selectedUser?.email} to another coordinator
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Step 1: Select Client */}
             <div className="space-y-2">
               <Label>Select Client to Transfer</Label>
-              <Select value={transferSwimmerId} onValueChange={setTransferSwimmerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a swimmer..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {allSwimmers
-                    .filter(s => s.coordinator_id || s.vmrc_coordinator_email)
-                    .map(swimmer => (
-                      <SelectItem key={swimmer.id} value={swimmer.id}>
-                        {swimmer.first_name} {swimmer.last_name}
+              {allSwimmers.filter(s => s.coordinator_id === selectedUser?.id).length === 0 ? (
+                <p className="text-sm text-muted-foreground p-3 bg-gray-50 rounded">
+                  This coordinator has no assigned clients.
+                </p>
+              ) : (
+                <Select value={transferSwimmerId} onValueChange={setTransferSwimmerId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a client..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allSwimmers
+                      .filter(s => s.coordinator_id === selectedUser?.id)
+                      .map(swimmer => (
+                        <SelectItem key={swimmer.id} value={swimmer.id}>
+                          {swimmer.first_name} {swimmer.last_name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {/* Step 2: Select or Create New Coordinator */}
+            {transferSwimmerId && (
+              <>
+                <div className="space-y-2">
+                  <Label>Transfer To</Label>
+                  <Select
+                    value={newCoordinatorEmail}
+                    onValueChange={(value) => {
+                      if (value === '__new__') {
+                        setShowNewCoordinatorForm(true);
+                        setNewCoordinatorEmail('');
+                      } else {
+                        setShowNewCoordinatorForm(false);
+                        setNewCoordinatorEmail(value);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select coordinator..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users
+                        .filter(u => u.role === 'vmrc_coordinator' && u.id !== selectedUser?.id)
+                        .map(coord => (
+                          <SelectItem key={coord.id} value={coord.email}>
+                            {coord.full_name || coord.email}
+                          </SelectItem>
+                        ))}
+                      <SelectItem value="__new__">
+                        <span className="flex items-center gap-2">
+                          <Plus className="h-4 w-4" />
+                          Add New Coordinator
+                        </span>
                       </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="coordEmail">New Coordinator Email *</Label>
-              <Input
-                id="coordEmail"
-                type="email"
-                placeholder="coordinator@vmrc.org"
-                value={newCoordinatorEmail}
-                onChange={(e) => setNewCoordinatorEmail(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="coordName">Coordinator Name</Label>
-              <Input
-                id="coordName"
-                placeholder="Jane Smith"
-                value={newCoordinatorName}
-                onChange={(e) => setNewCoordinatorName(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Required if creating a new coordinator account
-              </p>
-            </div>
+                {/* New Coordinator Form */}
+                {showNewCoordinatorForm && (
+                  <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+                    <h4 className="font-medium text-sm">New Coordinator Details</h4>
+                    <div className="space-y-2">
+                      <Label htmlFor="newCoordEmail">Email *</Label>
+                      <Input
+                        id="newCoordEmail"
+                        type="email"
+                        placeholder="coordinator@vmrc.org"
+                        value={newCoordinatorEmail}
+                        onChange={(e) => setNewCoordinatorEmail(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="newCoordName">Full Name *</Label>
+                      <Input
+                        id="newCoordName"
+                        placeholder="Jane Smith"
+                        value={newCoordinatorName}
+                        onChange={(e) => setNewCoordinatorName(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           <DialogFooter>
@@ -784,7 +887,12 @@ export default function UsersPage() {
             </Button>
             <Button
               onClick={handleTransferClient}
-              disabled={saving || !transferSwimmerId || !newCoordinatorEmail}
+              disabled={
+                saving ||
+                !transferSwimmerId ||
+                !newCoordinatorEmail ||
+                (showNewCoordinatorForm && !newCoordinatorName)
+              }
             >
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Transfer Client
