@@ -521,15 +521,19 @@ export default function UsersPage() {
                               Link Swimmer
                             </DropdownMenuItem>
                           )}
-                          {user.role === 'vmrc_coordinator' && (
-                            <DropdownMenuItem onClick={() => {
-                              setSelectedUser(user);
-                              setTransferDialogOpen(true);
-                            }}>
-                              <ArrowRightLeft className="h-4 w-4 mr-2" />
-                              Transfer Client
-                            </DropdownMenuItem>
-                          )}
+                          {(() => {
+                            console.log('Checking role for Transfer Client:', user.email, 'role:', user.role, 'is vmrc_coordinator?', user.role === 'vmrc_coordinator');
+                            return user.role === 'vmrc_coordinator' && (
+                              <DropdownMenuItem onClick={() => {
+                                console.log('Transfer Client clicked for coordinator:', user.email, 'role:', user.role);
+                                setSelectedUser(user);
+                                setTransferDialogOpen(true);
+                              }}>
+                                <ArrowRightLeft className="h-4 w-4 mr-2" />
+                                Transfer Client
+                              </DropdownMenuItem>
+                            );
+                          })()}
                           <DropdownMenuItem
                             onClick={() => {
                               setSelectedUser(user);
@@ -835,13 +839,15 @@ export default function UsersPage() {
                       <SelectValue placeholder="Select coordinator..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {users
-                        .filter(u => u.role === 'vmrc_coordinator' && u.id !== selectedUser?.id)
-                        .map(coord => (
+                      {(() => {
+                        const coordinators = users.filter(u => u.role === 'vmrc_coordinator' && u.id !== selectedUser?.id);
+                        console.log('Available coordinators for transfer:', coordinators.length, 'selectedUser:', selectedUser?.email);
+                        return coordinators.map(coord => (
                           <SelectItem key={coord.id} value={coord.email}>
                             {coord.full_name || coord.email}
                           </SelectItem>
-                        ))}
+                        ));
+                      })()}
                       <SelectItem value="__new__">
                         <span className="flex items-center gap-2">
                           <Plus className="h-4 w-4" />
