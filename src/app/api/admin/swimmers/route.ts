@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 interface SwimmersQueryParams {
   search?: string;
   status?: 'enrolled' | 'waitlist' | 'pending' | 'inactive' | 'all';
-  funding?: 'private_pay' | 'regional_center' | 'scholarship' | 'other' | 'all';
+  funding?: 'private_pay' | 'vmrc' | 'scholarship' | 'other' | 'all';
   level?: string; // level_id or "none" or "all"
   sortBy?: 'name' | 'age' | 'status' | 'lessons' | 'nextSession';
   sortOrder?: 'asc' | 'desc';
@@ -110,7 +110,7 @@ export async function GET(request: Request) {
     const params: SwimmersQueryParams = {
       search: searchParams.get('search') || undefined,
       status: (searchParams.get('status') as 'enrolled' | 'waitlist' | 'pending' | 'inactive' | 'all') || 'all',
-      funding: (searchParams.get('funding') as 'private_pay' | 'regional_center' | 'scholarship' | 'other' | 'all') || 'all',
+      funding: (searchParams.get('funding') as 'private_pay' | 'vmrc' | 'scholarship' | 'other' | 'all') || 'all',
       level: searchParams.get('level') || 'all',
       sortBy: (searchParams.get('sortBy') as 'name' | 'age' | 'status' | 'lessons' | 'nextSession') || 'name',
       sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'asc',
@@ -134,12 +134,15 @@ export async function GET(request: Request) {
         enrollment_status,
         assessment_status,
         current_level_id,
-        funding_source_id,
-        photo_url,
-        funding_source_sessions_used,
-        funding_source_sessions_authorized,
-        funding_source_current_pos_number,
-        funding_source_pos_expires_at,
+        payment_type,
+        is_vmrc_client,
+        vmrc_coordinator_name,
+        vmrc_coordinator_email,
+        vmrc_coordinator_phone,
+        vmrc_sessions_used,
+        vmrc_sessions_authorized,
+        vmrc_current_pos_number,
+        vmrc_pos_expires_at,
         created_at,
         updated_at,
         parent:profiles!swimmers_parent_id_fkey(
@@ -172,18 +175,9 @@ export async function GET(request: Request) {
       query = query.eq('enrollment_status', params.status);
     }
 
-    // Funding source filter
+    // Funding source filter (payment_type in swimmers table)
     if (params.funding && params.funding !== 'all') {
-      // Get funding source IDs for the specified type
-      const { data: fundingSources } = await supabase
-        .from('funding_sources')
-        .select('id')
-        .eq('type', params.funding);
-
-      if (fundingSources && fundingSources.length > 0) {
-        const fundingSourceIds = fundingSources.map(fs => fs.id);
-        query = query.in('funding_source_id', fundingSourceIds);
-      }
+      query = query.eq('payment_type', params.funding);
     }
 
     // Level filter
@@ -266,12 +260,15 @@ export async function GET(request: Request) {
           displayName: swimmer.swim_levels.display_name,
           color: swimmer.swim_levels.color
         } : null,
-        fundingSourceId: swimmer.funding_source_id,
-        photoUrl: swimmer.photo_url,
-        fundingSourceSessionsUsed: swimmer.funding_source_sessions_used,
-        fundingSourceSessionsAuthorized: swimmer.funding_source_sessions_authorized,
-        fundingSourceCurrentPosNumber: swimmer.funding_source_current_pos_number,
-        fundingSourcePosExpiresAt: swimmer.funding_source_pos_expires_at,
+        fundingSourceId: swimmer.payment_type,
+        fundingSourceName: swimmer.payment_type === 'vmrc' ? 'VMRC' :
+                          swimmer.payment_type === 'private_pay' ? 'Private Pay' :
+                          swimmer.payment_type === 'scholarship' ? 'Scholarship' : 'Other',
+        photoUrl: null, // No photo_url in schema
+        fundingSourceSessionsUsed: swimmer.vmrc_sessions_used || 0,
+        fundingSourceSessionsAuthorized: swimmer.vmrc_sessions_authorized || 0,
+        fundingSourceCurrentPosNumber: swimmer.vmrc_current_pos_number,
+        fundingSourcePosExpiresAt: swimmer.vmrc_pos_expires_at,
         createdAt: swimmer.created_at,
         updatedAt: swimmer.updated_at,
         parent: swimmer.parent ? {
