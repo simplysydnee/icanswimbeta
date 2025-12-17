@@ -144,7 +144,7 @@ export default function AdminDashboard() {
       {/* Clickable KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {/* Active Swimmers - Links to Swimmer Management */}
-        <Link href="/admin/swimmers">
+        <Link href="/admin/swimmers" className="block">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-cyan-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -164,7 +164,7 @@ export default function AdminDashboard() {
         </Link>
 
         {/* Sessions Today - Links to Schedule */}
-        <Link href="/admin/schedule">
+        <Link href="/admin/schedule" className="block">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-blue-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -182,7 +182,7 @@ export default function AdminDashboard() {
         </Link>
 
         {/* Pending Items - Links to Referrals */}
-        <Link href="/admin/referrals">
+        <Link href="/admin/referrals" className="block">
           <Card className={`cursor-pointer hover:shadow-lg transition-shadow ${pendingCount > 0 ? 'border-orange-300 bg-orange-50 hover:border-orange-400' : 'hover:border-gray-300'}`}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -202,7 +202,7 @@ export default function AdminDashboard() {
         </Link>
 
         {/* Total Swimmers - Links to Swimmer Management */}
-        <Link href="/admin/swimmers">
+        <Link href="/admin/swimmers" className="block">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-green-300">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -235,7 +235,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="space-y-3">
             {stats?.pendingPOs ? (
-              <Link href="/coordinator/pos">
+              <Link href="/coordinator/pos" className="block">
                 <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors cursor-pointer">
                   <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-yellow-600" />
@@ -267,7 +267,7 @@ export default function AdminDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-2">
-            <Link href="/admin/swimmers">
+            <Link href="/admin/swimmers" className="block">
               <Button variant="outline" className="w-full justify-start h-auto py-3">
                 <Users className="h-4 w-4 mr-2" />
                 <div className="text-left">
@@ -276,7 +276,7 @@ export default function AdminDashboard() {
               </Button>
             </Link>
 
-            <Link href="/admin/schedule">
+            <Link href="/admin/schedule" className="block">
               <Button variant="outline" className="w-full justify-start h-auto py-3">
                 <Calendar className="h-4 w-4 mr-2" />
                 <div className="text-left">
@@ -285,7 +285,7 @@ export default function AdminDashboard() {
               </Button>
             </Link>
 
-            <Link href="/admin/sessions/generate">
+            <Link href="/admin/sessions/generate" className="block">
               <Button variant="outline" className="w-full justify-start h-auto py-3">
                 <CalendarPlus className="h-4 w-4 mr-2" />
                 <div className="text-left">
@@ -294,7 +294,7 @@ export default function AdminDashboard() {
               </Button>
             </Link>
 
-            <Link href="/admin/referrals">
+            <Link href="/admin/referrals" className="block">
               <Button variant="outline" className="w-full justify-start h-auto py-3">
                 <FileText className="h-4 w-4 mr-2" />
                 <div className="text-left">
@@ -303,7 +303,7 @@ export default function AdminDashboard() {
               </Button>
             </Link>
 
-            <Link href="/admin/bookings">
+            <Link href="/admin/bookings" className="block">
               <Button variant="outline" className="w-full justify-start h-auto py-3">
                 <ClipboardList className="h-4 w-4 mr-2" />
                 <div className="text-left">
@@ -312,7 +312,7 @@ export default function AdminDashboard() {
               </Button>
             </Link>
 
-            <Link href="/coordinator/pos">
+            <Link href="/coordinator/pos" className="block">
               <Button variant="outline" className="w-full justify-start h-auto py-3">
                 <FileText className="h-4 w-4 mr-2" />
                 <div className="text-left">
@@ -321,7 +321,7 @@ export default function AdminDashboard() {
               </Button>
             </Link>
 
-            <Link href="/admin/users">
+            <Link href="/admin/users" className="block">
               <Button variant="outline" className="w-full justify-start h-auto py-3">
                 <UserCog className="h-4 w-4 mr-2" />
                 <div className="text-left">
@@ -330,7 +330,7 @@ export default function AdminDashboard() {
               </Button>
             </Link>
 
-            <Link href="/settings">
+            <Link href="/settings" className="block">
               <Button variant="outline" className="w-full justify-start h-auto py-3">
                 <Settings className="h-4 w-4 mr-2" />
                 <div className="text-left">
