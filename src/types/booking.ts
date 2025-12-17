@@ -43,6 +43,7 @@ export interface Swimmer {
   fundingSourceId?: string | null;
   fundingSourceName?: string;
   fundingSourceShortName?: string;
+  coordinatorId?: string;
   coordinatorName?: string;
   coordinatorEmail?: string;
   coordinatorPhone?: string;

@@ -376,14 +376,36 @@ export class ApiClient {
     child_date_of_birth?: string;
     coordinator_name: string;
     coordinator_email: string;
+    coordinator_id?: string;
     // Note: parent_phone might be passed from form but not stored in table
   }): Promise<ParentReferralRequest> {
     // Filter out any extra fields not in the table (like parent_phone)
-    const { parent_phone, child_date_of_birth, ...insertData } = data as any; // eslint-disable-line @typescript-eslint/no-unused-vars
+    const { parent_phone, child_date_of_birth, coordinator_id, ...insertData } = data as any; // eslint-disable-line @typescript-eslint/no-unused-vars
+
+    // Look up coordinator by email if coordinator_id not provided
+    let finalCoordinatorId = coordinator_id;
+    if (!finalCoordinatorId && data.coordinator_email) {
+      try {
+        const { data: coordinator } = await this.supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', data.coordinator_email.toLowerCase())
+          .eq('role', 'vmrc_coordinator')
+          .single();
+
+        if (coordinator) {
+          finalCoordinatorId = coordinator.id;
+        }
+      } catch (error) {
+        console.warn('Could not find coordinator by email:', data.coordinator_email, error);
+        // Continue without coordinator_id
+      }
+    }
 
     // Prepare insert data
     const insertPayload: any = {
       ...insertData,
+      coordinator_id: finalCoordinatorId,
       status: 'pending',
       created_at: new Date().toISOString(),
     };
@@ -459,6 +481,7 @@ export class ApiClient {
     referral_type: string;
     coordinator_name?: string;
     coordinator_email?: string;
+    coordinator_id?: string;
     // Section 5
     photo_release: string;
     liability_agreement: boolean;

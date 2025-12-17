@@ -72,6 +72,7 @@ interface Referral {
   // Coordinator info
   coordinator_name: string
   coordinator_email: string
+  coordinator_id?: string
   referral_type: string
 
   // Medical
@@ -391,8 +392,9 @@ function AdminReferralsContent() {
 
           // Funding source info - check if referral has funding_source_id
           payment_type: 'funding_source',
-          coordinator_name: referral.coordinator_name,
-          coordinator_email: referral.coordinator_email,
+          coordinator_id: referral.coordinator_id,
+          vmrc_coordinator_name: referral.coordinator_name,
+          vmrc_coordinator_email: referral.coordinator_email,
 
           // Signatures - match swimmers table schema
           signed_waiver: referral.liability_waiver_signed, // Use signed_waiver instead of signed_liability

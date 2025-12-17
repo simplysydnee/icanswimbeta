@@ -104,6 +104,7 @@ type ApiReferralData = {
   referral_type: string; // Will be hardcoded as 'vmrc_client'
   coordinator_name?: string;
   coordinator_email?: string;
+  coordinator_id?: string;
   photo_release: string; // Will be hardcoded as 'no'
   liability_agreement: boolean; // Will be hardcoded as false
   swimmer_photo_url?: string; // Will be undefined
@@ -249,6 +250,7 @@ export default function ReferralPage() {
         referral_type: 'vmrc_client', // Hardcoded as requested
         coordinator_name: data.coordinator_name,
         coordinator_email: data.coordinator_email,
+        coordinator_id: user?.id, // Add coordinator ID from logged-in user
         photo_release: 'no', // Hardcoded as requested
         liability_agreement: false, // Hardcoded as requested
         additional_info: data.additional_info,
