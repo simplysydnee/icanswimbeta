@@ -47,7 +47,7 @@ export default function AdminSwimmersPage() {
                 {isLoading ? '...' : error ? 'Error' : metrics?.totalSwimmers.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                Private pay clients only
+                All clients
               </div>
             </CardContent>
           </Card>
@@ -95,31 +95,12 @@ export default function AdminSwimmersPage() {
                 {isLoading ? '...' : error ? 'Error' : metrics?.averageLessons.toFixed(1)}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                per swimmer (private pay)
+                per swimmer
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Regional Center Info Note */}
-        {metrics && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <div className="bg-blue-100 dark:bg-blue-800 p-2 rounded-full">
-                <UserX className="h-5 w-5 text-blue-600 dark:text-blue-300" />
-              </div>
-              <div>
-                <h3 className="font-medium text-blue-900 dark:text-blue-100">
-                  Regional Center Clients Excluded
-                </h3>
-                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                  These metrics exclude {metrics.regionalCenterClients.toLocaleString()} regional center clients.
-                  Regional center clients are tracked separately in the funding sources management section.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Main Table */}
         <SwimmerManagementTable role="admin" />

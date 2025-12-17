@@ -43,55 +43,39 @@ export async function GET() {
 
     // ========== STEP 3: Fetch Metrics ==========
 
-    // Query 1: Total private pay swimmers (non-regional center)
-    // First get funding source IDs that are not regional_center
-    const { data: nonRegionalFundingSources, error: fundingSourcesError } = await supabase
-      .from('funding_sources')
-      .select('id')
-      .neq('type', 'regional_center');
-
-    if (fundingSourcesError) {
-      console.error('Error fetching non-regional funding sources:', fundingSourcesError);
-      throw fundingSourcesError;
-    }
-
-    const nonRegionalFundingSourceIds = nonRegionalFundingSources?.map(fs => fs.id) || [];
-
-    const { count: totalPrivatePay, error: totalError } = await supabase
+    // Query 1: Total ALL swimmers (including all funding sources)
+    const { count: totalSwimmers, error: totalError } = await supabase
       .from('swimmers')
-      .select('*', { count: 'exact', head: true })
-      .in('funding_source_id', nonRegionalFundingSourceIds);
+      .select('*', { count: 'exact', head: true });
 
     if (totalError) {
-      console.error('Error fetching total non-VMRC swimmers:', totalError);
+      console.error('Error fetching total swimmers:', totalError);
       throw totalError;
     }
 
-    // Query 2: Waitlisted private pay swimmers
-    const { count: waitlistedPrivatePay, error: waitlistedError } = await supabase
+    // Query 2: Waitlisted swimmers (all funding sources)
+    const { count: waitlistedSwimmers, error: waitlistedError } = await supabase
       .from('swimmers')
       .select('*', { count: 'exact', head: true })
-      .in('funding_source_id', nonRegionalFundingSourceIds)
       .eq('enrollment_status', 'waitlist');
 
     if (waitlistedError) {
-      console.error('Error fetching waitlisted non-VMRC swimmers:', waitlistedError);
+      console.error('Error fetching waitlisted swimmers:', waitlistedError);
       throw waitlistedError;
     }
 
-    // Query 3: Active enrolled private pay swimmers
-    const { count: activeEnrolledPrivatePay, error: activeError } = await supabase
+    // Query 3: Active enrolled swimmers (all funding sources)
+    const { count: activeEnrolledSwimmers, error: activeError } = await supabase
       .from('swimmers')
       .select('*', { count: 'exact', head: true })
-      .in('funding_source_id', nonRegionalFundingSourceIds)
       .eq('enrollment_status', 'enrolled');
 
     if (activeError) {
-      console.error('Error fetching active enrolled non-VMRC swimmers:', activeError);
+      console.error('Error fetching active enrolled swimmers:', activeError);
       throw activeError;
     }
 
-    // Query 4: Regional center clients count
+    // Query 4: Regional center clients count (for reference, but not excluded)
     // First get regional center funding source IDs
     const { data: regionalFundingSources, error: regionalFundingError } = await supabase
       .from('funding_sources')
@@ -115,8 +99,8 @@ export async function GET() {
       throw regionalError;
     }
 
-    // Query 5: Average lessons for private pay swimmers
-    // First, get all private pay swimmers with their completed bookings count
+    // Query 5: Average lessons for ALL swimmers
+    // Get all swimmers with their completed bookings count
     const { data: swimmersWithLessons, error: lessonsError } = await supabase
       .from('swimmers')
       .select(`
@@ -124,8 +108,7 @@ export async function GET() {
         bookings!bookings_swimmer_id_fkey(
           count
         )
-      `)
-      .in('funding_source_id', nonRegionalFundingSourceIds);
+      `);
 
     if (lessonsError) {
       console.error('Error fetching swimmers with lessons:', lessonsError);
@@ -148,16 +131,16 @@ export async function GET() {
 
     // ========== STEP 4: Prepare Response ==========
     const metrics: SwimmerMetricsResponse = {
-      totalSwimmers: totalPrivatePay || 0,
-      waitlistedSwimmers: waitlistedPrivatePay || 0,
-      activeEnrolledSwimmers: activeEnrolledPrivatePay || 0,
+      totalSwimmers: totalSwimmers || 0,
+      waitlistedSwimmers: waitlistedSwimmers || 0,
+      activeEnrolledSwimmers: activeEnrolledSwimmers || 0,
       averageLessons: parseFloat(averageLessons.toFixed(1)), // Round to 1 decimal place
       regionalCenterClients: regionalCenterClients || 0,
       lastUpdated: new Date().toISOString()
     };
 
     console.log(`✅ Admin fetched swimmer metrics:`, {
-      totalPrivatePay: metrics.totalSwimmers,
+      totalSwimmers: metrics.totalSwimmers,
       waitlisted: metrics.waitlistedSwimmers,
       activeEnrolled: metrics.activeEnrolledSwimmers,
       averageLessons: metrics.averageLessons,
