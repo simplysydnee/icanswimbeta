@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { SwimmerCard } from '@/components/parent/swimmer-card'
 import { UpcomingSessions } from '@/components/parent/upcoming-sessions'
 import { PendingEnrollmentAlert } from '@/components/dashboard/PendingEnrollmentAlert'
+import { PendingInvitations } from '@/components/parent/PendingInvitations'
 import Link from 'next/link'
 import { Plus, Calendar, Users } from 'lucide-react'
 
@@ -164,6 +165,9 @@ export default function ParentDashboard() {
 
       {/* Pending enrollment alert */}
       <PendingEnrollmentAlert />
+
+      {/* Pending invitations */}
+      <PendingInvitations />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

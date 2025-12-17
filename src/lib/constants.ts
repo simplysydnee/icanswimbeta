@@ -88,7 +88,7 @@ export const USER_ROLES = {
   INSTRUCTOR: 'instructor',
   ADMIN: 'admin',
   COORDINATOR: 'coordinator',
-  VMRC_COORDINATOR: 'vmrc_coordinator',
+  VMRC_COORDINATOR: 'coordinator',
 } as const;
 
 // Swim levels

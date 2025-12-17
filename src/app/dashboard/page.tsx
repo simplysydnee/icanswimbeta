@@ -20,7 +20,7 @@ export default function DashboardRedirect() {
         case 'instructor':
           router.replace('/instructor');
           break;
-        case 'vmrc_coordinator':
+        case 'coordinator':
           router.replace('/coordinator/pos');
           break;
         case 'parent':

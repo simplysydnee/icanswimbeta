@@ -91,7 +91,7 @@ export default function DebugPage() {
             <ul className="list-disc ml-4">
               {roles.map((r, i) => <li key={i}><strong>{r.role}</strong> (created: {new Date(r.created_at).toLocaleDateString()})</li>)}
             </ul>
-            <p className="mt-2"><strong>Valid roles:</strong> parent, instructor, admin, vmrc_coordinator</p>
+            <p className="mt-2"><strong>Valid roles:</strong> parent, instructor, admin, coordinator</p>
             <p className="mt-1 text-sm text-gray-600">Note: System uses user_roles table for role-based access control</p>
           </div>
         ) : (

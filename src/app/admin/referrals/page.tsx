@@ -344,14 +344,20 @@ function AdminReferralsContent() {
   const handleApprove = async (referral: Referral) => {
     setProcessing(true)
     try {
-      // 1. Get parent's user ID if they have an account
+      // 1. Get current admin user
+      const { data: { user: adminUser } } = await supabase.auth.getUser()
+      if (!adminUser) {
+        throw new Error('Admin not authenticated')
+      }
+
+      // 2. Get parent's user ID if they have an account
       const { data: parentProfile } = await supabase
         .from('profiles')
         .select('id')
         .eq('email', referral.parent_email)
         .single()
 
-      // 2. Create swimmer record
+      // 3. Create swimmer record
       const { data: swimmer, error: swimmerError } = await supabase
         .from('swimmers')
         .insert({
@@ -393,8 +399,8 @@ function AdminReferralsContent() {
           // Funding source info - check if referral has funding_source_id
           payment_type: 'funding_source',
           coordinator_id: referral.coordinator_id,
-          vmrc_coordinator_name: referral.coordinator_name,
-          vmrc_coordinator_email: referral.coordinator_email,
+          coordinator_name: referral.coordinator_name,
+          coordinator_email: referral.coordinator_email,
 
           // Signatures - match swimmers table schema
           signed_waiver: referral.liability_waiver_signed, // Use signed_waiver instead of signed_liability
@@ -427,7 +433,26 @@ function AdminReferralsContent() {
 
       if (updateError) throw updateError
 
-      // 4. Send approval email to parent
+      // 4. Create parent invitation if parent doesn't have an account yet
+      if (!parentProfile?.id && referral.parent_email) {
+        const { error: inviteError } = await supabase
+          .from('parent_invitations')
+          .insert({
+            swimmer_id: swimmer.id,
+            parent_email: referral.parent_email.toLowerCase(),
+            parent_name: referral.parent_name,
+            status: 'pending',
+            created_by: adminUser.id,
+            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+          })
+
+        if (inviteError) {
+          console.error('Error creating parent invitation:', inviteError)
+          // Don't fail the whole approval if invitation creation fails
+        }
+      }
+
+      // 5. Send approval email to parent
       const emailResult = await emailService.sendApprovalNotification({
         parentEmail: referral.parent_email,
         parentName: referral.parent_name,

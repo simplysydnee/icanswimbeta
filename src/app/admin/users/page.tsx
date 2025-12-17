@@ -17,7 +17,7 @@ interface User {
   email: string;
   full_name: string | null;
   phone: string | null;
-  role: 'parent' | 'instructor' | 'admin' | 'vmrc_coordinator';
+  role: 'parent' | 'instructor' | 'admin' | 'coordinator';
   created_at: string;
   updated_at: string;
 }
@@ -28,7 +28,7 @@ interface Swimmer {
   last_name: string;
   parent_id: string | null;
   coordinator_id: string | null;
-  vmrc_coordinator_email: string | null;
+  coordinator_email: string | null;
 }
 
 export default function UsersPage() {
@@ -53,7 +53,7 @@ export default function UsersPage() {
     email: '',
     full_name: '',
     phone: '',
-    role: 'parent' as 'parent' | 'instructor' | 'admin' | 'vmrc_coordinator'
+    role: 'parent' as 'parent' | 'instructor' | 'admin' | 'coordinator'
   });
 
   const fetchUsers = async () => {
@@ -86,7 +86,7 @@ export default function UsersPage() {
       // Fetch swimmers
       const { data: swimmersData, error: swimmersError } = await supabase
         .from('swimmers')
-        .select('id, first_name, last_name, parent_id, coordinator_id, vmrc_coordinator_email');
+        .select('id, first_name, last_name, parent_id, coordinator_id, coordinator_email');
 
       if (swimmersError) throw swimmersError;
 
@@ -340,7 +340,7 @@ export default function UsersPage() {
           .from('user_roles')
           .insert({
             user_id: newId,
-            role: 'vmrc_coordinator',
+            role: 'coordinator',
           });
 
         if (roleError) throw roleError;
@@ -376,8 +376,8 @@ export default function UsersPage() {
         .from('swimmers')
         .update({
           coordinator_id: coordinatorId,
-          vmrc_coordinator_email: newCoordinatorEmail.toLowerCase(),
-          vmrc_coordinator_name: coordProfile?.full_name || newCoordinatorName || null,
+          coordinator_email: newCoordinatorEmail.toLowerCase(),
+          coordinator_name: coordProfile?.full_name || newCoordinatorName || null,
         })
         .eq('id', transferSwimmerId);
 
@@ -412,7 +412,7 @@ export default function UsersPage() {
     switch (role) {
       case 'admin': return 'destructive';
       case 'instructor': return 'default';
-      case 'vmrc_coordinator': return 'secondary';
+      case 'coordinator': return 'secondary';
       case 'parent': return 'outline';
       default: return 'secondary';
     }
@@ -483,7 +483,7 @@ export default function UsersPage() {
                             {allSwimmers.filter(s => s.parent_id === user.id).length} swimmers
                           </Badge>
                         )}
-                        {user.role === 'vmrc_coordinator' && (
+                        {user.role === 'coordinator' && (
                           <Badge variant="secondary" className="text-xs">
                             {allSwimmers.filter(s => s.coordinator_id === user.id).length} clients
                           </Badge>
@@ -522,8 +522,8 @@ export default function UsersPage() {
                             </DropdownMenuItem>
                           )}
                           {(() => {
-                            console.log('Checking role for Transfer Client:', user.email, 'role:', user.role, 'is vmrc_coordinator?', user.role === 'vmrc_coordinator');
-                            return user.role === 'vmrc_coordinator' && (
+                            console.log('Checking role for Transfer Client:', user.email, 'role:', user.role, 'is coordinator?', user.role === 'coordinator');
+                            return user.role === 'coordinator' && (
                               <DropdownMenuItem onClick={() => {
                                 console.log('Transfer Client clicked for coordinator:', user.email, 'role:', user.role);
                                 setSelectedUser(user);
@@ -606,7 +606,7 @@ export default function UsersPage() {
                 <SelectContent>
                   <SelectItem value="parent">Parent</SelectItem>
                   <SelectItem value="instructor">Instructor</SelectItem>
-                  <SelectItem value="vmrc_coordinator">VMRC Coordinator</SelectItem>
+                  <SelectItem value="coordinator">Coordinator</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -670,7 +670,7 @@ export default function UsersPage() {
                 <SelectContent>
                   <SelectItem value="parent">Parent</SelectItem>
                   <SelectItem value="instructor">Instructor</SelectItem>
-                  <SelectItem value="vmrc_coordinator">VMRC Coordinator</SelectItem>
+                  <SelectItem value="coordinator">Coordinator</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -840,7 +840,7 @@ export default function UsersPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {(() => {
-                        const coordinators = users.filter(u => u.role === 'vmrc_coordinator' && u.id !== selectedUser?.id);
+                        const coordinators = users.filter(u => u.role === 'coordinator' && u.id !== selectedUser?.id);
                         console.log('Available coordinators for transfer:', coordinators.length, 'selectedUser:', selectedUser?.email);
                         return coordinators.map(coord => (
                           <SelectItem key={coord.id} value={coord.email}>

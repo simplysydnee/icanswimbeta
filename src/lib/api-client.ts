@@ -390,7 +390,7 @@ export class ApiClient {
           .from('profiles')
           .select('id')
           .eq('email', data.coordinator_email.toLowerCase())
-          .eq('role', 'vmrc_coordinator')
+          .eq('role', 'coordinator')
           .single();
 
         if (coordinator) {
