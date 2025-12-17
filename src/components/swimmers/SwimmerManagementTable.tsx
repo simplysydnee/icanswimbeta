@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { differenceInYears, parseISO, format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
-import SwimmerDetailDrawer from './SwimmerDetailDrawer';
 import { StatusBadge, getStatusOptions } from './StatusBadge';
 import {
   Table,
@@ -199,8 +198,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedSwimmer, setSelectedSwimmer] = useState<Swimmer | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
+  // Removed drawer state - now using full page navigation
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const [expandedMedicalSwimmerId, setExpandedMedicalSwimmerId] = useState<string | null>(null);
 
@@ -391,8 +389,12 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
 
   // Handle row click
   const handleRowClick = (swimmer: Swimmer) => {
-    setSelectedSwimmer(swimmer);
-    setDetailOpen(true);
+    // Navigate to swimmer detail page instead of opening drawer
+    if (role === 'instructor') {
+      router.push(`/instructor/swimmers/${swimmer.id}`);
+    } else {
+      router.push(`/admin/swimmers/${swimmer.id}`);
+    }
   };
 
   // Handle expand/collapse
@@ -405,23 +407,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
     setExpandedRowId(expandedRowId === swimmerId ? null : swimmerId);
   };
 
-  // Handle approve swimmer
-  const handleApprove = (swimmerId: string) => {
-    console.log('Approve swimmer:', swimmerId);
-    // TODO: Implement API call to approve swimmer
-    setDetailOpen(false);
-    // Refresh swimmers list
-    fetchSwimmers();
-  };
-
-  // Handle decline swimmer
-  const handleDecline = (swimmerId: string) => {
-    console.log('Decline swimmer:', swimmerId);
-    // TODO: Implement API call to decline swimmer
-    setDetailOpen(false);
-    // Refresh swimmers list
-    fetchSwimmers();
-  };
+  // Note: Approve/Decline functionality moved to swimmer detail page
 
   // Render loading skeleton
   const renderSkeletonRows = () => {
@@ -1245,16 +1231,6 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
           </div>
         </div>
       )}
-
-      {/* Detail Drawer */}
-      <SwimmerDetailDrawer
-        swimmer={selectedSwimmer}
-        open={detailOpen}
-        onClose={() => setDetailOpen(false)}
-        role={role}
-        onApprove={handleApprove}
-        onDecline={handleDecline}
-      />
     </div>
   );
 }
