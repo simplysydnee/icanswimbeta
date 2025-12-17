@@ -47,8 +47,8 @@ export interface ParentReferralRequest {
   parent_email: string;
   child_name: string;
   child_date_of_birth?: string;
-  coordinator_name: string;
-  coordinator_email: string;
+  vmrc_coordinator_name: string;
+  vmrc_coordinator_email: string;
   referral_token: string;
   status: string;
   vmrc_referral_id?: string;
@@ -95,8 +95,8 @@ export interface VmrcReferralRequest {
 
   // Section 4: Referral Information
   referral_type: string;
-  coordinator_name?: string;
-  coordinator_email?: string;
+  vmrc_coordinator_name?: string;
+  vmrc_coordinator_email?: string;
 
   // Section 5: Consent & Optional Info
   photo_release: string;
@@ -374,8 +374,8 @@ export class ApiClient {
     parent_email: string;
     child_name: string;
     child_date_of_birth?: string;
-    coordinator_name: string;
-    coordinator_email: string;
+    vmrc_coordinator_name: string;
+    vmrc_coordinator_email: string;
     coordinator_id?: string;
     // Note: parent_phone might be passed from form but not stored in table
   }): Promise<ParentReferralRequest> {
@@ -384,12 +384,12 @@ export class ApiClient {
 
     // Look up coordinator by email if coordinator_id not provided
     let finalCoordinatorId = coordinator_id;
-    if (!finalCoordinatorId && data.coordinator_email) {
+    if (!finalCoordinatorId && data.vmrc_coordinator_email) {
       try {
         const { data: coordinator } = await this.supabase
           .from('profiles')
           .select('id')
-          .eq('email', data.coordinator_email.toLowerCase())
+          .eq('email', data.vmrc_coordinator_email.toLowerCase())
           .eq('role', 'coordinator')
           .single();
 
@@ -397,7 +397,7 @@ export class ApiClient {
           finalCoordinatorId = coordinator.id;
         }
       } catch (error) {
-        console.warn('Could not find coordinator by email:', data.coordinator_email, error);
+        console.warn('Could not find coordinator by email:', data.vmrc_coordinator_email, error);
         // Continue without coordinator_id
       }
     }
@@ -479,8 +479,8 @@ export class ApiClient {
     safety_plan_description?: string;
     // Section 4
     referral_type: string;
-    coordinator_name?: string;
-    coordinator_email?: string;
+    vmrc_coordinator_name?: string;
+    vmrc_coordinator_email?: string;
     coordinator_id?: string;
     // Section 5
     photo_release: string;
@@ -587,8 +587,8 @@ export class ApiClient {
         // VMRC
         payment_type: referral.referral_type === 'vmrc_client' ? 'vmrc' : 'private_pay',
         funding_source_id: referral.referral_type === 'vmrc_client',
-        funding_coordinator_name: referral.coordinator_name,
-        funding_coordinator_email: referral.coordinator_email,
+        funding_vmrc_coordinator_name: referral.vmrc_coordinator_name,
+        funding_vmrc_coordinator_email: referral.vmrc_coordinator_email,
         // Consent
         photo_video_permission: referral.photo_release === 'yes',
         signed_waiver: referral.liability_agreement,

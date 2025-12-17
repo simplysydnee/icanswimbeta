@@ -59,8 +59,8 @@ const referralFormSchema = z.object({
   other_therapies_description: z.string().optional(),
 
   // Section 6: Coordinator Information
-  coordinator_name: z.string().min(1, 'Coordinator name is required'),
-  coordinator_email: z.string().email('Valid coordinator email is required'),
+  vmrc_coordinator_name: z.string().min(1, 'Coordinator name is required'),
+  vmrc_coordinator_email: z.string().email('Valid coordinator email is required'),
   additional_info: z.string().optional(),
 });
 
@@ -102,8 +102,8 @@ type ApiReferralData = {
 
   // Section 4 - Coordinator & Additional Info
   referral_type: string; // Will be hardcoded as 'vmrc_client'
-  coordinator_name?: string;
-  coordinator_email?: string;
+  vmrc_coordinator_name?: string;
+  vmrc_coordinator_email?: string;
   coordinator_id?: string;
   photo_release: string; // Will be hardcoded as 'no'
   liability_agreement: boolean; // Will be hardcoded as false
@@ -141,16 +141,16 @@ export default function ReferralPage() {
       elopement_history: 'no',
       previous_swim_lessons: 'no',
       has_other_therapies: 'no',
-      coordinator_name: '', // Will be populated when user is logged in
-      coordinator_email: '', // Will be populated when user is logged in
+      vmrc_coordinator_name: '', // Will be populated when user is logged in
+      vmrc_coordinator_email: '', // Will be populated when user is logged in
     },
   });
 
   // Update form values with user info when user is logged in
   useEffect(() => {
     if (user) {
-      setValue('coordinator_name', user.fullName || '');
-      setValue('coordinator_email', user.email || '');
+      setValue('vmrc_coordinator_name', user.fullName || '');
+      setValue('vmrc_coordinator_email', user.email || '');
     }
   }, [user, setValue]);
 
@@ -248,8 +248,8 @@ export default function ReferralPage() {
 
         // Section 4 - Coordinator & Additional Info
         referral_type: 'vmrc_client', // Hardcoded as requested
-        coordinator_name: data.coordinator_name,
-        coordinator_email: data.coordinator_email,
+        vmrc_coordinator_name: data.vmrc_coordinator_name,
+        vmrc_coordinator_email: data.vmrc_coordinator_email,
         coordinator_id: user?.id, // Add coordinator ID from logged-in user
         photo_release: 'no', // Hardcoded as requested
         liability_agreement: false, // Hardcoded as requested
@@ -263,7 +263,7 @@ export default function ReferralPage() {
         parentEmail: data.parent_email,
         parentName: data.parent_name,
         childName: `${data.child_first_name} ${data.child_last_name}`,
-        coordinatorName: data.coordinator_name,
+        coordinatorName: data.vmrc_coordinator_name,
       });
 
       if (emailResult.success) {
@@ -856,32 +856,32 @@ export default function ReferralPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="coordinator_name">Coordinator Name *</Label>
+                    <Label htmlFor="vmrc_coordinator_name">Coordinator Name *</Label>
                     <Input
-                      id="coordinator_name"
-                      {...register('coordinator_name')}
+                      id="vmrc_coordinator_name"
+                      {...register('vmrc_coordinator_name')}
                       placeholder="Your full name"
                       readOnly
                       className="bg-gray-50"
                     />
                     <p className="text-xs text-gray-500 mt-1">Auto-filled from your account</p>
-                    {errors.coordinator_name && (
-                      <p className="text-sm text-red-600 mt-1">{errors.coordinator_name.message}</p>
+                    {errors.vmrc_coordinator_name && (
+                      <p className="text-sm text-red-600 mt-1">{errors.vmrc_coordinator_name.message}</p>
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="coordinator_email">Coordinator Email *</Label>
+                    <Label htmlFor="vmrc_coordinator_email">Coordinator Email *</Label>
                     <Input
-                      id="coordinator_email"
+                      id="vmrc_coordinator_email"
                       type="email"
-                      {...register('coordinator_email')}
+                      {...register('vmrc_coordinator_email')}
                       placeholder="coordinator@example.com"
                       readOnly
                       className="bg-gray-50"
                     />
                     <p className="text-xs text-gray-500 mt-1">Auto-filled from your account</p>
-                    {errors.coordinator_email && (
-                      <p className="text-sm text-red-600 mt-1">{errors.coordinator_email.message}</p>
+                    {errors.vmrc_coordinator_email && (
+                      <p className="text-sm text-red-600 mt-1">{errors.vmrc_coordinator_email.message}</p>
                     )}
                   </div>
                 </div>

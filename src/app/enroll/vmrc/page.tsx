@@ -21,8 +21,8 @@ const parentReferralSchema = z.object({
   parent_phone: z.string().optional(),
   child_name: z.string().min(1, "Child's name is required"),
   child_date_of_birth: z.string().optional(),
-  coordinator_name: z.string().min(1, 'Coordinator name is required'),
-  coordinator_email: z.string().email('Valid coordinator email is required'),
+  vmrc_coordinator_name: z.string().min(1, 'Coordinator name is required'),
+  vmrc_coordinator_email: z.string().email('Valid coordinator email is required'),
 });
 
 type ParentReferralFormData = z.infer<typeof parentReferralSchema>;
@@ -294,26 +294,26 @@ function ParentVMRCReferralContent() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="coordinator_name">Coordinator Name *</Label>
+                  <Label htmlFor="vmrc_coordinator_name">Coordinator Name *</Label>
                   <Input
-                    id="coordinator_name"
-                    {...register('coordinator_name')}
+                    id="vmrc_coordinator_name"
+                    {...register('vmrc_coordinator_name')}
                     placeholder="Coordinator's full name"
                   />
-                  {errors.coordinator_name && (
-                    <p className="text-sm text-red-600 mt-1">{errors.coordinator_name.message}</p>
+                  {errors.vmrc_coordinator_name && (
+                    <p className="text-sm text-red-600 mt-1">{errors.vmrc_coordinator_name.message}</p>
                   )}
                 </div>
                 <div>
-                  <Label htmlFor="coordinator_email">Coordinator Email *</Label>
+                  <Label htmlFor="vmrc_coordinator_email">Coordinator Email *</Label>
                   <Input
-                    id="coordinator_email"
+                    id="vmrc_coordinator_email"
                     type="email"
-                    {...register('coordinator_email')}
+                    {...register('vmrc_coordinator_email')}
                     placeholder="coordinator@example.com"
                   />
-                  {errors.coordinator_email && (
-                    <p className="text-sm text-red-600 mt-1">{errors.coordinator_email.message}</p>
+                  {errors.vmrc_coordinator_email && (
+                    <p className="text-sm text-red-600 mt-1">{errors.vmrc_coordinator_email.message}</p>
                   )}
                 </div>
               </div>

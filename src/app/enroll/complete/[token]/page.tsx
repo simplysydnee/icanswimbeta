@@ -24,7 +24,7 @@ interface ReferralData {
   child_date_of_birth: string
   parent_name: string
   parent_email: string
-  coordinator_name: string
+  vmrc_coordinator_name: string
   status: string
   parent_completed_at: string | null
 }
@@ -65,7 +65,7 @@ export default function ParentCompletionPage() {
       try {
         const { data, error } = await supabase
           .from('referral_requests')
-          .select('id, child_name, child_date_of_birth, parent_name, parent_email, coordinator_name, status, parent_completed_at')
+          .select('id, child_name, child_date_of_birth, parent_name, parent_email, vmrc_coordinator_name, status, parent_completed_at')
           .eq('parent_token', token)
           .single()
 
@@ -245,7 +245,7 @@ export default function ParentCompletionPage() {
               <ul className="space-y-1 text-gray-600">
                 <li>• Our team will review your enrollment</li>
                 <li>• Once approved, you&apos;ll receive an email to schedule {referral?.child_name}&apos;s swim assessment</li>
-                <li>• Your coordinator ({referral?.coordinator_name}) will be updated</li>
+                <li>• Your coordinator ({referral?.vmrc_coordinator_name}) will be updated</li>
               </ul>
               <p className="text-gray-600 mt-3">
                 This usually takes 2-3 business days.
@@ -298,7 +298,7 @@ export default function ParentCompletionPage() {
               </div>
               <div>
                 <p className="text-gray-500">Coordinator</p>
-                <p className="font-medium">{referral?.coordinator_name}</p>
+                <p className="font-medium">{referral?.vmrc_coordinator_name}</p>
               </div>
             </div>
           </CardContent>

@@ -70,8 +70,8 @@ interface Referral {
   parent_phone: string
 
   // Coordinator info
-  coordinator_name: string
-  coordinator_email: string
+  vmrc_coordinator_name: string
+  vmrc_coordinator_email: string
   coordinator_id?: string
   referral_type: string
 
@@ -226,8 +226,8 @@ function AdminReferralsContent() {
           swim_goals,
           availability,
           strengths_interests,
-          coordinator_name,
-          coordinator_email,
+          vmrc_coordinator_name,
+          vmrc_coordinator_email,
           referral_type,
           liability_waiver_signed,
           cancellation_policy_signed,
@@ -315,7 +315,7 @@ function AdminReferralsContent() {
         r.child_name?.toLowerCase().includes(query) ||
         r.parent_name?.toLowerCase().includes(query) ||
         r.parent_email?.toLowerCase().includes(query) ||
-        r.coordinator_name?.toLowerCase().includes(query)
+        r.vmrc_coordinator_name?.toLowerCase().includes(query)
       )
       if (!matchesSearch) return false
     }
@@ -399,8 +399,8 @@ function AdminReferralsContent() {
           // Funding source info - check if referral has funding_source_id
           payment_type: 'funding_source',
           coordinator_id: referral.coordinator_id,
-          coordinator_name: referral.coordinator_name,
-          coordinator_email: referral.coordinator_email,
+          vmrc_coordinator_name: referral.vmrc_coordinator_name,
+          vmrc_coordinator_email: referral.vmrc_coordinator_email,
 
           // Signatures - match swimmers table schema
           signed_waiver: referral.liability_waiver_signed, // Use signed_waiver instead of signed_liability
@@ -764,7 +764,7 @@ function AdminReferralsContent() {
                           <p className="text-sm text-gray-500">{referral.parent_email}</p>
                         </div>
                       </TableCell>
-                      <TableCell>{referral.coordinator_name}</TableCell>
+                      <TableCell>{referral.vmrc_coordinator_name}</TableCell>
                       <TableCell>
                         {format(new Date(referral.created_at), 'MMM d, yyyy')}
                       </TableCell>
@@ -1035,11 +1035,11 @@ function AdminReferralsContent() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500">Name</p>
-                      <p className="font-medium">{selectedReferral.coordinator_name}</p>
+                      <p className="font-medium">{selectedReferral.vmrc_coordinator_name}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">Email</p>
-                      <p className="font-medium">{selectedReferral.coordinator_email}</p>
+                      <p className="font-medium">{selectedReferral.vmrc_coordinator_email}</p>
                     </div>
                   </div>
                 </div>

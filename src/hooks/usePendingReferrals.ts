@@ -8,7 +8,7 @@ interface PendingReferral {
   id: string
   parent_token: string
   child_name: string
-  coordinator_name: string
+  vmrc_coordinator_name: string
   created_at: string
 }
 
@@ -28,7 +28,7 @@ export function usePendingReferrals() {
       try {
         const { data, error } = await supabase
           .from('referral_requests')
-          .select('id, parent_token, child_name, coordinator_name, created_at')
+          .select('id, parent_token, child_name, vmrc_coordinator_name, created_at')
           .eq('parent_email', user.email)
           .eq('status', 'pending_parent')
           .is('parent_completed_at', null)

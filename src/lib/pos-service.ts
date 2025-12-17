@@ -39,17 +39,17 @@ export async function createAssessmentPOSPair(
   // Get coordinator info from swimmer
   const { data: swimmer } = await supabase
     .from('swimmers')
-    .select('funding_coordinator_name, funding_coordinator_email')
+    .select('funding_vmrc_coordinator_name, funding_vmrc_coordinator_email')
     .eq('id', swimmerId)
     .single();
 
   // Get coordinator user ID if they exist in our system
   let coordinatorId = null;
-  if (swimmer?.funding_coordinator_email) {
+  if (swimmer?.funding_vmrc_coordinator_email) {
     const { data: coordinator } = await supabase
       .from('profiles')
       .select('id')
-      .eq('email', swimmer.funding_coordinator_email)
+      .eq('email', swimmer.funding_vmrc_coordinator_email)
       .single();
     coordinatorId = coordinator?.id;
   }
@@ -136,7 +136,7 @@ export async function createRenewalPOS(
   // Get current PO details
   const { data: currentPO, error: fetchError } = await supabase
     .from('purchase_orders')
-    .select('*, swimmer:swimmers(funding_coordinator_email)')
+    .select('*, swimmer:swimmers(funding_vmrc_coordinator_email)')
     .eq('id', currentPOId)
     .single();
 

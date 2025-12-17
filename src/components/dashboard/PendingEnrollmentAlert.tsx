@@ -50,7 +50,7 @@ export function PendingEnrollmentAlert() {
 
           <AlertDescription className="mt-2">
             <p className="text-gray-700 mb-3">
-              {referral.coordinator_name} has submitted a VMRC referral for {referral.child_name}.
+              {referral.vmrc_coordinator_name} has submitted a VMRC referral for {referral.child_name}.
               Please complete the enrollment form to proceed with swim lessons.
             </p>
 
