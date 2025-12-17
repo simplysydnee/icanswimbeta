@@ -30,8 +30,8 @@ export function SessionGeneratorForm() {
   const [endDate, setEndDate] = useState<Date>();
   const [repeatDay, setRepeatDay] = useState<number>(1); // Monday default
   const [blackoutDates, setBlackoutDates] = useState<Date[]>([]);
-  const [startTime, setStartTime] = useState<string>('15:00'); // 3 PM default
-  const [endTime, setEndTime] = useState<string>('18:00'); // 6 PM default
+  const [startTime, setStartTime] = useState<string>('14:00'); // 2 PM default
+  const [endTime, setEndTime] = useState<string>('17:00'); // 5 PM default
   const [durationMinutes, setDurationMinutes] = useState<30 | 45>(30);
   const [breaks, setBreaks] = useState<Break[]>([]);
   const [instructorIds, setInstructorIds] = useState<string[]>([]);
@@ -47,8 +47,8 @@ export function SessionGeneratorForm() {
     setEndDate(undefined);
     setRepeatDay(1);
     setBlackoutDates([]);
-    setStartTime('15:00');
-    setEndTime('18:00');
+    setStartTime('14:00');
+    setEndTime('17:00');
     setDurationMinutes(30);
     setBreaks([]);
     setInstructorIds([]);

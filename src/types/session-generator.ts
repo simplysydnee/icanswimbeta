@@ -113,11 +113,12 @@ export interface TimeSlot {
   label: string;  // 12-hour format: "3:00 PM"
 }
 
-// Generate time slots from 6 AM to 9 PM in 30-min increments
+// Generate time slots from 8 AM to 7 PM in 15-min increments
 export const generateTimeSlots = (): TimeSlot[] => {
   const slots: TimeSlot[] = [];
-  for (let hour = 6; hour <= 21; hour++) {
-    for (let min = 0; min < 60; min += 30) {
+  for (let hour = 8; hour <= 19; hour++) { // 8am to 7pm
+    for (let min = 0; min < 60; min += 15) {
+      if (hour === 19 && min > 0) break; // Stop at 7:00 PM (no 7:15, 7:30, 7:45)
       const h24 = hour.toString().padStart(2, '0');
       const m = min.toString().padStart(2, '0');
       const value = `${h24}:${m}`;

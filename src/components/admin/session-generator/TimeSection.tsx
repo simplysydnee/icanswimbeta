@@ -29,8 +29,8 @@ const generateBreakEndOptions = (breakStartTime: string, dayEndTime: string): Ar
   const [endHour, endMin] = dayEndTime.split(':').map(Number);
   const endMinutes = endHour * 60 + endMin;
 
-  // Generate 5-minute increments for up to 1 hour, but don't exceed day end
-  for (let i = 5; i <= 60; i += 5) {
+  // Generate 15-minute increments for up to 1 hour, but don't exceed day end
+  for (let i = 15; i <= 60; i += 15) {
     const totalMinutes = startMinutes + i;
     if (totalMinutes > 24 * 60) break; // Don't go past midnight
     if (totalMinutes > endMinutes) break; // Don't exceed day end time
