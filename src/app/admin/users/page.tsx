@@ -60,14 +60,46 @@ export default function UsersPage() {
     const supabase = createClient();
 
     try {
-      const [usersRes, swimmersRes] = await Promise.all([
-        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-        supabase.from('swimmers').select('id, first_name, last_name, parent_id, coordinator_id, vmrc_coordinator_email')
-      ]);
+      // Fetch profiles with roles from user_roles table
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          email,
+          full_name,
+          phone,
+          created_at,
+          updated_at
+        `)
+        .order('created_at', { ascending: false });
 
-      if (usersRes.error) throw usersRes.error;
-      setUsers(usersRes.data || []);
-      setAllSwimmers(swimmersRes.data || []);
+      if (profilesError) throw profilesError;
+
+      // Fetch roles separately
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      if (rolesError) throw rolesError;
+
+      // Fetch swimmers
+      const { data: swimmersData, error: swimmersError } = await supabase
+        .from('swimmers')
+        .select('id, first_name, last_name, parent_id, coordinator_id, vmrc_coordinator_email');
+
+      if (swimmersError) throw swimmersError;
+
+      // Merge profiles with roles
+      const usersWithRoles = (profilesData || []).map(profile => {
+        const userRole = rolesData?.find(r => r.user_id === profile.id);
+        return {
+          ...profile,
+          role: userRole?.role || 'parent', // Default to parent if no role
+        };
+      });
+
+      setUsers(usersWithRoles);
+      setAllSwimmers(swimmersData || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -108,17 +140,26 @@ export default function UsersPage() {
       }
 
       // Create profile
-      const { error } = await supabase
+      const { error: profileError } = await supabase
         .from('profiles')
         .insert({
           id: userId,
           email: newUser.email,
           full_name: newUser.full_name || null,
           phone: newUser.phone || null,
-          role: newUser.role
         });
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Create role in user_roles table
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: newUser.role,
+        });
+
+      if (roleError) throw roleError;
 
       await fetchUsers();
       setAddDialogOpen(false);
@@ -139,16 +180,40 @@ export default function UsersPage() {
     const supabase = createClient();
 
     try {
-      const { error } = await supabase
+      // Update profile information
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           full_name: newUser.full_name || null,
           phone: newUser.phone || null,
-          role: newUser.role
         })
         .eq('id', selectedUser.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Check if user has a role entry
+      const { data: existingRole } = await supabase
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', selectedUser.id)
+        .single();
+
+      if (existingRole) {
+        // Update existing role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .update({ role: newUser.role })
+          .eq('user_id', selectedUser.id);
+
+        if (roleError) throw roleError;
+      } else {
+        // Insert new role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({ user_id: selectedUser.id, role: newUser.role });
+
+        if (roleError) throw roleError;
+      }
 
       await fetchUsers();
       setEditDialogOpen(false);
@@ -253,10 +318,20 @@ export default function UsersPage() {
             id: newId,
             email: newCoordinatorEmail.toLowerCase(),
             full_name: newCoordinatorName || null,
-            role: 'vmrc_coordinator',
           });
 
         if (createError) throw createError;
+
+        // Create role in user_roles table
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: newId,
+            role: 'vmrc_coordinator',
+          });
+
+        if (roleError) throw roleError;
+
         coordinatorId = newId;
         isNewCoordinator = true;
       }
