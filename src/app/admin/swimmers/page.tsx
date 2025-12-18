@@ -5,6 +5,7 @@ import { SwimmerManagementTable } from '@/components/swimmers/SwimmerManagementT
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Download, Filter, BarChart3, Clock, UserCheck, UserX, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useSwimmerMetrics } from '@/hooks/useSwimmerMetrics';
 
 export default function AdminSwimmersPage() {
@@ -44,7 +45,7 @@ export default function AdminSwimmersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {isLoading ? '...' : error ? 'Error' : metrics?.totalSwimmers.toLocaleString()}
+                {isLoading ? <Skeleton className="h-8 w-16" /> : error ? 'Error' : metrics?.totalSwimmers.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
                 All clients
@@ -60,10 +61,10 @@ export default function AdminSwimmersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {isLoading ? '...' : error ? 'Error' : metrics?.waitlistedSwimmers.toLocaleString()}
+                {isLoading ? <Skeleton className="h-8 w-16" /> : error ? 'Error' : metrics?.waitlistedSwimmers.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                {isLoading || error ? '' : `${Math.round((metrics!.waitlistedSwimmers / metrics!.totalSwimmers) * 100)}% of total`}
+                {isLoading || error ? <Skeleton className="h-4 w-20" /> : `${Math.round((metrics!.waitlistedSwimmers / metrics!.totalSwimmers) * 100)}% of total`}
               </div>
             </CardContent>
           </Card>
@@ -76,10 +77,10 @@ export default function AdminSwimmersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {isLoading ? '...' : error ? 'Error' : metrics?.activeEnrolledSwimmers.toLocaleString()}
+                {isLoading ? <Skeleton className="h-8 w-16" /> : error ? 'Error' : metrics?.activeEnrolledSwimmers.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                {isLoading || error ? '' : `${Math.round((metrics!.activeEnrolledSwimmers / metrics!.totalSwimmers) * 100)}% of total`}
+                {isLoading || error ? <Skeleton className="h-4 w-20" /> : `${Math.round((metrics!.activeEnrolledSwimmers / metrics!.totalSwimmers) * 100)}% of total`}
               </div>
             </CardContent>
           </Card>
@@ -92,7 +93,7 @@ export default function AdminSwimmersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {isLoading ? '...' : error ? 'Error' : metrics?.averageLessons.toFixed(1)}
+                {isLoading ? <Skeleton className="h-8 w-16" /> : error ? 'Error' : metrics?.averageLessons.toFixed(1)}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
                 per swimmer

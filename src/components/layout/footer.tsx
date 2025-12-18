@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Phone, Mail, MapPin, Facebook, Instagram } from 'lucide-react';
 
 export function Footer() {
@@ -9,9 +10,11 @@ export function Footer() {
           {/* Brand Section */}
           <div className="lg:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <img
+              <Image
                 src="/images/logo-header.svg"
                 alt="I Can Swim"
+                width={48}
+                height={48}
                 className="h-12 w-auto"
               />
             </div>

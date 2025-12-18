@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import Image from 'next/image';
 import { differenceInYears, parseISO } from 'date-fns';
 import { StatusBadge, getStatusOptions } from './StatusBadge';
 import { SwimmerDetailModal } from './SwimmerDetailModal';
@@ -536,10 +537,13 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       {swimmer.photoUrl ? (
-                        <img
+                        <Image
                           src={swimmer.photoUrl}
                           alt={swimmer.firstName}
-                          className="h-10 w-10 rounded-full object-cover"
+                          width={40}
+                          height={40}
+                          className="rounded-full object-cover"
+                          unoptimized
                         />
                       ) : (
                         <div className="h-10 w-10 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 font-medium text-sm">

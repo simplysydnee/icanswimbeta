@@ -66,6 +66,7 @@ export function AdminSidebar() {
             size="icon"
             onClick={() => setCollapsed(false)}
             className="h-10 w-10"
+            aria-label="Expand sidebar"
           >
             <Menu className="h-5 w-5 text-cyan-600" />
           </Button>
@@ -82,6 +83,7 @@ export function AdminSidebar() {
               size="icon"
               onClick={() => setCollapsed(true)}
               className="h-8 w-8"
+              aria-label="Collapse sidebar"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>

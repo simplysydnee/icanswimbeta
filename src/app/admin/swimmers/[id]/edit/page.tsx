@@ -82,7 +82,7 @@ export default function EditSwimmerPage() {
       <div className="p-6 max-w-4xl mx-auto">
         <div className="flex items-center gap-4 mb-6">
           <Link href={`/admin/swimmers/${swimmerId}`}>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" aria-label="Go back">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>

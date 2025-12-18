@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Calendar,
   Users,
@@ -16,6 +17,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { format } from 'date-fns';
 
 interface Session {
@@ -144,8 +146,52 @@ export default function InstructorDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="h-8 w-8 animate-spin text-cyan-600" />
+      <div className="p-6 space-y-6">
+        {/* Header skeleton */}
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-5 w-48" />
+        </div>
+
+        {/* Stats cards skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-8 w-16" />
+                  </div>
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Schedule skeleton */}
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-4 rounded-lg border bg-gray-50">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-4">
+                    <Skeleton className="h-10 w-10 rounded-lg" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-5 w-32" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-8 w-24 rounded" />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -283,10 +329,13 @@ export default function InstructorDashboard() {
                               {confirmedBookings.map((booking) => (
                                 <div key={booking.id} className="flex items-center gap-2">
                                   {booking.swimmer.photo_url ? (
-                                    <img
+                                    <Image
                                       src={booking.swimmer.photo_url}
                                       alt={booking.swimmer.first_name}
-                                      className="h-8 w-8 rounded-full object-cover"
+                                      width={32}
+                                      height={32}
+                                      className="rounded-full object-cover"
+                                      unoptimized
                                     />
                                   ) : (
                                     <div className="h-8 w-8 rounded-full bg-cyan-100 flex items-center justify-center text-xs font-medium text-cyan-700">

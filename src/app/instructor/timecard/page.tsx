@@ -207,13 +207,13 @@ export default function TimecardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={goToPreviousWeek}>
+          <Button variant="outline" size="icon" onClick={goToPreviousWeek} aria-label="Previous week">
             <Calendar className="h-4 w-4" />
           </Button>
           <Button variant="outline" onClick={goToCurrentWeek}>
             This Week
           </Button>
-          <Button variant="outline" size="icon" onClick={goToNextWeek}>
+          <Button variant="outline" size="icon" onClick={goToNextWeek} aria-label="Next week">
             <Calendar className="h-4 w-4" />
           </Button>
         </div>

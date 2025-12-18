@@ -56,6 +56,7 @@ export function InstructorSidebar() {
           size="icon"
           onClick={() => setCollapsed(!collapsed)}
           className="ml-auto"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>

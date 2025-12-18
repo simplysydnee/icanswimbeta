@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
   Dialog,
   DialogContent,
@@ -188,10 +189,13 @@ export function SwimmerDetailModal({
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
               {swimmer.photoUrl ? (
-                <img
+                <Image
                   src={swimmer.photoUrl}
                   alt={swimmer.fullName}
-                  className="h-20 w-20 rounded-full object-cover border-4 border-white/30"
+                  width={80}
+                  height={80}
+                  className="rounded-full object-cover border-4 border-white/30"
+                  unoptimized
                 />
               ) : (
                 <div className="h-20 w-20 rounded-full bg-white/20 flex items-center justify-center border-4 border-white/30">

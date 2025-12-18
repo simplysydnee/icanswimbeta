@@ -1,6 +1,7 @@
 'use client';
 
 import { Check, User } from 'lucide-react';
+import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from './StatusBadge';
 import type { Swimmer } from '@/types/booking';
@@ -32,10 +33,13 @@ export function SwimmerCard({ swimmer, isSelected, disabled, onClick }: SwimmerC
       {/* Avatar */}
       <div className="relative flex-shrink-0">
         {swimmer.photoUrl ? (
-          <img
+          <Image
             src={swimmer.photoUrl}
             alt={`${swimmer.firstName} ${swimmer.lastName}`}
-            className="h-12 w-12 rounded-full object-cover"
+            width={48}
+            height={48}
+            className="rounded-full object-cover"
+            unoptimized
           />
         ) : (
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
