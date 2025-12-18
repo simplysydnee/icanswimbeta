@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { DollarSign, Building2, Award as AwardIcon, HelpCircle } from 'lucide-react';
@@ -136,7 +137,7 @@ interface StatusBadgeProps {
 
 export function StatusBadge({ type, value, className, showIcon = true, size }: StatusBadgeProps) {
   // Get the appropriate configuration based on type
-  let config: Record<string, { label: string; bg: string; text: string; border: string; icon?: any; size?: string }>;
+  let config: Record<string, { label: string; bg: string; text: string; border: string; icon?: React.ComponentType<{ className?: string }>; size?: string }>;
   let defaultConfig = {
     label: value,
     bg: 'bg-gray-100',
@@ -165,7 +166,7 @@ export function StatusBadge({ type, value, className, showIcon = true, size }: S
   const statusConfig = config[value] || defaultConfig;
 
   // Determine badge size
-  const badgeSize = size || (statusConfig as any).size || 'default';
+  const badgeSize = size || statusConfig.size || 'default';
   const sizeClasses = {
     small: 'px-1.5 py-0.5 text-xs',
     default: 'px-2.5 py-1 text-xs',
@@ -173,7 +174,7 @@ export function StatusBadge({ type, value, className, showIcon = true, size }: S
   };
 
   // Get icon if available and showIcon is true
-  const IconComponent = showIcon && (statusConfig as any).icon ? (statusConfig as any).icon : null;
+  const IconComponent = showIcon && statusConfig.icon ? statusConfig.icon : null;
 
   return (
     <Badge

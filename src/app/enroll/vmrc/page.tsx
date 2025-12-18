@@ -92,7 +92,7 @@ function ParentVMRCReferralContent() {
         success: true,
         message: 'Referral request submitted successfully! Your coordinator will be in touch soon.',
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error submitting referral request:', error);
       console.error('Error message:', error?.message);
       console.error('Error details:', error?.details);

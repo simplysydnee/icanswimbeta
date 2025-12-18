@@ -196,7 +196,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
       toast({ title: 'Error', description: 'Failed to load sessions', variant: 'destructive' })
       console.error(error)
     } else if (data) {
-      const formatted: Session[] = data.map((s: any) => {
+      const formatted: Session[] = data.map((s) => {
         // Handle instructor data which might be an array or object
         const instructor = Array.isArray(s.instructor) ? s.instructor[0] : s.instructor
         const bookings = s.bookings || []

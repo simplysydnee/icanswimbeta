@@ -146,12 +146,12 @@ export default function SwimmerDetailPage() {
 
         // Transform swimmer data
         const transformedSwimmer = {
-          ...(swimmerData as any),
+          ...swimmerData,
           lessons_completed: completedCount || 0
         }
 
         // Transform bookings data to match the Booking interface
-        const transformedBookings: Booking[] = (bookingsData || []).map((rawBooking: any) => ({
+        const transformedBookings: Booking[] = (bookingsData || []).map((rawBooking) => ({
           id: rawBooking.id,
           session: {
             id: rawBooking.session[0]?.id || '',

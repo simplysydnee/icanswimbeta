@@ -74,7 +74,7 @@ export default function SwimmersPage() {
         const data = await response.json()
 
         // Transform API response to match SwimmerCard interface
-        const transformedData = data.map((swimmer: any) => ({
+        const transformedData = data.map((swimmer) => ({
           id: swimmer.id,
           first_name: swimmer.firstName,
           last_name: swimmer.lastName,
@@ -149,7 +149,7 @@ export default function SwimmersPage() {
           if (error) throw error
 
           // Add parent contact info to each swimmer
-          const swimmersWithParentInfo = (data || []).map((swimmer: any) => ({
+          const swimmersWithParentInfo = (data || []).map((swimmer) => ({
             ...swimmer,
             parent_phone: parentPhone,
             parent_email: parentEmail

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,7 +56,7 @@ export default function UsersPage() {
     role: 'parent' as 'parent' | 'instructor' | 'admin' | 'coordinator'
   });
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     const supabase = createClient();
 
@@ -141,11 +141,11 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   const handleAddUser = async () => {
     if (!newUser.email) return;
@@ -634,7 +634,7 @@ export default function UsersPage() {
 
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
-              <Select value={newUser.role} onValueChange={(value: any) => setNewUser({ ...newUser, role: value })}>
+              <Select value={newUser.role} onValueChange={(value: string) => setNewUser({ ...newUser, role: value as 'parent' | 'instructor' | 'admin' | 'coordinator' })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
@@ -698,7 +698,7 @@ export default function UsersPage() {
 
             <div className="space-y-2">
               <Label htmlFor="editRole">Role</Label>
-              <Select value={newUser.role} onValueChange={(value: any) => setNewUser({ ...newUser, role: value })}>
+              <Select value={newUser.role} onValueChange={(value: string) => setNewUser({ ...newUser, role: value as 'parent' | 'instructor' | 'admin' | 'coordinator' })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>

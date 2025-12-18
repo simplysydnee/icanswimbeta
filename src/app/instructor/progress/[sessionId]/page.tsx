@@ -39,7 +39,7 @@ function SessionProgressContent() {
       }
 
       const sessionData = await sessionResponse.json();
-      const currentSession = sessionData.sessions.find((s: any) => s.id === sessionId && s.bookingId === bookingId);
+      const currentSession = sessionData.sessions.find((s) => s.id === sessionId && s.bookingId === bookingId);
 
       if (!currentSession) {
         throw new Error('Session not found');
