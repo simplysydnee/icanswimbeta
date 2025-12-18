@@ -524,3 +524,38 @@ export const SESSION_STATUSES = {
 ```
 
 This foundation is customized for I Can Swim's specific needs while maintaining the Vibin Coders SaaS Accelerator's best practices and architecture.
+
+## Development Best Practices
+
+For detailed React, Next.js, and TypeScript best practices, see [BEST_PRACTICES.md](./BEST_PRACTICES.md) in the project root. Key areas covered:
+
+### Critical Rules
+- Never remove functionality when refactoring
+- Proper useEffect dependencies
+- No 'any' types
+- Next.js Image component usage
+- Loading states with skeletons
+- Accessibility requirements
+
+### Component Structure
+- Maximum component size limits
+- Component splitting patterns
+- File naming conventions
+
+### Security & Performance
+- Server-side validation
+- SQL injection prevention
+- Image optimization
+- Bundle size optimization
+
+### Testing Requirements
+- Component testing patterns
+- E2E testing with Playwright
+- Accessibility testing
+
+### Code Review Checklists
+- Before submitting PR checklist
+- Performance checklist
+- Security checklist
+
+Refer to BEST_PRACTICES.md for complete guidelines and examples.
