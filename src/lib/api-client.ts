@@ -4,6 +4,7 @@ import {
   GenerateSessionsResponse,
   GenerateSessionsRequestSchema
 } from '@/types/session-generator';
+import type { Swimmer } from '@/types/booking';
 
 export interface AssessmentSession {
   id: string;
@@ -380,7 +381,7 @@ export class ApiClient {
     // Note: parent_phone might be passed from form but not stored in table
   }): Promise<ParentReferralRequest> {
     // Filter out any extra fields not in the table (like parent_phone)
-    const { parent_phone, child_date_of_birth, coordinator_id, ...insertData } = data as any; // eslint-disable-line @typescript-eslint/no-unused-vars
+    const { parent_phone, child_date_of_birth, coordinator_id, ...insertData } = data;
 
     // Look up coordinator by email if coordinator_id not provided
     let finalCoordinatorId = coordinator_id;
@@ -403,7 +404,7 @@ export class ApiClient {
     }
 
     // Prepare insert data
-    const insertPayload: any = {
+    const insertPayload = {
       ...insertData,
       coordinator_id: finalCoordinatorId,
       status: 'pending',
@@ -546,7 +547,7 @@ export class ApiClient {
     referralId: string,
     adminId: string,
     notes?: string
-  ): Promise<{ referral: VmrcReferralRequest; swimmer: any }> {
+  ): Promise<{ referral: VmrcReferralRequest; swimmer: Swimmer }> {
     const referral = await this.getVmrcReferralById(referralId);
 
     // Parse name

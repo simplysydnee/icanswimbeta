@@ -7,9 +7,27 @@ interface CreateAssessmentPOSParams {
   coordinatorEmail?: string;
 }
 
+interface PurchaseOrder {
+  id: string;
+  swimmer_id: string;
+  funding_source_id: string;
+  coordinator_id: string | null;
+  po_type: 'assessment' | 'lessons';
+  sub_code: string | null;
+  sessions_authorized: number;
+  sessions_booked: number;
+  sessions_used: number;
+  start_date: string;
+  end_date: string;
+  status: string;
+  notes: string | null;
+  parent_po_id: string | null;
+  created_at: string;
+}
+
 interface POSResult {
-  assessmentPO: any;
-  lessonsPO: any;
+  assessmentPO: PurchaseOrder;
+  lessonsPO: PurchaseOrder;
 }
 
 /**
@@ -130,7 +148,7 @@ function calculateFallbackEndDate(startDate: Date): string {
 export async function createRenewalPOS(
   currentPOId: string,
   lesson12Date: string
-): Promise<any> {
+): Promise<PurchaseOrder> {
   const supabase = await createClient();
 
   // Get current PO details
@@ -191,7 +209,7 @@ export async function createRenewalPOS(
 export async function checkAndTriggerRenewal(
   swimmerId: string,
   lesson12Date: string
-): Promise<any | null> {
+): Promise<PurchaseOrder | null> {
   const supabase = await createClient();
 
   // Find active lessons PO for this swimmer

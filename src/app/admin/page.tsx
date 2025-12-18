@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -72,15 +72,7 @@ export default function AdminDashboard() {
   const [todaysSessions, setTodaysSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (role && role !== 'admin') {
-      router.push('/dashboard');
-    } else if (user) {
-      fetchStats();
-    }
-  }, [role, user]);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     setLoading(true);
     const supabase = createClient();
 
@@ -158,7 +150,15 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (role && role !== 'admin') {
+      router.push('/dashboard');
+    } else if (user) {
+      fetchStats();
+    }
+  }, [role, user, fetchStats, router]);
 
   const pendingCount = (stats?.pendingReferrals || 0) + (stats?.pendingPOs || 0) + (stats?.sessionsNeedingProgress || 0);
 
@@ -472,7 +472,7 @@ export default function AdminDashboard() {
                       </p>
                       {session.bookings && session.bookings.length > 0 && (
                         <p className="text-xs text-muted-foreground">
-                          {session.bookings.map((b: any) => b.swimmer?.first_name).filter(Boolean).join(', ')}
+                          {session.bookings.map((b) => b.swimmer?.first_name).filter(Boolean).join(', ')}
                         </p>
                       )}
                     </div>
