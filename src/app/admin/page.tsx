@@ -43,6 +43,8 @@ interface DashboardStats {
   pendingReferrals: number;
   pendingPOs: number;
   sessionsNeedingProgress: number;
+  privatePayRevenue: number;
+  fundedRevenue: number;
 }
 
 interface Session {
@@ -133,6 +135,32 @@ export default function AdminDashboard() {
         return isPastOrCurrent && !hasProgressNote && s.bookings?.length > 0;
       }).length || 0;
 
+      // Get revenue this month from bookings
+      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+
+      const { data: revenueBookings } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          status,
+          swimmer:swimmers(payment_type),
+          session:sessions(price_cents)
+        `)
+        .gte('created_at', startOfMonth)
+        .in('status', ['confirmed', 'completed']);
+
+      let privatePayRevenue = 0;
+      let fundedRevenue = 0;
+
+      revenueBookings?.forEach(booking => {
+        const price = booking.session?.price_cents || 7500; // Default $75
+        if (booking.swimmer?.payment_type === 'private_pay') {
+          privatePayRevenue += price;
+        } else {
+          fundedRevenue += price;
+        }
+      });
+
       setTodaysSessions(sessions || []);
       setStats({
         totalSwimmers: swimmerList.length,
@@ -143,7 +171,9 @@ export default function AdminDashboard() {
         sessionsToday: sessions?.length || 0,
         pendingReferrals: 0, // Placeholder - referral_requests table might not exist
         pendingPOs: pos?.length || 0,
-        sessionsNeedingProgress
+        sessionsNeedingProgress,
+        privatePayRevenue,
+        fundedRevenue
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -161,6 +191,13 @@ export default function AdminDashboard() {
   }, [role, user, fetchStats, router]);
 
   const pendingCount = (stats?.pendingReferrals || 0) + (stats?.pendingPOs || 0) + (stats?.sessionsNeedingProgress || 0);
+
+  const formatCurrency = (cents: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(cents / 100);
+  };
 
   if (loading) {
     return (
@@ -296,6 +333,57 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </Link>
+      </div>
+
+      {/* Revenue Breakdown Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <CreditCard className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Private Pay Revenue</p>
+                <p className="text-xl font-bold text-emerald-600">
+                  {formatCurrency(stats?.privatePayRevenue || 0)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Building2 className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Funded (Billed)</p>
+                <p className="text-xl font-bold text-blue-600">
+                  {formatCurrency(stats?.fundedRevenue || 0)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-200 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-green-700" />
+              </div>
+              <div>
+                <p className="text-sm text-green-700">Total Combined</p>
+                <p className="text-xl font-bold text-green-700">
+                  {formatCurrency((stats?.privatePayRevenue || 0) + (stats?.fundedRevenue || 0))}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Content - Two Columns */}
