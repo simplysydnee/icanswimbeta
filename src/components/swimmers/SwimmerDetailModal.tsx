@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { StatusBadge } from './StatusBadge';
 import { format } from 'date-fns';
 import { parseISO } from 'date-fns';
@@ -188,12 +187,19 @@ export function SwimmerDetailModal({
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={swimmer.photoUrl} alt={swimmer.fullName} />
-                <AvatarFallback className="bg-blue-100 text-blue-600 text-xl">
-                  {getInitials(swimmer.firstName, swimmer.lastName)}
-                </AvatarFallback>
-              </Avatar>
+              {swimmer.photoUrl ? (
+                <img
+                  src={swimmer.photoUrl}
+                  alt={swimmer.fullName}
+                  className="h-20 w-20 rounded-full object-cover border-4 border-white/30"
+                />
+              ) : (
+                <div className="h-20 w-20 rounded-full bg-white/20 flex items-center justify-center border-4 border-white/30">
+                  <span className="text-2xl font-bold text-white">
+                    {getInitials(swimmer.firstName, swimmer.lastName)}
+                  </span>
+                </div>
+              )}
               <div>
                 <DialogTitle className="text-2xl font-bold">{swimmer.fullName}</DialogTitle>
                 <div className="flex items-center gap-2 mt-1">

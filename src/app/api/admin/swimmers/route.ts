@@ -143,6 +143,7 @@ export async function GET(request: Request) {
         vmrc_sessions_authorized,
         vmrc_current_pos_number,
         vmrc_pos_expires_at,
+        photo_url,
         created_at,
         updated_at,
         parent:profiles!swimmers_parent_id_fkey(
@@ -264,7 +265,7 @@ export async function GET(request: Request) {
         fundingSourceName: swimmer.payment_type === 'vmrc' ? 'VMRC' :
                           swimmer.payment_type === 'private_pay' ? 'Private Pay' :
                           swimmer.payment_type === 'scholarship' ? 'Scholarship' : 'Other',
-        photoUrl: null, // No photo_url in schema
+        photoUrl: swimmer.photo_url,
         fundingSourceSessionsUsed: swimmer.vmrc_sessions_used || 0,
         fundingSourceSessionsAuthorized: swimmer.vmrc_sessions_authorized || 0,
         fundingSourceCurrentPosNumber: swimmer.vmrc_current_pos_number,
