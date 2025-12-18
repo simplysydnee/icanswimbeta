@@ -65,6 +65,7 @@ import {
   Building2,
   DollarSign,
   HelpCircle,
+  Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -1100,21 +1101,41 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
 
                   {/* Actions */}
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
+                    <div className="flex items-center gap-1">
+                      {/* Edit Button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        title="Edit Swimmer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (role === 'instructor') {
+                            router.push(`/instructor/swimmers/${swimmer.id}/edit`);
+                          } else {
+                            router.push(`/admin/swimmers/${swimmer.id}/edit`);
+                          }
+                        }}
+                      >
+                        <EditIcon className="h-4 w-4" />
+                      </Button>
 
-                        {/* Common actions */}
-                        <DropdownMenuItem onClick={() => handleRowClick(swimmer)}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
+                      {/* Actions Menu */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+
+                          {/* Common actions */}
+                          <DropdownMenuItem onClick={() => handleRowClick(swimmer)}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
 
                         {role === 'admin' ? (
                           <>
@@ -1131,33 +1152,34 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
                                 <DropdownMenuSeparator />
                               </>
                             )}
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push(`/admin/swimmers/${swimmer.id}/edit`)}>
                               <Edit className="h-4 w-4 mr-2" />
                               Edit Swimmer
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Award className="h-4 w-4 mr-2" />
+                            <DropdownMenuItem onClick={() => router.push(`/admin/swimmers/${swimmer.id}?tab=progress`)}>
+                              <Activity className="h-4 w-4 mr-2" />
                               View Progress
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push(`/booking?swimmer=${swimmer.id}`)}>
                               <Calendar className="h-4 w-4 mr-2" />
                               Book Session
                             </DropdownMenuItem>
                           </>
                         ) : (
                           <>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push(`/instructor/progress?swimmer=${swimmer.id}`)}>
                               <FileText className="h-4 w-4 mr-2" />
                               Add Progress Note
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <BookOpen className="h-4 w-4 mr-2" />
+                            <DropdownMenuItem onClick={() => router.push(`/instructor/swimmers/${swimmer.id}?tab=progress`)}>
+                              <Activity className="h-4 w-4 mr-2" />
                               View Progress
                             </DropdownMenuItem>
                           </>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>
+                    </div>
                   </TableCell>
 
                   {/* Expand Icon */}
