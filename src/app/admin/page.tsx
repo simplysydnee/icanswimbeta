@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Users,
   Calendar,
@@ -28,7 +29,7 @@ import {
   ClipboardList,
   UserCog
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, startOfDay, endOfDay } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 
 interface DashboardStats {
@@ -40,12 +41,34 @@ interface DashboardStats {
   sessionsToday: number;
   pendingReferrals: number;
   pendingPOs: number;
+  sessionsNeedingProgress: number;
+}
+
+interface Session {
+  id: string;
+  start_time: string;
+  end_time: string;
+  location: string | null;
+  status: string;
+  instructor: {
+    full_name: string | null;
+  } | null;
+  bookings: Array<{
+    id: string;
+    swimmer: {
+      id: string;
+      first_name: string;
+      last_name: string;
+    } | null;
+  }> | null;
+  progress_notes: Array<{ id: string }> | null;
 }
 
 export default function AdminDashboard() {
   const { user, role } = useAuth();
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [todaysSessions, setTodaysSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -72,13 +95,28 @@ export default function AdminDashboard() {
         .select('id')
         .in('status', ['pending', 'approved_pending_auth']);
 
-      // Fetch sessions for today
-      const today = format(new Date(), 'yyyy-MM-dd');
+      // Fetch sessions for today with progress_notes check
+      const startOfToday = startOfDay(new Date()).toISOString();
+      const endOfToday = endOfDay(new Date()).toISOString();
+
       const { data: sessions } = await supabase
         .from('sessions')
-        .select('id')
-        .gte('start_time', today)
-        .lt('start_time', format(new Date(Date.now() + 86400000), 'yyyy-MM-dd'));
+        .select(`
+          id,
+          start_time,
+          end_time,
+          location,
+          status,
+          instructor:profiles!instructor_id(full_name),
+          bookings(
+            id,
+            swimmer:swimmers(id, first_name, last_name)
+          ),
+          progress_notes(id)
+        `)
+        .gte('start_time', startOfToday)
+        .lte('start_time', endOfToday)
+        .order('start_time');
 
       const swimmerList = swimmers || [];
 
@@ -93,6 +131,16 @@ export default function AdminDashboard() {
         s.payment_type === 'other'
       ).length;
 
+      // Calculate sessions needing progress updates
+      const sessionsNeedingProgress = sessions?.filter(s => {
+        const sessionTime = new Date(s.start_time);
+        const now = new Date();
+        const isPastOrCurrent = sessionTime <= now;
+        const hasProgressNote = s.progress_notes && s.progress_notes.length > 0;
+        return isPastOrCurrent && !hasProgressNote && s.bookings?.length > 0;
+      }).length || 0;
+
+      setTodaysSessions(sessions || []);
       setStats({
         totalSwimmers: swimmerList.length,
         activeSwimmers,
@@ -101,7 +149,8 @@ export default function AdminDashboard() {
         fundedCount,
         sessionsToday: sessions?.length || 0,
         pendingReferrals: 0, // Placeholder - referral_requests table might not exist
-        pendingPOs: pos?.length || 0
+        pendingPOs: pos?.length || 0,
+        sessionsNeedingProgress
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -110,7 +159,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const pendingCount = (stats?.pendingReferrals || 0) + (stats?.pendingPOs || 0);
+  const pendingCount = (stats?.pendingReferrals || 0) + (stats?.pendingPOs || 0) + (stats?.sessionsNeedingProgress || 0);
 
   if (loading) {
     return (
@@ -190,7 +239,7 @@ export default function AdminDashboard() {
                   <p className="text-sm text-muted-foreground">Needs Attention</p>
                   <p className="text-3xl font-bold">{pendingCount}</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {stats?.pendingReferrals} referrals • {stats?.pendingPOs} POs
+                    {stats?.pendingReferrals} referrals • {stats?.pendingPOs} POs • {stats?.sessionsNeedingProgress} progress updates
                   </p>
                 </div>
                 <div className={`h-12 w-12 rounded-full flex items-center justify-center ${pendingCount > 0 ? 'bg-orange-200' : 'bg-gray-100'}`}>
@@ -234,6 +283,21 @@ export default function AdminDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            {stats?.sessionsNeedingProgress ? (
+              <Link href="/admin/schedule" className="block">
+                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-purple-600" />
+                    <div>
+                      <p className="font-medium text-purple-800">{stats.sessionsNeedingProgress} Progress Updates</p>
+                      <p className="text-sm text-purple-600">From today's sessions</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-purple-400" />
+                </div>
+              </Link>
+            ) : null}
+
             {stats?.pendingPOs ? (
               <Link href="/admin/pos" className="block">
                 <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors cursor-pointer">
@@ -249,7 +313,7 @@ export default function AdminDashboard() {
               </Link>
             ) : null}
 
-            {!stats?.pendingPOs && (
+            {!stats?.sessionsNeedingProgress && !stats?.pendingPOs && (
               <div className="text-center py-6 text-muted-foreground">
                 <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
                 <p>All caught up!</p>
@@ -341,6 +405,84 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Today's Schedule */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-blue-600" />
+            Today's Schedule
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {todaysSessions.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground">
+              <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+              <p>No sessions scheduled for today</p>
+            </div>
+          ) : (
+            todaysSessions.slice(0, 5).map((session) => {
+              const sessionTime = new Date(session.start_time);
+              const now = new Date();
+              const isPastOrCurrent = sessionTime <= now;
+              const hasProgressNote = session.progress_notes && session.progress_notes.length > 0;
+              const needsProgressUpdate = isPastOrCurrent && !hasProgressNote && (session.bookings?.length || 0) > 0;
+
+              return (
+                <div key={session.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded ${hasProgressNote ? 'bg-green-100' : 'bg-blue-100'}`}>
+                      {hasProgressNote ? (
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Clock className="h-4 w-4 text-blue-600" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium">{format(new Date(session.start_time), 'h:mm a')}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {session.instructor?.full_name || 'TBD'} • {session.bookings?.length || 0} swimmers
+                      </p>
+                      {session.bookings && session.bookings.length > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {session.bookings.map((b: any) => b.swimmer?.first_name).filter(Boolean).join(', ')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {needsProgressUpdate ? (
+                      <Link href={`/instructor/progress/${session.id}`}>
+                        <Button size="sm" variant="outline" className="text-orange-600 border-orange-300 hover:bg-orange-50">
+                          <FileText className="h-4 w-4 mr-1" />
+                          Update Progress
+                        </Button>
+                      </Link>
+                    ) : hasProgressNote ? (
+                      <Badge className="bg-green-100 text-green-700 border-green-300">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Updated
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">{session.location || 'TBD'}</Badge>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+          {todaysSessions.length > 5 && (
+            <div className="text-center pt-2">
+              <Link href="/admin/schedule">
+                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                  View all {todaysSessions.length} sessions
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Swimmer Breakdown */}
       <Card>
