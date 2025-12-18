@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -135,7 +135,9 @@ const paymentDisplayNames: Record<string, string> = {
 export default function AdminSwimmerDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const swimmerId = params.id as string
+  const defaultTab = searchParams.get('tab') || 'overview'
 
   const [swimmer, setSwimmer] = useState<Swimmer | null>(null)
   const [loading, setLoading] = useState(true)
@@ -284,7 +286,7 @@ export default function AdminSwimmerDetailPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs defaultValue={defaultTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="medical">Medical & Safety</TabsTrigger>
@@ -662,44 +664,307 @@ export default function AdminSwimmerDetailPage() {
             </div>
           </TabsContent>
 
-          {/* Progress & Skills Tab - Placeholder */}
-          <TabsContent value="progress">
+          {/* Progress & Skills Tab */}
+          <TabsContent value="progress" className="space-y-6">
+            {/* Current Level & Skills */}
             <Card>
               <CardHeader>
-                <CardTitle>Progress & Skills Tracking</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5" />
+                  Current Level & Skills
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {swimmer.current_level ? (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold">{swimmer.current_level.display_name || swimmer.current_level.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {swimmer.current_level.description || 'No description available'}
+                        </p>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className="border-l-4 text-lg px-4 py-2"
+                        style={{ borderLeftColor: swimmer.current_level.color || '#3b82f6' }}
+                      >
+                        {swimmer.current_level.display_name || swimmer.current_level.name}
+                      </Badge>
+                    </div>
+
+                    {/* Skills Checklist */}
+                    <div>
+                      <h4 className="font-medium mb-3">Skills in this Level</h4>
+                      <div className="space-y-2">
+                        {/* These would come from the database - using placeholder for now */}
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 w-4 rounded-full bg-green-500"></div>
+                          <span>Water entry and exit</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 w-4 rounded-full bg-green-500"></div>
+                          <span>Blowing bubbles</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 w-4 rounded-full bg-yellow-500"></div>
+                          <span>Front float with support</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 w-4 rounded-full bg-gray-300"></div>
+                          <span>Back float with support</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 w-4 rounded-full bg-gray-300"></div>
+                          <span>Kicking with board</span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <Award className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Level Assigned</h3>
+                    <p className="text-muted-foreground mb-4">
+                      This swimmer hasn't been assigned a swim level yet.
+                    </p>
+                    <Button>
+                      <Award className="h-4 w-4 mr-2" />
+                      Assign Level
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Recent Progress Notes */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Recent Progress Notes
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <Award className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Progress Tracking</h3>
-                  <p className="text-muted-foreground mb-6">
-                    View and track swimmer progress, skills mastered, and instructor notes.
-                  </p>
-                  <Button>
-                    <Activity className="h-4 w-4 mr-2" />
-                    View Progress Dashboard
-                  </Button>
+                <div className="space-y-4">
+                  {/* Progress note would come from database - using placeholder */}
+                  <div className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <span className="font-medium">Session on Dec 15, 2024</span>
+                        <span className="text-sm text-muted-foreground ml-2">with Instructor Sarah</span>
+                      </div>
+                      <Badge variant="outline">Completed</Badge>
+                    </div>
+                    <p className="text-sm mb-3">
+                      Made great progress with blowing bubbles today. Still working on front float but showing improvement.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary" className="text-xs">Bubbles</Badge>
+                      <Badge variant="secondary" className="text-xs">Water Comfort</Badge>
+                    </div>
+                  </div>
+
+                  <div className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <span className="font-medium">Session on Dec 8, 2024</span>
+                        <span className="text-sm text-muted-foreground ml-2">with Instructor Mike</span>
+                      </div>
+                      <Badge variant="outline">Completed</Badge>
+                    </div>
+                    <p className="text-sm mb-3">
+                      First assessment completed. Swimmer is comfortable entering water but needs work on floating.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary" className="text-xs">Assessment</Badge>
+                      <Badge variant="secondary" className="text-xs">Water Entry</Badge>
+                    </div>
+                  </div>
+
+                  <div className="text-center pt-4">
+                    <Button variant="outline">
+                      <FileText className="h-4 w-4 mr-2" />
+                      View All Progress Notes
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Swim Goals */}
+            {swimmer.swim_goals && swimmer.swim_goals.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Swim Goals
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {swimmer.swim_goals.map((goal, index) => (
+                      <Badge key={index} variant="outline" className="px-3 py-1">
+                        {goal}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
-          {/* Sessions & Bookings Tab - Placeholder */}
-          <TabsContent value="sessions">
+          {/* Sessions & Bookings Tab */}
+          <TabsContent value="sessions" className="space-y-6">
+            {/* Upcoming Sessions */}
             <Card>
               <CardHeader>
-                <CardTitle>Sessions & Bookings</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Upcoming Sessions
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Session History</h3>
-                  <p className="text-muted-foreground mb-6">
-                    View past and upcoming sessions, attendance, and booking history.
-                  </p>
-                  <Button>
-                    <Calendar className="h-4 w-4 mr-2" />
-                    View Session History
+                <div className="space-y-4">
+                  {/* Session data would come from database - using placeholder */}
+                  <div className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h4 className="font-medium">Monday, Dec 23, 2024</h4>
+                        <p className="text-sm text-muted-foreground">3:00 PM - 3:30 PM • Turlock Location</p>
+                      </div>
+                      <Badge variant="outline">Booked</Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="font-medium">Instructor:</span>
+                      <span>Sarah Johnson</span>
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <Button size="sm" variant="outline">
+                        Reschedule
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-red-600">
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h4 className="font-medium">Monday, Dec 30, 2024</h4>
+                        <p className="text-sm text-muted-foreground">3:00 PM - 3:30 PM • Turlock Location</p>
+                      </div>
+                      <Badge variant="outline">Booked</Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="font-medium">Instructor:</span>
+                      <span>Sarah Johnson</span>
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <Button size="sm" variant="outline">
+                        Reschedule
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-red-600">
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="text-center pt-2">
+                    <Button variant="outline">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      View Full Schedule
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Session Statistics */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Session Statistics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-cyan-600">12</div>
+                    <div className="text-sm text-muted-foreground">Total Sessions</div>
+                  </div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">10</div>
+                    <div className="text-sm text-muted-foreground">Completed</div>
+                  </div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">2</div>
+                    <div className="text-sm text-muted-foreground">Upcoming</div>
+                  </div>
+                  <div className="text-center p-4 border rounded-lg">
+                    <div className="text-2xl font-bold text-amber-600">85%</div>
+                    <div className="text-sm text-muted-foreground">Attendance Rate</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Session History */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Recent Session History
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <span className="font-medium">Dec 16, 2024</span>
+                      <span className="text-sm text-muted-foreground ml-2">3:00 PM</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">Completed</Badge>
+                      <span className="text-sm text-muted-foreground">Sarah Johnson</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <span className="font-medium">Dec 9, 2024</span>
+                      <span className="text-sm text-muted-foreground ml-2">3:00 PM</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">Completed</Badge>
+                      <span className="text-sm text-muted-foreground">Sarah Johnson</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <span className="font-medium">Dec 2, 2024</span>
+                      <span className="text-sm text-muted-foreground ml-2">3:00 PM</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">Completed</Badge>
+                      <span className="text-sm text-muted-foreground">Mike Wilson</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between py-2">
+                    <div>
+                      <span className="font-medium">Nov 25, 2024</span>
+                      <span className="text-sm text-muted-foreground ml-2">3:00 PM</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-red-600">Cancelled</Badge>
+                      <span className="text-sm text-muted-foreground">Parent request</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center pt-4">
+                  <Button variant="outline" size="sm">
+                    View Complete History
                   </Button>
                 </div>
               </CardContent>
