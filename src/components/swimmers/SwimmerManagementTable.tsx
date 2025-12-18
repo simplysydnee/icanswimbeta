@@ -22,7 +22,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Search,
@@ -536,17 +535,20 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
                   {/* Swimmer */}
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={swimmer.photoUrl} alt={swimmer.fullName} />
-                        <AvatarFallback className="bg-blue-100 text-blue-600 text-xs">
+                      {swimmer.photoUrl ? (
+                        <img
+                          src={swimmer.photoUrl}
+                          alt={swimmer.firstName}
+                          className="h-10 w-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 font-medium text-sm">
                           {getInitials(swimmer.firstName, swimmer.lastName)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{swimmer.fullName}</div>
-                        <div className="text-xs text-muted-foreground">
-                          ID: {swimmer.id.slice(0, 8)}...
                         </div>
+                      )}
+                      <div>
+                        <p className="font-medium">{swimmer.firstName} {swimmer.lastName}</p>
+                        <p className="text-xs text-muted-foreground">ID: {swimmer.id.slice(0, 8)}...</p>
                       </div>
                     </div>
                   </TableCell>
