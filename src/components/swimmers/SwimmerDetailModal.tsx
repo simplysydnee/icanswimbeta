@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   Dialog,
   DialogContent,
@@ -12,8 +13,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge } from './StatusBadge';
 import { format, parseISO } from 'date-fns';
+import { createClient } from '@/lib/supabase/client';
 import {
   Calendar,
   Edit,
@@ -35,6 +38,13 @@ import {
   FileText,
   Shield,
   AlertTriangle,
+  Users,
+  Activity,
+  Clock,
+  Target,
+  Award,
+  BookOpen,
+  Plus,
 } from 'lucide-react';
 
 // Types
@@ -119,6 +129,61 @@ export function SwimmerDetailModal({
   onDecline,
 }: SwimmerDetailModalProps) {
   const router = useRouter();
+  const [progressNotes, setProgressNotes] = useState<any[]>([]);
+  const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
+  const [swimmerSkills, setSwimmerSkills] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(false);
+
+  const fetchAdditionalData = useCallback(async () => {
+    if (!swimmer?.id) return;
+    setLoadingData(true);
+
+    const supabase = createClient();
+
+    // Fetch progress notes
+    const { data: notes } = await supabase
+      .from('progress_notes')
+      .select(`
+        id, created_at, lesson_summary, instructor_notes, skills_working_on, skills_mastered,
+        instructor:profiles!instructor_id(full_name)
+      `)
+      .eq('swimmer_id', swimmer.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+    setProgressNotes(notes || []);
+
+    // Fetch upcoming bookings
+    const { data: bookings } = await supabase
+      .from('bookings')
+      .select(`
+        id, status,
+        session:sessions(id, start_time, end_time, location, instructor:profiles!instructor_id(full_name))
+      `)
+      .eq('swimmer_id', swimmer.id)
+      .eq('status', 'confirmed')
+      .gte('session.start_time', new Date().toISOString())
+      .order('session(start_time)', { ascending: true })
+      .limit(5);
+    setUpcomingBookings(bookings || []);
+
+    // Fetch swimmer skills
+    const { data: skills } = await supabase
+      .from('swimmer_skills')
+      .select(`
+        id, status,
+        skill:skills(id, name, description)
+      `)
+      .eq('swimmer_id', swimmer.id);
+    setSwimmerSkills(skills || []);
+
+    setLoadingData(false);
+  }, [swimmer?.id]);
+
+  useEffect(() => {
+    if (isOpen && swimmer?.id) {
+      fetchAdditionalData();
+    }
+  }, [isOpen, swimmer?.id, fetchAdditionalData]);
 
   if (!swimmer) return null;
 
@@ -176,10 +241,6 @@ export function SwimmerDetailModal({
     router.push(`/admin/swimmers/${swimmer.id}/edit`);
   };
 
-  const handleBookSession = () => {
-    onClose();
-    router.push(`/booking?swimmer=${swimmer.id}`);
-  };
 
   const handleViewFullPage = () => {
     onClose();
@@ -251,15 +312,16 @@ export function SwimmerDetailModal({
               <Edit className="h-4 w-4 mr-1" />
               Edit
             </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-white/20 hover:bg-white/30 text-white border-0"
-              onClick={handleBookSession}
-            >
-              <Calendar className="h-4 w-4 mr-1" />
-              Book Session
-            </Button>
+            <Link href={`/booking?swimmer=${swimmer.id}`}>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="bg-white/20 hover:bg-white/30 text-white border-0"
+              >
+                <Calendar className="h-4 w-4 mr-1" />
+                Book Session
+              </Button>
+            </Link>
             <Button
               size="sm"
               variant="outline"
@@ -302,189 +364,273 @@ export function SwimmerDetailModal({
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            {/* Status Row */}
-            <div className="flex flex-wrap gap-2">
-              <StatusBadge
-                type="enrollment"
-                value={swimmer.enrollmentStatus}
-              />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column - Basic Info */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Status Row */}
+                <div className="flex flex-wrap gap-2">
+                  <StatusBadge
+                    type="enrollment"
+                    value={swimmer.enrollmentStatus}
+                  />
+                  {swimmer.approvalStatus && (
+                    <StatusBadge
+                      type="approval"
+                      value={swimmer.approvalStatus}
+                    />
+                  )}
+                  {swimmer.assessmentStatus && swimmer.assessmentStatus !== 'completed' && (
+                    <StatusBadge
+                      type="assessment"
+                      value={swimmer.assessmentStatus}
+                    />
+                  )}
+                  <StatusBadge
+                    type="funding"
+                    value={swimmer.paymentType}
+                    showIcon={true}
+                    size="large"
+                  />
+                  {swimmer.lessonsCompleted > 0 && (
+                    <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                      {swimmer.lessonsCompleted} lessons
+                    </Badge>
+                  )}
+                </div>
 
-              {swimmer.approvalStatus && (
-                <StatusBadge
-                  type="approval"
-                  value={swimmer.approvalStatus}
-                />
-              )}
-
-              {swimmer.assessmentStatus && swimmer.assessmentStatus !== 'completed' && (
-                <StatusBadge
-                  type="assessment"
-                  value={swimmer.assessmentStatus}
-                />
-              )}
-
-              <StatusBadge
-                type="funding"
-                value={swimmer.paymentType}
-                showIcon={true}
-                size="large"
-              />
-
-              {swimmer.lessonsCompleted > 0 && (
-                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
-                  {swimmer.lessonsCompleted} lessons
-                </Badge>
-              )}
-            </div>
-
-            {/* Contact Section */}
-            <section>
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Parent Contact
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {swimmer.parent?.phone && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <a
-                      href={`tel:${swimmer.parent.phone}`}
-                      className="hover:text-blue-600 hover:underline"
-                    >
-                      {swimmer.parent.phone}
-                    </a>
-                  </div>
-                )}
-                {swimmer.parent?.email && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <a
-                      href={`mailto:${swimmer.parent.email}`}
-                      className="hover:text-blue-600 hover:underline truncate"
-                    >
-                      {swimmer.parent.email}
-                    </a>
-                  </div>
-                )}
-                {(!swimmer.parent?.phone && !swimmer.parent?.email) && (
-                  <p className="text-sm text-muted-foreground">
-                    Contact information not available
-                  </p>
-                )}
-              </div>
-            </section>
-
-            {/* Funding Details */}
-            <section>
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                {swimmer.paymentType === 'private_pay' && (
-                  <DollarSign className="h-5 w-5 text-sky-600" />
-                )}
-                {swimmer.paymentType === 'vmrc' && (
-                  <Building2 className="h-5 w-5 text-violet-600" />
-                )}
-                {swimmer.paymentType === 'scholarship' && (
-                  <AwardIcon className="h-5 w-5 text-pink-600" />
-                )}
-                {swimmer.paymentType === 'other' && (
-                  <HelpCircle className="h-5 w-5 text-gray-600" />
-                )}
-                Funding Details
-              </h3>
-
-              {swimmer.paymentType === 'vmrc' ? (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {swimmer.vmrcCurrentPosNumber && (
-                      <div className="bg-violet-50 p-3 rounded-lg border border-violet-200">
-                        <div className="text-sm font-medium text-violet-800">Current PO</div>
-                        <div className="text-lg font-bold text-violet-900">{swimmer.vmrcCurrentPosNumber}</div>
-                        {swimmer.vmrcPosExpiresAt && (
-                          <div className="text-xs text-violet-600 mt-1">
-                            Expires: {formatDate(swimmer.vmrcPosExpiresAt)}
+                {/* Parent Info */}
+                <div className="bg-white border rounded-lg p-4">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Parent/Guardian Information
+                  </h3>
+                  {swimmer.parent ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{swimmer.parent.fullName || 'Not provided'}</p>
+                          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                            {swimmer.parent.email && (
+                              <div className="flex items-center gap-1">
+                                <Mail className="h-4 w-4" />
+                                <span>{swimmer.parent.email}</span>
+                              </div>
+                            )}
+                            {swimmer.parent.phone && (
+                              <div className="flex items-center gap-1">
+                                <Phone className="h-4 w-4" />
+                                <span>{swimmer.parent.phone}</span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    )}
-                    <div className="bg-violet-50 p-3 rounded-lg border border-violet-200">
-                      <div className="text-sm font-medium text-violet-800">Sessions</div>
-                      <div className="flex items-baseline gap-2">
-                        <div className="text-lg font-bold text-violet-900">
-                          {swimmer.vmrcSessionsUsed || 0}
                         </div>
-                        <div className="text-violet-700">/</div>
-                        <div className="text-lg font-bold text-violet-900">
-                          {swimmer.vmrcSessionsAuthorized || 0}
+                        <Button variant="outline" size="sm">
+                          Contact
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No parent information available</p>
+                  )}
+                </div>
+
+                {/* Medical & Safety Summary */}
+                {(swimmer.hasAllergies || swimmer.hasMedicalConditions || swimmer.historyOfSeizures) && (
+                  <div className="bg-white border rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-amber-600" />
+                      Medical & Safety Alerts
+                    </h3>
+                    <div className="space-y-3">
+                      {swimmer.hasAllergies && (
+                        <div className="flex items-start gap-2">
+                          <div className="h-2 w-2 rounded-full bg-amber-500 mt-2"></div>
+                          <div>
+                            <p className="font-medium">Allergies</p>
+                            {swimmer.allergiesDescription && (
+                              <p className="text-sm text-muted-foreground">{swimmer.allergiesDescription}</p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-xs text-violet-600 mt-1">
-                        Used / Authorized
-                      </div>
-                      {swimmer.vmrcSessionsAuthorized && swimmer.vmrcSessionsUsed && (
-                        <div className="mt-2">
-                          <div className="w-full bg-violet-200 rounded-full h-2">
-                            <div
-                              className="bg-violet-600 h-2 rounded-full transition-all duration-300"
-                              style={{
-                                width: `${Math.min(100, ((swimmer.vmrcSessionsUsed / swimmer.vmrcSessionsAuthorized) * 100))}%`
-                              }}
-                            ></div>
+                      )}
+                      {swimmer.hasMedicalConditions && (
+                        <div className="flex items-start gap-2">
+                          <div className="h-2 w-2 rounded-full bg-red-500 mt-2"></div>
+                          <div>
+                            <p className="font-medium">Medical Conditions</p>
+                            {swimmer.medicalConditionsDescription && (
+                              <p className="text-sm text-muted-foreground">{swimmer.medicalConditionsDescription}</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {swimmer.historyOfSeizures && (
+                        <div className="flex items-start gap-2">
+                          <div className="h-2 w-2 rounded-full bg-red-500 mt-2"></div>
+                          <div>
+                            <p className="font-medium">History of Seizures</p>
+                            <p className="text-sm text-muted-foreground">Requires special attention during lessons</p>
                           </div>
                         </div>
                       )}
                     </div>
                   </div>
-                  {swimmer.vmrcSessionsAuthorized &&
-                   swimmer.vmrcSessionsUsed &&
-                   swimmer.vmrcSessionsUsed >= swimmer.vmrcSessionsAuthorized - 1 && (
-                    <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 text-amber-600" />
-                        <span className="text-sm font-medium text-amber-800">
-                          PO renewal needed soon
-                        </span>
+                )}
+
+                {/* Swimming Background */}
+                <div className="bg-white border rounded-lg p-4">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <Award className="h-5 w-5" />
+                    Swimming Background & Goals
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Previous Lessons</p>
+                        <p className="font-medium">
+                          {swimmer.previousSwimLessons ? 'Yes' : 'No'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Comfort in Water</p>
+                        <p className="font-medium capitalize">{swimmer.comfortableInWater || 'Not specified'}</p>
                       </div>
                     </div>
-                  )}
-                </>
-              ) : null}
 
-              {swimmer.paymentType === 'private_pay' && (
-                <div className="bg-sky-50 p-4 rounded-lg border border-sky-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="h-5 w-5 text-sky-600" />
-                    <div className="text-sm font-medium text-sky-800">Private Pay Client</div>
-                  </div>
-                  <p className="text-sm text-sky-700">
-                    Standard rate applies. Payment required at time of booking.
-                  </p>
-                </div>
-              )}
+                    {swimmer.swimGoals && swimmer.swimGoals.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground mb-2">Swim Goals</p>
+                        <div className="flex flex-wrap gap-2">
+                          {swimmer.swimGoals.map((goal, index) => (
+                            <Badge key={index} variant="secondary">
+                              {goal}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-              {swimmer.paymentType === 'scholarship' && (
-                <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <AwardIcon className="h-5 w-5 text-pink-600" />
-                    <div className="text-sm font-medium text-pink-800">Scholarship Client</div>
+                    {swimmer.diagnosis && swimmer.diagnosis.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground mb-2">Diagnosis</p>
+                        <div className="flex flex-wrap gap-2">
+                          {swimmer.diagnosis.map((d, i) => (
+                            <Badge key={i} variant="outline">
+                              {d}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-pink-700">
-                    Scholarship-funded lessons. No payment required from parent.
-                  </p>
                 </div>
-              )}
+              </div>
 
-              {swimmer.paymentType === 'other' && (
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <HelpCircle className="h-5 w-5 text-gray-600" />
-                    <div className="text-sm font-medium text-gray-800">Other Funding</div>
+              {/* Right Column - Stats & Actions */}
+              <div className="space-y-6">
+                {/* Quick Stats */}
+                <div className="bg-white border rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                    Quick Stats
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Assessment Status</p>
+                      <Badge
+                        variant={swimmer.assessmentStatus === 'completed' ? 'default' : 'outline'}
+                        className={swimmer.assessmentStatus === 'completed' ? 'bg-green-100 text-green-800' : ''}
+                      >
+                        {swimmer.assessmentStatus === 'completed' ? 'Completed' : 'Pending'}
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Approval Status</p>
+                      <Badge
+                        variant={swimmer.approvalStatus === 'approved' ? 'default' : 'outline'}
+                        className={swimmer.approvalStatus === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}
+                      >
+                        {swimmer.approvalStatus === 'approved' ? 'Approved' : 'Pending Approval'}
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Flexible Swimmer</p>
+                      <Badge variant="outline">
+                        {swimmer.flexibleSwimmer ? 'Yes - Can fill last-minute spots' : 'No - Regular schedule only'}
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Legal Documents</p>
+                      <div className="space-y-2 mt-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Waiver Signed</span>
+                          {swimmer.signedWaiver ? (
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-600" />
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Photo Release</span>
+                          {swimmer.photoRelease ? (
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-600" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-700">
-                    Custom funding arrangement. Contact admin for details.
-                  </p>
                 </div>
-              )}
-            </section>
+
+                {/* Quick Actions */}
+                <div className="bg-white border rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                    Quick Actions
+                  </h3>
+                  <div className="space-y-2">
+                    <Link href={`/booking?swimmer=${swimmer.id}`} className="w-full">
+                      <Button variant="outline" className="w-full justify-start">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Book Session
+                      </Button>
+                    </Link>
+                    <Button variant="outline" className="w-full justify-start" onClick={handleEdit}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Information
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Add Progress Note
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Send to Coordinator
+                    </Button>
+                  </div>
+                </div>
+
+                {/* System Info */}
+                <div className="bg-white border rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                    System Information
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Created</span>
+                      <span>{formatDate(swimmer.createdAt)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Last Updated</span>
+                      <span>{formatDate(swimmer.updatedAt)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Swimmer ID</span>
+                      <span className="font-mono text-xs">{swimmer.id.substring(0, 8)}...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </TabsContent>
 
           {/* Medical & Safety Tab */}
@@ -636,30 +782,71 @@ export function SwimmerDetailModal({
             <section>
               <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                 <AwardIcon className="h-5 w-5" />
-                Progress
+                Progress & Skills
               </h3>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {/* Current Level Progress */}
                 {swimmer.currentLevel && (
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm font-medium">{swimmer.currentLevel.displayName}</span>
-                      <span className="text-xs text-muted-foreground">65%</span>
+                  <div className="bg-white border rounded-lg p-4">
+                    <h4 className="font-medium mb-3">Current Level: {swimmer.currentLevel.displayName}</h4>
+                    {/* Skills Checklist */}
+                    <div className="space-y-3">
+                      <h4 className="font-medium text-sm">Skills Progress</h4>
+                      {loadingData ? (
+                        <div className="space-y-2">
+                          <Skeleton className="h-8 w-full" />
+                          <Skeleton className="h-8 w-full" />
+                          <Skeleton className="h-8 w-full" />
+                        </div>
+                      ) : swimmerSkills.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No skills tracked yet</p>
+                      ) : (
+                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                          {swimmerSkills.map((s) => (
+                            <div key={s.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                              <span className="text-sm">{s.skill?.name}</span>
+                              <Badge className={
+                                s.status === 'mastered' ? 'bg-green-100 text-green-800' :
+                                s.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-gray-100 text-gray-800'
+                              }>
+                                {s.status?.replace('_', ' ')}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: '65%' }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Skills mastered: 8/12
-                    </p>
                   </div>
                 )}
 
-                {/* Lessons Completed */}
+                {/* Recent Progress Notes */}
+                <div className="bg-white border rounded-lg p-4">
+                  <h4 className="font-medium mb-3">Recent Progress Notes</h4>
+                  {loadingData ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-24 w-full" />
+                      <Skeleton className="h-24 w-full" />
+                    </div>
+                  ) : progressNotes.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No progress notes yet</p>
+                  ) : (
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {progressNotes.map((note) => (
+                        <div key={note.id} className="p-3 bg-gray-50 rounded-lg">
+                          <div className="flex justify-between text-sm">
+                            <span className="font-medium">{note.instructor?.full_name}</span>
+                            <span className="text-muted-foreground">{format(new Date(note.created_at), 'MMM d, yyyy')}</span>
+                          </div>
+                          <p className="text-sm mt-1 line-clamp-2">{note.lesson_summary || note.instructor_notes}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Progress Stats */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-blue-50 p-3 rounded-lg">
                     <div className="text-2xl font-bold text-blue-600">
@@ -691,16 +878,236 @@ export function SwimmerDetailModal({
             </section>
           </TabsContent>
 
-          {/* History Tab (Placeholder) */}
-          <TabsContent value="history" className="space-y-6">
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">Session History</h3>
-              <p className="text-gray-500 max-w-md mx-auto">
-                View past sessions, attendance records, and progress notes here.
-                This feature is coming soon.
-              </p>
-            </div>
+          {/* Sessions & Bookings Tab */}
+          <TabsContent value="sessions" className="space-y-6">
+            <section>
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Sessions & Bookings
+              </h3>
+
+              <div className="space-y-6">
+                {/* Upcoming Sessions */}
+                <div className="bg-white border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium">Upcoming Sessions</h4>
+                    <Link href={`/booking?swimmer=${swimmer.id}`}>
+                      <Button size="sm">
+                        <Plus className="h-4 w-4 mr-1" /> Book Session
+                      </Button>
+                    </Link>
+                  </div>
+                  {loadingData ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-16 w-full" />
+                      <Skeleton className="h-16 w-full" />
+                    </div>
+                  ) : upcomingBookings.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                      <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-muted-foreground">No upcoming sessions</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {upcomingBookings.map((booking) => (
+                        <div key={booking.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="font-medium text-sm">
+                              {booking.session?.start_time && format(new Date(booking.session.start_time), 'EEE, MMM d @ h:mm a')}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {booking.session?.instructor?.full_name} • {booking.session?.location || 'TBD'}
+                            </p>
+                          </div>
+                          <Badge variant="outline">{booking.status}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Session Statistics */}
+                <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold">{swimmer.vmrcSessionsUsed || swimmer.lessonsCompleted || 0}</p>
+                    <p className="text-xs text-muted-foreground">Completed</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold">{upcomingBookings.length}</p>
+                    <p className="text-xs text-muted-foreground">Upcoming</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold">{swimmer.vmrcSessionsAuthorized || 0}</p>
+                    <p className="text-xs text-muted-foreground">Authorized</p>
+                  </div>
+                </div>
+
+                {/* Session History Placeholder */}
+                <div className="border-t pt-4 mt-4">
+                  <h4 className="text-sm font-medium mb-3">Recent Sessions</h4>
+                  <div className="text-center py-8">
+                    <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <h5 className="text-lg font-semibold text-gray-700 mb-2">Session History</h5>
+                    <p className="text-gray-500 max-w-md mx-auto">
+                      View past sessions, attendance records, and progress notes here.
+                      This feature is coming soon.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </TabsContent>
+
+          {/* Billing & Funding Tab */}
+          <TabsContent value="billing" className="space-y-6">
+            <section>
+              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Billing & Funding
+              </h3>
+
+              {/* Payment Type */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Payment Type</h4>
+                <div className="flex items-center gap-2">
+                  {swimmer.paymentType === 'private_pay' && (
+                    <DollarSign className="h-5 w-5 text-sky-600" />
+                  )}
+                  {swimmer.paymentType === 'vmrc' && (
+                    <Building2 className="h-5 w-5 text-violet-600" />
+                  )}
+                  {swimmer.paymentType === 'scholarship' && (
+                    <AwardIcon className="h-5 w-5 text-pink-600" />
+                  )}
+                  {swimmer.paymentType === 'other' && (
+                    <HelpCircle className="h-5 w-5 text-gray-600" />
+                  )}
+                  <span className="font-medium capitalize">{swimmer.paymentType.replace('_', ' ')}</span>
+                </div>
+              </div>
+
+              {/* VMRC Details */}
+              {swimmer.paymentType === 'vmrc' && (
+                <div className="space-y-4">
+                  {/* PO Details */}
+                  {swimmer.vmrcCurrentPosNumber && (
+                    <div className="bg-violet-50 p-4 rounded-lg border border-violet-200">
+                      <h4 className="text-sm font-medium text-violet-800 mb-2">Current Purchase Order</h4>
+                      <div className="text-lg font-bold text-violet-900">{swimmer.vmrcCurrentPosNumber}</div>
+                      {swimmer.vmrcPosExpiresAt && (
+                        <div className="text-sm text-violet-600 mt-1">
+                          Expires: {formatDate(swimmer.vmrcPosExpiresAt)}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Sessions Progress */}
+                  <div className="bg-violet-50 p-4 rounded-lg border border-violet-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="text-sm font-medium text-violet-800">Sessions Usage</h4>
+                      <div className="text-sm font-bold text-violet-900">
+                        {swimmer.vmrcSessionsUsed || 0} / {swimmer.vmrcSessionsAuthorized || 0}
+                      </div>
+                    </div>
+                    {swimmer.vmrcSessionsAuthorized && swimmer.vmrcSessionsUsed && (
+                      <>
+                        <div className="w-full bg-violet-200 rounded-full h-2 mb-2">
+                          <div
+                            className="bg-violet-600 h-2 rounded-full transition-all duration-300"
+                            style={{
+                              width: `${Math.min(100, ((swimmer.vmrcSessionsUsed / swimmer.vmrcSessionsAuthorized) * 100))}%`
+                            }}
+                          ></div>
+                        </div>
+                        <div className="text-xs text-violet-600">
+                          {swimmer.vmrcSessionsAuthorized - swimmer.vmrcSessionsUsed} sessions remaining
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Renewal Alert */}
+                  {swimmer.vmrcSessionsAuthorized &&
+                   swimmer.vmrcSessionsUsed &&
+                   swimmer.vmrcSessionsUsed >= swimmer.vmrcSessionsAuthorized - 1 && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-amber-600" />
+                        <span className="text-sm font-medium text-amber-800">
+                          PO renewal needed soon
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Coordinator Info */}
+                  {(swimmer.vmrcCoordinatorName || swimmer.vmrcCoordinatorEmail || swimmer.vmrcCoordinatorPhone) && (
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <h4 className="text-sm font-medium text-gray-800 mb-2">VMRC Coordinator</h4>
+                      <div className="space-y-2">
+                        {swimmer.vmrcCoordinatorName && (
+                          <div className="text-sm">{swimmer.vmrcCoordinatorName}</div>
+                        )}
+                        {swimmer.vmrcCoordinatorEmail && (
+                          <div className="text-sm">
+                            <a href={`mailto:${swimmer.vmrcCoordinatorEmail}`} className="text-blue-600 hover:underline">
+                              {swimmer.vmrcCoordinatorEmail}
+                            </a>
+                          </div>
+                        )}
+                        {swimmer.vmrcCoordinatorPhone && (
+                          <div className="text-sm">
+                            <a href={`tel:${swimmer.vmrcCoordinatorPhone}`} className="text-blue-600 hover:underline">
+                              {swimmer.vmrcCoordinatorPhone}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Private Pay Details */}
+              {swimmer.paymentType === 'private_pay' && (
+                <div className="bg-sky-50 p-4 rounded-lg border border-sky-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="h-5 w-5 text-sky-600" />
+                    <div className="text-sm font-medium text-sky-800">Private Pay Client</div>
+                  </div>
+                  <p className="text-sm text-sky-700">
+                    Standard rate applies. Payment required at time of booking.
+                  </p>
+                </div>
+              )}
+
+              {/* Scholarship Details */}
+              {swimmer.paymentType === 'scholarship' && (
+                <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AwardIcon className="h-5 w-5 text-pink-600" />
+                    <div className="text-sm font-medium text-pink-800">Scholarship Client</div>
+                  </div>
+                  <p className="text-sm text-pink-700">
+                    Scholarship-funded lessons. No payment required from parent.
+                  </p>
+                </div>
+              )}
+
+              {/* Other Funding */}
+              {swimmer.paymentType === 'other' && (
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <HelpCircle className="h-5 w-5 text-gray-600" />
+                    <div className="text-sm font-medium text-gray-800">Other Funding</div>
+                  </div>
+                  <p className="text-sm text-gray-700">
+                    Custom funding arrangement. Contact admin for details.
+                  </p>
+                </div>
+              )}
+            </section>
           </TabsContent>
         </Tabs>
       </DialogContent>
