@@ -39,13 +39,14 @@ interface DateSelectStepProps {
   recurringEndDate: Date | null;
   selectedRecurringSessions: string[];
   swimmerId: string | null; // Add swimmerId for flexible_swimmer check
-  onSelectSession: (sessionId: string) => void;
+  onSelectSession: (session: AvailableSession) => void;
   onSetRecurring: (opts: {
     day?: number;
     time?: string;
     startDate?: Date;
     endDate?: Date;
     sessionIds?: string[];
+    sessions?: AvailableSession[];
   }) => void;
 }
 
@@ -171,7 +172,7 @@ export function DateSelectStep({
     if (sessionType === 'recurring' && matchedSessions.length > 0) {
       const matchedIds = matchedSessions.map(s => s.id);
       if (JSON.stringify(matchedIds) !== JSON.stringify(selectedRecurringSessions)) {
-        onSetRecurring({ sessionIds: matchedIds });
+        onSetRecurring({ sessionIds: matchedIds, sessions: matchedSessions });
       }
     }
   }, [matchedSessions, selectedRecurringSessions, sessionType, onSetRecurring]);
@@ -302,7 +303,7 @@ export function DateSelectStep({
                             variant={isSelected ? 'default' : 'outline'}
                             size="sm"
                             className="w-full justify-start text-xs h-8 px-2"
-                            onClick={() => onSelectSession(session.id)}
+                            onClick={() => onSelectSession(session)}
                           >
                             <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
                             <span className="truncate">

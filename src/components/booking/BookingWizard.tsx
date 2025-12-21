@@ -8,6 +8,7 @@ import { SwimmerSelectStep } from './steps/SwimmerSelectStep';
 import { SessionTypeStep } from './steps/SessionTypeStep';
 import InstructorStep from './steps/InstructorStep';
 import { DateSelectStep } from './steps/DateSelectStep';
+import { ConfirmationStep } from './steps/ConfirmationStep';
 import { BookingSummary } from './BookingSummary';
 import { AssessmentTab } from '@/components/features/booking/AssessmentTab';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,11 @@ export function BookingWizard({}: BookingWizardProps) {
   // Submission
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [bookingResult, setBookingResult] = useState<{
+    success: boolean;
+    confirmationNumber?: string;
+    error?: string;
+  } | null>(null);
 
   // Step flow logic
   const getStepNumber = (step: BookingStep): number => {
@@ -156,10 +162,11 @@ export function BookingWizard({}: BookingWizardProps) {
     return stepInfo[step];
   };
 
-  // Submit function (placeholder for now)
+  // Submit function
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setError(null);
+    setBookingResult(null);
 
     try {
       if (!selectedSwimmer) {
@@ -167,54 +174,38 @@ export function BookingWizard({}: BookingWizardProps) {
       }
 
       let response: Response;
+      let endpoint = '';
+      let payload: any = { swimmerId: selectedSwimmer.id };
 
       if (currentStep === 'assessment') {
-        // Assessment booking - should use assessment API
-        // Note: This shouldn't be called since AssessmentTab handles booking
-        // But keeping it as fallback
+        // Assessment booking
         if (!selectedSessionId) {
           throw new Error('No session selected');
         }
-
-        response = await fetch('/api/bookings/assessment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId: selectedSessionId,
-            swimmerId: selectedSwimmer.id,
-          }),
-        });
+        endpoint = '/api/bookings/assessment';
+        payload.sessionId = selectedSessionId;
       } else if (sessionType === 'single') {
         // Single lesson booking
         if (!selectedSessionId) {
           throw new Error('No session selected');
         }
-
-        response = await fetch('/api/bookings/single', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            swimmerId: selectedSwimmer.id,
-            sessionId: selectedSessionId,
-          }),
-        });
+        endpoint = '/api/bookings/single';
+        payload.sessionId = selectedSessionId;
       } else {
         // Recurring bookings
         const sessionIds = selectedRecurringSessions.map(s => s.id);
-
         if (sessionIds.length === 0) {
           throw new Error('No sessions selected');
         }
-
-        response = await fetch('/api/bookings/recurring', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            swimmerId: selectedSwimmer.id,
-            sessionIds: sessionIds,
-          }),
-        });
+        endpoint = '/api/bookings/recurring';
+        payload.sessionIds = sessionIds;
       }
+
+      response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
       const result = await response.json();
 
@@ -222,20 +213,26 @@ export function BookingWizard({}: BookingWizardProps) {
         throw new Error(result.error || 'Failed to create booking');
       }
 
-      // Success! Show confirmation
-      if (currentStep === 'assessment') {
-        alert(`Success! Assessment booked for ${selectedSwimmer.firstName}. Check your email for confirmation.`);
-      } else {
-        const sessionsBooked = sessionType === 'single' ? 1 : selectedRecurringSessions.length;
-        alert(`Success! Booked ${sessionsBooked} session${sessionsBooked > 1 ? 's' : ''} for ${selectedSwimmer.firstName}`);
-      }
+      // Generate confirmation number (format: ICS-YYYYMMDD-XXXXX)
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
+      const randomNum = Math.floor(10000 + Math.random() * 90000);
+      const confirmationNumber = `ICS-${dateStr}-${randomNum}`;
 
-      // Reset wizard for new booking
-      resetWizard();
+      // Set success result
+      setBookingResult({
+        success: true,
+        confirmationNumber,
+      });
 
     } catch (err) {
       console.error('Booking error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create booking. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create booking. Please try again.';
+      setError(errorMessage);
+      setBookingResult({
+        success: false,
+        error: errorMessage,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -256,6 +253,7 @@ export function BookingWizard({}: BookingWizardProps) {
     setRecurringEndDate(null);
     setSelectedRecurringSessions([]);
     setError(null);
+    setBookingResult(null);
   };
 
   // Render step function
@@ -317,49 +315,17 @@ export function BookingWizard({}: BookingWizardProps) {
             recurringEndDate={recurringEndDate}
             selectedRecurringSessions={selectedRecurringSessions.map(s => s.id)}
             swimmerId={selectedSwimmer?.id || null} // Pass swimmerId for flexible_swimmer check
-            onSelectSession={(sessionId) => {
-              setSelectedSessionId(sessionId);
-              // TODO: Also set selectedSession with full object
-              // For now, create a mock session
-              const mockSession: AvailableSession = {
-                id: sessionId,
-                startTime: new Date().toISOString(),
-                endTime: new Date(Date.now() + 3600000).toISOString(),
-                dayOfWeek: new Date().getDay(),
-                instructorId: selectedInstructorId || '',
-                instructorName: instructorName || 'Any Available',
-                location: 'Turlock Pool',
-                sessionType: 'single',
-                maxCapacity: 1,
-                currentBookings: 0,
-                isFull: false,
-                priceCents: 7500,
-              };
-              setSelectedSession(mockSession);
+            onSelectSession={(session) => {
+              setSelectedSessionId(session.id);
+              setSelectedSession(session);
             }}
             onSetRecurring={(opts) => {
               if (opts.day !== undefined) setRecurringDay(opts.day);
               if (opts.time !== undefined) setRecurringTime(opts.time);
               if (opts.startDate !== undefined) setRecurringStartDate(opts.startDate);
               if (opts.endDate !== undefined) setRecurringEndDate(opts.endDate);
-              // TODO: Convert sessionIds to full session objects
-              // For now, create mock sessions
-              if (opts.sessionIds && opts.sessionIds.length > 0) {
-                const mockSessions: AvailableSession[] = opts.sessionIds.map((id, index) => ({
-                  id,
-                  startTime: new Date(Date.now() + index * 604800000).toISOString(), // Weekly intervals
-                  endTime: new Date(Date.now() + index * 604800000 + 3600000).toISOString(),
-                  dayOfWeek: opts.day || 0,
-                  instructorId: selectedInstructorId || '',
-                  instructorName: instructorName || 'Any Available',
-                  location: 'Turlock Pool',
-                  sessionType: 'recurring',
-                  maxCapacity: 1,
-                  currentBookings: 0,
-                  isFull: false,
-                  priceCents: 7500,
-                }));
-                setSelectedRecurringSessions(mockSessions);
+              if (opts.sessions && opts.sessions.length > 0) {
+                setSelectedRecurringSessions(opts.sessions);
               }
             }}
           />
@@ -380,7 +346,7 @@ export function BookingWizard({}: BookingWizardProps) {
         const isAssessment = selectedSwimmer?.enrollmentStatus === 'waitlist';
 
         if (isAssessment) {
-          // Assessment already booked, show confirmation
+          // Assessment confirmation (keep existing for now)
           return (
             <div className="space-y-6">
               <div className="flex items-center gap-3 text-green-600">
@@ -418,42 +384,21 @@ export function BookingWizard({}: BookingWizardProps) {
             </div>
           );
         } else {
-          // Regular booking confirmation
+          // Regular booking confirmation using ConfirmationStep
+          const sessions = sessionType === 'single' && selectedSession
+            ? [selectedSession]
+            : selectedRecurringSessions;
+
           return (
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 text-green-600">
-                <CheckCircle2 className="h-6 w-6" />
-                <div>
-                  <p className="font-semibold">Ready to Book</p>
-                  <p className="text-sm text-muted-foreground">Review your booking details</p>
-                </div>
-              </div>
-
-              {/* Show mobile summary on confirm step */}
-              <div className="lg:hidden">
-                <BookingSummary
-                  swimmer={selectedSwimmer}
-                  sessionType={sessionType}
-                  instructorName={instructorName}
-                  instructorPreference={instructorPreference}
-                  selectedSession={selectedSession}
-                  selectedRecurringSessions={selectedRecurringSessions}
-                  recurringDay={recurringDay}
-                  recurringTime={recurringTime}
-                  recurringStartDate={recurringStartDate}
-                  recurringEndDate={recurringEndDate}
-                />
-              </div>
-
-              {/* Cancellation policy notice */}
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  By confirming, you agree to the 24-hour cancellation policy.
-                  Late cancellations may affect your booking privileges.
-                </AlertDescription>
-              </Alert>
-            </div>
+            <ConfirmationStep
+              swimmer={selectedSwimmer!}
+              sessions={sessions}
+              sessionType={sessionType || 'single'}
+              onConfirm={handleSubmit}
+              onBack={handleBack}
+              isSubmitting={isSubmitting}
+              bookingResult={bookingResult || undefined}
+            />
           );
         }
 
@@ -539,7 +484,7 @@ export function BookingWizard({}: BookingWizardProps) {
               <Button
                 variant="outline"
                 onClick={handleBack}
-                disabled={currentStep === 'select-swimmer' || isSubmitting}
+                disabled={currentStep === 'select-swimmer' || isSubmitting || (currentStep === 'confirm' && selectedSwimmer?.enrollmentStatus !== 'waitlist')}
               >
                 <ChevronLeft className="h-4 w-4 mr-2" />
                 Back
@@ -547,25 +492,15 @@ export function BookingWizard({}: BookingWizardProps) {
 
               {currentStep === 'confirm' ? (
                 selectedSwimmer?.enrollmentStatus === 'waitlist' ? (
-                  // For assessments, show "Done" button instead of submit
+                  // For assessments, show "Done" button
                   <Button onClick={() => resetWizard()}>
                     <CheckCircle2 className="h-4 w-4 mr-2" />
                     Done
                   </Button>
                 ) : (
-                  <Button onClick={handleSubmit} disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Booking...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Confirm Booking
-                      </>
-                    )}
-                  </Button>
+                  // For regular bookings, ConfirmationStep has its own buttons
+                  // Show empty div to maintain layout
+                  <div></div>
                 )
               ) : (
                 <Button onClick={handleNext} disabled={!canProceed}>

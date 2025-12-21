@@ -22,7 +22,6 @@ import {
   Edit,
   CheckCircle,
   XCircle,
-  User,
   Mail,
   Phone,
   DollarSign,
@@ -32,18 +31,12 @@ import {
   AlertCircle,
   Stethoscope,
   Heart,
-  Target as TargetIcon,
-  ChevronsRight as ChevronsRightIcon,
   X,
   FileText,
   Shield,
   AlertTriangle,
   Users,
-  Activity,
-  Clock,
-  Target,
   Award,
-  BookOpen,
   Plus,
 } from 'lucide-react';
 
@@ -138,45 +131,77 @@ export function SwimmerDetailModal({
     if (!swimmer?.id) return;
     setLoadingData(true);
 
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
 
-    // Fetch progress notes
-    const { data: notes } = await supabase
-      .from('progress_notes')
-      .select(`
-        id, created_at, lesson_summary, instructor_notes, skills_working_on, skills_mastered,
-        instructor:profiles!instructor_id(full_name)
-      `)
-      .eq('swimmer_id', swimmer.id)
-      .order('created_at', { ascending: false })
-      .limit(5);
-    setProgressNotes(notes || []);
+      // Fetch progress notes
+      const { data: notes, error: notesError } = await supabase
+        .from('progress_notes')
+        .select(`
+          id, created_at, lesson_summary, instructor_notes, skills_working_on, skills_mastered,
+          instructor:profiles!instructor_id(full_name)
+        `)
+        .eq('swimmer_id', swimmer.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-    // Fetch upcoming bookings
-    const { data: bookings } = await supabase
-      .from('bookings')
-      .select(`
-        id, status,
-        session:sessions(id, start_time, end_time, location, instructor:profiles!instructor_id(full_name))
-      `)
-      .eq('swimmer_id', swimmer.id)
-      .eq('status', 'confirmed')
-      .gte('session.start_time', new Date().toISOString())
-      .order('session(start_time)', { ascending: true })
-      .limit(5);
-    setUpcomingBookings(bookings || []);
+      if (notesError) {
+        console.error('Error fetching progress notes:', notesError);
+      }
+      setProgressNotes(notes || []);
 
-    // Fetch swimmer skills
-    const { data: skills } = await supabase
-      .from('swimmer_skills')
-      .select(`
-        id, status,
-        skill:skills(id, name, description)
-      `)
-      .eq('swimmer_id', swimmer.id);
-    setSwimmerSkills(skills || []);
+      // Fetch upcoming bookings - use a simpler approach
+      const { data: bookings, error: bookingsError } = await supabase
+        .from('bookings')
+        .select(`
+          id, status, session_id,
+          sessions!inner(id, start_time, end_time, location, instructor_id)
+        `)
+        .eq('swimmer_id', swimmer.id)
+        .eq('status', 'confirmed')
+        .gte('sessions.start_time', new Date().toISOString())
+        .limit(5);
 
-    setLoadingData(false);
+      if (bookingsError) {
+        console.error('Error fetching bookings:', bookingsError);
+      }
+
+      // Sort bookings by start_time manually since ordering through join is complex
+      const sortedBookings = (bookings || []).sort((a, b) => {
+        const timeA = a.sessions?.start_time ? new Date(a.sessions.start_time).getTime() : 0;
+        const timeB = b.sessions?.start_time ? new Date(b.sessions.start_time).getTime() : 0;
+        return timeA - timeB;
+      });
+
+      setUpcomingBookings(sortedBookings);
+
+      // Fetch swimmer skills - check if table exists first
+      try {
+        const { data: skills, error: skillsError } = await supabase
+          .from('swimmer_skills')
+          .select(`
+            id, status,
+            skill:skills(id, name, description)
+          `)
+          .eq('swimmer_id', swimmer.id);
+
+        if (skillsError) {
+          console.error('Error fetching swimmer skills:', skillsError);
+          // If table doesn't exist, use empty array
+          setSwimmerSkills([]);
+        } else {
+          setSwimmerSkills(skills || []);
+        }
+      } catch (error) {
+        console.error('Error in swimmer skills query:', error);
+        setSwimmerSkills([]);
+      }
+
+    } catch (error) {
+      console.error('Error in fetchAdditionalData:', error);
+    } finally {
+      setLoadingData(false);
+    }
   }, [swimmer?.id]);
 
   useEffect(() => {
@@ -186,6 +211,9 @@ export function SwimmerDetailModal({
   }, [isOpen, swimmer?.id, fetchAdditionalData]);
 
   if (!swimmer) return null;
+
+  // Safely get payment type with fallback
+  const paymentType = swimmer.paymentType || 'private_pay';
 
   // Get initials for avatar
   const getInitials = (firstName: string, lastName: string) => {
@@ -387,7 +415,7 @@ export function SwimmerDetailModal({
                   )}
                   <StatusBadge
                     type="funding"
-                    value={swimmer.paymentType}
+                    value={paymentType}
                     showIcon={true}
                     size="large"
                   />
@@ -836,10 +864,12 @@ export function SwimmerDetailModal({
                       {progressNotes.map((note) => (
                         <div key={note.id} className="p-3 bg-gray-50 rounded-lg">
                           <div className="flex justify-between text-sm">
-                            <span className="font-medium">{note.instructor?.full_name}</span>
-                            <span className="text-muted-foreground">{format(new Date(note.created_at), 'MMM d, yyyy')}</span>
+                            <span className="font-medium">{note.instructor?.full_name || 'Unknown Instructor'}</span>
+                            <span className="text-muted-foreground">
+                              {note.created_at ? format(new Date(note.created_at), 'MMM d, yyyy') : 'N/A'}
+                            </span>
                           </div>
-                          <p className="text-sm mt-1 line-clamp-2">{note.lesson_summary || note.instructor_notes}</p>
+                          <p className="text-sm mt-1 line-clamp-2">{note.lesson_summary || note.instructor_notes || 'No summary provided'}</p>
                         </div>
                       ))}
                     </div>
@@ -913,10 +943,10 @@ export function SwimmerDetailModal({
                         <div key={booking.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                           <div>
                             <p className="font-medium text-sm">
-                              {booking.session?.start_time && format(new Date(booking.session.start_time), 'EEE, MMM d @ h:mm a')}
+                              {booking.sessions?.start_time ? format(new Date(booking.sessions.start_time), 'EEE, MMM d @ h:mm a') : 'Time TBD'}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {booking.session?.instructor?.full_name} • {booking.session?.location || 'TBD'}
+                              {booking.sessions?.location || 'TBD'}
                             </p>
                           </div>
                           <Badge variant="outline">{booking.status}</Badge>
@@ -970,24 +1000,24 @@ export function SwimmerDetailModal({
               <div className="mb-6">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Payment Type</h4>
                 <div className="flex items-center gap-2">
-                  {swimmer.paymentType === 'private_pay' && (
+                  {paymentType === 'private_pay' && (
                     <DollarSign className="h-5 w-5 text-sky-600" />
                   )}
-                  {swimmer.paymentType === 'vmrc' && (
+                  {paymentType === 'vmrc' && (
                     <Building2 className="h-5 w-5 text-violet-600" />
                   )}
-                  {swimmer.paymentType === 'scholarship' && (
+                  {paymentType === 'scholarship' && (
                     <AwardIcon className="h-5 w-5 text-pink-600" />
                   )}
-                  {swimmer.paymentType === 'other' && (
+                  {paymentType === 'other' && (
                     <HelpCircle className="h-5 w-5 text-gray-600" />
                   )}
-                  <span className="font-medium capitalize">{swimmer.paymentType.replace('_', ' ')}</span>
+                  <span className="font-medium capitalize">{paymentType.replace('_', ' ')}</span>
                 </div>
               </div>
 
               {/* VMRC Details */}
-              {swimmer.paymentType === 'vmrc' && (
+              {paymentType === 'vmrc' && (
                 <div className="space-y-4">
                   {/* PO Details */}
                   {swimmer.vmrcCurrentPosNumber && (
@@ -1070,7 +1100,7 @@ export function SwimmerDetailModal({
               )}
 
               {/* Private Pay Details */}
-              {swimmer.paymentType === 'private_pay' && (
+              {paymentType === 'private_pay' && (
                 <div className="bg-sky-50 p-4 rounded-lg border border-sky-200">
                   <div className="flex items-center gap-2 mb-2">
                     <DollarSign className="h-5 w-5 text-sky-600" />
@@ -1083,7 +1113,7 @@ export function SwimmerDetailModal({
               )}
 
               {/* Scholarship Details */}
-              {swimmer.paymentType === 'scholarship' && (
+              {paymentType === 'scholarship' && (
                 <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
                   <div className="flex items-center gap-2 mb-2">
                     <AwardIcon className="h-5 w-5 text-pink-600" />
@@ -1096,7 +1126,7 @@ export function SwimmerDetailModal({
               )}
 
               {/* Other Funding */}
-              {swimmer.paymentType === 'other' && (
+              {paymentType === 'other' && (
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                   <div className="flex items-center gap-2 mb-2">
                     <HelpCircle className="h-5 w-5 text-gray-600" />
