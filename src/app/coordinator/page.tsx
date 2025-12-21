@@ -27,8 +27,8 @@ interface Client {
   last_name: string;
   photo_url?: string;
   enrollment_status: string;
-  vmrc_sessions_used?: number;
-  vmrc_sessions_authorized?: number;
+  funded_sessions_used?: number;
+  funded_sessions_authorized?: number;
 }
 
 interface PurchaseOrder {
@@ -61,7 +61,7 @@ export default function CoordinatorDashboard() {
     // Get assigned clients
     const { data: clientsData } = await supabase
       .from('swimmers')
-      .select('id, first_name, last_name, photo_url, enrollment_status, vmrc_sessions_used, vmrc_sessions_authorized')
+      .select('id, first_name, last_name, photo_url, enrollment_status, funded_sessions_used, funded_sessions_authorized')
       .eq('coordinator_id', user.id)
       .order('last_name');
 
@@ -292,7 +292,7 @@ export default function CoordinatorDashboard() {
                         <div>
                           <p className="font-medium">{client.first_name} {client.last_name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {client.vmrc_sessions_used || 0}/{client.vmrc_sessions_authorized || 0} sessions
+                            {client.funded_sessions_used || 0}/{client.funded_sessions_authorized || 0} sessions
                           </p>
                         </div>
                       </div>

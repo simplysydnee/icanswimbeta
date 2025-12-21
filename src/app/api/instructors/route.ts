@@ -12,28 +12,12 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // First get instructor user IDs from user_roles
-    const { data: instructorRoles, error: rolesError } = await supabase
-      .from('user_roles')
-      .select('user_id')
-      .eq('role', 'instructor');
-
-    if (rolesError) {
-      console.error('Error fetching instructor roles:', rolesError);
-      return NextResponse.json({ error: 'Failed to fetch instructors' }, { status: 500 });
-    }
-
-    if (!instructorRoles || instructorRoles.length === 0) {
-      return NextResponse.json([]);
-    }
-
-    const instructorIds = instructorRoles.map(role => role.user_id);
-
-    // Get profiles for instructor IDs
+    // Get instructor profiles directly from profiles table
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, full_name, avatar_url, email')
-      .in('id', instructorIds);
+      .eq('role', 'instructor')
+      .order('full_name', { ascending: true });
 
     if (profilesError) {
       console.error('Error fetching instructor profiles:', profilesError);

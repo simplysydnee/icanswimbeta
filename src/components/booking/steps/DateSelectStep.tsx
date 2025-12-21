@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format, addMonths, startOfWeek, endOfWeek, eachDayOfInterval, parseISO, isBefore, startOfDay } from 'date-fns';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { format, addMonths, startOfWeek, endOfWeek, parseISO, isBefore, startOfDay } from 'date-fns';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, User } from 'lucide-react';
 import type { AvailableSession } from '@/types/booking';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -81,7 +81,8 @@ export function DateSelectStep({
 
   // Calculate week range for single mode
   const weekEnd = endOfWeek(currentWeekStart);
-  const weekDays = eachDayOfInterval({ start: currentWeekStart, end: weekEnd });
+  // Note: weekDays is no longer used in the new Calendly-style design
+  // const weekDays = eachDayOfInterval({ start: currentWeekStart, end: weekEnd });
 
   // Fetch available sessions for single mode week
   const { data: weekSessions = [], isLoading: isLoadingWeek } = useQuery({
@@ -135,15 +136,16 @@ export function DateSelectStep({
     enabled: sessionType === 'recurring' && !!localStartDate && !!localEndDate,
   });
 
-  // Group sessions by date for single mode
-  const sessionsByDate = weekSessions.reduce((acc, session) => {
-    const dateKey = format(parseISO(session.startTime), 'yyyy-MM-dd');
-    if (!acc[dateKey]) {
-      acc[dateKey] = [];
-    }
-    acc[dateKey].push(session);
-    return acc;
-  }, {} as Record<string, AvailableSession[]>);
+  // Note: sessionsByDate is no longer used in the new Calendly-style design
+  // Keeping the variable commented out in case it's needed elsewhere
+  // const sessionsByDate = weekSessions.reduce((acc, session) => {
+  //   const dateKey = format(parseISO(session.startTime), 'yyyy-MM-dd');
+  //   if (!acc[dateKey]) {
+  //     acc[dateKey] = [];
+  //   }
+  //   acc[dateKey].push(session);
+  //   return acc;
+  // }, {} as Record<string, AvailableSession[]>);
 
   // Get unique days from range sessions for recurring mode
   const uniqueDays = Array.from(new Set(rangeSessions.map(s => s.dayOfWeek))).sort();
@@ -213,110 +215,168 @@ export function DateSelectStep({
     }
   };
 
-  // Single session mode
+  // Single session mode - Calendly style
   if (sessionType === 'single') {
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+    // Filter sessions for selected date
+    const sessionsForSelectedDate = selectedDate
+      ? weekSessions.filter(session =>
+          format(parseISO(session.startTime), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
+        )
+      : [];
+
+    // Group sessions by time for better display
+    const timeSlots = sessionsForSelectedDate.reduce((acc, session) => {
+      const timeKey = format(parseISO(session.startTime), 'h:mm a');
+      if (!acc[timeKey]) {
+        acc[timeKey] = [];
+      }
+      acc[timeKey].push(session);
+      return acc;
+    }, {} as Record<string, AvailableSession[]>);
+
     const hasAnySessions = weekSessions.length > 0;
 
     return (
       <div className="space-y-6">
-        {/* Week navigation header */}
-        <div className="flex items-center justify-between">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={goToPreviousWeek}
-            disabled={isCurrentWeek}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-
-          <div className="text-center">
-            <h3 className="font-semibold">
-              {format(currentWeekStart, 'MMMM d')} - {format(weekEnd, 'MMMM d, yyyy')}
-            </h3>
-            <p className="text-sm text-muted-foreground">Select an available session</p>
-          </div>
-
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={goToNextWeek}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        <div className="space-y-2">
+          <h3 className="font-semibold">Select Date & Time</h3>
+          <p className="text-sm text-muted-foreground">
+            Choose a date, then select an available time slot
+          </p>
         </div>
 
-        {/* No sessions alert */}
-        {!isLoadingWeek && !hasAnySessions && (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              No available sessions this week. Try another week or contact the office for availability.
-            </AlertDescription>
-          </Alert>
+        {/* Date selection */}
+        <div className="space-y-4">
+          <h4 className="font-medium">1. Select Date</h4>
+          <div className="border rounded-lg p-4">
+            <Calendar
+              mode="single"
+              selected={selectedDate || undefined}
+              onSelect={(date) => setSelectedDate(date || null)}
+              disabled={(date) => {
+                // Disable dates before today
+                return isBefore(date, startOfDay(new Date()));
+              }}
+              className="w-full"
+              required={false}
+              classNames={{
+                months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                month: "space-y-4",
+                caption: "flex justify-center pt-1 relative items-center",
+                caption_label: "text-sm font-medium",
+                nav: "space-x-1 flex items-center",
+                nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+                nav_button_previous: "absolute left-1",
+                nav_button_next: "absolute right-1",
+                table: "w-full border-collapse space-y-1",
+                head_row: "flex",
+                head_cell: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+                row: "flex w-full mt-2",
+                cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
+                day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                day_today: "bg-accent text-accent-foreground",
+                day_outside: "text-muted-foreground opacity-50",
+                day_disabled: "text-muted-foreground opacity-50",
+                day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+                day_hidden: "invisible",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Time slots for selected date */}
+        {selectedDate && (
+          <div className="space-y-4">
+            <h4 className="font-medium">
+              2. Select Time for {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+            </h4>
+
+            {isLoadingWeek ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 rounded-lg" />
+                ))}
+              </div>
+            ) : sessionsForSelectedDate.length === 0 ? (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  No available sessions on {format(selectedDate, 'MMMM d, yyyy')}. Try another date.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {Object.entries(timeSlots).map(([time, sessions]) => {
+                  // For now, just show the first session at this time
+                  // In a more advanced version, we could show multiple instructors at same time
+                  const session = sessions[0];
+                  const isSelected = session.id === selectedSessionId;
+                  const spotsRemaining = session.spotsRemaining || session.maxCapacity - session.currentBookings;
+
+                  return (
+                    <Button
+                      key={time}
+                      variant={isSelected ? 'default' : 'outline'}
+                      className="h-auto py-3 flex flex-col items-center justify-center"
+                      onClick={() => onSelectSession(session)}
+                    >
+                      <div className="font-medium">{time}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {spotsRemaining} spot{spotsRemaining !== 1 ? 's' : ''} left
+                      </div>
+                      {session.instructorName && (
+                        <div className="text-xs mt-1 flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          {session.instructorName}
+                        </div>
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         )}
 
-        {/* Days grid */}
-        {isLoadingWeek ? (
-          <div className="grid grid-cols-7 gap-1">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-6 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
+        {/* Week navigation for browsing other weeks */}
+        {!selectedDate && (
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToPreviousWeek}
+                disabled={isCurrentWeek}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous Week
+              </Button>
+
+              <div className="text-center text-sm">
+                {format(currentWeekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-7 gap-1">
-            {weekDays.map((day, index) => {
-              const dateKey = format(day, 'yyyy-MM-dd');
-              const daySessions = sessionsByDate[dateKey] || [];
 
-              return (
-                <div key={index} className="space-y-1">
-                  {/* Day header */}
-                  <div className="text-center">
-                    <div className="font-medium text-sm">{format(day, 'EEE')}</div>
-                    <div className={cn(
-                      "text-xs rounded-full w-6 h-6 flex items-center justify-center mx-auto",
-                      format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground'
-                    )}>
-                      {format(day, 'd')}
-                    </div>
-                  </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToNextWeek}
+              >
+                Next Week
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
 
-                  {/* Time slots */}
-                  <div className="space-y-1">
-                    {daySessions.length === 0 ? (
-                      <div className="text-center text-xs text-muted-foreground py-2">
-                        No slots
-                      </div>
-                    ) : (
-                      daySessions.map(session => {
-                        const isSelected = session.id === selectedSessionId;
-                        return (
-                          <Button
-                            key={session.id}
-                            variant={isSelected ? 'default' : 'outline'}
-                            size="sm"
-                            className="w-full justify-start text-xs h-8 px-2"
-                            onClick={() => onSelectSession(session)}
-                          >
-                            <Clock className="h-3 w-3 mr-1 flex-shrink-0" />
-                            <span className="truncate">
-                              {format(parseISO(session.startTime), 'h:mm a')}
-                            </span>
-                          </Button>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            {!isLoadingWeek && !hasAnySessions && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  No available sessions this week. Try another week or contact the office for availability.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
         )}
 
@@ -342,6 +402,11 @@ export function DateSelectStep({
                     Instructor: {selectedSession.instructorName}
                   </span>
                 </div>
+                {selectedSession.spotsRemaining !== undefined && (
+                  <p className="text-xs text-green-600 mt-1">
+                    {selectedSession.spotsRemaining} spot{selectedSession.spotsRemaining !== 1 ? 's' : ''} remaining
+                  </p>
+                )}
               </div>
             </div>
           </div>

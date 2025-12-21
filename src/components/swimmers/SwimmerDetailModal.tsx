@@ -62,10 +62,10 @@ export interface Swimmer {
   paymentType: string;
   hasFundingAuthorization: boolean;
   photoUrl?: string;
-  vmrcSessionsUsed?: number;
-  vmrcSessionsAuthorized?: number;
-  vmrcCurrentPosNumber?: string;
-  vmrcPosExpiresAt?: string;
+  fundedSessionsUsed?: number;
+  fundedSessionsAuthorized?: number;
+  currentPoNumber?: string;
+  poExpiresAt?: string;
   createdAt: string;
   updatedAt: string;
   parent?: {
@@ -100,10 +100,10 @@ export interface Swimmer {
   flexibleSwimmer?: boolean;
   signedWaiver?: boolean;
   photoRelease?: boolean;
-  isVmrcClient?: boolean;
-  vmrcCoordinatorName?: string;
-  vmrcCoordinatorEmail?: string;
-  vmrcCoordinatorPhone?: string;
+  isFundedClient?: boolean;
+  coordinatorName?: string;
+  coordinatorEmail?: string;
+  coordinatorPhone?: string;
 }
 
 interface SwimmerDetailModalProps {
@@ -959,7 +959,7 @@ export function SwimmerDetailModal({
                 {/* Session Statistics */}
                 <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
                   <div className="text-center">
-                    <p className="text-2xl font-bold">{swimmer.vmrcSessionsUsed || swimmer.lessonsCompleted || 0}</p>
+                    <p className="text-2xl font-bold">{swimmer.fundedSessionsUsed || swimmer.lessonsCompleted || 0}</p>
                     <p className="text-xs text-muted-foreground">Completed</p>
                   </div>
                   <div className="text-center">
@@ -967,7 +967,7 @@ export function SwimmerDetailModal({
                     <p className="text-xs text-muted-foreground">Upcoming</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold">{swimmer.vmrcSessionsAuthorized || 0}</p>
+                    <p className="text-2xl font-bold">{swimmer.fundedSessionsAuthorized || 0}</p>
                     <p className="text-xs text-muted-foreground">Authorized</p>
                   </div>
                 </div>
@@ -1003,7 +1003,7 @@ export function SwimmerDetailModal({
                   {paymentType === 'private_pay' && (
                     <DollarSign className="h-5 w-5 text-sky-600" />
                   )}
-                  {paymentType === 'vmrc' && (
+                  {paymentType === 'funded' && (
                     <Building2 className="h-5 w-5 text-violet-600" />
                   )}
                   {paymentType === 'scholarship' && (
@@ -1016,17 +1016,17 @@ export function SwimmerDetailModal({
                 </div>
               </div>
 
-              {/* VMRC Details */}
-              {paymentType === 'vmrc' && (
+              {/* Funding Source Details */}
+              {paymentType === 'funded' && (
                 <div className="space-y-4">
                   {/* PO Details */}
-                  {swimmer.vmrcCurrentPosNumber && (
+                  {swimmer.currentPoNumber && (
                     <div className="bg-violet-50 p-4 rounded-lg border border-violet-200">
                       <h4 className="text-sm font-medium text-violet-800 mb-2">Current Purchase Order</h4>
-                      <div className="text-lg font-bold text-violet-900">{swimmer.vmrcCurrentPosNumber}</div>
-                      {swimmer.vmrcPosExpiresAt && (
+                      <div className="text-lg font-bold text-violet-900">{swimmer.currentPoNumber}</div>
+                      {swimmer.poExpiresAt && (
                         <div className="text-sm text-violet-600 mt-1">
-                          Expires: {formatDate(swimmer.vmrcPosExpiresAt)}
+                          Expires: {formatDate(swimmer.poExpiresAt)}
                         </div>
                       )}
                     </div>
@@ -1037,30 +1037,30 @@ export function SwimmerDetailModal({
                     <div className="flex justify-between items-center mb-2">
                       <h4 className="text-sm font-medium text-violet-800">Sessions Usage</h4>
                       <div className="text-sm font-bold text-violet-900">
-                        {swimmer.vmrcSessionsUsed || 0} / {swimmer.vmrcSessionsAuthorized || 0}
+                        {swimmer.fundedSessionsUsed || 0} / {swimmer.fundedSessionsAuthorized || 0}
                       </div>
                     </div>
-                    {swimmer.vmrcSessionsAuthorized && swimmer.vmrcSessionsUsed && (
+                    {swimmer.fundedSessionsAuthorized && swimmer.fundedSessionsUsed && (
                       <>
                         <div className="w-full bg-violet-200 rounded-full h-2 mb-2">
                           <div
                             className="bg-violet-600 h-2 rounded-full transition-all duration-300"
                             style={{
-                              width: `${Math.min(100, ((swimmer.vmrcSessionsUsed / swimmer.vmrcSessionsAuthorized) * 100))}%`
+                              width: `${Math.min(100, ((swimmer.fundedSessionsUsed / swimmer.fundedSessionsAuthorized) * 100))}%`
                             }}
                           ></div>
                         </div>
                         <div className="text-xs text-violet-600">
-                          {swimmer.vmrcSessionsAuthorized - swimmer.vmrcSessionsUsed} sessions remaining
+                          {swimmer.fundedSessionsAuthorized - swimmer.fundedSessionsUsed} sessions remaining
                         </div>
                       </>
                     )}
                   </div>
 
                   {/* Renewal Alert */}
-                  {swimmer.vmrcSessionsAuthorized &&
-                   swimmer.vmrcSessionsUsed &&
-                   swimmer.vmrcSessionsUsed >= swimmer.vmrcSessionsAuthorized - 1 && (
+                  {swimmer.fundedSessionsAuthorized &&
+                   swimmer.fundedSessionsUsed &&
+                   swimmer.fundedSessionsUsed >= swimmer.fundedSessionsAuthorized - 1 && (
                     <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                       <div className="flex items-center gap-2">
                         <AlertCircle className="h-4 w-4 text-amber-600" />
@@ -1072,24 +1072,24 @@ export function SwimmerDetailModal({
                   )}
 
                   {/* Coordinator Info */}
-                  {(swimmer.vmrcCoordinatorName || swimmer.vmrcCoordinatorEmail || swimmer.vmrcCoordinatorPhone) && (
+                  {(swimmer.coordinatorName || swimmer.coordinatorEmail || swimmer.coordinatorPhone) && (
                     <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <h4 className="text-sm font-medium text-gray-800 mb-2">VMRC Coordinator</h4>
+                      <h4 className="text-sm font-medium text-gray-800 mb-2">Funding Coordinator</h4>
                       <div className="space-y-2">
-                        {swimmer.vmrcCoordinatorName && (
-                          <div className="text-sm">{swimmer.vmrcCoordinatorName}</div>
+                        {swimmer.coordinatorName && (
+                          <div className="text-sm">{swimmer.coordinatorName}</div>
                         )}
-                        {swimmer.vmrcCoordinatorEmail && (
+                        {swimmer.coordinatorEmail && (
                           <div className="text-sm">
-                            <a href={`mailto:${swimmer.vmrcCoordinatorEmail}`} className="text-blue-600 hover:underline">
-                              {swimmer.vmrcCoordinatorEmail}
+                            <a href={`mailto:${swimmer.coordinatorEmail}`} className="text-blue-600 hover:underline">
+                              {swimmer.coordinatorEmail}
                             </a>
                           </div>
                         )}
-                        {swimmer.vmrcCoordinatorPhone && (
+                        {swimmer.coordinatorPhone && (
                           <div className="text-sm">
-                            <a href={`tel:${swimmer.vmrcCoordinatorPhone}`} className="text-blue-600 hover:underline">
-                              {swimmer.vmrcCoordinatorPhone}
+                            <a href={`tel:${swimmer.coordinatorPhone}`} className="text-blue-600 hover:underline">
+                              {swimmer.coordinatorPhone}
                             </a>
                           </div>
                         )}

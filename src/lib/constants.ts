@@ -88,7 +88,7 @@ export const USER_ROLES = {
   INSTRUCTOR: 'instructor',
   ADMIN: 'admin',
   COORDINATOR: 'coordinator',
-  VMRC_COORDINATOR: 'coordinator',
+  // COORDINATOR: 'coordinator' - already defined above
 } as const;
 
 // Swim levels
@@ -191,7 +191,7 @@ export const FEATURES = {
   PAYMENTS: 'payments',
   BOOKING: 'booking',
   PROGRESS_TRACKING: 'progress_tracking',
-  VMRC_MANAGEMENT: 'vmrc_management',
+  FUNDING_SOURCE_MANAGEMENT: 'funding_source_management',
   INSTRUCTOR_DASHBOARD: 'instructor_dashboard',
   ADMIN_DASHBOARD: 'admin_dashboard',
   COORDINATOR_PORTAL: 'coordinator_portal',
@@ -270,7 +270,7 @@ export const ERROR_CODES = {
   RECURRING_SESSION_SINGLE_BOOKING_NOT_ALLOWED: 'RECURRING_SESSION_SINGLE_BOOKING_NOT_ALLOWED',
   NON_RECURRING_SESSION_IN_RECURRING_BOOKING: 'NON_RECURRING_SESSION_IN_RECURRING_BOOKING',
   
-  // VMRC
+  // Funding Source
   PO_EXPIRED: 'PO_EXPIRED',
   PO_SESSIONS_EXHAUSTED: 'PO_SESSIONS_EXHAUSTED',
   PO_APPROVAL_REQUIRED: 'PO_APPROVAL_REQUIRED',

@@ -26,9 +26,9 @@ interface Swimmer {
   firstName: string;
   lastName: string;
   paymentType?: string;
-  is_vmrc_client?: boolean;
-  vmrc_sessions_used?: number;
-  vmrc_sessions_authorized?: number;
+  is_funded_client?: boolean;
+  funded_sessions_used?: number;
+  funded_sessions_authorized?: number;
   fundingSourceId?: string;
   fundingSourceName?: string;
 }
@@ -56,9 +56,9 @@ export function ConfirmationStep({
   isSubmitting,
   bookingResult,
 }: ConfirmationStepProps) {
-  const isVmrc = swimmer.is_vmrc_client || swimmer.paymentType === 'vmrc' || swimmer.fundingSourceId;
-  const sessionsRemaining = isVmrc
-    ? (swimmer.vmrc_sessions_authorized || 0) - (swimmer.vmrc_sessions_used || 0)
+  const isFunded = swimmer.is_funded_client || swimmer.paymentType === 'funded' || swimmer.fundingSourceId;
+  const sessionsRemaining = isFunded
+    ? (swimmer.funded_sessions_authorized || 0) - (swimmer.funded_sessions_used || 0)
     : null;
   const hasEnoughSessions = sessionsRemaining === null || sessionsRemaining >= sessions.length;
 
@@ -173,8 +173,8 @@ export function ConfirmationStep({
         <p className="text-muted-foreground">Please review the details below before confirming.</p>
       </div>
 
-      {/* VMRC PO Warning */}
-      {isVmrc && !hasEnoughSessions && (
+      {/* Funding Source PO Warning */}
+      {isFunded && !hasEnoughSessions && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
@@ -189,14 +189,14 @@ export function ConfirmationStep({
         </div>
       )}
 
-      {/* VMRC PO Status */}
-      {isVmrc && hasEnoughSessions && (
+      {/* Funding Source PO Status */}
+      {isFunded && hasEnoughSessions && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-blue-800">Funding Source: {swimmer.fundingSourceName || 'VMRC'}</p>
+              <p className="font-medium text-blue-800">Funding Source: {swimmer.fundingSourceName || 'Funding Source'}</p>
               <p className="text-sm text-blue-700">
-                Sessions: {swimmer.vmrc_sessions_used || 0} used / {swimmer.vmrc_sessions_authorized || 0} authorized
+                Sessions: {swimmer.funded_sessions_used || 0} used / {swimmer.funded_sessions_authorized || 0} authorized
               </p>
             </div>
             <Badge className="bg-blue-200 text-blue-800">

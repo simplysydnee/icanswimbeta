@@ -310,8 +310,8 @@ export function BookingWizard({}: BookingWizardProps) {
         return (
           <SessionTypeStep
             selectedType={sessionType}
-            hasFundingSource={selectedSwimmer?.fundingSourceId ? true : false}
-            fundingSourceName={selectedSwimmer?.fundingSourceName}
+            paymentType={selectedSwimmer?.paymentType}
+            isFundedClient={selectedSwimmer?.isFundedClient}
             isFlexibleSwimmer={selectedSwimmer?.flexibleSwimmer || false}
             onSelectType={(type) => {
               setSessionType(type);

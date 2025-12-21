@@ -9,16 +9,26 @@ import { Label } from '@/components/ui/label';
 
 interface SessionTypeStepProps {
   selectedType: SessionType | null;
-  hasFundingSource: boolean;
-  fundingSourceName?: string;
+  paymentType?: string; // 'private_pay', 'funded', 'scholarship', 'other'
+  isFundedClient?: boolean;
   isFlexibleSwimmer: boolean; // Add flexible swimmer status
   onSelectType: (type: SessionType) => void;
 }
 
-export function SessionTypeStep({ selectedType, hasFundingSource, fundingSourceName, isFlexibleSwimmer, onSelectType }: SessionTypeStepProps) {
-  const sessionPrice = hasFundingSource ? PRICING.FUNDING_SOURCE_LESSON : PRICING.LESSON_PRIVATE_PAY;
-  const priceDisplay = hasFundingSource ?
-    `$0 - ${fundingSourceName || 'Funding Source'} Funded` :
+export function SessionTypeStep({ selectedType, paymentType, isFundedClient, isFlexibleSwimmer, onSelectType }: SessionTypeStepProps) {
+  const isFunded = paymentType === 'funded' || paymentType === 'scholarship' || isFundedClient;
+  const sessionPrice = isFunded ? PRICING.FUNDING_SOURCE_LESSON : PRICING.LESSON_PRIVATE_PAY;
+
+  // Get funding source display name
+  const getFundingSourceName = () => {
+    if (paymentType === 'funded' || isFundedClient) return 'Funding Source';
+    if (paymentType === 'scholarship') return 'Scholarship';
+    if (paymentType === 'other') return 'Other Funding';
+    return 'Funding Source';
+  };
+
+  const priceDisplay = isFunded ?
+    `$0 - ${getFundingSourceName()} Funded` :
     formatPrice(sessionPrice);
 
   const sessionTypes = [

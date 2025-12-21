@@ -13,7 +13,9 @@ export type EnrollmentStatus =
 // Payment type options
 export type PaymentType =
   | 'private_pay'
-  | 'funding_source';
+  | 'funded'
+  | 'scholarship'
+  | 'other';
 
 // Session type options
 export type SessionType =
@@ -40,6 +42,8 @@ export interface Swimmer {
   currentLevelId: string | null;
   currentLevelName?: string;
   paymentType: PaymentType;
+  isFundedClient?: boolean;
+  flexibleSwimmer?: boolean;
   fundingSourceId?: string | null;
   fundingSourceName?: string;
   fundingSourceShortName?: string;
@@ -119,7 +123,7 @@ export interface BookingConfirmation {
     location: string;
   }[];
   totalAmount: number;
-  paymentStatus: 'pending' | 'completed' | 'vmrc_pending';
+  paymentStatus: 'pending' | 'completed' | 'funding_pending';
   confirmationNumber: string;
 }
 
@@ -143,12 +147,14 @@ export interface DateAvailability {
   isFullyBooked: boolean;
 }
 
-// VMRC PO (Purchase Order) details
-export interface VmrcPurchaseOrder {
+// Funding Source PO (Purchase Order) details
+export interface FundingPurchaseOrder {
   id: string;
   poNumber: string;
   swimmerId: string;
   coordinatorName: string;
+  fundingSourceId?: string;
+  fundingSourceName?: string;
   authorizedSessions: number;
   usedSessions: number;
   remainingSessions: number;
