@@ -92,8 +92,8 @@ export default function ParentDashboard() {
             `)
             .eq('parent_id', user.id)
             .eq('status', 'confirmed')
-            .gte('sessions.start_time', new Date().toISOString())
-            .order('sessions.start_time', { ascending: true })
+            .gte('session.start_time', new Date().toISOString())
+            .order('session.start_time', { ascending: true })
             .limit(5)
 
           if (bookingsError) {

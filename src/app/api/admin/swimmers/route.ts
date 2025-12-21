@@ -158,15 +158,14 @@ export async function GET(request: Request) {
           display_name,
           color
         ),
-        lessons_completed:bookings!bookings_swimmer_id_fkey(
-          count
-        ).filter(status.eq.completed),
-        next_session:bookings!bookings_swimmer_id_fkey(
+        bookings!bookings_swimmer_id_fkey(
+          id,
+          status,
           session:sessions(
             start_time,
-            instructor:profiles(full_name)
+            instructor:profiles!sessions_instructor_id_fkey(full_name)
           )
-        ).filter(status.eq.confirmed, sessions.start_time.gte.now()).order(sessions.start_time).limit(1)
+        )
       `, { count: 'exact' });
 
     // ========== STEP 5: Apply Filters ==========
@@ -241,8 +240,23 @@ export async function GET(request: Request) {
     // ========== STEP 9: Transform Data ==========
     const transformedSwimmers: SwimmerResponse[] = (data as any[]).map(swimmer => {
       const age = swimmer.date_of_birth ? calculateAge(swimmer.date_of_birth) : undefined;
-      const lessonsCompleted = swimmer.lessons_completed?.[0]?.count || 0;
-      const nextSession = swimmer.next_session?.[0]?.session;
+
+      // Calculate lessons completed from bookings
+      const completedBookings = (swimmer.bookings as any[])?.filter((b: any) => b.status === 'completed') || [];
+      const lessonsCompleted = completedBookings.length;
+
+      // Find next upcoming session
+      const now = new Date();
+      const upcomingBookings = (swimmer.bookings as any[])?.filter((b: any) =>
+        b.status === 'confirmed' &&
+        b.session &&
+        b.session.length > 0 &&
+        new Date(b.session[0].start_time) > now
+      ) || [];
+
+      const nextBooking = upcomingBookings.sort((a: any, b: any) =>
+        new Date(a.session[0].start_time).getTime() - new Date(b.session[0].start_time).getTime()
+      )[0];
 
       return {
         id: swimmer.id,
@@ -255,11 +269,11 @@ export async function GET(request: Request) {
         enrollmentStatus: swimmer.enrollment_status,
         assessmentStatus: swimmer.assessment_status,
         currentLevelId: swimmer.current_level_id,
-        currentLevel: swimmer.swim_levels ? {
-          id: swimmer.swim_levels.id,
-          name: swimmer.swim_levels.name,
-          displayName: swimmer.swim_levels.display_name,
-          color: swimmer.swim_levels.color
+        currentLevel: swimmer.swim_levels?.[0] ? {
+          id: swimmer.swim_levels[0].id,
+          name: swimmer.swim_levels[0].name,
+          displayName: swimmer.swim_levels[0].display_name,
+          color: swimmer.swim_levels[0].color
         } : null,
         fundingSourceId: swimmer.payment_type,
         fundingSourceName: swimmer.payment_type === 'vmrc' ? 'VMRC' :
@@ -273,15 +287,15 @@ export async function GET(request: Request) {
         createdAt: swimmer.created_at,
         updatedAt: swimmer.updated_at,
         parent: swimmer.parent ? {
-          id: swimmer.parent.id,
-          fullName: swimmer.parent.full_name,
-          email: swimmer.parent.email,
-          phone: swimmer.parent.phone
+          id: (swimmer.parent as any[])[0]?.id,
+          fullName: (swimmer.parent as any[])[0]?.full_name,
+          email: (swimmer.parent as any[])[0]?.email,
+          phone: (swimmer.parent as any[])[0]?.phone
         } : null,
         lessonsCompleted,
-        nextSession: nextSession ? {
-          startTime: nextSession.start_time,
-          instructorName: nextSession.instructor?.full_name
+        nextSession: nextBooking?.session?.[0] ? {
+          startTime: nextBooking.session[0].start_time,
+          instructorName: nextBooking.session[0].instructor?.[0]?.full_name
         } : null
       };
     });

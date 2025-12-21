@@ -24,20 +24,19 @@ export async function GET() {
         enrollment_status,
         assessment_status,
         current_level_id,
-        funding_source_id,
-        photo_url,
-        funding_source_sessions_used,
-        funding_source_sessions_authorized,
+        payment_type,
+        is_vmrc_client,
+        vmrc_sessions_used,
+        vmrc_sessions_authorized,
         swim_levels:current_level_id(name, display_name, color),
-        lessons_completed:bookings!bookings_swimmer_id_fkey(
-          count
-        ).filter(status.eq.completed),
-        next_session:bookings!bookings_swimmer_id_fkey(
+        bookings!bookings_swimmer_id_fkey(
+          id,
+          status,
           session:sessions(
             start_time,
-            instructor:profiles(full_name)
+            instructor:profiles!sessions_instructor_id_fkey(full_name)
           )
-        ).filter(status.eq.confirmed, sessions.start_time.gte.now()).order(sessions.start_time).limit(1)
+        )
       `)
       .eq('parent_id', user.id)
       .order('first_name');
@@ -48,30 +47,49 @@ export async function GET() {
     }
 
     // Transform snake_case to camelCase and extract nested data
-    const transformedData = data.map(swimmer => ({
-      id: swimmer.id,
-      parentId: swimmer.parent_id,
-      firstName: swimmer.first_name,
-      lastName: swimmer.last_name,
-      dateOfBirth: swimmer.date_of_birth,
-      enrollmentStatus: swimmer.enrollment_status,
-      assessmentStatus: swimmer.assessment_status,
-      currentLevelId: swimmer.current_level_id,
-      currentLevel: swimmer.swim_levels ? {
-        name: swimmer.swim_levels.name,
-        displayName: swimmer.swim_levels.display_name,
-        color: swimmer.swim_levels.color
-      } : null,
-      fundingSourceId: swimmer.funding_source_id,
-      photoUrl: swimmer.photo_url,
-      fundingSourceSessionsUsed: swimmer.funding_source_sessions_used,
-      fundingSourceSessionsAuthorized: swimmer.funding_source_sessions_authorized,
-      lessonsCompleted: swimmer.lessons_completed?.[0]?.count || 0,
-      nextSession: swimmer.next_session?.[0]?.session ? {
-        startTime: swimmer.next_session[0].session.start_time,
-        instructorName: swimmer.next_session[0].session.instructor?.full_name
-      } : null
-    }));
+    const transformedData = data.map((swimmer: any) => {
+      // Calculate lessons completed
+      const completedBookings = swimmer.bookings?.filter((b: any) => b.status === 'completed') || [];
+      const lessonsCompleted = completedBookings.length;
+
+      // Find next upcoming session
+      const now = new Date();
+      const upcomingBookings = swimmer.bookings?.filter((b: any) =>
+        b.status === 'confirmed' &&
+        b.session &&
+        b.session.length > 0 &&
+        new Date(b.session[0].start_time) > now
+      ) || [];
+
+      const nextBooking = upcomingBookings.sort((a: any, b: any) =>
+        new Date(a.session[0].start_time).getTime() - new Date(b.session[0].start_time).getTime()
+      )[0];
+
+      return {
+        id: swimmer.id,
+        parentId: swimmer.parent_id,
+        firstName: swimmer.first_name,
+        lastName: swimmer.last_name,
+        dateOfBirth: swimmer.date_of_birth,
+        enrollmentStatus: swimmer.enrollment_status,
+        assessmentStatus: swimmer.assessment_status,
+        currentLevelId: swimmer.current_level_id,
+        currentLevel: swimmer.swim_levels?.[0] ? {
+          name: swimmer.swim_levels[0].name,
+          displayName: swimmer.swim_levels[0].display_name,
+          color: swimmer.swim_levels[0].color
+        } : null,
+        paymentType: swimmer.payment_type,
+        isVMRCClient: swimmer.is_vmrc_client,
+        vmrcSessionsUsed: swimmer.vmrc_sessions_used,
+        vmrcSessionsAuthorized: swimmer.vmrc_sessions_authorized,
+        lessonsCompleted,
+        nextSession: nextBooking?.session?.[0] ? {
+          startTime: nextBooking.session[0].start_time,
+          instructorName: nextBooking.session[0].instructor?.[0]?.full_name
+        } : null
+      };
+    });
 
     return NextResponse.json(transformedData);
   } catch (error) {
