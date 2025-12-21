@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { RoleGuard } from '@/components/auth/RoleGuard'
 import { Card, CardContent } from '@/components/ui/card'
@@ -33,6 +34,7 @@ interface Instructor {
 }
 
 export default function InstructorsPage() {
+  const { user } = useAuth()
   const { toast } = useToast()
   const supabase = createClient()
   const objectUrlRef = useRef<string | null>(null)
@@ -159,8 +161,7 @@ export default function InstructorsPage() {
     const fileExt = file.name.split('.').pop()
     const fileName = `instructor-${Date.now()}.${fileExt}`
 
-    // Get current user ID for folder structure
-    const { data: { user } } = await supabase.auth.getUser()
+    // Get current user ID for folder structure from useAuth hook
     const userId = user?.id || 'admin'
 
     // Upload to user's folder to comply with storage policy

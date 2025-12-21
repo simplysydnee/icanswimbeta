@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { RoleGuard } from '@/components/auth/RoleGuard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -148,6 +149,7 @@ const getStatusBadge = (status: string, parentCompletedAt: string | null) => {
 function AdminReferralsContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { user } = useAuth()
   const [referrals, setReferrals] = useState<Referral[]>([])
   const [loading, setLoading] = useState(true)
   const [lastFetchTime, setLastFetchTime] = useState<number>(0)
@@ -344,9 +346,8 @@ function AdminReferralsContent() {
   const handleApprove = async (referral: Referral) => {
     setProcessing(true)
     try {
-      // 1. Get current admin user
-      const { data: { user: adminUser } } = await supabase.auth.getUser()
-      if (!adminUser) {
+      // 1. Get current admin user from useAuth hook
+      if (!user) {
         throw new Error('Admin not authenticated')
       }
 
@@ -442,7 +443,7 @@ function AdminReferralsContent() {
             parent_email: referral.parent_email.toLowerCase(),
             parent_name: referral.parent_name,
             status: 'pending',
-            created_by: adminUser.id,
+            created_by: user.id,
             expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
           })
 

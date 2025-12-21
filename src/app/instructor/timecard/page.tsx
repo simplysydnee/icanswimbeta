@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ interface TimeEntry {
 }
 
 export default function TimecardPage() {
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState('');
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
@@ -42,14 +44,15 @@ export default function TimecardPage() {
   });
 
   useEffect(() => {
-    fetchTimeEntries();
-  }, [currentWeekStart]);
+    if (user) {
+      fetchTimeEntries();
+    }
+  }, [currentWeekStart, user]);
 
   const fetchTimeEntries = async () => {
     setLoading(true);
     const supabase = createClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     setUserId(user.id);
 
@@ -321,7 +324,7 @@ export default function TimecardPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {authLoading || loading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-cyan-600" />
             </div>

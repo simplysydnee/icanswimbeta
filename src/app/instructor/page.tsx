@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,7 @@ interface Session {
 }
 
 export default function InstructorDashboard() {
+  const { user, profile, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('');
   const [userId, setUserId] = useState('');
@@ -56,18 +58,10 @@ export default function InstructorDashboard() {
   const fetchDashboardData = useCallback(async () => {
     const supabase = createClient();
 
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
+    // Get current user from useAuth hook
     if (!user) return;
 
     setUserId(user.id);
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', user.id)
-      .single();
-
     setUserName(profile?.full_name?.split(' ')[0] || 'Instructor');
 
     // Get today's sessions for this instructor
@@ -141,10 +135,12 @@ export default function InstructorDashboard() {
   }, []);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [fetchDashboardData, user]);
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="p-6 space-y-6">
         {/* Header skeleton */}
