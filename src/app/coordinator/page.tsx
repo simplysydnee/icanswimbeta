@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,7 @@ interface PurchaseOrder {
 }
 
 export default function CoordinatorDashboard() {
+  const { user, profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('');
   const [clients, setClients] = useState<Client[]>([]);
@@ -53,15 +55,7 @@ export default function CoordinatorDashboard() {
   const fetchDashboardData = useCallback(async () => {
     const supabase = createClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', user.id)
-      .single();
-
     setUserName(profile?.full_name?.split(' ')[0] || 'Coordinator');
 
     // Get assigned clients

@@ -122,10 +122,11 @@ export default function ProfileSettingsPage() {
                       <AvatarImage src="/api/placeholder/100/100" alt="Profile" />
                       <AvatarFallback className="text-lg">JD</AvatarFallback>
                     </Avatar>
-                    <Button 
-                      size="icon" 
-                      variant="outline" 
+                    <Button
+                      size="icon"
+                      variant="outline"
                       className="absolute -bottom-2 -right-2 h-8 w-8"
+                      aria-label="Change profile photo"
                     >
                       <Camera className="h-4 w-4" />
                     </Button>
