@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { emailService } from '@/lib/email-service';
+import { format } from 'date-fns';
 
 export async function POST(request: Request) {
   try {
@@ -16,11 +18,23 @@ export async function POST(request: Request) {
     // Validate swimmer belongs to parent
     const { data: swimmer } = await supabase
       .from('swimmers')
-      .select('id, funding_source_id, flexible_swimmer, enrollment_status')
+      .select('id, funding_source_id, flexible_swimmer, enrollment_status, first_name, last_name')
       .eq('id', swimmerId)
       .eq('parent_id', parentId)
       .single();
     if (!swimmer) return NextResponse.json({ error: 'Swimmer not authorized' }, { status: 403 });
+
+    // Check for booking conflicts
+    const conflictResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/bookings/check-conflict`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ swimmerId, sessionId }),
+    });
+
+    const conflictData = await conflictResponse.json();
+    if (conflictData.hasConflict) {
+      return NextResponse.json({ error: conflictData.message || 'Booking conflict detected' }, { status: 409 });
+    }
 
     const fundingSourceId = swimmer.funding_source_id;
 
@@ -122,6 +136,42 @@ export async function POST(request: Request) {
         .from('purchase_orders')
         .update({ lessons_booked: supabase.raw('lessons_booked + 1') })
         .eq('id', activePoId);
+    }
+
+    // Send confirmation email
+    try {
+      const { data: parentProfile } = await supabase
+        .from('profiles')
+        .select('email, full_name')
+        .eq('id', parentId)
+        .single();
+
+      const { data: instructorProfile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', session.instructor_id)
+        .single();
+
+      if (parentProfile?.email) {
+        // Generate confirmation number
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
+        const randomNum = Math.floor(10000 + Math.random() * 90000);
+        const confirmationNumber = `ICS-${dateStr}-${randomNum}`;
+
+        await emailService.sendSingleLessonBooking({
+          parentEmail: parentProfile.email,
+          parentName: parentProfile.full_name || 'Parent',
+          childName: `${swimmer.first_name} ${swimmer.last_name}`,
+          date: format(new Date(session.start_time), 'EEEE, MMMM d, yyyy'),
+          time: format(new Date(session.start_time), 'h:mm a'),
+          location: session.location || 'TBD',
+          instructor: instructorProfile?.full_name || 'Instructor',
+        });
+      }
+    } catch (emailError) {
+      console.error('Failed to send confirmation email:', emailError);
+      // Don't fail the booking if email fails
     }
 
     return NextResponse.json({

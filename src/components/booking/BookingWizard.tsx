@@ -189,6 +189,22 @@ export function BookingWizard({}: BookingWizardProps) {
         if (!selectedSessionId) {
           throw new Error('No session selected');
         }
+
+        // Check for conflicts before booking
+        const conflictResponse = await fetch('/api/bookings/check-conflict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            swimmerId: selectedSwimmer.id,
+            sessionId: selectedSessionId,
+          }),
+        });
+
+        const conflictData = await conflictResponse.json();
+        if (conflictData.hasConflict) {
+          throw new Error(conflictData.message || 'Booking conflict detected');
+        }
+
         endpoint = '/api/bookings/single';
         payload.sessionId = selectedSessionId;
       } else {
@@ -197,6 +213,25 @@ export function BookingWizard({}: BookingWizardProps) {
         if (sessionIds.length === 0) {
           throw new Error('No sessions selected');
         }
+
+        // Check for conflicts for each session
+        for (const session of selectedRecurringSessions) {
+          const conflictResponse = await fetch('/api/bookings/check-conflict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              swimmerId: selectedSwimmer.id,
+              startTime: session.startTime,
+              endTime: session.endTime,
+            }),
+          });
+
+          const conflictData = await conflictResponse.json();
+          if (conflictData.hasConflict) {
+            throw new Error(`Conflict detected for session on ${new Date(session.startTime).toLocaleDateString()}: ${conflictData.message}`);
+          }
+        }
+
         endpoint = '/api/bookings/recurring';
         payload.sessionIds = sessionIds;
       }
