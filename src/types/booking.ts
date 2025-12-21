@@ -79,6 +79,9 @@ export interface AvailableSession {
   priceCents: number;
   isRecurring?: boolean; // Added for session type enforcement
   spotsRemaining?: number; // Added for availability display
+  heldBy?: string; // User ID who has session on hold
+  heldUntil?: string; // ISO datetime when hold expires
+  isHeld?: boolean; // Whether session is currently held
 }
 
 // Booking wizard state

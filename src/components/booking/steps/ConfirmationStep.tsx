@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Calendar, Clock, User, MapPin, AlertTriangle, Loader2 } from 'lucide-react';
+import { CheckCircle, Calendar, Clock, User, MapPin, AlertTriangle, Loader2, Lock, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { useSessionHold } from '@/hooks/useSessionHold';
 
 interface Session {
   id: string;
@@ -14,7 +15,10 @@ interface Session {
   endTime: string;
   location?: string;
   instructorName?: string;
-  instructorAvatarUrl?: string;
+  instructorAvatarUrl?: string | null;
+  heldBy?: string;
+  heldUntil?: string;
+  isHeld?: boolean;
 }
 
 interface Swimmer {
@@ -57,6 +61,47 @@ export function ConfirmationStep({
     ? (swimmer.vmrc_sessions_authorized || 0) - (swimmer.vmrc_sessions_used || 0)
     : null;
   const hasEnoughSessions = sessionsRemaining === null || sessionsRemaining >= sessions.length;
+
+  // Use session hold for the first session (for single bookings)
+  const firstSessionId = sessions.length > 0 ? sessions[0].id : null;
+  const {
+    isHolding,
+    holdUntil,
+    timeRemaining,
+    error: holdError,
+    holdSession,
+    releaseHold,
+    formatTimeRemaining,
+  } = useSessionHold(firstSessionId);
+
+  // Auto-release hold on unmount
+  useEffect(() => {
+    return () => {
+      if (isHolding && firstSessionId) {
+        releaseHold();
+      }
+    };
+  }, [isHolding, firstSessionId, releaseHold]);
+
+  // Handle confirmation with hold
+  const handleConfirmWithHold = async () => {
+    // For single bookings, create a hold first
+    if (sessionType === 'single' && firstSessionId && !isHolding) {
+      const held = await holdSession();
+      if (!held) {
+        // Hold failed, show error
+        return;
+      }
+    }
+
+    // Proceed with booking
+    await onConfirm();
+
+    // Release hold after successful booking
+    if (isHolding && firstSessionId) {
+      await releaseHold();
+    }
+  };
 
   // Success state
   if (bookingResult?.success) {
@@ -224,13 +269,45 @@ export function ConfirmationStep({
         </p>
       </div>
 
+      {/* Hold Status */}
+      {sessionType === 'single' && isHolding && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Lock className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="font-medium text-blue-800">Session Held</p>
+                <p className="text-sm text-blue-700">
+                  This session is reserved for you for {formatTimeRemaining()}
+                </p>
+              </div>
+            </div>
+            <Badge className="bg-blue-200 text-blue-800 font-mono">
+              {formatTimeRemaining()}
+            </Badge>
+          </div>
+        </div>
+      )}
+
+      {holdError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+            <div>
+              <p className="font-medium text-red-800">Hold Error</p>
+              <p className="text-sm text-red-700">{holdError}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Action Buttons */}
       <div className="flex gap-3">
-        <Button variant="outline" onClick={onBack} disabled={isSubmitting} className="flex-1">
+        <Button variant="outline" onClick={onBack} disabled={isSubmitting || isHolding} className="flex-1">
           Back
         </Button>
         <Button
-          onClick={onConfirm}
+          onClick={handleConfirmWithHold}
           disabled={isSubmitting || !hasEnoughSessions}
           className="flex-1"
         >
@@ -238,6 +315,11 @@ export function ConfirmationStep({
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Confirming...
+            </>
+          ) : isHolding ? (
+            <>
+              <Lock className="h-4 w-4 mr-2" />
+              Complete Booking
             </>
           ) : (
             'Confirm Booking'

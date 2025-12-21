@@ -47,11 +47,14 @@ export async function GET(request: Request) {
         max_capacity,
         booking_count,
         is_recurring,
+        held_by,
+        held_until,
         profiles!instructor_id(full_name, avatar_url)
       `)
       .eq('session_type', 'lesson')
       .in('status', ['available', 'open'])
       .eq('is_full', false)
+      .or(`held_by.is.null,held_until.lt.${new Date().toISOString()}`)
       .gte('start_time', startDate)
       .lte('start_time', endDate)
       .order('start_time', { ascending: true });
@@ -99,6 +102,9 @@ export async function GET(request: Request) {
       isFull: session.booking_count >= session.max_capacity,
       spotsRemaining: session.max_capacity - session.booking_count,
       isRecurring: session.is_recurring,
+      heldBy: session.held_by,
+      heldUntil: session.held_until,
+      isHeld: session.held_by !== null && new Date(session.held_until) > new Date(),
       instructorName: session.profiles?.[0]?.full_name || 'Unknown Instructor',
       instructorAvatarUrl: session.profiles?.[0]?.avatar_url || null,
     }));
