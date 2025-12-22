@@ -902,7 +902,7 @@ export default function UsersPage() {
                       <Input
                         id="newCoordEmail"
                         type="email"
-                        placeholder="coordinator@vmrc.org"
+                        placeholder="coordinator@regional-center.org"
                         value={newCoordinatorEmail}
                         onChange={(e) => setNewCoordinatorEmail(e.target.value)}
                       />

@@ -13,7 +13,7 @@ const testimonials = [
     name: 'Michael R.',
     location: 'Modesto',
     rating: 5,
-    text: 'VMRC billing used to be so complicated. Now it\'s completely automated and we never miss a session.',
+    text: 'Funding source billing used to be so complicated. Now it\'s completely automated and we never miss a session.',
     swimmer: 'Age 6, Speech Delay',
   },
   {

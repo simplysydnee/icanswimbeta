@@ -30,10 +30,10 @@ interface Swimmer {
   paymentType: string
   hasFundingAuthorization: boolean
   photoUrl?: string
-  vmrcSessionsUsed?: number
-  vmrcSessionsAuthorized?: number
-  vmrcCurrentPosNumber?: string
-  vmrcPosExpiresAt?: string
+  authorizedSessionsUsed?: number
+  authorizedSessionsTotal?: number
+  currentAuthorizationNumber?: string
+  authorizationExpiresAt?: string
   createdAt: string
   updatedAt: string
   parent?: {
@@ -92,7 +92,7 @@ const statusColors: Record<string, string> = {
 // Payment type colors
 const paymentColors: Record<string, string> = {
   private_pay: "bg-blue-100 text-blue-800 border-blue-200",
-  vmrc: "bg-purple-100 text-purple-800 border-purple-200",
+  funded: "bg-purple-100 text-purple-800 border-purple-200",
   scholarship: "bg-orange-100 text-orange-800 border-orange-200",
   other: "bg-gray-100 text-gray-800 border-gray-200",
 }
@@ -109,7 +109,7 @@ const statusDisplay: Record<string, string> = {
 // Payment type display names
 const paymentDisplay: Record<string, string> = {
   private_pay: "Private Pay",
-  vmrc: "VMRC",
+  funded: "Funded",
   scholarship: "Scholarship",
   other: "Other",
 }
@@ -480,16 +480,16 @@ export default function SwimmerDetailDrawer({
                       )}
                     </div>
                   </div>
-                  {swimmer.hasFundingAuthorization && swimmer.vmrcSessionsAuthorized && (
+                  {swimmer.hasFundingAuthorization && swimmer.authorizedSessionsTotal && (
                     <div className="pt-3 border-t">
-                      <div className="text-sm text-muted-foreground">VMRC Sessions</div>
+                      <div className="text-sm text-muted-foreground">Funding Sessions</div>
                       <div className="font-medium">
-                        {swimmer.vmrcSessionsUsed || 0} / {swimmer.vmrcSessionsAuthorized} used
+                        {swimmer.authorizedSessionsUsed || 0} / {swimmer.authorizedSessionsTotal} used
                       </div>
-                      {swimmer.vmrcCurrentPosNumber && (
+                      {swimmer.currentAuthorizationNumber && (
                         <div className="text-xs text-muted-foreground mt-1">
-                          PO: {swimmer.vmrcCurrentPosNumber}
-                          {swimmer.vmrcPosExpiresAt && ` (expires ${formatDate(swimmer.vmrcPosExpiresAt)})`}
+                          Authorization: {swimmer.currentAuthorizationNumber}
+                          {swimmer.authorizationExpiresAt && ` (expires ${formatDate(swimmer.authorizationExpiresAt)})`}
                         </div>
                       )}
                     </div>

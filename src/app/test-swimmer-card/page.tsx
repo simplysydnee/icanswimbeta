@@ -33,8 +33,8 @@ export default function TestSwimmerCardPage() {
       currentLevelName: 'Red',
       paymentType: 'funding_source',
       fundingSourceId: 'funding-source-1',
-      fundingSourceName: 'Valley Mountain Regional Center',
-      fundingSourceShortName: 'VMRC',
+      fundingSourceName: 'Regional Center Funding',
+      fundingSourceShortName: 'Funded',
       sessionsUsed: 3,
       sessionsAuthorized: 12,
     },
@@ -76,8 +76,8 @@ export default function TestSwimmerCardPage() {
       currentLevelId: null,
       paymentType: 'funding_source',
       fundingSourceId: 'funding-source-1',
-      fundingSourceName: 'Valley Mountain Regional Center',
-      fundingSourceShortName: 'VMRC',
+      fundingSourceName: 'Regional Center Funding',
+      fundingSourceShortName: 'Funded',
       sessionsUsed: 0,
       sessionsAuthorized: 1,
     },
@@ -120,7 +120,7 @@ export default function TestSwimmerCardPage() {
             <strong>Emma Smith:</strong> Private pay, enrolled, White level, no photo
           </li>
           <li>
-            <strong>Liam Johnson:</strong> Authorized client (VMRC), waitlist, Red level, session counter
+            <strong>Liam Johnson:</strong> Authorized client (Funded), waitlist, Red level, session counter
           </li>
           <li>
             <strong>Olivia Williams:</strong> Private pay, pending enrollment, has avatar photo
@@ -129,7 +129,7 @@ export default function TestSwimmerCardPage() {
             <strong>Noah Brown:</strong> Private pay, inactive, White level
           </li>
           <li>
-            <strong>Ava Jones:</strong> Authorized client (VMRC), declined, assessment failed
+            <strong>Ava Jones:</strong> Authorized client (Funded), declined, assessment failed
           </li>
         </ul>
       </div>

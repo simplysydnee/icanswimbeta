@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 interface SwimmersQueryParams {
   search?: string;
   status?: 'enrolled' | 'waitlist' | 'pending' | 'inactive' | 'all';
-  funding?: 'private_pay' | 'vmrc' | 'scholarship' | 'other' | 'all';
+  funding?: 'private_pay' | 'funded' | 'scholarship' | 'other' | 'all';
   level?: string; // level_id or "none" or "all"
   sortBy?: 'name' | 'age' | 'status' | 'lessons' | 'nextSession';
   sortOrder?: 'asc' | 'desc';
@@ -110,7 +110,7 @@ export async function GET(request: Request) {
     const params: SwimmersQueryParams = {
       search: searchParams.get('search') || undefined,
       status: (searchParams.get('status') as 'enrolled' | 'waitlist' | 'pending' | 'inactive' | 'all') || 'all',
-      funding: (searchParams.get('funding') as 'private_pay' | 'vmrc' | 'scholarship' | 'other' | 'all') || 'all',
+      funding: (searchParams.get('funding') as 'private_pay' | 'funded' | 'scholarship' | 'other' | 'all') || 'all',
       level: searchParams.get('level') || 'all',
       sortBy: (searchParams.get('sortBy') as 'name' | 'age' | 'status' | 'lessons' | 'nextSession') || 'name',
       sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'asc',
@@ -276,7 +276,7 @@ export async function GET(request: Request) {
           color: swimmer.swim_levels[0].color
         } : null,
         fundingSourceId: swimmer.payment_type,
-        fundingSourceName: swimmer.payment_type === 'vmrc' ? 'VMRC' :
+        fundingSourceName: swimmer.payment_type === 'funded' ? 'Funded' :
                           swimmer.payment_type === 'private_pay' ? 'Private Pay' :
                           swimmer.payment_type === 'scholarship' ? 'Scholarship' : 'Other',
         photoUrl: swimmer.photo_url,

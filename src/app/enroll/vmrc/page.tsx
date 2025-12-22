@@ -27,7 +27,7 @@ const parentReferralSchema = z.object({
 
 type ParentReferralFormData = z.infer<typeof parentReferralSchema>;
 
-function ParentVMRCReferralContent() {
+function ParentFundingReferralContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading, profile } = useAuth();
@@ -153,7 +153,7 @@ function ParentVMRCReferralContent() {
               <h3 className="font-semibold">What happens next?</h3>
               <ul className="list-disc list-inside space-y-2 text-sm text-gray-600">
                 <li>Your coordinator will receive your request</li>
-                <li>They will complete the full VMRC referral form</li>
+                <li>They will complete the full funding source referral form</li>
                 <li>Our team will review the referral and contact you</li>
                 <li>You'll be invited to schedule an assessment session</li>
               </ul>
@@ -181,9 +181,9 @@ function ParentVMRCReferralContent() {
     <div className="container max-w-2xl py-8">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl text-[#2a5e84]">VMRC Referral Request</CardTitle>
+          <CardTitle className="text-2xl text-[#2a5e84]">Funding Source Referral Request</CardTitle>
           <CardDescription>
-            Request a referral for adaptive swim lessons through your VMRC coordinator.
+            Request a referral for adaptive swim lessons through your funding source coordinator.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -319,7 +319,7 @@ function ParentVMRCReferralContent() {
               </div>
 
               <div className="text-sm text-gray-600">
-                <p>This is the VMRC coordinator who will complete the full referral form.</p>
+                <p>This is the funding source coordinator who will complete the full referral form.</p>
               </div>
             </div>
 
@@ -327,7 +327,7 @@ function ParentVMRCReferralContent() {
             <div className="border rounded-lg p-4 bg-[#f0f7ff] border-[#2a5e84]/20">
               <h4 className="font-semibold text-[#2a5e84] mb-2">What to expect:</h4>
               <ul className="list-disc list-inside space-y-1 text-sm text-[#2a5e84]">
-                <li>Your coordinator will complete the full VMRC referral form</li>
+                <li>Your coordinator will complete the full funding source referral form</li>
                 <li>Our team reviews all referrals within 2-3 business days</li>
                 <li>You'll receive an invitation to schedule an assessment</li>
                 <li>Assessment sessions are 30 minutes and help determine appropriate swim level</li>
@@ -360,14 +360,14 @@ function ParentVMRCReferralContent() {
   );
 }
 
-export default function ParentVMRCReferralPage() {
+export default function ParentFundingReferralPage() {
   return (
     <Suspense fallback={
       <div className="container max-w-2xl py-8 flex justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     }>
-      <ParentVMRCReferralContent />
+      <ParentFundingReferralContent />
     </Suspense>
   );
 }

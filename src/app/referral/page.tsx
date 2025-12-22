@@ -101,7 +101,7 @@ type ApiReferralData = {
   safety_plan_description?: string;
 
   // Section 4 - Coordinator & Additional Info
-  referral_type: string; // Will be hardcoded as 'vmrc_client'
+  referral_type: string; // Will be hardcoded as 'funded_client'
   coordinator_name?: string;
   coordinator_email?: string;
   coordinator_id?: string;
@@ -247,7 +247,7 @@ export default function ReferralPage() {
         safety_plan_description: data.safety_plan_description,
 
         // Section 4 - Coordinator & Additional Info
-        referral_type: 'vmrc_client', // Hardcoded as requested
+        referral_type: 'funded_client', // Hardcoded as requested
         coordinator_name: data.coordinator_name,
         coordinator_email: data.coordinator_email,
         coordinator_id: user?.id, // Add coordinator ID from logged-in user
@@ -303,7 +303,7 @@ export default function ReferralPage() {
           <CardHeader>
             <CardTitle className="text-2xl text-green-600">Referral Submitted Successfully!</CardTitle>
             <CardDescription>
-              Thank you for submitting the VMRC referral form.
+              Thank you for submitting the funding source referral form.
             </CardDescription>
           </CardHeader>
           <CardContent>

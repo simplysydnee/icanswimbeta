@@ -56,10 +56,10 @@ export interface Swimmer {
   paymentType: string;
   hasFundingAuthorization: boolean;
   photoUrl?: string;
-  vmrcSessionsUsed?: number;
-  vmrcSessionsAuthorized?: number;
-  vmrcCurrentPosNumber?: string;
-  vmrcPosExpiresAt?: string;
+  authorizedSessionsUsed?: number;
+  authorizedSessionsTotal?: number;
+  currentAuthorizationNumber?: string;
+  authorizationExpiresAt?: string;
   createdAt: string;
   updatedAt: string;
   parent?: {
@@ -101,7 +101,7 @@ const statusColors: Record<string, string> = {
 // Payment type colors
 const paymentColors: Record<string, string> = {
   private_pay: 'bg-blue-100 text-blue-800 border-blue-200',
-  vmrc: 'bg-purple-100 text-purple-800 border-purple-200',
+  funded: 'bg-purple-100 text-purple-800 border-purple-200',
   scholarship: 'bg-orange-100 text-orange-800 border-orange-200',
   other: 'bg-gray-100 text-gray-800 border-gray-200',
 };
@@ -118,7 +118,7 @@ const statusDisplay: Record<string, string> = {
 // Payment type display names
 const paymentDisplay: Record<string, string> = {
   private_pay: 'Private Pay',
-  vmrc: 'VMRC',
+  funded: 'Funded',
   scholarship: 'Scholarship',
   other: 'Other',
 };
@@ -337,7 +337,7 @@ export function SwimmersTable({
                 <SelectContent>
                   <SelectItem value="all">All Funding Types</SelectItem>
                   <SelectItem value="private_pay">Private Pay</SelectItem>
-                  <SelectItem value="vmrc">VMRC</SelectItem>
+                  <SelectItem value="funded">Funded</SelectItem>
                   <SelectItem value="scholarship">Scholarship</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
@@ -517,7 +517,7 @@ export function SwimmersTable({
                         )}
                       >
                         {paymentDisplay[swimmer.paymentType] || swimmer.paymentType}
-                        {swimmer.hasFundingAuthorization && ' (VMRC)'}
+                        {swimmer.hasFundingAuthorization && ' (Funded)'}
                       </Badge>
                     </TableCell>
 
@@ -526,9 +526,9 @@ export function SwimmersTable({
                       <div className="flex items-center gap-2">
                         <Award className="h-4 w-4 text-blue-600" />
                         <span className="font-medium">{swimmer.lessonsCompleted}</span>
-                        {swimmer.hasFundingAuthorization && swimmer.vmrcSessionsAuthorized && (
+                        {swimmer.hasFundingAuthorization && swimmer.authorizedSessionsTotal && (
                           <span className="text-xs text-muted-foreground">
-                            ({swimmer.vmrcSessionsUsed || 0}/{swimmer.vmrcSessionsAuthorized})
+                            ({swimmer.authorizedSessionsUsed || 0}/{swimmer.authorizedSessionsTotal})
                           </span>
                         )}
                       </div>

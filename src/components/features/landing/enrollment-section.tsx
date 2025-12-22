@@ -28,7 +28,7 @@ export function EnrollmentSection() {
             <CardContent>
               <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm text-yellow-900">
-                  <strong>⚠️ Not a VMRC Client?</strong> This enrollment is for private-pay families only. If you have VMRC authorization or a coordinator referral, use the "Request Referral" option instead.
+                  <strong>⚠️ Not a Funded Client?</strong> This enrollment is for private-pay families only. If you have funding authorization or a coordinator referral, use the "Request Referral" option instead.
                 </p>
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground mb-6">
@@ -50,9 +50,9 @@ export function EnrollmentSection() {
           <Card className="border-2 hover:border-accent/50 transition-all hover:shadow-lg">
             <CardHeader>
               <Heart className="h-12 w-12 text-accent mb-4" />
-              <CardTitle className="text-xl">VMRC / Referral Request</CardTitle>
+              <CardTitle className="text-xl">Funding / Referral Request</CardTitle>
               <CardDescription className="text-base">
-                For VMRC clients or those with coordinator referrals
+                For funded clients or those with coordinator referrals
               </CardDescription>
             </CardHeader>
             <CardContent>

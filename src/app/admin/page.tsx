@@ -119,9 +119,9 @@ export default function AdminDashboard() {
       const activeSwimmers = swimmerList.filter(s => s.enrollment_status === 'enrolled').length;
       const waitlistedSwimmers = swimmerList.filter(s => s.enrollment_status === 'waitlist').length;
       const privatePayCount = swimmerList.filter(s => s.payment_type === 'private_pay').length;
-      // Funded includes vmrc, scholarship, and other payment types
+      // Funded includes funded, scholarship, and other payment types
       const fundedCount = swimmerList.filter(s =>
-        s.payment_type === 'vmrc' ||
+        s.payment_type === 'funded' ||
         s.payment_type === 'scholarship' ||
         s.payment_type === 'other'
       ).length;
@@ -477,7 +477,7 @@ export default function AdminDashboard() {
               <Button variant="outline" className="w-full justify-start h-auto py-3">
                 <FileText className="h-4 w-4 mr-2" />
                 <div className="text-left">
-                  <div className="font-medium">VMRC Referrals</div>
+                  <div className="font-medium">Funding Referrals</div>
                 </div>
               </Button>
             </Link>

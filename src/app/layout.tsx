@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     template: `%s | ${APP_CONFIG.name}`,
   },
   description: APP_CONFIG.description,
-  keywords: ["swim lessons", "adaptive swimming", "special needs swimming", "VMRC", "Turlock", "Modesto", "I Can Swim"],
+  keywords: ["swim lessons", "adaptive swimming", "special needs swimming", "funded swimming", "regional centers", "Turlock", "Modesto", "I Can Swim"],
   authors: [{ name: APP_CONFIG.owner }],
   creator: APP_CONFIG.owner,
   icons: {

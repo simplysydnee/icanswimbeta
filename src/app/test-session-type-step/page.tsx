@@ -7,7 +7,7 @@ import { SessionType } from '@/types/booking';
 export default function TestSessionTypeStepPage() {
   const [selectedType, setSelectedType] = useState<SessionType | null>(null);
   const [hasFundingSource, setHasFundingSource] = useState(false);
-  const [fundingSourceName, setFundingSourceName] = useState('VMRC');
+  const [fundingSourceName, setFundingSourceName] = useState('Funded');
 
   return (
     <div className="container mx-auto py-8 max-w-4xl">
@@ -61,10 +61,10 @@ export default function TestSessionTypeStepPage() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setFundingSourceName('VMRC')}
-                    className={`px-3 py-1.5 text-sm rounded-md ${fundingSourceName === 'VMRC' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                    onClick={() => setFundingSourceName('Funded')}
+                    className={`px-3 py-1.5 text-sm rounded-md ${fundingSourceName === 'Funded' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
                   >
-                    VMRC
+                    Funded
                   </button>
                   <button
                     type="button"
@@ -122,7 +122,7 @@ export default function TestSessionTypeStepPage() {
                 <div>
                   <h4 className="text-sm font-medium mb-1">fundingSourceName</h4>
                   <p className="text-sm text-muted-foreground">
-                    Name of the funding source (e.g., VMRC, Regional Center)
+                    Name of the funding source (e.g., Funded, Regional Center)
                   </p>
                 </div>
                 <div>

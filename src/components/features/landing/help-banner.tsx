@@ -10,7 +10,7 @@ export function HelpBanner() {
             <h3 className="text-2xl font-bold mb-2">Need Help Getting Started?</h3>
             <p className="text-blue-100 max-w-2xl">
               Our team is here to help you navigate the booking process, answer questions about our adaptive swim lessons,
-              and provide support for VMRC billing and special needs accommodations.
+              and provide support for funding source billing and special needs accommodations.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-4">

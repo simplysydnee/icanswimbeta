@@ -39,7 +39,7 @@ export function HeroSection() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
             {[
               { text: "Special Needs Expertise", color: "text-primary" },
-              { text: "VMRC Approved Provider", color: "text-accent" },
+              { text: "Funding Approved Provider", color: "text-accent" },
               { text: "Swim Angel Fish Certified Instructors", color: "text-secondary" }
             ].map((benefit, index) => (
               <div key={index} className="flex items-center justify-center space-x-2 text-sm font-medium text-center">

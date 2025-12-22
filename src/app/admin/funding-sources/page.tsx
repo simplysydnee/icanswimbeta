@@ -187,7 +187,7 @@ export default function FundingSourcesPage() {
       const domains = formData.allowed_email_domains.split(',').map(d => d.trim())
       const invalidDomains = domains.filter(d => !d.startsWith('@'))
       if (invalidDomains.length > 0) {
-        errors.allowed_email_domains = 'Email domains must start with @ (e.g., @vmrc.net, @cvrc.org)'
+        errors.allowed_email_domains = 'Email domains must start with @ (e.g., @regional-center.net, @funding.org)'
       }
     }
 
@@ -446,7 +446,7 @@ export default function FundingSourcesPage() {
                         name="short_name"
                         value={formData.short_name}
                         onChange={handleInputChange}
-                        placeholder="e.g., VMRC"
+                        placeholder="e.g., Funded"
                       />
                       {formErrors.short_name && (
                         <p className="text-sm text-destructive">{formErrors.short_name}</p>
@@ -517,7 +517,7 @@ export default function FundingSourcesPage() {
                         name="allowed_email_domains"
                         value={formData.allowed_email_domains}
                         onChange={handleInputChange}
-                        placeholder="@vmrc.net, @cvrc.org"
+                        placeholder="@regional-center.net, @funding.org"
                       />
                       <p className="text-sm text-muted-foreground">
                         Comma-separated list of email domains allowed for coordinators from this funding source

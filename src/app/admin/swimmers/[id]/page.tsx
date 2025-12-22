@@ -110,7 +110,7 @@ const statusColors: Record<string, string> = {
 // Payment type colors
 const paymentColors: Record<string, string> = {
   private_pay: "bg-blue-100 text-blue-800 border-blue-200",
-  vmrc: "bg-purple-100 text-purple-800 border-purple-200",
+  funded: "bg-purple-100 text-purple-800 border-purple-200",
   scholarship: "bg-orange-100 text-orange-800 border-orange-200",
   other: "bg-gray-100 text-gray-800 border-gray-200",
 }
@@ -127,7 +127,7 @@ const statusDisplayNames: Record<string, string> = {
 // Payment type display names
 const paymentDisplayNames: Record<string, string> = {
   private_pay: "Private Pay",
-  vmrc: "VMRC",
+  funded: "Funded",
   scholarship: "Scholarship",
   other: "Other",
 }

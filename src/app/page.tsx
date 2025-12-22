@@ -145,9 +145,9 @@ export default function Home() {
               <div className="w-12 h-12 bg-[#23a1c0] rounded-full flex items-center justify-center">
                 <span className="text-white font-bold">✓</span>
               </div>
-              <h3 className="text-xl font-semibold text-[#1E3A5F] font-inter">VMRC Approved</h3>
+              <h3 className="text-xl font-semibold text-[#1E3A5F] font-inter">Funding Approved</h3>
               <p className="text-gray-600 font-inter leading-relaxed">
-                We work directly with Valley Mountain Regional Center to provide state-funded swim lessons for eligible families
+                We work directly with regional centers and funding sources to provide state-funded swim lessons for eligible families
               </p>
             </div>
             <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100 space-y-4">

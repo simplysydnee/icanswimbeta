@@ -276,7 +276,7 @@ export default function ParentCompletionPage() {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg">Referral Information</CardTitle>
-            <CardDescription>Submitted by your VMRC coordinator</CardDescription>
+            <CardDescription>Submitted by your funding source coordinator</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4 text-sm">

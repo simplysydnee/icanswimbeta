@@ -89,7 +89,7 @@ function SwimmerSelectStepDemo() {
                     {swimmer.hasFundingAuthorization && (
                       <>
                         <span>•</span>
-                        <span className="text-blue-600">VMRC</span>
+                        <span className="text-blue-600">Funded</span>
                       </>
                     )}
                   </div>
