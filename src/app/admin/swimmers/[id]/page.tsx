@@ -978,7 +978,7 @@ export default function AdminSwimmerDetailPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Building2 className="h-5 w-5" />
-                    VMRC Funding Information
+                    Funding Source Information
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">

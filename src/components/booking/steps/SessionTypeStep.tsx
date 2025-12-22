@@ -10,14 +10,14 @@ import { Label } from '@/components/ui/label';
 interface SessionTypeStepProps {
   selectedType: SessionType | null;
   paymentType?: string; // 'private_pay', 'funded', 'scholarship', 'other'
-  isFundedClient?: boolean;
+  fundingSourceName?: string; // Name of funding source (e.g., "Valley Mountain Regional Center")
   isFlexibleSwimmer: boolean; // Add flexible swimmer status
   enrollmentStatus?: string; // 'waitlist', 'enrolled', 'assessment_only', etc.
   onSelectType: (type: SessionType) => void;
 }
 
-export function SessionTypeStep({ selectedType, paymentType, isFundedClient, isFlexibleSwimmer, enrollmentStatus, onSelectType }: SessionTypeStepProps) {
-  const isFunded = paymentType === 'funded' || paymentType === 'scholarship' || isFundedClient;
+export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, isFlexibleSwimmer, enrollmentStatus, onSelectType }: SessionTypeStepProps) {
+  const isFunded = paymentType === 'funded' || paymentType === 'scholarship' || !!fundingSourceName;
   // Check if swimmer is on waitlist - only show assessment option
   const isWaitlist = enrollmentStatus === 'waitlist';
 
@@ -28,16 +28,17 @@ export function SessionTypeStep({ selectedType, paymentType, isFundedClient, isF
 
   // Get funding source display name
   const getFundingSourceName = () => {
-    if (paymentType === 'funded' || isFundedClient) return 'Funding Source';
+    if (fundingSourceName) return fundingSourceName;
+    if (paymentType === 'funded') return 'Funding Source';
     if (paymentType === 'scholarship') return 'Scholarship';
     if (paymentType === 'other') return 'Other Funding';
-    return 'Funding Source';
+    return 'Private Pay';
   };
 
   const priceDisplay = isWaitlist
     ? formatPrice(sessionPrice) // Show actual price for assessments
     : (isFunded
-      ? `$0 - ${getFundingSourceName()} Funded`
+      ? `Covered by ${getFundingSourceName()}`
       : formatPrice(sessionPrice));
 
   const sessionTypes = [
