@@ -542,9 +542,11 @@ export default function SwimmerDetailPage() {
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Profile
               </Button>
-              <Button variant="outline" className="w-full">
-                <Activity className="h-4 w-4 mr-2" />
-                View Progress
+              <Button variant="outline" className="w-full" asChild>
+                <Link href={`/parent/swimmers/${swimmer.id}/progress`}>
+                  <Activity className="h-4 w-4 mr-2" />
+                  View Progress
+                </Link>
               </Button>
               <Button variant="outline" className="w-full">
                 <FileText className="h-4 w-4 mr-2" />
