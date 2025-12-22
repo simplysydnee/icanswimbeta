@@ -1,6 +1,6 @@
 # I Can Swim - Development To-Do List
 
-*Last Updated: December 17, 2025*
+*Last Updated: December 21, 2025*
 
 ---
 
@@ -168,7 +168,18 @@
 - [x] Swimmer Management - removed exclusion message
 - [x] Remove .next from git tracking
 - [x] Stub email notifications (Resend)
-- [x] Funding source refactor (VMRC → generic)
+- [x] **VMRC → Generic Funding Source Migration (Complete)**
+  - Database: Updated column names from `vmrc_*` to generic `funding_*` and `authorized_*`
+  - Code: Updated all API routes, services, and hooks to use new column names
+  - UI: Replaced all hardcoded "VMRC" strings with "Funded" / "Funding Source" terminology
+  - Types: Updated TypeScript interfaces and payment_type enum from 'vmrc' to 'funded'
+- [x] **User roles fixed to use user_roles table**
+- [x] **Booking flow improvements**
+  - Instructor selection functionality
+  - Waitlist assessment rule implementation
+  - Calendly-style time slot selection
+- [x] **SESSION holds and conflict detection**
+- [x] **Email confirmations system**
 
 ---
 
