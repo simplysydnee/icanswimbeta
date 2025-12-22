@@ -21,7 +21,6 @@ import {
   Building2,
   CreditCard,
   CheckCircle,
-  ChevronRight,
   UserPlus,
   CalendarPlus,
   Mail,
@@ -32,6 +31,7 @@ import {
 } from 'lucide-react';
 import { format, startOfDay, endOfDay } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
+import NeedsProgressUpdateCard from '@/components/dashboard/NeedsProgressUpdateCard';
 
 interface DashboardStats {
   totalSwimmers: number;
@@ -389,53 +389,8 @@ export default function AdminDashboard() {
       {/* Main Content - Two Columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
-        {/* Action Required Section */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-orange-500" />
-              Action Required
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {stats?.sessionsNeedingProgress ? (
-              <Link href="/admin/schedule" className="block">
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-purple-600" />
-                    <div>
-                      <p className="font-medium text-purple-800">{stats.sessionsNeedingProgress} Progress Updates</p>
-                      <p className="text-sm text-purple-600">From today's sessions</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-purple-400" />
-                </div>
-              </Link>
-            ) : null}
-
-            {stats?.pendingPOs ? (
-              <Link href="/admin/pos" className="block">
-                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-yellow-600" />
-                    <div>
-                      <p className="font-medium text-yellow-800">{stats.pendingPOs} Purchase Orders</p>
-                      <p className="text-sm text-yellow-600">Need approval</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-yellow-400" />
-                </div>
-              </Link>
-            ) : null}
-
-            {!stats?.sessionsNeedingProgress && !stats?.pendingPOs && (
-              <div className="text-center py-6 text-muted-foreground">
-                <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
-                <p>All caught up!</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Needs Progress Update Card */}
+        <NeedsProgressUpdateCard />
 
         {/* Quick Actions - Previously the button list */}
         <Card>

@@ -20,6 +20,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { format } from 'date-fns';
+import NeedsProgressUpdateCard from '@/components/dashboard/NeedsProgressUpdateCard';
 
 interface Session {
   id: string;
@@ -260,6 +261,9 @@ export default function InstructorDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Needs Progress Update Card */}
+      <NeedsProgressUpdateCard />
 
       {/* Today's Schedule */}
       <Card>
