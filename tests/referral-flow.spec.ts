@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Referral Flow End-to-End Test', () => {
-  const baseUrl = 'http://localhost:3002';
+  const baseUrl = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
   const testCoordinatorEmail = `coordinator-${Date.now()}@test.com`;
   const testCoordinatorPassword = 'Test1234!';
   const testParentEmail = `testparent+flow${Date.now()}@example.com`;
