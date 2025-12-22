@@ -57,10 +57,10 @@ interface Swimmer {
   swim_goals?: string[]
   // Funding source info
   payment_type: string
-  is_vmrc_client: boolean
-  vmrc_coordinator_name?: string
-  vmrc_sessions_used?: number
-  vmrc_sessions_authorized?: number
+  funding_source_id?: string
+  funding_coordinator_name?: string
+  authorized_sessions_used?: number
+  authorized_sessions_total?: number
   // Parent info
   parent?: {
     id: string
@@ -374,17 +374,17 @@ export default function InstructorSwimmerDetailPage() {
                         {swimmer.assessment_status === 'completed' ? 'Completed' : 'Pending'}
                       </Badge>
                     </div>
-                    {swimmer.is_vmrc_client && (
+                    {swimmer.funding_source_id && (
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">VMRC Sessions</p>
+                        <p className="text-sm font-medium text-muted-foreground">{swimmer.funding_source_name || 'Funding Source'} Sessions</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xl font-bold">{swimmer.vmrc_sessions_used || 0}</span>
-                          <span className="text-muted-foreground">/ {swimmer.vmrc_sessions_authorized || 0}</span>
+                          <span className="text-xl font-bold">{swimmer.authorized_sessions_used || 0}</span>
+                          <span className="text-muted-foreground">/ {swimmer.authorized_sessions_total || 0}</span>
                           <span className="text-sm text-muted-foreground">used</span>
                         </div>
-                        {swimmer.vmrc_sessions_authorized &&
-                         swimmer.vmrc_sessions_used &&
-                         swimmer.vmrc_sessions_used >= swimmer.vmrc_sessions_authorized - 2 && (
+                        {swimmer.authorized_sessions_total &&
+                         swimmer.authorized_sessions_used &&
+                         swimmer.authorized_sessions_used >= swimmer.authorized_sessions_total - 2 && (
                           <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-sm text-amber-800">
                             <Clock className="h-4 w-4 inline mr-1" />
                             Renewal needed soon
@@ -415,7 +415,7 @@ export default function InstructorSwimmerDetailPage() {
                       <Mail className="h-4 w-4 mr-2" />
                       Email Parent
                     </Button>
-                    {swimmer.is_vmrc_client && (
+                    {swimmer.funding_source_id && (
                       <Button variant="outline" className="w-full justify-start">
                         <FileText className="h-4 w-4 mr-2" />
                         Request PO Renewal

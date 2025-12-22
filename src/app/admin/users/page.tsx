@@ -28,7 +28,7 @@ interface Swimmer {
   last_name: string;
   parent_id: string | null;
   coordinator_id: string | null;
-  vmrc_coordinator_email: string | null;
+  funding_coordinator_email: string | null;
 }
 
 export default function UsersPage() {
@@ -106,7 +106,7 @@ export default function UsersPage() {
       // Fetch swimmers
       const { data: swimmersData, error: swimmersError } = await supabase
         .from('swimmers')
-        .select('id, first_name, last_name, parent_id, coordinator_id, vmrc_coordinator_email');
+        .select('id, first_name, last_name, parent_id, coordinator_id, funding_coordinator_email');
 
       console.log('Swimmers fetch result:', {
         dataCount: swimmersData?.length || 0,
@@ -411,8 +411,8 @@ export default function UsersPage() {
         .from('swimmers')
         .update({
           coordinator_id: coordinatorId,
-          vmrc_coordinator_email: newCoordinatorEmail.toLowerCase(),
-          vmrc_coordinator_name: coordProfile?.full_name || newCoordinatorName || null,
+          funding_coordinator_email: newCoordinatorEmail.toLowerCase(),
+          funding_coordinator_name: coordProfile?.full_name || newCoordinatorName || null,
         })
         .eq('id', transferSwimmerId);
 

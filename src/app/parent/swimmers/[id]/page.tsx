@@ -43,9 +43,9 @@ interface Swimmer {
   funding_source_id?: string
   funding_source_name?: string
   funding_source_short_name?: string
-  vmrc_coordinator_name?: string
-  vmrc_coordinator_email?: string
-  vmrc_coordinator_phone?: string
+  funding_coordinator_name?: string
+  funding_coordinator_email?: string
+  funding_coordinator_phone?: string
   sessions_used?: number
   sessions_authorized?: number
   // Progress tracking
@@ -486,7 +486,7 @@ export default function SwimmerDetailPage() {
                         {swimmer.funding_source_name || 'Funding Source'} Coordinator
                       </label>
                       <p className="text-sm">
-                        {swimmer.vmrc_coordinator_name || 'Not specified'}
+                        {swimmer.funding_coordinator_name || 'Not specified'}
                       </p>
                     </div>
                     {swimmer.sessions_authorized !== undefined && swimmer.sessions_used !== undefined && (

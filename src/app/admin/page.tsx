@@ -82,7 +82,7 @@ export default function AdminDashboard() {
       // Fetch swimmers data
       const { data: swimmers } = await supabase
         .from('swimmers')
-        .select('id, enrollment_status, payment_type, is_vmrc_client');
+        .select('id, enrollment_status, payment_type, funding_source_id');
 
       // Fetch pending purchase orders
       const { data: pos } = await supabase

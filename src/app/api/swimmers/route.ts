@@ -25,9 +25,9 @@ export async function GET() {
         assessment_status,
         current_level_id,
         payment_type,
-        is_vmrc_client,
-        vmrc_sessions_used,
-        vmrc_sessions_authorized,
+        funding_source_id,
+        authorized_sessions_used,
+        authorized_sessions_total,
         swim_levels:current_level_id(name, display_name, color),
         bookings!bookings_swimmer_id_fkey(
           id,
@@ -80,9 +80,9 @@ export async function GET() {
           color: swimmer.swim_levels[0].color
         } : null,
         paymentType: swimmer.payment_type,
-        isVMRCClient: swimmer.is_vmrc_client,
-        vmrcSessionsUsed: swimmer.vmrc_sessions_used,
-        vmrcSessionsAuthorized: swimmer.vmrc_sessions_authorized,
+        fundingSourceId: swimmer.funding_source_id,
+        authorizedSessionsUsed: swimmer.authorized_sessions_used,
+        authorizedSessionsTotal: swimmer.authorized_sessions_total,
         lessonsCompleted,
         nextSession: nextBooking?.session?.[0] ? {
           startTime: nextBooking.session[0].start_time,

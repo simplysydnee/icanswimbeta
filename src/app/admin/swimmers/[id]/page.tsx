@@ -75,14 +75,14 @@ interface Swimmer {
   flexible_swimmer: boolean
   // Funding source info
   payment_type: string
-  is_vmrc_client: boolean
-  vmrc_coordinator_name?: string
-  vmrc_coordinator_email?: string
-  vmrc_coordinator_phone?: string
-  vmrc_sessions_used?: number
-  vmrc_sessions_authorized?: number
-  vmrc_current_pos_number?: string
-  vmrc_pos_expires_at?: string
+  funding_source_id?: string
+  funding_coordinator_name?: string
+  funding_coordinator_email?: string
+  funding_coordinator_phone?: string
+  authorized_sessions_used?: number
+  authorized_sessions_total?: number
+  current_authorization_number?: string
+  authorization_expires_at?: string
   // Legal
   signed_waiver: boolean
   photo_release: boolean
@@ -973,7 +973,7 @@ export default function AdminSwimmerDetailPage() {
 
           {/* Billing & Funding Tab */}
           <TabsContent value="billing" className="space-y-6">
-            {swimmer.is_vmrc_client ? (
+            {swimmer.funding_source_id ? (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -988,15 +988,15 @@ export default function AdminSwimmerDetailPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Name</p>
-                        <p className="font-medium">{swimmer.vmrc_coordinator_name || 'Not specified'}</p>
+                        <p className="font-medium">{swimmer.funding_coordinator_name || 'Not specified'}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Email</p>
-                        <p className="font-medium">{swimmer.vmrc_coordinator_email || 'Not specified'}</p>
+                        <p className="font-medium">{swimmer.funding_coordinator_email || 'Not specified'}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Phone</p>
-                        <p className="font-medium">{swimmer.vmrc_coordinator_phone || 'Not specified'}</p>
+                        <p className="font-medium">{swimmer.funding_coordinator_phone || 'Not specified'}</p>
                       </div>
                     </div>
                   </div>
@@ -1007,13 +1007,13 @@ export default function AdminSwimmerDetailPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">PO Number</p>
-                        <p className="font-medium">{swimmer.vmrc_current_pos_number || 'Not assigned'}</p>
+                        <p className="font-medium">{swimmer.current_authorization_number || 'Not assigned'}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Expires</p>
                         <p className="font-medium">
-                          {swimmer.vmrc_pos_expires_at
-                            ? format(parseISO(swimmer.vmrc_pos_expires_at), 'MMM d, yyyy')
+                          {swimmer.authorization_expires_at
+                            ? format(parseISO(swimmer.authorization_expires_at), 'MMM d, yyyy')
                             : 'Not set'
                           }
                         </p>
@@ -1028,14 +1028,14 @@ export default function AdminSwimmerDetailPage() {
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Sessions Used</p>
                         <div className="flex items-center gap-2">
-                          <p className="text-2xl font-bold">{swimmer.vmrc_sessions_used || 0}</p>
-                          <span className="text-muted-foreground">/ {swimmer.vmrc_sessions_authorized || 0}</span>
+                          <p className="text-2xl font-bold">{swimmer.authorized_sessions_used || 0}</p>
+                          <span className="text-muted-foreground">/ {swimmer.authorized_sessions_total || 0}</span>
                         </div>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Remaining</p>
                         <p className="text-2xl font-bold">
-                          {Math.max(0, (swimmer.vmrc_sessions_authorized || 0) - (swimmer.vmrc_sessions_used || 0))}
+                          {Math.max(0, (swimmer.authorized_sessions_total || 0) - (swimmer.authorized_sessions_used || 0))}
                         </p>
                       </div>
                     </div>
@@ -1046,13 +1046,13 @@ export default function AdminSwimmerDetailPage() {
                         <div
                           className="h-full bg-primary transition-all duration-300"
                           style={{
-                            width: `${Math.min(100, ((swimmer.vmrc_sessions_used || 0) / (swimmer.vmrc_sessions_authorized || 1)) * 100)}%`
+                            width: `${Math.min(100, ((swimmer.authorized_sessions_used || 0) / (swimmer.authorized_sessions_total || 1)) * 100)}%`
                           }}
                         ></div>
                       </div>
                       <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                        <span>{swimmer.vmrc_sessions_used || 0} used</span>
-                        <span>{swimmer.vmrc_sessions_authorized || 0} authorized</span>
+                        <span>{swimmer.authorized_sessions_used || 0} used</span>
+                        <span>{swimmer.authorized_sessions_total || 0} authorized</span>
                       </div>
                     </div>
                   </div>
