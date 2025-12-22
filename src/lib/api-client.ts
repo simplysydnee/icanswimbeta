@@ -48,8 +48,8 @@ export interface ParentReferralRequest {
   parent_email: string;
   child_name: string;
   child_date_of_birth?: string;
-  vmrc_coordinator_name: string;
-  vmrc_coordinator_email: string;
+  coordinator_name: string;
+  coordinator_email: string;
   referral_token: string;
   status: string;
   vmrc_referral_id?: string;
@@ -96,8 +96,8 @@ export interface VmrcReferralRequest {
 
   // Section 4: Referral Information
   referral_type: string;
-  vmrc_coordinator_name?: string;
-  vmrc_coordinator_email?: string;
+  coordinator_name?: string;
+  coordinator_email?: string;
 
   // Section 5: Consent & Optional Info
   photo_release: string;
@@ -373,24 +373,25 @@ export class ApiClient {
   async createParentReferralRequest(data: {
     parent_name: string;
     parent_email: string;
+    parent_phone?: string;
     child_name: string;
     child_date_of_birth?: string;
-    vmrc_coordinator_name: string;
-    vmrc_coordinator_email: string;
+    coordinator_name: string;
+    coordinator_email: string;
     coordinator_id?: string;
     // Note: parent_phone might be passed from form but not stored in table
   }): Promise<ParentReferralRequest> {
     // Filter out any extra fields not in the table (like parent_phone)
-    const { parent_phone, child_date_of_birth, coordinator_id, ...insertData } = data;
+    const { parent_phone, coordinator_id, ...insertData } = data;
 
     // Look up coordinator by email if coordinator_id not provided
     let finalCoordinatorId = coordinator_id;
-    if (!finalCoordinatorId && data.vmrc_coordinator_email) {
+    if (!finalCoordinatorId && data.coordinator_email) {
       try {
         const { data: coordinator } = await this.supabase
           .from('profiles')
           .select('id')
-          .eq('email', data.vmrc_coordinator_email.toLowerCase())
+          .eq('email', data.coordinator_email.toLowerCase())
           .eq('role', 'coordinator')
           .single();
 
@@ -398,7 +399,7 @@ export class ApiClient {
           finalCoordinatorId = coordinator.id;
         }
       } catch (error) {
-        console.warn('Could not find coordinator by email:', data.vmrc_coordinator_email, error);
+        console.warn('Could not find coordinator by email:', data.coordinator_email, error);
         // Continue without coordinator_id
       }
     }
@@ -412,21 +413,21 @@ export class ApiClient {
     };
 
     // Format date if provided (convert to YYYY-MM-DD format for PostgreSQL DATE type)
-    if (child_date_of_birth) {
+    if (data.child_date_of_birth) {
       try {
         // Try to parse and format the date
-        const date = new Date(child_date_of_birth);
+        const date = new Date(data.child_date_of_birth);
         if (!isNaN(date.getTime())) {
           // Format as YYYY-MM-DD for PostgreSQL DATE type
           const formattedDate = date.toISOString().split('T')[0];
           insertPayload.child_date_of_birth = formattedDate;
         } else {
           // If parsing fails, try to use as-is (might already be in correct format)
-          insertPayload.child_date_of_birth = child_date_of_birth;
+          insertPayload.child_date_of_birth = data.child_date_of_birth;
         }
       } catch (e) {
-        console.warn('Failed to parse date:', child_date_of_birth, e);
-        insertPayload.child_date_of_birth = child_date_of_birth;
+        console.warn('Failed to parse date:', data.child_date_of_birth, e);
+        insertPayload.child_date_of_birth = data.child_date_of_birth;
       }
     }
 
@@ -480,8 +481,8 @@ export class ApiClient {
     safety_plan_description?: string;
     // Section 4
     referral_type: string;
-    vmrc_coordinator_name?: string;
-    vmrc_coordinator_email?: string;
+    coordinator_name?: string;
+    coordinator_email?: string;
     coordinator_id?: string;
     // Section 5
     photo_release: string;
@@ -588,8 +589,8 @@ export class ApiClient {
         // VMRC
         payment_type: referral.referral_type === 'vmrc_client' ? 'vmrc' : 'private_pay',
         funding_source_id: referral.referral_type === 'vmrc_client',
-        funding_vmrc_coordinator_name: referral.vmrc_coordinator_name,
-        funding_vmrc_coordinator_email: referral.vmrc_coordinator_email,
+        funding_coordinator_name: referral.coordinator_name,
+        funding_coordinator_email: referral.coordinator_email,
         // Consent
         photo_video_permission: referral.photo_release === 'yes',
         signed_waiver: referral.liability_agreement,
