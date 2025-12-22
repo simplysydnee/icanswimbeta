@@ -277,7 +277,7 @@ export function SwimmerDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-6">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
@@ -382,12 +382,12 @@ export function SwimmerDetailModal({
 
         {/* Tabbed Interface */}
         <Tabs defaultValue="overview" className="mt-4">
-          <TabsList className="grid grid-cols-5 mb-6">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="medical">Medical & Safety</TabsTrigger>
-            <TabsTrigger value="progress">Progress & Skills</TabsTrigger>
-            <TabsTrigger value="sessions">Sessions & Bookings</TabsTrigger>
-            <TabsTrigger value="billing">Billing & Funding</TabsTrigger>
+          <TabsList className="flex flex-wrap gap-2 mb-6">
+            <TabsTrigger value="overview" className="px-4 py-2">Overview</TabsTrigger>
+            <TabsTrigger value="medical" className="px-4 py-2">Medical & Safety</TabsTrigger>
+            <TabsTrigger value="progress" className="px-4 py-2">Progress & Skills</TabsTrigger>
+            <TabsTrigger value="sessions" className="px-4 py-2">Sessions & Bookings</TabsTrigger>
+            <TabsTrigger value="billing" className="px-4 py-2">Billing & Funding</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -582,7 +582,7 @@ export function SwimmerDetailModal({
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Flexible Swimmer</p>
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="whitespace-normal text-left">
                         {swimmer.flexibleSwimmer ? 'Yes - Can fill last-minute spots' : 'No - Regular schedule only'}
                       </Badge>
                     </div>
