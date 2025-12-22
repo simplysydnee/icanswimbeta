@@ -435,8 +435,9 @@ function AdminReferralsContent() {
       if (updateError) throw updateError
 
       // 4. Create parent invitation if parent doesn't have an account yet
+      let invitationId = null
       if (!parentProfile?.id && referral.parent_email) {
-        const { error: inviteError } = await supabase
+        const { data: invitation, error: inviteError } = await supabase
           .from('parent_invitations')
           .insert({
             swimmer_id: swimmer.id,
@@ -446,10 +447,35 @@ function AdminReferralsContent() {
             created_by: user.id,
             expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
           })
+          .select()
+          .single()
 
         if (inviteError) {
           console.error('Error creating parent invitation:', inviteError)
           // Don't fail the whole approval if invitation creation fails
+        } else {
+          invitationId = invitation.id
+
+          // Send invitation email via API
+          try {
+            const response = await fetch('/api/invitations/send', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                swimmer_id: swimmer.id,
+                parent_email: referral.parent_email.toLowerCase(),
+                parent_name: referral.parent_name,
+              }),
+            })
+
+            if (!response.ok) {
+              console.error('Failed to send invitation email:', await response.text())
+            }
+          } catch (emailError) {
+            console.error('Error sending invitation email:', emailError)
+          }
         }
       }
 

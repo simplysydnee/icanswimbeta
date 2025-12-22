@@ -42,28 +42,24 @@ export default function ClaimSwimmerPage() {
 
   const fetchInvitation = async () => {
     setLoading(true);
-    const supabase = createClient();
-
     try {
-      const { data, error } = await supabase
-        .from('parent_invitations')
-        .select(`
-          *,
-          swimmer:swimmers(id, first_name, last_name)
-        `)
-        .eq('invitation_token', token)
-        .single();
+      const response = await fetch(`/api/invitations/claim/${token}`);
+      const data = await response.json();
 
-      if (error) throw error;
+      if (!response.ok) {
+        setError(data.error || 'Invalid invitation link');
+        return;
+      }
 
-      if (!data) {
+      const invitationData = data.invitation;
+      if (!invitationData) {
         setError('Invitation not found');
-      } else if (data.status === 'claimed') {
+      } else if (invitationData.is_claimed) {
         setError('This invitation has already been claimed');
-      } else if (new Date(data.expires_at) < new Date()) {
+      } else if (invitationData.is_expired) {
         setError('This invitation has expired');
       } else {
-        setInvitation(data);
+        setInvitation(invitationData);
       }
     } catch (error) {
       console.error('Error fetching invitation:', error);
@@ -84,10 +80,9 @@ export default function ClaimSwimmerPage() {
 
     setClaiming(true);
     try {
-      const response = await fetch('/api/invitations/claim', {
+      const response = await fetch(`/api/invitations/claim/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ invitation_id: invitation.id }),
       });
 
       const data = await response.json();

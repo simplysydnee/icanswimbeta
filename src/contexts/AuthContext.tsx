@@ -408,6 +408,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await supabase.auth.refreshSession()
       }
 
+      // Auto-link swimmers for this email
+      if (data.user) {
+        try {
+          const response = await fetch('/api/auth/link-swimmers', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!response.ok) {
+            console.error('Failed to auto-link swimmers:', await response.text());
+            // Continue anyway - signup succeeded, just auto-link failed
+          } else {
+            const result = await response.json();
+            console.log('Auto-link result:', result);
+          }
+        } catch (linkError) {
+          console.error('Error auto-linking swimmers:', linkError);
+          // Don't fail signup if auto-link fails
+        }
+      }
+
       // Redirect to specified path or default to dashboard
       const redirectPath = redirect_url || '/dashboard'
       router.push(redirectPath)

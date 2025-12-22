@@ -48,10 +48,42 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
 
-    // TODO: Send invitation email with link
-    // const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/claim/${invitation.invitation_token}`;
+    // Send invitation email with link
+    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/claim/${invitation.invitation_token}`;
 
-    return NextResponse.json({ invitation });
+    try {
+      // Call Edge Function to send email
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-parent-invitation`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.SUPABASE_SECRET_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          parent_email: parent_email.toLowerCase(),
+          parent_name,
+          swimmer_id,
+          invitation_token: invitation.invitation_token,
+          invite_url: inviteUrl,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to send invitation email:', await response.text());
+        // Continue anyway - invitation is created, just email failed
+      } else {
+        // Update invitation with sent_at timestamp
+        await supabase
+          .from('parent_invitations')
+          .update({ sent_at: new Date().toISOString(), status: 'sent' })
+          .eq('id', invitation.id);
+      }
+    } catch (emailError) {
+      console.error('Error sending invitation email:', emailError);
+      // Don't fail the invitation creation if email fails
+    }
+
+    return NextResponse.json({ invitation, invite_url: inviteUrl });
   } catch (error) {
     console.error('Error creating invitation:', error);
     return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 });
