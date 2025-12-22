@@ -105,7 +105,8 @@ export default function SwimmerProgressPage() {
 
       setSwimmer(swimmerData)
 
-      // Fetch swimmer skills with skill details (parents shouldn't see instructor_notes)
+      // Fetch swimmer skills with skill details
+      // BUSINESS RULE: swimmer_skills.instructor_notes is internal only - do not show to parents
       const { data: skillsData, error: skillsError } = await supabase
         .from('swimmer_skills')
         .select(`
@@ -141,7 +142,8 @@ export default function SwimmerProgressPage() {
       }))
       setSkills(transformedSkills)
 
-      // Fetch progress notes (parents shouldn't see instructor_notes)
+      // Fetch progress notes
+      // BUSINESS RULE: instructor_notes is internal only - do not show to parents
       const { data: notesData, error: notesError } = await supabase
         .from('progress_notes')
         .select(`
@@ -429,7 +431,6 @@ export default function SwimmerProgressPage() {
                     <p className="text-muted-foreground whitespace-pre-line">{note.lesson_summary}</p>
                   </div>
                 )}
-
 
                 {note.parent_notes && (
                   <div>
