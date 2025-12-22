@@ -5,27 +5,31 @@ export async function GET() {
   try {
     const supabase = await createClient();
 
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Get instructor profiles directly from profiles table
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, full_name, avatar_url, email')
+    // Query instructors from user_roles table with profile join
+    const { data: roleData, error: roleError } = await supabase
+      .from('user_roles')
+      .select(`
+        user_id,
+        profile:profiles(id, full_name, avatar_url, email)
+      `)
       .eq('role', 'instructor')
-      .order('full_name', { ascending: true });
+      .order('profile(full_name)', { ascending: true });
 
-    if (profilesError) {
-      console.error('Error fetching instructor profiles:', profilesError);
+    if (roleError) {
+      console.error('Error fetching instructors from user_roles:', roleError);
       return NextResponse.json({ error: 'Failed to fetch instructors' }, { status: 500 });
     }
 
+    const instructorList = roleData
+      ?.map(r => {
+        // Handle case where profile might be an array
+        const profile = Array.isArray(r.profile) ? r.profile[0] : r.profile;
+        return profile;
+      })
+      .filter(Boolean) || [];
+
     // Transform snake_case to camelCase
-    const transformedData = (profiles || []).map(profile => ({
+    const transformedData = instructorList.map(profile => ({
       id: profile.id,
       fullName: profile.full_name,
       avatarUrl: profile.avatar_url,

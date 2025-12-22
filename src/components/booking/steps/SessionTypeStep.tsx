@@ -12,12 +12,19 @@ interface SessionTypeStepProps {
   paymentType?: string; // 'private_pay', 'funded', 'scholarship', 'other'
   isFundedClient?: boolean;
   isFlexibleSwimmer: boolean; // Add flexible swimmer status
+  enrollmentStatus?: string; // 'waitlist', 'enrolled', 'assessment_only', etc.
   onSelectType: (type: SessionType) => void;
 }
 
-export function SessionTypeStep({ selectedType, paymentType, isFundedClient, isFlexibleSwimmer, onSelectType }: SessionTypeStepProps) {
+export function SessionTypeStep({ selectedType, paymentType, isFundedClient, isFlexibleSwimmer, enrollmentStatus, onSelectType }: SessionTypeStepProps) {
   const isFunded = paymentType === 'funded' || paymentType === 'scholarship' || isFundedClient;
-  const sessionPrice = isFunded ? PRICING.FUNDING_SOURCE_LESSON : PRICING.LESSON_PRIVATE_PAY;
+  // Check if swimmer is on waitlist - only show assessment option
+  const isWaitlist = enrollmentStatus === 'waitlist';
+
+  // Use assessment price for waitlist swimmers, otherwise use regular lesson price
+  const sessionPrice = isWaitlist
+    ? PRICING.ASSESSMENT
+    : (isFunded ? PRICING.FUNDING_SOURCE_LESSON : PRICING.LESSON_PRIVATE_PAY);
 
   // Get funding source display name
   const getFundingSourceName = () => {
@@ -27,23 +34,36 @@ export function SessionTypeStep({ selectedType, paymentType, isFundedClient, isF
     return 'Funding Source';
   };
 
-  const priceDisplay = isFunded ?
-    `$0 - ${getFundingSourceName()} Funded` :
-    formatPrice(sessionPrice);
+  const priceDisplay = isWaitlist
+    ? formatPrice(sessionPrice) // Show actual price for assessments
+    : (isFunded
+      ? `$0 - ${getFundingSourceName()} Funded`
+      : formatPrice(sessionPrice));
 
   const sessionTypes = [
     {
       id: 'single' as SessionType,
-      title: 'Single Lesson',
-      description: 'Book a one-time floating session (canceled slots made available)',
+      title: isWaitlist ? 'Initial Assessment' : 'Single Lesson',
+      description: isWaitlist
+        ? 'Complete an assessment session to determine swimmer level and goals'
+        : 'Book a one-time floating session (canceled slots made available)',
       icon: Calendar,
-      benefits: [
-        'Canceled weekly slots released back',
-        'Flexible scheduling',
-        'Great for trying out',
-        'No commitment required',
-      ],
-      note: 'Available to all enrolled swimmers',
+      benefits: isWaitlist
+        ? [
+            '45-minute evaluation session',
+            'Skill level assessment',
+            'Goal setting with instructor',
+            'Required before regular lessons',
+          ]
+        : [
+            'Canceled weekly slots released back',
+            'Flexible scheduling',
+            'Great for trying out',
+            'No commitment required',
+          ],
+      note: isWaitlist
+        ? 'Required for all new swimmers on waitlist'
+        : 'Available to all enrolled swimmers',
       disabled: false,
     },
     {
@@ -57,7 +77,7 @@ export function SessionTypeStep({ selectedType, paymentType, isFundedClient, isF
         'Better skill progression',
       ],
       note: 'For enrolled swimmers with active status',
-      disabled: isFlexibleSwimmer, // Disabled for flexible swimmers
+      disabled: isFlexibleSwimmer || isWaitlist, // Disabled for flexible swimmers OR waitlist
     },
   ];
 
@@ -173,6 +193,24 @@ export function SessionTypeStep({ selectedType, paymentType, isFundedClient, isF
               </p>
               <p className="text-xs text-amber-600 mt-2">
                 To regain weekly recurring booking privileges, please contact the office.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Waitlist info box */}
+      {isWaitlist && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="space-y-1">
+              <h4 className="font-medium text-blue-800">Waitlist Status - Assessment Required</h4>
+              <p className="text-sm text-blue-700">
+                Your swimmer is on the waitlist. Before booking regular lessons, you must complete an initial assessment session.
+              </p>
+              <p className="text-xs text-blue-600 mt-2">
+                The assessment helps our instructors understand your swimmer's needs, skill level, and goals to provide the best instruction.
               </p>
             </div>
           </div>
