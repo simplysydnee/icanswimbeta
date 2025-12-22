@@ -16,18 +16,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User email not found' }, { status: 400 });
     }
 
-    // Find swimmers with matching parent_email (case-insensitive)
-    const { data: swimmers, error: swimmersError } = await supabase
-      .from('swimmers')
-      .select('id, first_name, last_name, parent_email')
-      .ilike('parent_email', userEmail);
+    // Note: Swimmers table doesn't have parent_email column
+    // Parent linking happens through parent_invitations table
+    const swimmers: any[] = [];
 
-    if (swimmersError) throw swimmersError;
-
-    // Find pending invitations for this email
+    // Find pending invitations for this email with swimmer details
     const { data: invitations, error: invitationsError } = await supabase
       .from('parent_invitations')
-      .select('id, swimmer_id, status')
+      .select('id, swimmer_id, status, swimmer:swimmers(id, first_name, last_name)')
       .eq('parent_email', userEmail)
       .eq('status', 'pending');
 
@@ -40,7 +36,8 @@ export async function POST(request: NextRequest) {
       errors: [] as Array<string>,
     };
 
-    // Link swimmers that have matching parent_email
+    // Link swimmers from pending invitations
+    // Note: Direct email matching on swimmers table is not possible since swimmers don't have parent_email column
     for (const swimmer of swimmers || []) {
       try {
         const { error: updateError } = await supabase
@@ -62,7 +59,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Claim pending invitations
+    // Claim pending invitations and link swimmers
     for (const invitation of invitations || []) {
       try {
         // Update invitation status
@@ -77,8 +74,27 @@ export async function POST(request: NextRequest) {
 
         if (updateInviteError) {
           results.errors.push(`Failed to claim invitation for swimmer ${invitation.swimmer_id}: ${updateInviteError.message}`);
+          continue;
+        }
+
+        // Link swimmer to parent
+        const { error: updateSwimmerError } = await supabase
+          .from('swimmers')
+          .update({ parent_id: user.id })
+          .eq('id', invitation.swimmer_id);
+
+        if (updateSwimmerError) {
+          results.errors.push(`Failed to link swimmer ${invitation.swimmer_id}: ${updateSwimmerError.message}`);
         } else {
           results.invitations_claimed++;
+          results.swimmers_linked++;
+          const swimmerName = invitation.swimmer
+            ? `${invitation.swimmer.first_name} ${invitation.swimmer.last_name}`
+            : `Swimmer ${invitation.swimmer_id.substring(0, 8)}`;
+          results.swimmers.push({
+            id: invitation.swimmer_id,
+            name: swimmerName
+          });
         }
       } catch (error) {
         results.errors.push(`Error claiming invitation ${invitation.id}: ${error}`);
