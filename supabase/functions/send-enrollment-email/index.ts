@@ -8,11 +8,13 @@ const corsHeaders = {
 
 interface EmailRequest {
   to: string
-  subject: string
-  parentName: string
-  childName: string
-  coordinatorName: string
-  templateType: 'enrollment_invite' | 'approval_notification' | 'booking_confirmation' | 'assessment_booking' | 'recurring_lesson_booking' | 'single_lesson_booking' | 'assessment_completion'
+  subject?: string
+  parentName?: string
+  childName?: string
+  coordinatorName?: string
+  toName?: string
+  html?: string
+  templateType: 'enrollment_invite' | 'approval_notification' | 'booking_confirmation' | 'assessment_booking' | 'recurring_lesson_booking' | 'single_lesson_booking' | 'assessment_completion' | 'custom'
   customData?: Record<string, any>
 }
 
@@ -361,6 +363,13 @@ const getEmailTemplate = (type: string, data: any): { subject: string; html: str
         html: data.customData?.html || '<p>Assessment results are available in your portal.</p>'
       }
 
+    case 'custom':
+      // For custom emails, use provided html and subject directly
+      return {
+        subject: data.subject || 'Message from I Can Swim',
+        html: data.html || '<p>You have a message from I Can Swim.</p>'
+      }
+
     default:
       return {
         subject: 'I Can Swim Notification',
@@ -377,7 +386,7 @@ serve(async (req) => {
 
   try {
     const requestData: EmailRequest = await req.json()
-    const { to, templateType, parentName, childName, coordinatorName, customData } = requestData
+    const { to, templateType, parentName, childName, coordinatorName, toName, subject, html, customData } = requestData
 
     // Get email template
     const template = getEmailTemplate(templateType, {
@@ -385,6 +394,9 @@ serve(async (req) => {
       parentName,
       childName,
       coordinatorName,
+      toName,
+      subject,
+      html,
       customData
     })
 
@@ -392,10 +404,12 @@ serve(async (req) => {
     if (TEST_MODE) {
       console.log('TEST MODE - Would send email:')
       console.log('To:', to)
+      console.log('To Name:', toName)
       console.log('Subject:', template.subject)
       console.log('Template:', templateType)
       console.log('Parent:', parentName)
       console.log('Child:', childName)
+      console.log('Coordinator:', coordinatorName)
       return new Response(
         JSON.stringify({ success: true, message: 'Test mode - email logged' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

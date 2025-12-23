@@ -5,13 +5,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, CheckCircle, Clock, FileText, User, Award, Star, Target, TrendingUp } from 'lucide-react';
+import { Clock, FileText, Award, Star, Target } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 
@@ -171,23 +171,6 @@ export default function ProgressUpdateModal({
     setSkills(prev => prev.map(skill => ({ ...skill, status: undefined })));
   };
 
-  const getStatusColor = (status?: string) => {
-    switch (status) {
-      case 'mastered': return 'bg-green-100 text-green-700 border-green-300';
-      case 'in_progress': return 'bg-blue-100 text-blue-700 border-blue-300';
-      case 'not_started': return 'bg-gray-100 text-gray-700 border-gray-300';
-      default: return 'bg-gray-100 text-gray-700 border-gray-300';
-    }
-  };
-
-  const getStatusIcon = (status?: string) => {
-    switch (status) {
-      case 'mastered': return <CheckCircle className="h-4 w-4" />;
-      case 'in_progress': return <TrendingUp className="h-4 w-4" />;
-      case 'not_started': return <Target className="h-4 w-4" />;
-      default: return <Target className="h-4 w-4" />;
-    }
-  };
 
   if (loading) {
     return (
@@ -211,13 +194,16 @@ export default function ProgressUpdateModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="sm:max-w-2xl max-h-[90vh] overflow-y-auto"
+        aria-describedby="progress-update-description"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
             Update Progress
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="progress-update-description">
             Update progress for {swimmerName} from session at {format(new Date(sessionTime), 'h:mm a')}
           </DialogDescription>
         </DialogHeader>

@@ -174,12 +174,16 @@ export default function AdminSwimmerDetailPage() {
     }
   }
 
-  const handleBookAssessment = () => {
-    router.push(`/admin/booking?tab=assessment&swimmer=${swimmerId}`)
+  const handleBookSession = () => {
+    router.push(`/admin/bookings?swimmer=${swimmerId}`)
   }
 
   const handleUpdateInformation = () => {
     router.push(`/admin/swimmers/${swimmerId}/edit`)
+  }
+
+  const handleAddProgressNote = () => {
+    router.push(`/instructor/progress?swimmer=${swimmerId}`)
   }
 
   const handleGenerateReport = async () => {
@@ -219,9 +223,10 @@ export default function AdminSwimmerDetailPage() {
     if (!swimmer) return
 
     if (swimmer.payment_type === 'funded' && swimmer.funding_coordinator_email) {
-      const subject = encodeURIComponent(`Re: ${swimmer.first_name} ${swimmer.last_name} - I Can Swim`)
-      const body = encodeURIComponent(`Hi ${swimmer.funding_coordinator_name || 'Coordinator'},\n\nRegarding ${swimmer.first_name} ${swimmer.last_name}:\n\n• Current Level: ${swimmer.current_level?.display_name || 'Not assigned'}\n• Assessment Status: ${swimmer.assessment_status}\n• Sessions Used: ${swimmer.authorized_sessions_used || 0}/${swimmer.authorized_sessions_total || 0}\n\nPlease let me know if you need any additional information.\n\nBest regards,\nI Can Swim Team`)
-      window.open(`mailto:${swimmer.funding_coordinator_email}?subject=${subject}&body=${body}`)
+      // Open email composer with mailto link
+      const subject = `I Can Swim - Update for ${swimmer.first_name} ${swimmer.last_name}`
+      const body = `Dear Coordinator,\n\nPlease find an update regarding ${swimmer.first_name} ${swimmer.last_name}.\n\nThank you,\nThe I Can Swim Team`
+      window.location.href = `mailto:${swimmer.funding_coordinator_email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
     } else {
       toast({
         title: "No Coordinator Email",
@@ -535,10 +540,10 @@ export default function AdminSwimmerDetailPage() {
                     <Button
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={handleBookAssessment}
+                      onClick={handleBookSession}
                     >
                       <Calendar className="h-4 w-4 mr-2" />
-                      Book Assessment
+                      Book Session
                     </Button>
                     <Button
                       variant="outline"
@@ -546,25 +551,15 @@ export default function AdminSwimmerDetailPage() {
                       onClick={handleUpdateInformation}
                     >
                       <Edit className="h-4 w-4 mr-2" />
-                      Update Information
+                      Edit Information
                     </Button>
                     <Button
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={handleGenerateReport}
-                      disabled={isGeneratingReport}
+                      onClick={handleAddProgressNote}
                     >
-                      {isGeneratingReport ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <FileText className="h-4 w-4 mr-2" />
-                          Generate Report
-                        </>
-                      )}
+                      <FileText className="h-4 w-4 mr-2" />
+                      Add Progress Note
                     </Button>
                     <Button
                       variant="outline"

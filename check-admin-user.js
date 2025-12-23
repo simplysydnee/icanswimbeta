@@ -54,7 +54,7 @@ async function checkAdminUser() {
       console.log(`✅ Found ${profilesData.length} profiles:`)
       profilesData.forEach((profile, i) => {
         console.log(`  ${i+1}. ID: ${profile.id}, Email: ${profile.email}, Role: ${profile.role}`)
-      })
+      })`1`
     }
 
   } catch (error) {

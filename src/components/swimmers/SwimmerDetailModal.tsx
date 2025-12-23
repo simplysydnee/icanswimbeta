@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { StatusBadge } from './StatusBadge';
+import { EmailComposerModal } from '@/components/email/EmailComposerModal';
 import { format, parseISO } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -124,12 +126,19 @@ export function SwimmerDetailModal({
 }: SwimmerDetailModalProps) {
   const router = useRouter();
   const { role } = useAuth();
+  const { toast } = useToast();
   const isAdmin = role === 'admin';
   const [progressNotes, setProgressNotes] = useState<any[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
   const [swimmerSkills, setSwimmerSkills] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailRecipient, setEmailRecipient] = useState<{
+    email: string;
+    name: string;
+    type: 'coordinator' | 'parent';
+  } | null>(null);
 
   const fetchAdditionalData = useCallback(async () => {
     if (!swimmer?.id) return;
@@ -613,24 +622,99 @@ export function SwimmerDetailModal({
                     Quick Actions
                   </h3>
                   <div className="space-y-2">
-                    <Link href={`/booking?swimmer=${swimmer.id}`} className="w-full">
-                      <Button variant="outline" className="w-full justify-start">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Book Session
-                      </Button>
-                    </Link>
-                    <Button variant="outline" className="w-full justify-start" onClick={handleEdit}>
+                    {/* Book Session */}
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => router.push(
+                        isAdmin
+                          ? `/admin/booking?swimmer=${swimmer.id}`
+                          : `/booking?swimmer=${swimmer.id}`
+                      )}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Book Session
+                    </Button>
+
+                    {/* Edit Information */}
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={handleEdit}
+                    >
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Information
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Add Progress Note
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start">
+
+                    {/* Add Progress Note - Admin/Instructor only */}
+                    {(role === 'admin' || role === 'instructor') && (
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => router.push(`/instructor/progress?swimmer=${swimmer.id}`)}
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Add Progress Note
+                      </Button>
+                    )}
+
+                    {/* Email Parent */}
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => {
+                        const parentEmail = swimmer.parent?.email || swimmer.parentEmail;
+                        const parentName = swimmer.parent?.full_name || swimmer.parent?.fullName || swimmer.parentName || 'Parent';
+
+                        if (parentEmail) {
+                          setEmailRecipient({
+                            email: parentEmail,
+                            name: parentName,
+                            type: 'parent'
+                          });
+                          setEmailModalOpen(true);
+                        } else {
+                          toast({
+                            title: 'No parent email',
+                            description: 'This swimmer does not have a parent email on file.',
+                            variant: 'destructive'
+                          });
+                        }
+                      }}
+                    >
                       <Mail className="h-4 w-4 mr-2" />
-                      Send to Coordinator
+                      Email Parent
                     </Button>
+
+                    {/* Email Coordinator - Funded clients only */}
+                    {swimmer.paymentType !== 'private_pay' && (
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => {
+                          const coordEmail = swimmer.coordinatorEmail || swimmer.coordinator_email;
+                          const coordName = swimmer.coordinatorName || swimmer.coordinator_name || 'Coordinator';
+
+                          if (coordEmail) {
+                            setEmailRecipient({
+                              email: coordEmail,
+                              name: coordName,
+                              type: 'coordinator'
+                            });
+                            setEmailModalOpen(true);
+                          } else {
+                            toast({
+                              title: 'No coordinator email',
+                              description: 'This swimmer does not have a coordinator email on file.',
+                              variant: 'destructive'
+                            });
+                          }
+                        }}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Email Coordinator
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -1140,6 +1224,21 @@ export function SwimmerDetailModal({
           )}
         </Tabs>
         </div>
+
+        {/* Email Modal */}
+        {emailRecipient && (
+          <EmailComposerModal
+            isOpen={emailModalOpen}
+            onClose={() => {
+              setEmailModalOpen(false);
+              setEmailRecipient(null);
+            }}
+            recipientEmail={emailRecipient.email}
+            recipientName={emailRecipient.name}
+            recipientType={emailRecipient.type}
+            swimmerName={`${swimmer.firstName} ${swimmer.lastName}`}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
