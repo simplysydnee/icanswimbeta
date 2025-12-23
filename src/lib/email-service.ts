@@ -10,6 +10,7 @@ type EmailTemplate =
   | 'session_cancellation'  // NEW
   | 'assessment_completion'  // NEW
   | 'welcome_enrollment'  // NEW
+  | 'account_created'  // NEW - for users with no swimmers enrolled yet
 
 interface SendEmailParams {
   to: string
@@ -215,6 +216,17 @@ export const emailService = {
         isPrivatePay: params.isPrivatePay,
         fundingSourceName: params.fundingSourceName
       },
+    })
+  },
+
+  async sendAccountCreated(params: {
+    parentEmail: string
+    parentName: string
+  }) {
+    return sendEmail({
+      to: params.parentEmail,
+      templateType: 'account_created',
+      parentName: params.parentName,
     })
   },
 }

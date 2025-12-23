@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { emailService } from '@/lib/email-service'
 import type { AuthContextType, AuthUser, LoginCredentials, RegisterCredentials, ResetPasswordRequest, UserWithRole, UserRole, Profile, UserRoleRecord } from '@/types/auth'
 
 interface ExtendedAuthContextType extends AuthContextType {
@@ -395,6 +396,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           })
 
         if (profileError) throw profileError
+
+        // Send account created email (for users with no swimmers enrolled yet)
+        try {
+          await emailService.sendAccountCreated({
+            parentEmail: email,
+            parentName: name || 'there',
+          })
+        } catch (emailError) {
+          console.error('Failed to send account created email:', emailError)
+          // Don't fail signup if email fails
+        }
 
         // Database trigger will auto-assign role based on email domain
         // @regional-center.net → coordinator (regional center coordinator)

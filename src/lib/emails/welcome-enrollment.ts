@@ -254,3 +254,96 @@ export function generateWelcomeEmail(data: WelcomeEmailData): EmailContent {
     return generateFundedWelcomeEmail(data);
   }
 }
+
+// Account Created - Next Steps Email (for users with no swimmers enrolled yet)
+export interface AccountCreatedEmailData {
+  parentName: string;
+  parentEmail: string;
+}
+
+export function generateAccountCreatedEmail(data: AccountCreatedEmailData): EmailContent {
+  const subject = "Welcome to I Can Swim! Here's How to Get Started 🏊";
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #2a5e84; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+    .header h1 { margin: 0; font-size: 24px; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+    .section { margin: 25px 0; }
+    .section-title { color: #2a5e84; font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #e8f4f8; padding-bottom: 5px; }
+    .highlight { background: #e8f4f8; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #2a5e84; }
+    .button { display: inline-block; background: #2a5e84; color: white !important; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: bold; }
+    .footer { text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px; }
+    .info-row { margin: 8px 0; }
+    .label { color: #666; }
+    .contact-info { background: #f0f9ff; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #0ea5e9; }
+    .option-card { background: #f8fafc; padding: 20px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #2a5e84; }
+    .option-title { color: #2a5e84; font-size: 16px; font-weight: bold; margin-top: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🏊 Welcome to I Can Swim!</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${data.parentName},</p>
+
+      <p>Thanks for creating your I Can Swim account! We're excited you're interested in our program.</p>
+
+      <div class="section">
+        <div class="section-title">🎯 Next Step: Enroll Your Swimmer</div>
+        <p>To get started, you'll need to enroll your swimmer. We offer two enrollment options:</p>
+
+        <div class="option-card">
+          <h3 class="option-title">Option 1: Private Pay</h3>
+          <p>Enroll directly through your parent portal. You'll complete a short enrollment form, then book your swimmer's Initial Assessment.</p>
+          <p style="text-align: center;">
+            <a href="https://icanswim209.com" class="button">Enroll Now</a>
+          </p>
+        </div>
+
+        <div class="option-card">
+          <h3 class="option-title">Option 2: Regional Center Funding</h3>
+          <p>If your swimmer receives services through a Regional Center (such as Valley Mountain Regional Center, Central Valley Regional Center, etc.), swim lessons may be fully covered at no cost to you!</p>
+          <p><strong>Here's how it works:</strong></p>
+          <ol>
+            <li>Contact your Regional Center coordinator</li>
+            <li>Request a referral for swim lessons with I Can Swim</li>
+            <li>Once we receive the referral, we'll reach out with next steps</li>
+          </ol>
+          <p><em>Not sure if your swimmer qualifies? Contact your Regional Center coordinator—they can help determine eligibility.</em></p>
+        </div>
+      </div>
+
+      <div class="contact-info">
+        <h3 style="margin-top: 0; color: #0ea5e9;">❓ Questions?</h3>
+        <p>We're happy to help you figure out the best option for your family!</p>
+        <div class="info-row"><span class="label">📧 Email:</span> info@icanswim209.com</div>
+        <div class="info-row"><span class="label">📞 Phone:</span> (209) 778-7877</div>
+        <div class="info-row"><span class="label">📱 Text:</span> 209-643-7969</div>
+      </div>
+
+      <div class="footer">
+        <p>We hope to see you at the pool soon!</p>
+        <p><strong>Warm regards,</strong><br>
+        <strong>Sutton Lucas</strong><br>
+        Owner, I Can Swim</p>
+        <p>📍 Turlock: 2705 Sebastian Drive, Turlock, CA 95382</p>
+        <p>📍 Modesto: 1212 Kansas Ave, Modesto, CA 95351</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  return { subject, html };
+}
