@@ -175,14 +175,17 @@ export default function AdminSwimmerDetailPage() {
   }
 
   const handleBookSession = () => {
+    console.log('handleBookSession clicked', { swimmerId })
     router.push(`/admin/bookings?swimmer=${swimmerId}`)
   }
 
   const handleUpdateInformation = () => {
+    console.log('handleUpdateInformation clicked', { swimmerId })
     router.push(`/admin/swimmers/${swimmerId}/edit`)
   }
 
   const handleAddProgressNote = () => {
+    console.log('handleAddProgressNote clicked', { swimmerId })
     router.push(`/instructor/progress?swimmer=${swimmerId}`)
   }
 
@@ -220,6 +223,7 @@ export default function AdminSwimmerDetailPage() {
   }
 
   const handleSendToCoordinator = () => {
+    console.log('handleSendToCoordinator clicked', { swimmerId })
     if (!swimmer) return
 
     if (swimmer.payment_type === 'funded' && swimmer.funding_coordinator_email) {

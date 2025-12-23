@@ -278,6 +278,7 @@ export function SwimmerDetailModal({
   };
 
   const handleEdit = () => {
+    console.log('handleEdit clicked', { swimmerId: swimmer.id });
     onClose();
     const editPath = isAdmin ? `/admin/swimmers/${swimmer.id}/edit` : `/parent/swimmers/${swimmer.id}/edit`;
     router.push(editPath);
@@ -626,11 +627,14 @@ export function SwimmerDetailModal({
                     <Button
                       variant="outline"
                       className="w-full justify-start"
-                      onClick={() => router.push(
-                        isAdmin
-                          ? `/admin/booking?swimmer=${swimmer.id}`
-                          : `/booking?swimmer=${swimmer.id}`
-                      )}
+                      onClick={() => {
+                        console.log('Book Session clicked', { swimmerId: swimmer.id, isAdmin });
+                        router.push(
+                          isAdmin
+                            ? `/admin/bookings?swimmer=${swimmer.id}`
+                            : `/booking?swimmer=${swimmer.id}`
+                        );
+                      }}
                     >
                       <Calendar className="h-4 w-4 mr-2" />
                       Book Session
@@ -651,7 +655,10 @@ export function SwimmerDetailModal({
                       <Button
                         variant="outline"
                         className="w-full justify-start"
-                        onClick={() => router.push(`/instructor/progress?swimmer=${swimmer.id}`)}
+                        onClick={() => {
+                          console.log('Add Progress Note clicked', { swimmerId: swimmer.id, role });
+                          router.push(`/instructor/progress?swimmer=${swimmer.id}`);
+                        }}
                       >
                         <FileText className="h-4 w-4 mr-2" />
                         Add Progress Note
@@ -663,8 +670,9 @@ export function SwimmerDetailModal({
                       variant="outline"
                       className="w-full justify-start"
                       onClick={() => {
-                        const parentEmail = swimmer.parent?.email || swimmer.parentEmail;
-                        const parentName = swimmer.parent?.full_name || swimmer.parent?.fullName || swimmer.parentName || 'Parent';
+                        console.log('Email Parent clicked', { swimmerId: swimmer.id });
+                        const parentEmail = swimmer.parent?.email;
+                        const parentName = swimmer.parent?.fullName || 'Parent';
 
                         if (parentEmail) {
                           setEmailRecipient({
@@ -692,8 +700,9 @@ export function SwimmerDetailModal({
                         variant="outline"
                         className="w-full justify-start"
                         onClick={() => {
-                          const coordEmail = swimmer.coordinatorEmail || swimmer.coordinator_email;
-                          const coordName = swimmer.coordinatorName || swimmer.coordinator_name || 'Coordinator';
+                          console.log('Email Coordinator clicked', { swimmerId: swimmer.id, paymentType: swimmer.paymentType });
+                          const coordEmail = swimmer.coordinatorEmail;
+                          const coordName = swimmer.coordinatorName || 'Coordinator';
 
                           if (coordEmail) {
                             setEmailRecipient({

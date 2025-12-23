@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Mail, Phone, AlertTriangle, User, Award, Calendar, ChevronDown, ChevronUp, Target, Shield } from "lucide-react"
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -122,6 +123,7 @@ export default function SwimmerDetailDrawer({
   onApprove,
   onDecline,
 }: SwimmerDetailDrawerProps) {
+  const router = useRouter()
   const [showMedicalDetails, setShowMedicalDetails] = useState(false)
   const [showBehaviorDetails, setShowBehaviorDetails] = useState(false)
 
@@ -176,6 +178,24 @@ export default function SwimmerDetailDrawer({
     if (count >= 10) return "🎯"
     if (count >= 5) return "✨"
     return ""
+  }
+
+  // Handler functions
+  const handleEditSwimmer = () => {
+    console.log('handleEditSwimmer clicked', { swimmerId: swimmer.id, role })
+    const editPath = role === 'admin' ? `/admin/swimmers/${swimmer.id}/edit` : `/instructor/swimmers/${swimmer.id}/edit`
+    router.push(editPath)
+  }
+
+  const handleAddProgressNote = () => {
+    console.log('handleAddProgressNote clicked', { swimmerId: swimmer.id, role })
+    router.push(`/instructor/progress?swimmer=${swimmer.id}`)
+  }
+
+  const handleBookSession = () => {
+    console.log('handleBookSession clicked', { swimmerId: swimmer.id, role })
+    const bookingPath = role === 'admin' ? `/admin/bookings?swimmer=${swimmer.id}` : `/booking?swimmer=${swimmer.id}`
+    router.push(bookingPath)
   }
 
   // Check if there are medical alerts
@@ -609,14 +629,18 @@ export default function SwimmerDetailDrawer({
               )}
 
               {role === "admin" && swimmer.enrollmentStatus !== "pending" && (
-                <Button className="flex-1">Edit Swimmer</Button>
+                <Button className="flex-1" onClick={handleEditSwimmer}>
+                  Edit Swimmer
+                </Button>
               )}
 
               {role === "instructor" && (
-                <Button className="flex-1">Add Progress Note</Button>
+                <Button className="flex-1" onClick={handleAddProgressNote}>
+                  Add Progress Note
+                </Button>
               )}
 
-              <Button variant="outline" className="flex-1">
+              <Button variant="outline" className="flex-1" onClick={handleBookSession}>
                 <Calendar className="h-4 w-4 mr-2" />
                 Book Session
               </Button>
