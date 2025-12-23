@@ -161,6 +161,7 @@ export default function PrivatePayEnrollmentPage() {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
     reset,
   } = useForm<PrivateEnrollmentFormData>({
@@ -965,7 +966,8 @@ export default function PrivatePayEnrollmentPage() {
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="flexible_swimmer"
-                      {...register('flexible_swimmer', { value: true })}
+                      checked={watch('flexible_swimmer')}
+                      onCheckedChange={(checked) => setValue('flexible_swimmer', checked === true, { shouldValidate: true })}
                     />
                     <Label htmlFor="flexible_swimmer" className="font-normal">
                       I understand that I may need to be flexible with my schedule to secure a spot
@@ -986,7 +988,8 @@ export default function PrivatePayEnrollmentPage() {
                     <div className="flex items-start space-x-3">
                       <Checkbox
                         id="signed_waiver"
-                        {...register('signed_waiver', { value: true })}
+                        checked={watch('signed_waiver')}
+                        onCheckedChange={(checked) => setValue('signed_waiver', checked === true, { shouldValidate: true })}
                       />
                       <div className="space-y-1">
                         <Label htmlFor="signed_waiver" className="font-semibold">
@@ -1030,7 +1033,8 @@ export default function PrivatePayEnrollmentPage() {
                   <div className="flex items-start space-x-3">
                     <Checkbox
                       id="photo_release"
-                      {...register('photo_release', { value: true })}
+                      checked={watch('photo_release')}
+                      onCheckedChange={(checked) => setValue('photo_release', checked === true, { shouldValidate: true })}
                     />
                     <div className="space-y-1">
                       <Label htmlFor="photo_release" className="font-semibold">
@@ -1049,7 +1053,8 @@ export default function PrivatePayEnrollmentPage() {
                     <div className="flex items-start space-x-3">
                       <Checkbox
                         id="cancellation_policy_agreement"
-                        {...register('cancellation_policy_agreement', { value: true })}
+                        checked={watch('cancellation_policy_agreement')}
+                        onCheckedChange={(checked) => setValue('cancellation_policy_agreement', checked === true, { shouldValidate: true })}
                       />
                       <div className="space-y-1">
                         <Label htmlFor="cancellation_policy_agreement" className="font-semibold">
