@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  CheckCircle,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -23,6 +24,7 @@ const navItems = [
   { label: 'My Schedule', href: '/instructor/schedule', icon: Calendar },
   { label: 'My Swimmers', href: '/instructor/swimmers', icon: Users },
   { label: 'Progress Notes', href: '/instructor/progress', icon: FileText },
+  { label: 'Complete Assessment', href: '/instructor/assessments/complete', icon: CheckCircle },
   { label: 'Timecard', href: '/instructor/timecard', icon: Clock },
 ];
 

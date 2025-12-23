@@ -1,0 +1,216 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/auth/server';
+import { DEFAULT_FUNDING_SOURCE_CONFIG } from '@/lib/constants';
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Check if user has permission (admin or instructor)
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, full_name')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile || !['admin', 'instructor'].includes(profile.role)) {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
+      );
+    }
+
+    // Parse request body
+    const body = await request.json();
+    const {
+      swimmerId,
+      instructor,
+      assessmentDate,
+      strengths,
+      challenges,
+      swimSkills,
+      roadblocks,
+      swimSkillsGoals,
+      safetyGoals,
+      approvalStatus,
+    } = body;
+
+    // Validate required fields
+    if (!swimmerId || !instructor || !assessmentDate || !strengths?.trim() || !challenges?.trim() || !approvalStatus) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // Get swimmer details
+    const { data: swimmer, error: swimmerError } = await supabase
+      .from('swimmers')
+      .select(`
+        id,
+        first_name,
+        last_name,
+        parent_id,
+        payment_type,
+        funding_source_id,
+        enrollment_status,
+        assessment_status,
+        funded_sessions_used,
+        funded_sessions_authorized
+      `)
+      .eq('id', swimmerId)
+      .single();
+
+    if (swimmerError || !swimmer) {
+      return NextResponse.json(
+        { error: 'Swimmer not found' },
+        { status: 404 }
+      );
+    }
+
+    // Start transaction
+    const { error: transactionError } = await supabase.rpc('submit_assessment_transaction', {
+      p_swimmer_id: swimmerId,
+      p_instructor_id: user.id,
+      p_assessment_date: new Date(assessmentDate).toISOString(),
+      p_strengths: strengths,
+      p_challenges: challenges,
+      p_swim_skills: swimSkills || {},
+      p_roadblocks: roadblocks || {},
+      p_swim_skills_goals: swimSkillsGoals || '',
+      p_safety_goals: safetyGoals || '',
+      p_approval_status: approvalStatus,
+      p_created_by: user.id,
+    });
+
+    if (transactionError) {
+      console.error('Transaction error:', transactionError);
+      return NextResponse.json(
+        { error: 'Failed to submit assessment' },
+        { status: 500 }
+      );
+    }
+
+    // Update swimmer status based on approval
+    const swimmerUpdates: any = {
+      assessment_status: 'completed',
+      updated_at: new Date().toISOString(),
+    };
+
+    if (approvalStatus === 'approved') {
+      swimmerUpdates.enrollment_status = 'enrolled';
+      swimmerUpdates.approval_status = 'approved';
+      swimmerUpdates.approved_at = new Date().toISOString();
+      swimmerUpdates.approved_by = user.id;
+
+      // For funded clients, create lessons PO
+      if (swimmer.payment_type === 'funded' || swimmer.funding_source_id) {
+        await createLessonsPO(
+          supabase,
+          swimmerId,
+          swimmer.funding_source_id,
+          user.id,
+          swimmer.parent_id
+        );
+      }
+    } else if (approvalStatus === 'dropped') {
+      swimmerUpdates.enrollment_status = 'waitlist';
+      swimmerUpdates.approval_status = 'declined';
+    }
+
+    const { error: swimmerUpdateError } = await supabase
+      .from('swimmers')
+      .update(swimmerUpdates)
+      .eq('id', swimmerId);
+
+    if (swimmerUpdateError) {
+      console.error('Error updating swimmer:', swimmerUpdateError);
+      // Don't fail the whole request
+    }
+
+    // TODO: Send email notification to parent
+    // await sendAssessmentCompletionEmail(swimmer, profile, approvalStatus, body);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Assessment submitted successfully',
+      approvalStatus,
+      swimmerName: `${swimmer.first_name} ${swimmer.last_name}`,
+    });
+
+  } catch (error) {
+    console.error('Error submitting assessment:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+async function createLessonsPO(
+  supabase: any,
+  swimmerId: string,
+  fundingSourceId: string | null,
+  createdBy: string,
+  parentId: string
+) {
+  try {
+    // Calculate PO dates
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + DEFAULT_FUNDING_SOURCE_CONFIG.PO_DURATION_MONTHS);
+
+    // Generate PO number
+    const poNumber = `PO-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+    // Create PO record
+    const { error: poError } = await supabase
+      .from('purchase_orders')
+      .insert({
+        swimmer_id: swimmerId,
+        funding_source_id: fundingSourceId,
+        parent_id: parentId,
+        created_by: createdBy,
+        po_type: 'lessons',
+        po_number: poNumber,
+        authorized_sessions: DEFAULT_FUNDING_SOURCE_CONFIG.LESSONS_PER_PO,
+        used_sessions: 0,
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        status: 'pending',
+        notes: 'Automatically created after assessment approval',
+      });
+
+    if (poError) {
+      console.error('Error creating PO:', poError);
+      return;
+    }
+
+    // Update swimmer's PO info
+    const { error: swimmerError } = await supabase
+      .from('swimmers')
+      .update({
+        current_po_number: poNumber,
+        po_expires_at: endDate.toISOString(),
+        funded_sessions_authorized: DEFAULT_FUNDING_SOURCE_CONFIG.LESSONS_PER_PO,
+        funded_sessions_used: 0,
+      })
+      .eq('id', swimmerId);
+
+    if (swimmerError) {
+      console.error('Error updating swimmer PO info:', swimmerError);
+    }
+
+  } catch (error) {
+    console.error('Error in createLessonsPO:', error);
+  }
+}
