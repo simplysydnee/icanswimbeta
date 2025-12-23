@@ -1,4 +1,35 @@
-export default function PricingPage() {
+import { createClient } from '@/lib/supabase/server';
+import Image from 'next/image';
+
+interface RegionalCenter {
+  id: string;
+  name: string;
+  short_name: string | null;
+  logo_url: string | null;
+}
+
+export default async function PricingPage() {
+  const supabase = await createClient();
+
+  let regionalCenters: RegionalCenter[] = [];
+  try {
+    const { data, error } = await supabase
+      .from('funding_sources')
+      .select('id, name, short_name, logo_url')
+      .eq('source_type', 'regional_center')
+      .eq('is_active', true)
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching regional centers:', error);
+    } else {
+      regionalCenters = data || [];
+    }
+  } catch (error) {
+    console.error('Error in regional centers query:', error);
+    regionalCenters = [];
+  }
+
   return (
     <div className="container mx-auto px-4 py-12">
       {/* Hero Section */}
@@ -24,10 +55,10 @@ export default function PricingPage() {
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Initial Assessment</h2>
               <div className="flex items-baseline justify-center">
-                <span className="text-4xl font-bold text-gray-900">$65</span>
+                <span className="text-4xl font-bold text-gray-900">$75</span>
                 <span className="text-gray-600 ml-2">one-time</span>
               </div>
-              <p className="text-gray-600 mt-2">45-minute session</p>
+              <p className="text-gray-600 mt-2">30-minute session</p>
             </div>
             <ul className="space-y-3 mb-8">
               <li className="flex items-start">
@@ -120,68 +151,56 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {/* VMRC Funding Section */}
+      {/* Regional Center Funding Section */}
       <div className="max-w-4xl mx-auto bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-8 lg:p-12">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">VMRC Funding Available</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Client of a Regional Center?</h2>
           <p className="text-xl text-gray-700 max-w-2xl mx-auto">
-            We partner with Valley Mountain Regional Center to provide fully funded swim lessons for eligible children.
+            We are proud vendors for these Regional Centers. If you're a client, swim lessons may be fully funded at no cost to you.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">How It Works</h3>
-            <ul className="space-y-3">
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Contact your VMRC coordinator</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Submit referral to I Can Swim</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">We handle the paperwork</span>
-              </li>
-            </ul>
+
+        {/* Regional Center Logos */}
+        {regionalCenters && regionalCenters.length > 0 && (
+          <div className="mb-8">
+            <div className="flex flex-wrap justify-center gap-6 items-center">
+              {regionalCenters.map((center) => (
+                <div key={center.id} className="flex flex-col items-center">
+                  {center.logo_url ? (
+                    <div className="relative w-20 h-20 bg-white rounded-lg p-2 border border-gray-200">
+                      <Image
+                        src={center.logo_url}
+                        alt={center.name}
+                        fill
+                        className="object-contain p-1"
+                        sizes="80px"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-20 h-20 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100">
+                      <span className="text-blue-700 font-semibold text-sm text-center px-1">
+                        {center.short_name || center.name}
+                      </span>
+                    </div>
+                  )}
+                  <span className="text-xs text-gray-600 mt-2 text-center max-w-[80px]">
+                    {center.short_name || center.name}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Benefits</h3>
-            <ul className="space-y-3">
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">No out-of-pocket cost</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Same quality instruction</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Purchase Order system</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div className="text-center mt-8">
+        )}
+
+        <div className="text-center">
+          <p className="text-gray-700 mb-6 max-w-2xl mx-auto">
+            Contact your Regional Center coordinator to request swim lessons as a service, then reach out to us!
+          </p>
           <a
             href="/regional-centers"
             className="inline-flex items-center text-blue-600 font-semibold hover:text-blue-700"
           >
-            Learn more about regional centers →
+            Learn more about Regional Center funding →
           </a>
         </div>
       </div>
@@ -214,7 +233,7 @@ export default function PricingPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">VMRC Funding</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Regional Center Funding</h3>
             <p className="text-gray-600 text-sm">No cost for eligible families</p>
           </div>
         </div>
