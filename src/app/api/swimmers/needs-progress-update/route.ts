@@ -26,18 +26,18 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Get today's date range
-    const today = new Date();
-    const startOfToday = startOfDay(today).toISOString();
-    const endOfToday = endOfDay(today).toISOString();
+    // Get sessions from the last 24 hours to catch any timezone issues
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const now = new Date().toISOString();
 
-    // Get completed sessions for today
+    console.log('DEBUG: Date range - 24 hours ago:', twentyFourHoursAgo, 'now:', now);
+
+    // Get sessions from the last 24 hours that have ended (need progress updates)
     let sessionsQuery = supabase
       .from('sessions')
-      .select('id, start_time, end_time, instructor_id')
-      .gte('start_time', startOfToday)
-      .lte('start_time', endOfToday)
-      .or(`status.eq.completed,end_time.lt.${new Date().toISOString()}`);
+      .select('id, start_time, end_time, instructor_id, status')
+      .gte('start_time', twentyFourHoursAgo)
+      .lte('end_time', now);  // Session has ended
 
     // Instructors only see their own sessions
     if (isInstructor) {
@@ -51,7 +51,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
     }
 
+    console.log('DEBUG: Found sessions for today:', sessions?.length);
+    console.log('DEBUG: Session IDs:', sessions?.map(s => ({ id: s.id, start_time: s.start_time, end_time: s.end_time })));
+
     if (!sessions || sessions.length === 0) {
+      console.log('DEBUG: No sessions found for today');
       return NextResponse.json([]);
     }
 
@@ -85,16 +89,29 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch bookings' }, { status: 500 });
     }
 
+    console.log('DEBUG: Found bookings for sessions:', bookings?.length);
+    console.log('DEBUG: Booking details:', bookings?.map(b => ({
+      id: b.id,
+      session_id: b.session_id,
+      swimmer: b.swimmer
+    })));
+
     // Get existing progress notes for these sessions
     const { data: existingNotes } = await supabase
       .from('progress_notes')
       .select('booking_id, swimmer_id, session_id')
       .in('session_id', sessionIds);
 
+    console.log('DEBUG: Existing progress notes:', existingNotes?.length);
+    console.log('DEBUG: Progress note booking IDs:', existingNotes?.map(n => n.booking_id));
+
     const notedBookingIds = new Set(existingNotes?.map(n => n.booking_id) || []);
 
     // Filter out bookings that already have progress notes
     const needsUpdate = bookings?.filter(b => !notedBookingIds.has(b.id)) || [];
+
+    console.log('DEBUG: Bookings needing update:', needsUpdate.length);
+    console.log('DEBUG: Final result:', needsUpdate);
 
     return NextResponse.json(needsUpdate);
 

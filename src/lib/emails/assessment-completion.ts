@@ -238,21 +238,18 @@ export function generateApprovedEmail(data: AssessmentEmailData): EmailContent {
 
       <p>Great news! <strong>${data.clientName}</strong> has successfully completed their swim assessment and is approved for swim lessons with I Can Swim!</p>
 
-      ${isPrivatePay ? `
       <div class="ready-to-book">
         <h3 style="margin-top: 0; color: #065f46;">✅ Ready to Book!</h3>
-        <p>As a private-pay client, you can now book recurring swim lessons for ${data.clientName}.</p>
+        <p>You can now book recurring swim lessons for ${data.clientName}.</p>
+        ${isPrivatePay ? `
+        <p>As a private-pay client, sessions will be billed after each lesson.</p>
+        ` : `
+        <p>Your 12-session authorization has been submitted to your coordinator for approval. You can start booking lessons now!</p>
+        `}
         <p style="text-align: center;">
           <a href="https://icanswim209.com/booking" class="button">Book Lessons Now</a>
         </p>
       </div>
-      ` : `
-      <div class="awaiting-po">
-        <h3 style="margin-top: 0; color: #92400e;">⏳ Awaiting Purchase Order</h3>
-        <p>As a funded client, we've automatically created a purchase order for 12 lessons. Your coordinator will review and approve it shortly.</p>
-        <p>Once approved, you'll receive another notification and can book lessons for ${data.clientName}.</p>
-      </div>
-      `}
 
       <div class="section">
         <div class="section-title">Assessment Summary</div>

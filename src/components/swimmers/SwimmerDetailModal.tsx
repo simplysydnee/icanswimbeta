@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -122,6 +123,8 @@ export function SwimmerDetailModal({
   onDecline,
 }: SwimmerDetailModalProps) {
   const router = useRouter();
+  const { role } = useAuth();
+  const isAdmin = role === 'admin';
   const [progressNotes, setProgressNotes] = useState<any[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
   const [swimmerSkills, setSwimmerSkills] = useState<any[]>([]);
@@ -267,13 +270,15 @@ export function SwimmerDetailModal({
 
   const handleEdit = () => {
     onClose();
-    router.push(`/admin/swimmers/${swimmer.id}/edit`);
+    const editPath = isAdmin ? `/admin/swimmers/${swimmer.id}/edit` : `/parent/swimmers/${swimmer.id}/edit`;
+    router.push(editPath);
   };
 
 
   const handleViewFullPage = () => {
     onClose();
-    router.push(`/admin/swimmers/${swimmer.id}`);
+    const viewPath = isAdmin ? `/admin/swimmers/${swimmer.id}` : `/parent/swimmers/${swimmer.id}`;
+    router.push(viewPath);
   };
 
   return (
@@ -324,10 +329,12 @@ export function SwimmerDetailModal({
               </div>
             </div>
 
-            {/* Action buttons */}
+            {/* Action buttons - ROLE AWARE */}
             <div className="flex gap-2">
               <Button variant="outline" onClick={handleViewFullPage}>View Full Page</Button>
-              {swimmer.enrollmentStatus === 'waitlist' && onApprove && onDecline && (
+
+              {/* Only admins see Approve/Decline */}
+              {isAdmin && swimmer.enrollmentStatus === 'waitlist' && onApprove && onDecline && (
                 <>
                   <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => onApprove(swimmer)}>
                     <CheckCircle className="h-4 w-4 mr-1" /> Approve
@@ -355,7 +362,7 @@ export function SwimmerDetailModal({
                 <SelectItem value="medical">Medical & Safety</SelectItem>
                 <SelectItem value="progress">Progress & Skills</SelectItem>
                 <SelectItem value="sessions">Sessions & Bookings</SelectItem>
-                <SelectItem value="billing">Billing & Funding</SelectItem>
+                {isAdmin && <SelectItem value="billing">Billing & Funding</SelectItem>}
               </SelectContent>
             </Select>
           </div>
@@ -367,7 +374,9 @@ export function SwimmerDetailModal({
               <TabsTrigger value="medical" className="px-2 py-1.5 text-[11px] sm:text-xs">Medical & Safety</TabsTrigger>
               <TabsTrigger value="progress" className="px-2 py-1.5 text-[11px] sm:text-xs">Progress & Skills</TabsTrigger>
               <TabsTrigger value="sessions" className="px-2 py-1.5 text-[11px] sm:text-xs">Sessions & Bookings</TabsTrigger>
-              <TabsTrigger value="billing" className="px-2 py-1.5 text-[11px] sm:text-xs">Billing & Funding</TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger value="billing" className="px-2 py-1.5 text-[11px] sm:text-xs">Billing & Funding</TabsTrigger>
+              )}
             </TabsList>
 
           {/* Overview Tab */}
@@ -976,13 +985,14 @@ export function SwimmerDetailModal({
             </section>
           </TabsContent>
 
-          {/* Billing & Funding Tab */}
-          <TabsContent value="billing" className="space-y-6">
-            <section>
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Billing & Funding
-              </h3>
+          {/* Billing & Funding Tab - Admin only */}
+          {isAdmin && (
+            <TabsContent value="billing" className="space-y-6">
+              <section>
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Billing & Funding
+                </h3>
 
               {/* Payment Type */}
               <div className="mb-6">
@@ -1127,6 +1137,7 @@ export function SwimmerDetailModal({
               )}
             </section>
           </TabsContent>
+          )}
         </Tabs>
         </div>
       </DialogContent>
