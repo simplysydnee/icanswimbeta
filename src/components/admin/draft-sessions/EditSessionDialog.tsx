@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -108,6 +109,9 @@ export function EditSessionDialog({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit Session</DialogTitle>
+          <DialogDescription className="sr-only">
+            Edit session details including date, time, and instructor
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">

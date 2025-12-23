@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Camera, Loader2, X, ZoomIn, ZoomOut, RotateCw, Check } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 
 interface AvatarUploadWithCropProps {
   userId: string
@@ -390,6 +390,9 @@ export function AvatarUploadWithCrop({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Crop Profile Photo</DialogTitle>
+            <DialogDescription className="sr-only">
+              Crop and adjust your profile photo before uploading
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">

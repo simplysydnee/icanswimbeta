@@ -59,27 +59,16 @@ export default function EditSwimmerPage() {
     setSaving(false);
   };
 
-  if (loading) {
-    return (
-      <RoleGuard allowedRoles={['admin']}>
+  return (
+    <RoleGuard allowedRoles={['admin']}>
+      {loading ? (
         <div className="p-6 flex items-center justify-center min-h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin text-cyan-600" />
         </div>
-      </RoleGuard>
-    );
-  }
-
-  if (!swimmer) {
-    return (
-      <RoleGuard allowedRoles={['admin']}>
+      ) : !swimmer ? (
         <div className="p-6">Swimmer not found</div>
-      </RoleGuard>
-    );
-  }
-
-  return (
-    <RoleGuard allowedRoles={['admin']}>
-      <div className="p-6 max-w-4xl mx-auto">
+      ) : (
+        <div className="p-6 max-w-4xl mx-auto">
         <div className="flex items-center gap-4 mb-6">
           <Link href={`/admin/swimmers/${swimmerId}`}>
             <Button variant="ghost" size="icon" aria-label="Go back">
@@ -139,6 +128,7 @@ export default function EditSwimmerPage() {
           </CardContent>
         </Card>
       </div>
+      )}
     </RoleGuard>
   );
 }
