@@ -2,7 +2,7 @@ export default function FAQPage() {
   const faqs = [
     {
       question: "How do I get started with swim lessons?",
-      answer: "Start by booking an assessment session. This 45-minute session helps us understand your swimmer's comfort level, abilities, and goals. After the assessment, we'll create a personalized lesson plan and schedule your regular lessons."
+      answer: "Start by booking an assessment session. This 30-minute session helps us understand your swimmer's comfort level, abilities, and goals. After the assessment, we'll create a personalized lesson plan and schedule your regular lessons."
     },
     {
       question: "What should we bring to the first lesson?",
@@ -18,7 +18,7 @@ export default function FAQPage() {
     },
     {
       question: "How long are the lessons?",
-      answer: "Assessment sessions are 45 minutes. Regular lessons are 30 minutes of one-on-one instruction. We find this duration is optimal for maintaining focus and making consistent progress."
+      answer: "Assessment sessions are 30 minutes. Regular lessons are 30 minutes of one-on-one instruction. We find this duration is optimal for maintaining focus and making consistent progress."
     },
     {
       question: "What qualifications do your instructors have?",

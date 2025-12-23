@@ -48,7 +48,7 @@ export type Break = z.infer<typeof BreakSchema>;
 const BaseRequestSchema = z.object({
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid start time'),
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Invalid end time'),
-  durationMinutes: z.union([z.literal(30), z.literal(45)]),
+  durationMinutes: z.literal(30),
   maxCapacity: z.number().int().min(1).max(10),
   location: z.string().min(1, 'Location is required'),
   instructorIds: z.array(z.string().uuid()).min(1, 'At least one instructor required'),

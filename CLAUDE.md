@@ -374,7 +374,7 @@ CREATE TABLE progress_notes (
 
 | Type | Price | Notes |
 |------|-------|-------|
-| Initial Assessment | $65 | One-time, 45 minutes |
+| Initial Assessment | $65 | One-time, 30 minutes |
 | Regular Lesson (Private Pay) | $75 | Per session |
 | VMRC Lesson | $0 | Billed to state, tracked against PO |
 

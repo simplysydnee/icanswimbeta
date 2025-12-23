@@ -176,7 +176,7 @@ export default async function ProgramsPage() {
             <div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Initial Assessment</h3>
               <p className="text-gray-700">
-                We start with a 45-minute assessment to understand your swimmer&apos;s comfort level, abilities, and goals. This helps us create a personalized learning plan.
+                We start with a 30-minute assessment to understand your swimmer&apos;s comfort level, abilities, and goals. This helps us create a personalized learning plan.
               </p>
             </div>
           </div>

@@ -66,11 +66,11 @@ const isValidBreakDuration = (startTime: string, endTime: string): boolean => {
 interface TimeSectionProps {
   startTime: string;
   endTime: string;
-  durationMinutes: 30 | 45;
+  durationMinutes: 30;
   breaks: Break[];
   onStartTimeChange: (time: string) => void;
   onEndTimeChange: (time: string) => void;
-  onDurationChange: (duration: 30 | 45) => void;
+  onDurationChange: (duration: 30) => void;
   onBreaksChange: (breaks: Break[]) => void;
 }
 
@@ -151,7 +151,7 @@ export function TimeSection({
           <Label className="text-sm">Session Duration</Label>
           <Select
             value={durationMinutes.toString()}
-            onValueChange={(v) => onDurationChange(parseInt(v) as 30 | 45)}
+            onValueChange={(v) => onDurationChange(parseInt(v) as 30)}
           >
             <SelectTrigger>
               <SelectValue />

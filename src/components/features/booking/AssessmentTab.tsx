@@ -301,7 +301,7 @@ export function AssessmentTab({ selectedSwimmerId, onBookingComplete }: Assessme
       <div>
         <h2 className="text-xl font-semibold text-gray-900">Book an Assessment</h2>
         <p className="text-gray-600 mt-1">
-          Schedule a 45-minute swim assessment for your child.
+          Schedule a 30-minute swim assessment for your child.
           {selectedSwimmerData && isRegionalCenterClient(selectedSwimmerData.funding_source_id) && (
             <span className="text-green-600 font-medium"> (Regional Center - No charge)</span>
           )}

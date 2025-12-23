@@ -39,7 +39,6 @@ export const LOCATIONS = [
 // Session durations (in minutes)
 export const DURATION_OPTIONS = [
   { value: 30, label: '30 minutes' },
-  { value: 45, label: '45 minutes' },
 ] as const;
 
 // Days of week (0 = Sunday per JavaScript Date.getDay())

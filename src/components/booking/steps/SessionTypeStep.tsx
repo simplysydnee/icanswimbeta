@@ -51,7 +51,7 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
       icon: Calendar,
       benefits: isWaitlist
         ? [
-            '45-minute evaluation session',
+            '30-minute evaluation session',
             'Skill level assessment',
             'Goal setting with instructor',
             'Required before regular lessons',

@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     // Check for time overlaps
     const sessionStartTime = new Date(sessionStart).getTime();
-    const sessionEndTime = sessionEnd ? new Date(sessionEnd).getTime() : sessionStartTime + (45 * 60 * 1000); // Default 45 min
+    const sessionEndTime = sessionEnd ? new Date(sessionEnd).getTime() : sessionStartTime + (30 * 60 * 1000); // Default 30 min
 
     const overlappingBookings = conflicts?.filter(booking => {
       if (!booking.session?.start_time) return false;
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       const existingStart = new Date(booking.session.start_time).getTime();
       const existingEnd = booking.session.end_time
         ? new Date(booking.session.end_time).getTime()
-        : existingStart + (45 * 60 * 1000);
+        : existingStart + (30 * 60 * 1000);
 
       // Check if times overlap
       return (sessionStartTime < existingEnd && sessionEndTime > existingStart);

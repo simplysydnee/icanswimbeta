@@ -108,7 +108,7 @@ const getEmailTemplate = (type: string, data: any): { subject: string; html: str
                   <p>Great news! <strong>${data.childName}</strong> has been approved for swim lessons at I Can Swim!</p>
 
                   <div class="highlight">
-                    <strong>Next Step:</strong> Schedule ${data.childName}'s swim assessment. This 45-minute session helps us create a personalized learning plan.
+                    <strong>Next Step:</strong> Schedule ${data.childName}'s swim assessment. This 30-minute session helps us create a personalized learning plan.
                   </div>
 
                   <p style="text-align: center;">
@@ -117,7 +117,7 @@ const getEmailTemplate = (type: string, data: any): { subject: string; html: str
 
                   <p><strong>What to expect:</strong></p>
                   <ul>
-                    <li>45-minute one-on-one assessment</li>
+                    <li>30-minute one-on-one assessment</li>
                     <li>Evaluation of current swim abilities</li>
                     <li>Personalized lesson plan created</li>
                     <li>Meet your instructor</li>

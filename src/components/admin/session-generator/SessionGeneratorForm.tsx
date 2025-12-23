@@ -32,7 +32,7 @@ export function SessionGeneratorForm() {
   const [blackoutDates, setBlackoutDates] = useState<Date[]>([]);
   const [startTime, setStartTime] = useState<string>('14:00'); // 2 PM default
   const [endTime, setEndTime] = useState<string>('17:00'); // 5 PM default
-  const [durationMinutes, setDurationMinutes] = useState<30 | 45>(30);
+  const [durationMinutes, setDurationMinutes] = useState<30>(30);
   const [breaks, setBreaks] = useState<Break[]>([]);
   const [instructorIds, setInstructorIds] = useState<string[]>([]);
   const [location, setLocation] = useState<string>('Turlock');

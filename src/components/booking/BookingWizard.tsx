@@ -410,7 +410,7 @@ export function BookingWizard({}: BookingWizardProps) {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="font-semibold text-blue-900 mb-2">Assessment Details</h3>
                 <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• 45-minute one-on-one evaluation</li>
+                  <li>• 30-minute one-on-one evaluation</li>
                   <li>• Assessment of current swimming abilities</li>
                   <li>• Personalized lesson plan recommendation</li>
                   <li>• Required before starting regular swim lessons</li>

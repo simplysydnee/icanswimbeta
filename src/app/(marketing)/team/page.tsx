@@ -130,7 +130,7 @@ export default async function TeamPage() {
             <div>
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Safety Certification</h3>
               <p className="text-gray-700">
-                All instructors are certified in CPR, First Aid, and water safety, with additional training in special needs aquatic safety.
+                All instructors are Swim Angelfish certified, in addition to CPR, First Aid, and water safety certification, with specialized training in special needs aquatic safety.
               </p>
             </div>
           </div>
