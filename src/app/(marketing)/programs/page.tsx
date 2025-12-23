@@ -1,4 +1,35 @@
-export default function ProgramsPage() {
+import { createClient } from '@/lib/supabase/server';
+import Image from 'next/image';
+
+interface RegionalCenter {
+  id: string;
+  name: string;
+  short_name: string | null;
+  logo_url: string | null;
+}
+
+export default async function ProgramsPage() {
+  const supabase = await createClient();
+
+  let regionalCenters: RegionalCenter[] = [];
+  try {
+    const { data, error } = await supabase
+      .from('funding_sources')
+      .select('id, name, short_name, logo_url')
+      .eq('source_type', 'regional_center')
+      .eq('is_active', true)
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching regional centers:', error);
+    } else {
+      regionalCenters = data || [];
+    }
+  } catch (error) {
+    console.error('Error in regional centers query:', error);
+    regionalCenters = [];
+  }
+
   return (
     <div className="container mx-auto px-4 py-12">
       {/* Hero Section */}
@@ -63,10 +94,44 @@ export default function ProgramsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">VMRC Funded Lessons</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Regional Center Funded Lessons</h2>
             <p className="text-gray-700 mb-6">
-              We partner with Valley Mountain Regional Center to provide funded swim lessons for eligible children. No out-of-pocket cost for qualified families.
+              We are a proud vendor for multiple Regional Centers across California. Eligible families can receive fully funded swim lessons at no out-of-pocket cost.
             </p>
+
+            {/* Regional Center Logos */}
+            {regionalCenters && regionalCenters.length > 0 && (
+              <div className="mb-6">
+                <p className="text-sm font-medium text-gray-700 mb-3">Proud vendor for:</p>
+                <div className="flex flex-wrap gap-4 items-center">
+                  {regionalCenters.map((center) => (
+                    <div key={center.id} className="flex flex-col items-center">
+                      {center.logo_url ? (
+                        <div className="relative w-16 h-16 bg-white rounded-lg p-2 border border-gray-200">
+                          <Image
+                            src={center.logo_url}
+                            alt={center.name}
+                            fill
+                            className="object-contain p-1"
+                            sizes="64px"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-16 h-16 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100">
+                          <span className="text-blue-700 font-semibold text-sm text-center px-1">
+                            {center.short_name || center.name}
+                          </span>
+                        </div>
+                      )}
+                      <span className="text-xs text-gray-600 mt-1 text-center">
+                        {center.short_name || center.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <ul className="space-y-3 mb-6">
               <li className="flex items-start">
                 <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
