@@ -27,7 +27,7 @@ export async function createTestReferral(): Promise<{ referral: TestReferralData
   const testToken = crypto.randomUUID()
 
   const { data, error } = await supabase
-    .from('vmrc_referral_requests')
+    .from('referral_requests')
     .insert({
       parent_token: testToken,
       child_name: 'Test Child',
@@ -39,7 +39,7 @@ export async function createTestReferral(): Promise<{ referral: TestReferralData
       coordinator_email: 'coordinator@vmrc.net',
       status: 'pending_parent',
       // Required fields from original schema
-      diagnosis: 'Autism',
+      diagnosis: ['Autism'],
       non_ambulatory: 'no',
       has_seizure_disorder: 'no',
       height: '48 inches',
@@ -53,11 +53,11 @@ export async function createTestReferral(): Promise<{ referral: TestReferralData
       other_therapies_description: '',
       comfortable_in_water: 'yes',
       self_injurious_behavior: 'no',
-      self_injurious_description: '',
+      self_injurious_behavior_description: '',
       aggressive_behavior: 'no',
       aggressive_behavior_description: '',
       elopement_behavior: 'no',
-      elopement_description: '',
+      elopement_behavior_description: '',
       has_safety_plan: 'no',
       safety_plan_description: '',
       referral_type: 'vmrc_client',
@@ -82,7 +82,7 @@ export async function createCompletedReferral(): Promise<{ referral: TestReferra
   const testToken = crypto.randomUUID()
 
   const { data, error } = await supabase
-    .from('vmrc_referral_requests')
+    .from('referral_requests')
     .insert({
       parent_token: testToken,
       child_name: 'Completed Child',
@@ -95,7 +95,7 @@ export async function createCompletedReferral(): Promise<{ referral: TestReferra
       status: 'pending',
       parent_completed_at: new Date().toISOString(),
       // Required fields from original schema
-      diagnosis: 'Autism',
+      diagnosis: ['Autism'],
       non_ambulatory: 'no',
       has_seizure_disorder: 'no',
       height: '48 inches',
@@ -109,11 +109,11 @@ export async function createCompletedReferral(): Promise<{ referral: TestReferra
       other_therapies_description: '',
       comfortable_in_water: 'yes',
       self_injurious_behavior: 'no',
-      self_injurious_description: '',
+      self_injurious_behavior_description: '',
       aggressive_behavior: 'no',
       aggressive_behavior_description: '',
       elopement_behavior: 'no',
-      elopement_description: '',
+      elopement_behavior_description: '',
       has_safety_plan: 'no',
       safety_plan_description: '',
       referral_type: 'vmrc_client',
@@ -136,7 +136,7 @@ export async function createCompletedReferral(): Promise<{ referral: TestReferra
  */
 export async function deleteTestReferral(id: string): Promise<void> {
   const { error } = await supabase
-    .from('vmrc_referral_requests')
+    .from('referral_requests')
     .delete()
     .eq('id', id)
 
@@ -151,7 +151,7 @@ export async function deleteTestReferral(id: string): Promise<void> {
  */
 export async function getReferralByToken(token: string): Promise<TestReferralData | null> {
   const { data, error } = await supabase
-    .from('vmrc_referral_requests')
+    .from('referral_requests')
     .select('*')
     .eq('parent_token', token)
     .single()
@@ -170,7 +170,7 @@ export async function getReferralByToken(token: string): Promise<TestReferralDat
 export async function cleanupTestReferrals(): Promise<void> {
   // Delete referrals created during tests
   const { error } = await supabase
-    .from('vmrc_referral_requests')
+    .from('referral_requests')
     .delete()
     .like('parent_email', '%@example.com')
 

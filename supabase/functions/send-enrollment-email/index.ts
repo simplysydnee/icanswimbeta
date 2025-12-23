@@ -12,7 +12,7 @@ interface EmailRequest {
   parentName: string
   childName: string
   coordinatorName: string
-  templateType: 'enrollment_invite' | 'approval_notification' | 'booking_confirmation' | 'assessment_booking' | 'recurring_lesson_booking' | 'single_lesson_booking'
+  templateType: 'enrollment_invite' | 'approval_notification' | 'booking_confirmation' | 'assessment_booking' | 'recurring_lesson_booking' | 'single_lesson_booking' | 'assessment_completion'
   customData?: Record<string, any>
 }
 
@@ -352,6 +352,13 @@ const getEmailTemplate = (type: string, data: any): { subject: string; html: str
             </body>
           </html>
         `
+      }
+
+    case 'assessment_completion':
+      // For assessment completion, we expect customData to contain the HTML and subject
+      return {
+        subject: data.customData?.subject || 'Assessment Results - I Can Swim',
+        html: data.customData?.html || '<p>Assessment results are available in your portal.</p>'
       }
 
     default:

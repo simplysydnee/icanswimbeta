@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getCurrentUser } from '@/lib/auth/server';
+import { getUser } from '@/lib/auth/server';
 import { DEFAULT_FUNDING_SOURCE_CONFIG } from '@/lib/constants';
+import { emailService } from '@/lib/email-service';
+import { generateAssessmentCompletionEmail, type AssessmentEmailData } from '@/lib/emails/assessment-completion';
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const user = await getCurrentUser();
+    const user = await getUser();
 
     if (!user) {
       return NextResponse.json(
@@ -52,7 +54,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get swimmer details
+    // Get swimmer details with parent info
     const { data: swimmer, error: swimmerError } = await supabase
       .from('swimmers')
       .select(`
@@ -65,7 +67,12 @@ export async function POST(request: NextRequest) {
         enrollment_status,
         assessment_status,
         funded_sessions_used,
-        funded_sessions_authorized
+        funded_sessions_authorized,
+        parent:profiles!swimmers_parent_id_fkey (
+          id,
+          email,
+          full_name
+        )
       `)
       .eq('id', swimmerId)
       .single();
@@ -137,8 +144,42 @@ export async function POST(request: NextRequest) {
       // Don't fail the whole request
     }
 
-    // TODO: Send email notification to parent
-    // await sendAssessmentCompletionEmail(swimmer, profile, approvalStatus, body);
+    // Send email notification to parent
+    const parent = swimmer.parent?.[0];
+    if (parent?.email) {
+      try {
+        const emailData: AssessmentEmailData = {
+          clientName: `${swimmer.first_name} ${swimmer.last_name}`,
+          parentName: parent.full_name || 'Parent',
+          parentEmail: parent.email,
+          isPrivatePay: swimmer.payment_type === 'private_pay' || !swimmer.funding_source_id,
+          status: approvalStatus as 'approved' | 'dropped',
+          assessmentData: {
+            strengths,
+            challenges,
+            swimSkills: swimSkills || {},
+            goals: swimSkillsGoals || safetyGoals || '',
+            instructorName: profile?.full_name,
+            assessmentDate,
+          },
+        };
+
+        const emailContent = generateAssessmentCompletionEmail(emailData);
+
+        await emailService.sendAssessmentCompletion({
+          parentEmail: parent.email,
+          parentName: parent.full_name || 'Parent',
+          childName: `${swimmer.first_name} ${swimmer.last_name}`,
+          subject: emailContent.subject,
+          html: emailContent.html,
+        });
+
+        console.log(`Assessment completion email sent to ${parent.email}`);
+      } catch (emailError) {
+        console.error('Failed to send assessment completion email:', emailError);
+        // Don't fail the whole request if email fails
+      }
+    }
 
     return NextResponse.json({
       success: true,

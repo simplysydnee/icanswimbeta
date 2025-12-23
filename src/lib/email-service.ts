@@ -8,6 +8,7 @@ type EmailTemplate =
   | 'recurring_lesson_booking'  // NEW
   | 'single_lesson_booking'  // NEW
   | 'session_cancellation'  // NEW
+  | 'assessment_completion'  // NEW
 
 interface SendEmailParams {
   to: string
@@ -174,6 +175,25 @@ export const emailService = {
         reason: params.reason,
         swimmerNames: params.swimmerNames,
         contactPhone: '(209) 643-7969'
+      },
+    })
+  },
+
+  async sendAssessmentCompletion(params: {
+    parentEmail: string
+    parentName: string
+    childName: string
+    subject: string
+    html: string
+  }) {
+    return sendEmail({
+      to: params.parentEmail,
+      templateType: 'assessment_completion',
+      parentName: params.parentName,
+      childName: params.childName,
+      customData: {
+        subject: params.subject,
+        html: params.html
       },
     })
   },

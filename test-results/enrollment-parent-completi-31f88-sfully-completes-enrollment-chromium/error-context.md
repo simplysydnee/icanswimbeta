@@ -1,0 +1,80 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "I Can Swim" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - heading "I Can Swim" [level=1] [ref=e7] [cursor=pointer]
+          - img [ref=e9] [cursor=pointer]
+        - generic [ref=e11]:
+          - button "Login" [ref=e12]
+          - link "Get Started" [ref=e13] [cursor=pointer]:
+            - /url: /signup
+    - main [ref=e14]:
+      - generic [ref=e17]:
+        - generic [ref=e18]: ✅
+        - heading "Enrollment Submitted!" [level=2] [ref=e19]
+        - paragraph [ref=e20]: Thank you! We've received Test Child's enrollment information.
+        - generic [ref=e21]:
+          - paragraph [ref=e22]: What happens next?
+          - list [ref=e23]:
+            - listitem [ref=e24]: • Our team will review your enrollment
+            - listitem [ref=e25]: • Once approved, you'll receive an email to schedule Test Child's swim assessment
+            - listitem [ref=e26]: • Your coordinator (Test Coordinator) will be updated
+          - paragraph [ref=e27]: This usually takes 2-3 business days.
+        - paragraph [ref=e28]: Questions? Call (209) 778-7877
+    - contentinfo [ref=e29]:
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - generic [ref=e32]:
+            - img "I Can Swim" [ref=e34]
+            - paragraph [ref=e35]: Building confidence, safety, and joy in the water through personalized, adaptive instruction tailored to each swimmer's unique needs. Serving Central Valley families since 2015.
+            - generic [ref=e36]:
+              - generic [ref=e37]:
+                - img [ref=e38]
+                - generic [ref=e40]: (209) 778-7877
+              - generic [ref=e41]:
+                - img [ref=e42]
+                - generic [ref=e45]: info@icanswim209.com
+              - generic [ref=e46]:
+                - link [ref=e47] [cursor=pointer]:
+                  - /url: https://facebook.com/icanswim209
+                  - img [ref=e48] [cursor=pointer]
+                - link [ref=e50] [cursor=pointer]:
+                  - /url: https://instagram.com/icanswim209
+                  - img [ref=e51] [cursor=pointer]
+          - generic [ref=e54]:
+            - heading "Our Location" [level=3] [ref=e55]
+            - list [ref=e56]:
+              - listitem [ref=e57]:
+                - generic [ref=e58]:
+                  - img [ref=e59]
+                  - generic [ref=e62]:
+                    - strong [ref=e63]: Modesto
+                    - text: 1212 Kansas Ave
+                    - text: Modesto, CA 95351
+          - generic [ref=e64]:
+            - heading "Quick Links" [level=3] [ref=e65]
+            - list [ref=e66]:
+              - listitem [ref=e67]:
+                - link "Book Assessment" [ref=e68] [cursor=pointer]:
+                  - /url: /signup
+              - listitem [ref=e69]:
+                - link "Parent Dashboard" [ref=e70] [cursor=pointer]:
+                  - /url: /login
+              - listitem [ref=e71]:
+                - link "About Our Program" [ref=e72] [cursor=pointer]:
+                  - /url: /about
+              - listitem [ref=e73]:
+                - link "Contact Us" [ref=e74] [cursor=pointer]:
+                  - /url: /contact
+        - generic [ref=e75]:
+          - paragraph [ref=e76]: © 2024 I Can Swim, LLC. All rights reserved.
+          - paragraph [ref=e77]: Adaptive Swim Lessons for Every Child
+  - alert [ref=e78]
+  - button "Open Next.js Dev Tools" [ref=e84] [cursor=pointer]:
+    - img [ref=e85] [cursor=pointer]
+```

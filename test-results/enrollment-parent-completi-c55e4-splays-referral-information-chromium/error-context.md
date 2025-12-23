@@ -1,0 +1,210 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "I Can Swim" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - heading "I Can Swim" [level=1] [ref=e7] [cursor=pointer]
+          - img [ref=e9] [cursor=pointer]
+        - generic [ref=e11]:
+          - button "Login" [ref=e12]
+          - link "Get Started" [ref=e13] [cursor=pointer]:
+            - /url: /signup
+    - main [ref=e14]:
+      - generic [ref=e16]:
+        - generic [ref=e17]:
+          - heading "Complete Your Enrollment" [level=1] [ref=e18]
+          - paragraph [ref=e19]: Almost done! Please complete the information below for Test Child.
+        - generic [ref=e20]:
+          - generic [ref=e21]:
+            - generic [ref=e22]: Referral Information
+            - generic [ref=e23]: Submitted by your funding source coordinator
+          - generic [ref=e25]:
+            - generic [ref=e26]:
+              - paragraph [ref=e27]: Child's Name
+              - paragraph [ref=e28]: Test Child
+            - generic [ref=e29]:
+              - paragraph [ref=e30]: Date of Birth
+              - paragraph [ref=e31]: May 14, 2018
+            - generic [ref=e32]:
+              - paragraph [ref=e33]: Parent/Guardian
+              - paragraph [ref=e34]: Test Parent
+            - generic [ref=e35]:
+              - paragraph [ref=e36]: Coordinator
+              - paragraph [ref=e37]: Test Coordinator
+        - generic [ref=e38]:
+          - generic [ref=e39]:
+            - generic [ref=e40]: Swim Goals *
+            - generic [ref=e41]: Select all goals that apply for your child
+          - generic [ref=e43]:
+            - generic [ref=e44] [cursor=pointer]:
+              - checkbox [ref=e45]
+              - generic [ref=e46] [cursor=pointer]: Develop comfort and familiarity with water
+            - generic [ref=e47] [cursor=pointer]:
+              - checkbox [ref=e48]
+              - generic [ref=e49] [cursor=pointer]: Front crawl
+            - generic [ref=e50] [cursor=pointer]:
+              - checkbox [ref=e51]
+              - generic [ref=e52] [cursor=pointer]: Backstroke
+            - generic [ref=e53] [cursor=pointer]:
+              - checkbox [ref=e54]
+              - generic [ref=e55] [cursor=pointer]: Improve basic water safety skills (e.g. floating, treading water)
+            - generic [ref=e56] [cursor=pointer]:
+              - checkbox [ref=e57]
+              - generic [ref=e58] [cursor=pointer]: Learn basic swimming strokes (e.g. front stroke)
+            - generic [ref=e59] [cursor=pointer]:
+              - checkbox [ref=e60]
+              - generic [ref=e61] [cursor=pointer]: Learn to swim with flotation device
+            - generic [ref=e62] [cursor=pointer]:
+              - checkbox [ref=e63]
+              - generic [ref=e64] [cursor=pointer]: Become comfortable in water
+            - generic [ref=e65] [cursor=pointer]:
+              - checkbox [ref=e66]
+              - generic [ref=e67] [cursor=pointer]: Enter and exit water
+            - generic [ref=e68] [cursor=pointer]:
+              - checkbox [ref=e69]
+              - generic [ref=e70] [cursor=pointer]: To float on back
+            - generic [ref=e71] [cursor=pointer]:
+              - checkbox [ref=e72]
+              - generic [ref=e73] [cursor=pointer]: Perform basic arm and leg movement
+            - generic [ref=e74] [cursor=pointer]:
+              - checkbox [ref=e75]
+              - generic [ref=e76] [cursor=pointer]: Tread water
+        - generic [ref=e77]:
+          - generic [ref=e79]: About Your Child
+          - generic [ref=e80]:
+            - generic [ref=e81]:
+              - generic [ref=e82]: Strengths & Interests
+              - textbox "Strengths & Interests" [ref=e83]
+            - generic [ref=e84]:
+              - generic [ref=e85]: What Motivates Your Child?
+              - textbox "What Motivates Your Child?" [ref=e86]
+        - generic [ref=e87]:
+          - generic [ref=e88]:
+            - generic [ref=e89]: Availability *
+            - generic [ref=e90]: When can your child attend lessons?
+          - generic [ref=e91]:
+            - generic [ref=e92]:
+              - generic [ref=e93] [cursor=pointer]:
+                - checkbox [ref=e94]
+                - generic [ref=e95] [cursor=pointer]: Flexible – I can adjust my schedule if needed
+              - generic [ref=e96] [cursor=pointer]:
+                - checkbox [ref=e97]
+                - generic [ref=e98] [cursor=pointer]: Weekday Mornings (8 AM- 12 PM)
+              - generic [ref=e99] [cursor=pointer]:
+                - checkbox [ref=e100]
+                - generic [ref=e101] [cursor=pointer]: Weekday Afternoons (12 PM – 4 PM)
+              - generic [ref=e102] [cursor=pointer]:
+                - checkbox [ref=e103]
+                - generic [ref=e104] [cursor=pointer]: Weekday Evenings (4 PM – 7 PM)
+              - generic [ref=e105] [cursor=pointer]:
+                - checkbox [ref=e106]
+                - generic [ref=e107] [cursor=pointer]: Saturday Availability
+              - generic [ref=e108] [cursor=pointer]:
+                - checkbox [ref=e109]
+                - generic [ref=e110] [cursor=pointer]: Sunday Availability
+              - generic [ref=e111] [cursor=pointer]:
+                - checkbox [ref=e112]
+                - generic [ref=e113] [cursor=pointer]: Other (please specify)
+            - generic [ref=e114]:
+              - generic [ref=e115]: Preferred Start Date (Optional)
+              - button "Select a date" [ref=e116]:
+                - img
+                - text: Select a date
+        - generic [ref=e117]:
+          - generic [ref=e119]: Agreements & Signatures
+          - generic [ref=e120]:
+            - generic [ref=e122]:
+              - checkbox "Liability Waiver Agreement *" [ref=e123]
+              - generic [ref=e124]:
+                - generic [ref=e125]: Liability Waiver Agreement *
+                - paragraph [ref=e126]:
+                  - text: I have read and agree to the
+                  - button "View Liability Waiver" [ref=e127]:
+                    - img
+                    - text: View Liability Waiver
+            - generic [ref=e129]:
+              - checkbox "Cancellation Policy Agreement *" [ref=e130]
+              - generic [ref=e131]:
+                - generic [ref=e132]: Cancellation Policy Agreement *
+                - paragraph [ref=e133]:
+                  - text: I have read and agree to the
+                  - button "View Cancellation Policy" [ref=e134]:
+                    - img
+                    - text: View Cancellation Policy
+            - generic [ref=e136]:
+              - checkbox "Photo/Video Release (Optional)" [ref=e137]
+              - generic [ref=e138]:
+                - generic [ref=e139]: Photo/Video Release (Optional)
+                - paragraph [ref=e140]: I grant permission for I Can Swim to use photos/videos of my child for promotional materials, website, and social media.
+        - generic [ref=e141]:
+          - generic [ref=e142]:
+            - generic [ref=e143]: Emergency Contact *
+            - generic [ref=e144]: Someone we can reach if we can't reach you
+          - generic [ref=e146]:
+            - generic [ref=e147]:
+              - generic [ref=e148]: Contact Name *
+              - textbox "Contact Name *" [ref=e149]
+            - generic [ref=e150]:
+              - generic [ref=e151]: Contact Phone *
+              - textbox "Contact Phone *" [ref=e152]
+            - generic [ref=e153]:
+              - generic [ref=e154]: Relationship to Child
+              - textbox "Relationship to Child" [ref=e155]
+        - button "Complete Enrollment" [ref=e157]
+        - paragraph [ref=e158]: Questions? Contact us at (209) 778-7877 or info@icanswim209.com
+    - contentinfo [ref=e159]:
+      - generic [ref=e160]:
+        - generic [ref=e161]:
+          - generic [ref=e162]:
+            - img "I Can Swim" [ref=e164]
+            - paragraph [ref=e165]: Building confidence, safety, and joy in the water through personalized, adaptive instruction tailored to each swimmer's unique needs. Serving Central Valley families since 2015.
+            - generic [ref=e166]:
+              - generic [ref=e167]:
+                - img [ref=e168]
+                - generic [ref=e170]: (209) 778-7877
+              - generic [ref=e171]:
+                - img [ref=e172]
+                - generic [ref=e175]: info@icanswim209.com
+              - generic [ref=e176]:
+                - link [ref=e177] [cursor=pointer]:
+                  - /url: https://facebook.com/icanswim209
+                  - img [ref=e178] [cursor=pointer]
+                - link [ref=e180] [cursor=pointer]:
+                  - /url: https://instagram.com/icanswim209
+                  - img [ref=e181] [cursor=pointer]
+          - generic [ref=e184]:
+            - heading "Our Location" [level=3] [ref=e185]
+            - list [ref=e186]:
+              - listitem [ref=e187]:
+                - generic [ref=e188]:
+                  - img [ref=e189]
+                  - generic [ref=e192]:
+                    - strong [ref=e193]: Modesto
+                    - text: 1212 Kansas Ave
+                    - text: Modesto, CA 95351
+          - generic [ref=e194]:
+            - heading "Quick Links" [level=3] [ref=e195]
+            - list [ref=e196]:
+              - listitem [ref=e197]:
+                - link "Book Assessment" [ref=e198] [cursor=pointer]:
+                  - /url: /signup
+              - listitem [ref=e199]:
+                - link "Parent Dashboard" [ref=e200] [cursor=pointer]:
+                  - /url: /login
+              - listitem [ref=e201]:
+                - link "About Our Program" [ref=e202] [cursor=pointer]:
+                  - /url: /about
+              - listitem [ref=e203]:
+                - link "Contact Us" [ref=e204] [cursor=pointer]:
+                  - /url: /contact
+        - generic [ref=e205]:
+          - paragraph [ref=e206]: © 2024 I Can Swim, LLC. All rights reserved.
+          - paragraph [ref=e207]: Adaptive Swim Lessons for Every Child
+  - alert [ref=e208]
+  - button "Open Next.js Dev Tools" [ref=e214] [cursor=pointer]:
+    - img [ref=e215] [cursor=pointer]
+```
