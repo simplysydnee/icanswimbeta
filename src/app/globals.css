@@ -44,6 +44,15 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* Scrollbar utilities */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari and Opera */
+}
+
 :root {
   --radius: 0.625rem;
   --sidebar-width: 4rem;

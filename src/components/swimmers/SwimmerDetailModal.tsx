@@ -277,7 +277,7 @@ export function SwimmerDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-6">
+      <DialogContent className="max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
@@ -382,19 +382,19 @@ export function SwimmerDetailModal({
 
         {/* Tabbed Interface */}
         <Tabs defaultValue="overview" className="mt-4">
-          <TabsList className="flex flex-wrap gap-2 mb-6">
-            <TabsTrigger value="overview" className="px-4 py-2">Overview</TabsTrigger>
-            <TabsTrigger value="medical" className="px-4 py-2">Medical & Safety</TabsTrigger>
-            <TabsTrigger value="progress" className="px-4 py-2">Progress & Skills</TabsTrigger>
-            <TabsTrigger value="sessions" className="px-4 py-2">Sessions & Bookings</TabsTrigger>
-            <TabsTrigger value="billing" className="px-4 py-2">Billing & Funding</TabsTrigger>
+          <TabsList className="flex flex-nowrap gap-1 mb-6 overflow-x-auto scrollbar-hide">
+            <TabsTrigger value="overview" className="px-3 py-2 text-sm whitespace-nowrap flex-shrink-0">Overview</TabsTrigger>
+            <TabsTrigger value="medical" className="px-3 py-2 text-sm whitespace-nowrap flex-shrink-0">Medical & Safety</TabsTrigger>
+            <TabsTrigger value="progress" className="px-3 py-2 text-sm whitespace-nowrap flex-shrink-0">Progress & Skills</TabsTrigger>
+            <TabsTrigger value="sessions" className="px-3 py-2 text-sm whitespace-nowrap flex-shrink-0">Sessions & Bookings</TabsTrigger>
+            <TabsTrigger value="billing" className="px-3 py-2 text-sm whitespace-nowrap flex-shrink-0">Billing & Funding</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column - Basic Info */}
-              <div className="lg:col-span-2 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
+              {/* Main Content */}
+              <div className="lg:col-span-3 space-y-6">
                 {/* Status Row */}
                 <div className="flex flex-wrap gap-2">
                   <StatusBadge
@@ -555,7 +555,7 @@ export function SwimmerDetailModal({
               </div>
 
               {/* Right Column - Stats & Actions */}
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Quick Stats */}
                 <div className="bg-white border rounded-lg p-4">
                   <h3 className="text-sm font-medium text-muted-foreground mb-3">
@@ -563,31 +563,31 @@ export function SwimmerDetailModal({
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Assessment Status</p>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Assessment Status</p>
                       <Badge
                         variant={swimmer.assessmentStatus === 'completed' ? 'default' : 'outline'}
-                        className={swimmer.assessmentStatus === 'completed' ? 'bg-green-100 text-green-800' : ''}
+                        className={swimmer.assessmentStatus === 'completed' ? 'bg-green-100 text-green-800 mt-1' : 'mt-1'}
                       >
                         {swimmer.assessmentStatus === 'completed' ? 'Completed' : 'Pending'}
                       </Badge>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Approval Status</p>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Approval Status</p>
                       <Badge
                         variant={swimmer.approvalStatus === 'approved' ? 'default' : 'outline'}
-                        className={swimmer.approvalStatus === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}
+                        className={swimmer.approvalStatus === 'approved' ? 'bg-green-100 text-green-800 mt-1' : 'bg-yellow-100 text-yellow-800 mt-1'}
                       >
                         {swimmer.approvalStatus === 'approved' ? 'Approved' : 'Pending Approval'}
                       </Badge>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Flexible Swimmer</p>
-                      <Badge variant="outline" className="whitespace-normal text-left">
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Flexible Swimmer</p>
+                      <Badge variant="outline" className="whitespace-normal text-left mt-1">
                         {swimmer.flexibleSwimmer ? 'Yes - Can fill last-minute spots' : 'No - Regular schedule only'}
                       </Badge>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Legal Documents</p>
+                      <p className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Legal Documents</p>
                       <div className="space-y-2 mt-2">
                         <div className="flex items-center justify-between">
                           <span className="text-sm">Waiver Signed</span>
