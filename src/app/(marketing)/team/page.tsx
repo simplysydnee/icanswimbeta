@@ -1,4 +1,48 @@
-export default function TeamPage() {
+import { createClient } from '@/lib/supabase/server';
+import Image from 'next/image';
+
+interface TeamMember {
+  id: string;
+  full_name: string;
+  avatar_url: string | null;
+  title: string | null;
+  bio: string | null;
+  credentials: string[] | null;
+}
+
+export default async function TeamPage() {
+  const supabase = await createClient();
+
+  let team: TeamMember[] = [];
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url, bio, title, credentials')
+      .eq('display_on_team', true)
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching team members:', error);
+    } else {
+      team = data || [];
+    }
+  } catch (error) {
+    console.error('Error in team query:', error);
+    team = [];
+  }
+
+  // Fallback to Sutton if no team members found
+  if (team.length === 0) {
+    team = [{
+      id: 'fallback-sutton',
+      full_name: 'Sutton Lucas',
+      avatar_url: '/images/sutton-lucas.jpg',
+      title: 'Owner & Lead Instructor',
+      bio: 'Sutton has been teaching individuals with special needs for more than 14 years. She holds a Bachelor of Arts in Liberal Studies from Cal Poly San Luis Obispo, a Master\'s in Education, and three teaching credentials in Special Education. She is Level 2 Adaptive Swim Whisper certified from Swim Angelfish.',
+      credentials: ['BA Liberal Studies, Cal Poly SLO', 'MA Education', '3 Special Education Credentials', 'Level 2 Adaptive Swim Whisper']
+    }];
+  }
+
   return (
     <div className="container mx-auto px-4 py-12">
       {/* Hero Section */}
@@ -14,41 +58,51 @@ export default function TeamPage() {
       {/* Team Members */}
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {/* Founder */}
-          <div className="bg-white rounded-2xl p-8 shadow-sm border">
-            <div className="aspect-square rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center mb-6">
-              <span className="text-4xl font-bold text-cyan-700">SL</span>
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Sutton Lucas</h3>
-            <p className="text-cyan-600 font-medium mb-4">Founder & Head Instructor</p>
-            <p className="text-gray-700">
-              With over a decade of experience in adaptive aquatics, Sutton brings passion, expertise, and compassion to every lesson.
-            </p>
-          </div>
+          {team.map((member) => {
+            const initials = member.full_name
+              .split(' ')
+              .map((name) => name[0])
+              .join('')
+              .toUpperCase()
+              .slice(0, 2);
 
-          {/* Instructor 1 */}
-          <div className="bg-white rounded-2xl p-8 shadow-sm border">
-            <div className="aspect-square rounded-xl bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center mb-6">
-              <span className="text-4xl font-bold text-blue-700">AI</span>
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Alex Johnson</h3>
-            <p className="text-cyan-600 font-medium mb-4">Senior Instructor</p>
-            <p className="text-gray-700">
-              Certified in multiple teaching methodologies with 8 years of experience working with children with special needs.
-            </p>
-          </div>
-
-          {/* Instructor 2 */}
-          <div className="bg-white rounded-2xl p-8 shadow-sm border">
-            <div className="aspect-square rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center mb-6">
-              <span className="text-4xl font-bold text-cyan-700">MS</span>
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Maria Sanchez</h3>
-            <p className="text-cyan-600 font-medium mb-4">Instructor & Program Coordinator</p>
-            <p className="text-gray-700">
-              Specializes in working with non-verbal swimmers and creating sensory-friendly learning environments.
-            </p>
-          </div>
+            return (
+              <div key={member.id} className="bg-white rounded-2xl p-8 shadow-sm border">
+                <div className="aspect-square rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center mb-6 overflow-hidden">
+                  {member.avatar_url ? (
+                    <Image
+                      src={member.avatar_url}
+                      alt={member.full_name}
+                      width={400}
+                      height={400}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-4xl font-bold text-cyan-700">{initials}</span>
+                  )}
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">{member.full_name}</h3>
+                {member.title && (
+                  <p className="text-cyan-600 font-medium mb-4">{member.title}</p>
+                )}
+                {member.bio && (
+                  <p className="text-gray-700 mb-4">{member.bio}</p>
+                )}
+                {member.credentials && member.credentials.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {member.credentials.map((credential, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-cyan-50 text-cyan-700 text-sm rounded-full border border-cyan-100"
+                      >
+                        {credential}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Team Values */}
