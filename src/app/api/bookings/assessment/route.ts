@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { DEFAULT_FUNDING_SOURCE_CONFIG } from '@/lib/constants'
+import { emailService } from '@/lib/email-service'
 
 export async function POST(request: NextRequest) {
   try {
@@ -151,11 +153,26 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', swimmerId)
 
-    // 10. Return success with all details for email
+    // 10. Create Assessment Purchase Order for funded clients
+    let assessmentPO = null
+    if (swimmer.funding_source_id) {
+      assessmentPO = await createAssessmentPO(
+        supabase,
+        swimmer.id,
+        swimmer.funding_source_id,
+        user.id,
+        swimmer.parent_id,
+        assessment.id,
+        swimmer.coordinator_email || null
+      )
+    }
+
+    // 11. Return success with all details for email
     return NextResponse.json({
       success: true,
       booking: booking,
       assessment: assessment,
+      assessmentPO: assessmentPO,
       emailData: {
         parentEmail: swimmer.parent?.email || user.email,
         parentName: swimmer.parent?.full_name || 'Parent',
@@ -174,5 +191,133 @@ export async function POST(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     )
+  }
+}
+
+async function createAssessmentPO(
+  supabase: any,
+  swimmerId: string,
+  fundingSourceId: string,
+  createdBy: string,
+  parentId: string,
+  assessmentId: string,
+  coordinatorEmail: string | null
+) {
+  try {
+    // Calculate PO dates - assessment PO is typically shorter duration
+    const startDate = new Date()
+    const endDate = new Date()
+    endDate.setMonth(endDate.getMonth() + 1) // Assessment PO valid for 1 month
+
+    // Generate PO number
+    const poNumber = `PO-ASSESS-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+
+    // Create PO record
+    const { data: po, error: poError } = await supabase
+      .from('purchase_orders')
+      .insert({
+        swimmer_id: swimmerId,
+        funding_source_id: fundingSourceId,
+        parent_id: parentId,
+        created_by: createdBy,
+        assessment_id: assessmentId,
+        po_type: 'assessment',
+        po_number: poNumber,
+        authorized_sessions: DEFAULT_FUNDING_SOURCE_CONFIG.ASSESSMENT_SESSIONS,
+        used_sessions: 0,
+        start_date: startDate.toISOString(),
+        end_date: endDate.toISOString(),
+        status: 'pending',
+        notes: 'Automatically created for assessment booking',
+      })
+      .select()
+      .single()
+
+    if (poError) {
+      console.error('Error creating assessment PO:', poError)
+      // Don't fail the whole request if PO creation fails
+      return null
+    }
+
+    // Update swimmer's PO info for assessment
+    await supabase
+      .from('swimmers')
+      .update({
+        current_po_number: poNumber,
+        po_expires_at: endDate.toISOString(),
+        funded_sessions_authorized: DEFAULT_FUNDING_SOURCE_CONFIG.ASSESSMENT_SESSIONS,
+        funded_sessions_used: 0,
+      })
+      .eq('id', swimmerId)
+
+    // Send coordinator notification if email is available
+    await sendCoordinatorNotification(
+      supabase,
+      swimmerId,
+      fundingSourceId,
+      coordinatorEmail,
+      poNumber
+    )
+
+    return po
+  } catch (error) {
+    console.error('Error in createAssessmentPO:', error)
+    return null
+  }
+}
+
+async function sendCoordinatorNotification(
+  supabase: any,
+  swimmerId: string,
+  fundingSourceId: string,
+  coordinatorEmail: string | null,
+  poNumber: string
+) {
+  try {
+    // Get swimmer details
+    const { data: swimmer } = await supabase
+      .from('swimmers')
+      .select('first_name, last_name, coordinator_name, coordinator_email')
+      .eq('id', swimmerId)
+      .single()
+
+    if (!swimmer) return
+
+    // Get funding source details
+    const { data: fundingSource } = await supabase
+      .from('funding_sources')
+      .select('name, contact_email, contact_name')
+      .eq('id', fundingSourceId)
+      .single()
+
+    if (!fundingSource) return
+
+    // Determine which email to use (prefer swimmer's coordinator email)
+    const toEmail = coordinatorEmail || swimmer.coordinator_email || fundingSource.contact_email
+    if (!toEmail) {
+      console.log('No coordinator email available for notification')
+      return
+    }
+
+    // Determine coordinator name
+    const coordinatorName = swimmer.coordinator_name || fundingSource.contact_name || 'Coordinator'
+
+    // Send email notification
+    // Note: We need to add a coordinator notification template to the email service
+    // For now, we'll use the existing assessment_booking template with custom data
+    await emailService.sendAssessmentBooking({
+      parentEmail: toEmail,
+      parentName: coordinatorName,
+      childName: `${swimmer.first_name} ${swimmer.last_name}`,
+      date: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+      time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      location: 'Assessment Session',
+      instructor: 'TBD',
+    })
+
+    console.log(`Coordinator notification sent to ${toEmail} for PO ${poNumber}`)
+  } catch (error) {
+    console.error('Error sending coordinator notification:', error)
+    // Don't fail the whole request if notification fails
   }
 }

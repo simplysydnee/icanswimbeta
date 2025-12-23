@@ -2,20 +2,19 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { StatusBadge } from './StatusBadge';
 import { format, parseISO } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
@@ -281,98 +280,66 @@ export function SwimmerDetailModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="!max-w-[1400px] w-[95vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <div className="flex items-center gap-4">
-            {swimmer.photoUrl ? (
-              <Image
-                src={swimmer.photoUrl}
-                alt={swimmer.fullName}
-                width={80}
-                height={80}
-                className="rounded-full object-cover border-4 border-white/30"
-                unoptimized
-              />
-            ) : (
-              <div className="h-20 w-20 rounded-full bg-white/20 flex items-center justify-center border-4 border-white/30">
-                <span className="text-2xl font-bold text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {/* Avatar - photo or initials */}
+              <Avatar className="h-16 w-16 border-2 border-cyan-200">
+                {swimmer.photoUrl && (
+                  <AvatarImage src={swimmer.photoUrl} alt={swimmer.firstName} />
+                )}
+                <AvatarFallback className="bg-cyan-100 text-cyan-700 text-xl font-semibold">
                   {getInitials(swimmer.firstName, swimmer.lastName)}
-                </span>
+                </AvatarFallback>
+              </Avatar>
+
+              {/* Name, age, and edit icon */}
+              <div>
+                <div className="flex items-center gap-2">
+                  <DialogTitle className="text-2xl font-bold">
+                    {swimmer.firstName} {swimmer.lastName}
+                  </DialogTitle>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleEdit}>
+                    <Edit className="h-4 w-4" />
+                    <span className="sr-only">Edit swimmer</span>
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  {calculateAge(swimmer.dateOfBirth) !== '—' && (
+                    <span className="text-muted-foreground">
+                      {calculateAge(swimmer.dateOfBirth)}
+                    </span>
+                  )}
+                  {swimmer.currentLevel && (
+                    <>
+                      <span className="text-muted-foreground">•</span>
+                      <Badge
+                        variant="outline"
+                        className="text-sm font-medium"
+                      >
+                        {swimmer.currentLevel.displayName}
+                      </Badge>
+                    </>
+                  )}
+                </div>
               </div>
-            )}
-            <div>
-              <DialogTitle className="text-2xl font-bold">{swimmer.fullName}</DialogTitle>
-              <DialogDescription className="sr-only">
-                Swimmer details and information for {swimmer.fullName}
-              </DialogDescription>
-              <div className="flex items-center gap-2 mt-1">
-                {calculateAge(swimmer.dateOfBirth) !== '—' && (
-                  <span className="text-muted-foreground">
-                    {calculateAge(swimmer.dateOfBirth)}
-                  </span>
-                )}
-                {swimmer.currentLevel && (
-                  <>
-                    <span className="text-muted-foreground">•</span>
-                    <Badge
-                      variant="outline"
-                      className="text-sm font-medium"
-                    >
-                      {swimmer.currentLevel.displayName}
-                    </Badge>
-                  </>
-                )}
-              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleViewFullPage}>View Full Page</Button>
+              {swimmer.enrollmentStatus === 'waitlist' && onApprove && onDecline && (
+                <>
+                  <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => onApprove(swimmer)}>
+                    <CheckCircle className="h-4 w-4 mr-1" /> Approve
+                  </Button>
+                  <Button variant="destructive" onClick={() => onDecline(swimmer)}>
+                    <XCircle className="h-4 w-4 mr-1" /> Decline
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-2 mt-4">
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-primary/10 hover:bg-primary/20 text-primary-foreground border-0"
-              onClick={handleEdit}
-            >
-              <Edit className="h-4 w-4 mr-1" />
-              Edit
-            </Button>
-            <Link href={`/booking?swimmer=${swimmer.id}`}>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="bg-primary/10 hover:bg-primary/20 text-primary-foreground border-0"
-              >
-                <Calendar className="h-4 w-4 mr-1" />
-                Book Session
-              </Button>
-            </Link>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleViewFullPage}
-            >
-              View Full Page
-            </Button>
-            {swimmer.enrollmentStatus === 'waitlist' && onApprove && onDecline && (
-              <>
-                <Button
-                  size="sm"
-                  className="bg-green-500 hover:bg-green-600 text-white"
-                  onClick={() => onApprove(swimmer)}
-                >
-                  <CheckCircle className="h-4 w-4 mr-1" />
-                  Approve
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => onDecline(swimmer)}
-                >
-                  <XCircle className="h-4 w-4 mr-1" />
-                  Decline
-                </Button>
-              </>
-            )}
-          </div>
         </DialogHeader>
 
         {/* Tabbed Interface */}
@@ -380,7 +347,7 @@ export function SwimmerDetailModal({
           {/* Mobile Dropdown (visible on small and medium screens) */}
           <div className="block md:hidden mb-4">
             <Select value={activeTab} onValueChange={setActiveTab}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger id="mobile-tab-select" name="mobileTabSelect" className="w-full">
                 <SelectValue placeholder="Select section" />
               </SelectTrigger>
               <SelectContent>
