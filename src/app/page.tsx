@@ -1,6 +1,11 @@
+import { PublicHeader } from '@/components/marketing/PublicHeader';
+import { PublicFooter } from '@/components/marketing/PublicFooter';
+
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
+      <PublicHeader />
+      <div className="flex-1">
       {/* Hero Section */}
       <section className="relative bg-white py-24 lg:py-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -44,12 +49,12 @@ export default function Home() {
               Adaptive Swim Lessons for Children with Special Needs
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button className="bg-[#23a1c0] hover:bg-[#1d8ba8] text-white font-semibold px-8 py-4 rounded-lg transition-colors duration-200 font-inter text-lg">
+              <a href="/enroll" className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold px-8 py-4 rounded-lg transition-colors duration-200 font-inter text-lg">
                 Get Started
-              </button>
-              <button className="border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-8 py-4 rounded-lg transition-colors duration-200 font-inter text-lg">
+              </a>
+              <a href="/about" className="border-2 border-gray-800 text-gray-800 hover:bg-gray-800 hover:text-white font-semibold px-8 py-4 rounded-lg transition-colors duration-200 font-inter text-lg">
                 Learn More
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -201,16 +206,18 @@ export default function Home() {
               Join hundreds of families who trust I Can Swim with their child&apos;s water safety and swimming development
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button className="bg-[#23a1c0] hover:bg-[#1d8ba8] text-white font-semibold px-8 py-4 rounded-lg transition-colors duration-200 font-inter text-lg">
+              <a href="/enroll" className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold px-8 py-4 rounded-lg transition-colors duration-200 font-inter text-lg">
                 Book Your Assessment
-              </button>
-              <button className="border-2 border-white text-white hover:bg-white hover:text-[#1E3A5F] font-semibold px-8 py-4 rounded-lg transition-colors duration-200 font-inter text-lg">
+              </a>
+              <a href="/contact" className="border-2 border-white text-white hover:bg-white hover:text-gray-800 font-semibold px-8 py-4 rounded-lg transition-colors duration-200 font-inter text-lg">
                 Contact Us
-              </button>
+              </a>
             </div>
           </div>
         </div>
       </section>
+      </div>
+      <PublicFooter />
     </div>
   );
 }
