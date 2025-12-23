@@ -32,6 +32,7 @@ import {
 import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import NeedsProgressUpdateCard from '@/components/dashboard/NeedsProgressUpdateCard';
+import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
 
 interface DashboardStats {
   totalSwimmers: number;
@@ -73,6 +74,15 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [todaysSessions, setTodaysSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState<{
+    bookingId: string;
+    sessionId: string;
+    swimmerId: string;
+    swimmerName: string;
+    swimmerPhotoUrl?: string;
+    sessionTime: string;
+  } | null>(null);
+  const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
 
   const fetchStats = useCallback(async () => {
     setLoading(true);
@@ -182,6 +192,32 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   }, []);
+
+  const handleUpdateProgress = (
+    bookingId: string,
+    sessionId: string,
+    swimmerId: string,
+    swimmerName: string,
+    swimmerPhotoUrl: string | undefined,
+    sessionTime: string
+  ) => {
+    setSelectedBooking({
+      bookingId,
+      sessionId,
+      swimmerId,
+      swimmerName,
+      swimmerPhotoUrl,
+      sessionTime,
+    });
+    setIsProgressModalOpen(true);
+  };
+
+  const handleProgressSubmitted = () => {
+    setIsProgressModalOpen(false);
+    setSelectedBooking(null);
+    // Refresh the data
+    fetchStats();
+  };
 
   useEffect(() => {
     if (role && role !== 'admin') {
@@ -521,21 +557,39 @@ export default function AdminDashboard() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {needsProgressUpdate ? (
-                      <Link href={`/instructor/progress/${session.id}`}>
-                        <Button size="sm" variant="outline" className="text-orange-600 border-orange-300 hover:bg-orange-50">
-                          <FileText className="h-4 w-4 mr-1" />
-                          Update Progress
-                        </Button>
-                      </Link>
-                    ) : hasProgressNote ? (
-                      <Badge className="bg-green-100 text-green-700 border-green-300">
+                  <div className="flex flex-col gap-2">
+                    {hasProgressNote ? (
+                      <Badge className="bg-green-100 text-green-700 border-green-300 self-start">
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Updated
                       </Badge>
+                    ) : needsProgressUpdate ? (
+                      <div className="space-y-2">
+                        {session.bookings?.map((booking) => {
+                          if (!booking.swimmer) return null;
+                          return (
+                            <Button
+                              key={booking.id}
+                              size="sm"
+                              variant="outline"
+                              className="text-orange-600 border-orange-300 hover:bg-orange-50 w-full justify-start"
+                              onClick={() => handleUpdateProgress(
+                                booking.id,
+                                session.id,
+                                booking.swimmer!.id,
+                                `${booking.swimmer!.first_name} ${booking.swimmer!.last_name}`,
+                                undefined, // admin page doesn't have swimmer photo_url
+                                session.start_time
+                              )}
+                            >
+                              <FileText className="h-4 w-4 mr-1" />
+                              Update {booking.swimmer!.first_name}'s Progress
+                            </Button>
+                          );
+                        })}
+                      </div>
                     ) : (
-                      <Badge variant="outline">{session.location || 'TBD'}</Badge>
+                      <Badge variant="outline" className="self-start">{session.location || 'TBD'}</Badge>
                     )}
                   </div>
                 </div>
@@ -604,6 +658,21 @@ export default function AdminDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Progress Update Modal */}
+      {selectedBooking && (
+        <ProgressUpdateModal
+          open={isProgressModalOpen}
+          onOpenChange={setIsProgressModalOpen}
+          bookingId={selectedBooking.bookingId}
+          sessionId={selectedBooking.sessionId}
+          swimmerId={selectedBooking.swimmerId}
+          swimmerName={selectedBooking.swimmerName}
+          swimmerPhotoUrl={selectedBooking.swimmerPhotoUrl}
+          sessionTime={selectedBooking.sessionTime}
+          onSuccess={handleProgressSubmitted}
+        />
+      )}
     </div>
   );
 }
