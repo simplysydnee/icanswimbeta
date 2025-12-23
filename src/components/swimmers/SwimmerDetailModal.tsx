@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -161,7 +162,7 @@ export function SwimmerDetailModal({
         `)
         .eq('swimmer_id', swimmer.id)
         .eq('status', 'confirmed')
-        .gte('session.start_time', new Date().toISOString())
+        .gte('sessions.start_time', new Date().toISOString())
         .limit(5);
 
       if (bookingsError) {
@@ -301,6 +302,9 @@ export function SwimmerDetailModal({
               )}
               <div>
                 <DialogTitle className="text-2xl font-bold">{swimmer.fullName}</DialogTitle>
+                <DialogDescription className="sr-only">
+                  Swimmer details and information for {swimmer.fullName}
+                </DialogDescription>
                 <div className="flex items-center gap-2 mt-1">
                   {calculateAge(swimmer.dateOfBirth) !== '—' && (
                     <span className="text-muted-foreground">

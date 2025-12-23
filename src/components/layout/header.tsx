@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Navigation } from './navigation';
@@ -123,9 +123,9 @@ export function Header() {
                     <div className="space-y-4">
                       <div>
                         <DialogTitle className="text-2xl font-bold">Welcome back</DialogTitle>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <DialogDescription className="text-sm text-gray-500 mt-1">
                           Sign in to your I Can Swim account
-                        </p>
+                        </DialogDescription>
                       </div>
 
                       {loginError && (
@@ -256,9 +256,9 @@ export function Header() {
                           <div className="space-y-4">
                             <div>
                               <DialogTitle className="text-2xl font-bold">Welcome back</DialogTitle>
-                              <p className="text-sm text-gray-500 mt-1">
+                              <DialogDescription className="text-sm text-gray-500 mt-1">
                                 Sign in to your I Can Swim account
-                              </p>
+                              </DialogDescription>
                             </div>
 
                             {loginError && (
