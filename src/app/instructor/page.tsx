@@ -21,6 +21,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import NeedsProgressUpdateCard from '@/components/dashboard/NeedsProgressUpdateCard';
+import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
 
 interface Session {
   id: string;
@@ -55,6 +56,15 @@ export default function InstructorDashboard() {
     needsProgressUpdate: 0,
     completedThisWeek: 0,
   });
+  const [selectedBooking, setSelectedBooking] = useState<{
+    bookingId: string;
+    sessionId: string;
+    swimmerId: string;
+    swimmerName: string;
+    swimmerPhotoUrl?: string;
+    sessionTime: string;
+  } | null>(null);
+  const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
 
   const fetchDashboardData = useCallback(async () => {
     const supabase = createClient();
@@ -102,7 +112,7 @@ export default function InstructorDashboard() {
 
     // Calculate stats
     const swimmersToday = todaySessions.reduce((acc, s) =>
-      acc + (s.bookings?.filter(b => b.status === 'confirmed').length || 0), 0
+      acc + (s.bookings?.filter((b: any) => b.status === 'confirmed').length || 0), 0
     );
 
     const needsProgressUpdate = todaySessions.filter(s => {
@@ -110,7 +120,7 @@ export default function InstructorDashboard() {
       const now = new Date();
       const isPast = sessionTime < now;
       const hasProgress = s.progress_notes && s.progress_notes.length > 0;
-      const hasBookings = s.bookings && s.bookings.filter(b => b.status === 'confirmed').length > 0;
+      const hasBookings = s.bookings && s.bookings.filter((b: any) => b.status === 'confirmed').length > 0;
       return isPast && !hasProgress && hasBookings;
     }).length;
 
@@ -134,6 +144,32 @@ export default function InstructorDashboard() {
 
     setLoading(false);
   }, []);
+
+  const handleUpdateProgress = (
+    bookingId: string,
+    sessionId: string,
+    swimmerId: string,
+    swimmerName: string,
+    swimmerPhotoUrl: string | undefined,
+    sessionTime: string
+  ) => {
+    setSelectedBooking({
+      bookingId,
+      sessionId,
+      swimmerId,
+      swimmerName,
+      swimmerPhotoUrl,
+      sessionTime,
+    });
+    setIsProgressModalOpen(true);
+  };
+
+  const handleProgressSubmitted = () => {
+    setIsProgressModalOpen(false);
+    setSelectedBooking(null);
+    // Refresh the data
+    fetchDashboardData();
+  };
 
   useEffect(() => {
     if (user) {
@@ -360,21 +396,35 @@ export default function InstructorDashboard() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col gap-2">
                         {hasProgress ? (
-                          <Badge className="bg-green-100 text-green-700 border-green-300">
+                          <Badge className="bg-green-100 text-green-700 border-green-300 self-start">
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Completed
                           </Badge>
                         ) : needsUpdate ? (
-                          <Link href={`/instructor/progress/${session.id}`}>
-                            <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white">
-                              <FileText className="h-4 w-4 mr-1" />
-                              Update Progress
-                            </Button>
-                          </Link>
+                          <div className="space-y-2">
+                            {confirmedBookings.map((booking) => (
+                              <Button
+                                key={booking.id}
+                                size="sm"
+                                className="bg-orange-500 hover:bg-orange-600 text-white w-full justify-start"
+                                onClick={() => handleUpdateProgress(
+                                  booking.id,
+                                  session.id,
+                                  booking.swimmer.id,
+                                  `${booking.swimmer.first_name} ${booking.swimmer.last_name}`,
+                                  booking.swimmer.photo_url,
+                                  session.start_time
+                                )}
+                              >
+                                <FileText className="h-4 w-4 mr-1" />
+                                Update {booking.swimmer.first_name}'s Progress
+                              </Button>
+                            ))}
+                          </div>
                         ) : (
-                          <Badge variant="outline">Upcoming</Badge>
+                          <Badge variant="outline" className="self-start">Upcoming</Badge>
                         )}
                       </div>
                     </div>
@@ -420,6 +470,21 @@ export default function InstructorDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Progress Update Modal */}
+      {selectedBooking && (
+        <ProgressUpdateModal
+          open={isProgressModalOpen}
+          onOpenChange={setIsProgressModalOpen}
+          bookingId={selectedBooking.bookingId}
+          sessionId={selectedBooking.sessionId}
+          swimmerId={selectedBooking.swimmerId}
+          swimmerName={selectedBooking.swimmerName}
+          swimmerPhotoUrl={selectedBooking.swimmerPhotoUrl}
+          sessionTime={selectedBooking.sessionTime}
+          onSuccess={handleProgressSubmitted}
+        />
+      )}
     </div>
   );
 }
