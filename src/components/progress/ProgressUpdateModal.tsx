@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Clock, FileText, Award, Star, Target, User, ClipboardList } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
+import SwimmerAssessmentInfo from './SwimmerAssessmentInfo';
 
 interface Skill {
   id: string;
@@ -283,203 +284,228 @@ export default function ProgressUpdateModal({
           </div>
         </div>
 
-        {/* Attendance & Mood */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label>Attendance</Label>
-            <Select value={attendanceStatus} onValueChange={setAttendanceStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select attendance" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="present">Present</SelectItem>
-                <SelectItem value="absent">Absent</SelectItem>
-                <SelectItem value="late">Late</SelectItem>
-                <SelectItem value="left_early">Left Early</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Swimmer Mood</Label>
-            <Select value={swimmerMood} onValueChange={setSwimmerMood}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select mood" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="happy">Happy</SelectItem>
-                <SelectItem value="engaged">Engaged</SelectItem>
-                <SelectItem value="neutral">Neutral</SelectItem>
-                <SelectItem value="anxious">Anxious</SelectItem>
-                <SelectItem value="tired">Tired</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Water Comfort</Label>
-            <Select value={waterComfort} onValueChange={setWaterComfort}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select comfort level" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="very_comfortable">Very Comfortable</SelectItem>
-                <SelectItem value="comfortable">Comfortable</SelectItem>
-                <SelectItem value="neutral">Neutral</SelectItem>
-                <SelectItem value="uncomfortable">Uncomfortable</SelectItem>
-                <SelectItem value="very_uncomfortable">Very Uncomfortable</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        {/* Tabs for Progress Update and Swimmer Info */}
+        <Tabs defaultValue="progress" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="progress" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Update Progress
+            </TabsTrigger>
+            <TabsTrigger value="assessment" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              Swimmer Info
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Skills */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label className="text-lg font-medium">Skills</Label>
-            <Badge variant="outline">
-              {skills.filter(s => s.status === 'mastered').length} mastered • {skills.filter(s => s.status === 'in_progress').length} in progress
-            </Badge>
-          </div>
-
-          <div className="grid grid-cols-1 gap-2">
-            {skills.map((skill) => (
-              <div key={skill.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex-1">
-                  <p className="font-medium">{skill.name}</p>
-                  <p className="text-sm text-muted-foreground">{skill.description}</p>
-                </div>
-                <RadioGroup
-                  value={skill.status || 'not_started'}
-                  onValueChange={(value) => handleSkillStatusChange(skill.id, value as any)}
-                  className="flex items-center gap-2"
-                >
-                  <div className="flex items-center space-x-1">
-                    <RadioGroupItem value="not_started" id={`${skill.id}-not_started`} />
-                    <Label htmlFor={`${skill.id}-not_started`} className="text-xs cursor-pointer">
-                      Not Started
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <RadioGroupItem value="in_progress" id={`${skill.id}-in_progress`} />
-                    <Label htmlFor={`${skill.id}-in_progress`} className="text-xs cursor-pointer">
-                      In Progress
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <RadioGroupItem value="mastered" id={`${skill.id}-mastered`} />
-                    <Label htmlFor={`${skill.id}-mastered`} className="text-xs cursor-pointer">
-                      Mastered
-                    </Label>
-                  </div>
-                </RadioGroup>
+          {/* Progress Update Tab */}
+          <TabsContent value="progress" className="space-y-6 mt-4">
+            {/* Attendance & Mood */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Attendance</Label>
+                <Select value={attendanceStatus} onValueChange={setAttendanceStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select attendance" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="present">Present</SelectItem>
+                    <SelectItem value="absent">Absent</SelectItem>
+                    <SelectItem value="late">Late</SelectItem>
+                    <SelectItem value="left_early">Left Early</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            ))}
-          </div>
-        </div>
+              <div className="space-y-2">
+                <Label>Swimmer Mood</Label>
+                <Select value={swimmerMood} onValueChange={setSwimmerMood}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select mood" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="happy">Happy</SelectItem>
+                    <SelectItem value="engaged">Engaged</SelectItem>
+                    <SelectItem value="neutral">Neutral</SelectItem>
+                    <SelectItem value="anxious">Anxious</SelectItem>
+                    <SelectItem value="tired">Tired</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Water Comfort</Label>
+                <Select value={waterComfort} onValueChange={setWaterComfort}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select comfort level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="very_comfortable">Very Comfortable</SelectItem>
+                    <SelectItem value="comfortable">Comfortable</SelectItem>
+                    <SelectItem value="neutral">Neutral</SelectItem>
+                    <SelectItem value="uncomfortable">Uncomfortable</SelectItem>
+                    <SelectItem value="very_uncomfortable">Very Uncomfortable</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-        {/* Level Advancement */}
-        {nextLevels.length > 0 && (
-          <div className="space-y-3">
-            <Label className="text-lg font-medium">Level Advancement</Label>
-            <p className="text-sm text-muted-foreground">
-              Is {swimmerName.split(' ')[0]} ready to advance to the next level?
-            </p>
-            <Select value={selectedNextLevelId} onValueChange={setSelectedNextLevelId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select next level (optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Keep at current level</SelectItem>
-                {nextLevels.map((level) => (
-                  <SelectItem key={level.id} value={level.id}>
-                    {level.display_name || level.name} - {level.description}
-                  </SelectItem>
+            {/* Skills */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-lg font-medium">Skills</Label>
+                <Badge variant="outline">
+                  {skills.filter(s => s.status === 'mastered').length} mastered • {skills.filter(s => s.status === 'in_progress').length} in progress
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2">
+                {skills.map((skill) => (
+                  <div key={skill.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-medium">{skill.name}</p>
+                      <p className="text-sm text-muted-foreground">{skill.description}</p>
+                    </div>
+                    <RadioGroup
+                      value={skill.status || 'not_started'}
+                      onValueChange={(value) => handleSkillStatusChange(skill.id, value as any)}
+                      className="flex items-center gap-2"
+                    >
+                      <div className="flex items-center space-x-1">
+                        <RadioGroupItem value="not_started" id={`${skill.id}-not_started`} />
+                        <Label htmlFor={`${skill.id}-not_started`} className="text-xs cursor-pointer">
+                          Not Started
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <RadioGroupItem value="in_progress" id={`${skill.id}-in_progress`} />
+                        <Label htmlFor={`${skill.id}-in_progress`} className="text-xs cursor-pointer">
+                          In Progress
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <RadioGroupItem value="mastered" id={`${skill.id}-mastered`} />
+                        <Label htmlFor={`${skill.id}-mastered`} className="text-xs cursor-pointer">
+                          Mastered
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {/* Notes */}
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Lesson Summary *</Label>
-            <Textarea
-              placeholder="What did you work on today? What went well? What needs improvement?"
-              value={lessonSummary}
-              onChange={(e) => setLessonSummary(e.target.value)}
-              rows={3}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Instructor Notes (Private)</Label>
-            <Textarea
-              placeholder="Private notes for instructors and admins only"
-              value={instructorNotes}
-              onChange={(e) => setInstructorNotes(e.target.value)}
-              rows={2}
-            />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Parent Notes</Label>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="shared-with-parent"
-                  checked={sharedWithParent}
-                  onCheckedChange={(checked) => setSharedWithParent(checked as boolean)}
-                />
-                <Label htmlFor="shared-with-parent" className="text-sm cursor-pointer">
-                  Share with parent
-                </Label>
               </div>
             </div>
-            <Textarea
-              placeholder="Notes to share with parent (if sharing is enabled)"
-              value={parentNotes}
-              onChange={(e) => setParentNotes(e.target.value)}
-              rows={2}
-              disabled={!sharedWithParent}
-            />
-          </div>
-        </div>
 
-        {/* Focus Level */}
-        <div className="space-y-2">
-          <Label>Focus Level</Label>
-          <RadioGroup value={focusLevel} onValueChange={setFocusLevel} className="grid grid-cols-3 gap-2">
-            <div>
-              <RadioGroupItem value="high" id="focus-high" className="peer sr-only" />
-              <Label
-                htmlFor="focus-high"
-                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-              >
-                <Star className="h-6 w-6 mb-2 text-yellow-500" />
-                <span className="text-sm">High</span>
-              </Label>
+            {/* Level Advancement */}
+            {nextLevels.length > 0 && (
+              <div className="space-y-3">
+                <Label className="text-lg font-medium">Level Advancement</Label>
+                <p className="text-sm text-muted-foreground">
+                  Is {swimmerName.split(' ')[0]} ready to advance to the next level?
+                </p>
+                <Select value={selectedNextLevelId} onValueChange={setSelectedNextLevelId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select next level (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Keep at current level</SelectItem>
+                    {nextLevels.map((level) => (
+                      <SelectItem key={level.id} value={level.id}>
+                        {level.display_name || level.name} - {level.description}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Notes */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Lesson Summary *</Label>
+                <Textarea
+                  placeholder="What did you work on today? What went well? What needs improvement?"
+                  value={lessonSummary}
+                  onChange={(e) => setLessonSummary(e.target.value)}
+                  rows={3}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Instructor Notes (Private)</Label>
+                <Textarea
+                  placeholder="Private notes for instructors and admins only"
+                  value={instructorNotes}
+                  onChange={(e) => setInstructorNotes(e.target.value)}
+                  rows={2}
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Parent Notes</Label>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="shared-with-parent"
+                      checked={sharedWithParent}
+                      onCheckedChange={(checked) => setSharedWithParent(checked as boolean)}
+                    />
+                    <Label htmlFor="shared-with-parent" className="text-sm cursor-pointer">
+                      Share with parent
+                    </Label>
+                  </div>
+                </div>
+                <Textarea
+                  placeholder="Notes to share with parent (if sharing is enabled)"
+                  value={parentNotes}
+                  onChange={(e) => setParentNotes(e.target.value)}
+                  rows={2}
+                  disabled={!sharedWithParent}
+                />
+              </div>
             </div>
-            <div>
-              <RadioGroupItem value="medium" id="focus-medium" className="peer sr-only" />
-              <Label
-                htmlFor="focus-medium"
-                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-              >
-                <Target className="h-6 w-6 mb-2 text-blue-500" />
-                <span className="text-sm">Medium</span>
-              </Label>
+
+            {/* Focus Level */}
+            <div className="space-y-2">
+              <Label>Focus Level</Label>
+              <RadioGroup value={focusLevel} onValueChange={setFocusLevel} className="grid grid-cols-3 gap-2">
+                <div>
+                  <RadioGroupItem value="high" id="focus-high" className="peer sr-only" />
+                  <Label
+                    htmlFor="focus-high"
+                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                  >
+                    <Star className="h-6 w-6 mb-2 text-yellow-500" />
+                    <span className="text-sm">High</span>
+                  </Label>
+                </div>
+                <div>
+                  <RadioGroupItem value="medium" id="focus-medium" className="peer sr-only" />
+                  <Label
+                    htmlFor="focus-medium"
+                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                  >
+                    <Target className="h-6 w-6 mb-2 text-blue-500" />
+                    <span className="text-sm">Medium</span>
+                  </Label>
+                </div>
+                <div>
+                  <RadioGroupItem value="low" id="focus-low" className="peer sr-only" />
+                  <Label
+                    htmlFor="focus-low"
+                    className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                  >
+                    <Clock className="h-6 w-6 mb-2 text-gray-500" />
+                    <span className="text-sm">Low</span>
+                  </Label>
+                </div>
+              </RadioGroup>
             </div>
-            <div>
-              <RadioGroupItem value="low" id="focus-low" className="peer sr-only" />
-              <Label
-                htmlFor="focus-low"
-                className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-              >
-                <Clock className="h-6 w-6 mb-2 text-gray-500" />
-                <span className="text-sm">Low</span>
-              </Label>
-            </div>
-          </RadioGroup>
-        </div>
+          </TabsContent>
+
+          {/* Swimmer Info Tab */}
+          <TabsContent value="assessment" className="mt-4">
+            <SwimmerAssessmentInfo
+              swimmerData={swimmerAssessmentData}
+              assessmentData={assessmentData}
+            />
+          </TabsContent>
+        </Tabs>
 
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-4 border-t">
