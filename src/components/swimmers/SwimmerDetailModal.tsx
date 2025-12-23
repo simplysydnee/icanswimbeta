@@ -33,7 +33,6 @@ import {
   AlertCircle,
   Stethoscope,
   Heart,
-  X,
   FileText,
   Shield,
   AlertTriangle,
@@ -282,57 +281,47 @@ export function SwimmerDetailModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="!max-w-[1400px] w-[95vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              {swimmer.photoUrl ? (
-                <Image
-                  src={swimmer.photoUrl}
-                  alt={swimmer.fullName}
-                  width={80}
-                  height={80}
-                  className="rounded-full object-cover border-4 border-white/30"
-                  unoptimized
-                />
-              ) : (
-                <div className="h-20 w-20 rounded-full bg-white/20 flex items-center justify-center border-4 border-white/30">
-                  <span className="text-2xl font-bold text-white">
-                    {getInitials(swimmer.firstName, swimmer.lastName)}
+          <div className="flex items-center gap-4">
+            {swimmer.photoUrl ? (
+              <Image
+                src={swimmer.photoUrl}
+                alt={swimmer.fullName}
+                width={80}
+                height={80}
+                className="rounded-full object-cover border-4 border-white/30"
+                unoptimized
+              />
+            ) : (
+              <div className="h-20 w-20 rounded-full bg-white/20 flex items-center justify-center border-4 border-white/30">
+                <span className="text-2xl font-bold text-white">
+                  {getInitials(swimmer.firstName, swimmer.lastName)}
+                </span>
+              </div>
+            )}
+            <div>
+              <DialogTitle className="text-2xl font-bold">{swimmer.fullName}</DialogTitle>
+              <DialogDescription className="sr-only">
+                Swimmer details and information for {swimmer.fullName}
+              </DialogDescription>
+              <div className="flex items-center gap-2 mt-1">
+                {calculateAge(swimmer.dateOfBirth) !== '—' && (
+                  <span className="text-muted-foreground">
+                    {calculateAge(swimmer.dateOfBirth)}
                   </span>
-                </div>
-              )}
-              <div>
-                <DialogTitle className="text-2xl font-bold">{swimmer.fullName}</DialogTitle>
-                <DialogDescription className="sr-only">
-                  Swimmer details and information for {swimmer.fullName}
-                </DialogDescription>
-                <div className="flex items-center gap-2 mt-1">
-                  {calculateAge(swimmer.dateOfBirth) !== '—' && (
-                    <span className="text-muted-foreground">
-                      {calculateAge(swimmer.dateOfBirth)}
-                    </span>
-                  )}
-                  {swimmer.currentLevel && (
-                    <>
-                      <span className="text-muted-foreground">•</span>
-                      <Badge
-                        variant="outline"
-                        className="text-sm font-medium"
-                      >
-                        {swimmer.currentLevel.displayName}
-                      </Badge>
-                    </>
-                  )}
-                </div>
+                )}
+                {swimmer.currentLevel && (
+                  <>
+                    <span className="text-muted-foreground">•</span>
+                    <Badge
+                      variant="outline"
+                      className="text-sm font-medium"
+                    >
+                      {swimmer.currentLevel.displayName}
+                    </Badge>
+                  </>
+                )}
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="h-8 w-8"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
 
           {/* Action Buttons */}
@@ -340,7 +329,7 @@ export function SwimmerDetailModal({
             <Button
               size="sm"
               variant="secondary"
-              className="bg-white/20 hover:bg-white/30 text-white border-0"
+              className="bg-primary/10 hover:bg-primary/20 text-primary-foreground border-0"
               onClick={handleEdit}
             >
               <Edit className="h-4 w-4 mr-1" />
@@ -350,7 +339,7 @@ export function SwimmerDetailModal({
               <Button
                 size="sm"
                 variant="secondary"
-                className="bg-white/20 hover:bg-white/30 text-white border-0"
+                className="bg-primary/10 hover:bg-primary/20 text-primary-foreground border-0"
               >
                 <Calendar className="h-4 w-4 mr-1" />
                 Book Session
@@ -588,21 +577,29 @@ export function SwimmerDetailModal({
                   <div className="space-y-4">
                     <div>
                       <p className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Assessment Status</p>
-                      <Badge
-                        variant={swimmer.assessmentStatus === 'completed' ? 'default' : 'outline'}
-                        className={swimmer.assessmentStatus === 'completed' ? 'bg-green-100 text-green-800 mt-1' : 'mt-1'}
-                      >
-                        {swimmer.assessmentStatus === 'completed' ? 'Completed' : 'Pending'}
-                      </Badge>
+                      <div className="mt-1">
+                        <StatusBadge
+                          type="assessment"
+                          value={swimmer.assessmentStatus}
+                          size="small"
+                        />
+                      </div>
                     </div>
                     <div>
                       <p className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Approval Status</p>
-                      <Badge
-                        variant={swimmer.approvalStatus === 'approved' ? 'default' : 'outline'}
-                        className={swimmer.approvalStatus === 'approved' ? 'bg-green-100 text-green-800 mt-1' : 'bg-yellow-100 text-yellow-800 mt-1'}
-                      >
-                        {swimmer.approvalStatus === 'approved' ? 'Approved' : 'Pending Approval'}
-                      </Badge>
+                      <div className="mt-1">
+                        {swimmer.approvalStatus ? (
+                          <StatusBadge
+                            type="approval"
+                            value={swimmer.approvalStatus}
+                            size="small"
+                          />
+                        ) : (
+                          <Badge variant="outline" className="bg-gray-100 text-gray-800 mt-1">
+                            Not Set
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <p className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Flexible Swimmer</p>
