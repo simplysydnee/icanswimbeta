@@ -75,6 +75,7 @@ const privateEnrollmentSchema = z.object({
   }),
   liability_waiver_signature: z.string().optional(),
   photo_release: z.boolean(),
+  photo_release_signature: z.string().optional(),
   cancellation_policy_agreement: z.boolean().refine(val => val === true, {
     message: 'You must agree to the cancellation policy',
   }),
@@ -105,6 +106,18 @@ const privateEnrollmentSchema = z.object({
   {
     message: 'Cancellation policy signature is required when agreeing to the policy',
     path: ['cancellation_policy_signature'],
+  }
+).refine(
+  (data) => {
+    // Signature required only when photo release is agreed to
+    if (data.photo_release && (!data.photo_release_signature || data.photo_release_signature.trim() === '')) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: 'Photo release signature is required when agreeing to the photo release',
+    path: ['photo_release_signature'],
   }
 );
 
@@ -185,6 +198,7 @@ export default function PrivatePayEnrollmentPage() {
       signed_waiver: false,
       liability_waiver_signature: '',
       photo_release: false,
+      photo_release_signature: '',
       cancellation_policy_agreement: false,
       cancellation_policy_signature: '',
     },
@@ -213,6 +227,8 @@ export default function PrivatePayEnrollmentPage() {
     console.log('=== FORM SUBMISSION DEBUG ===');
     console.log('signed_waiver:', data.signed_waiver);
     console.log('liability_waiver_signature:', data.liability_waiver_signature);
+    console.log('photo_release:', data.photo_release);
+    console.log('photo_release_signature:', data.photo_release_signature);
     console.log('cancellation_policy_agreement:', data.cancellation_policy_agreement);
     console.log('cancellation_policy_signature:', data.cancellation_policy_signature);
     console.log('Full formData:', data);
@@ -282,9 +298,9 @@ export default function PrivatePayEnrollmentPage() {
         signed_waiver: data.signed_waiver,
         signed_liability: data.signed_waiver, // Map to both fields
         photo_video_permission: data.photo_release,
+        photo_video_signature: data.photo_release_signature || null,
         liability_waiver_signature: data.liability_waiver_signature,
         cancellation_policy_signature: data.cancellation_policy_signature,
-        // Note: photo_video_signature field exists but not collected in form
 
         // Status
         enrollment_status: 'pending_enrollment',
@@ -1030,20 +1046,42 @@ export default function PrivatePayEnrollmentPage() {
 
                 {/* Photo/Video Release */}
                 <div className="border rounded-lg p-4 bg-gray-50">
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="photo_release"
-                      checked={watch('photo_release')}
-                      onCheckedChange={(checked) => setValue('photo_release', checked === true, { shouldValidate: true })}
-                    />
-                    <div className="space-y-1">
-                      <Label htmlFor="photo_release" className="font-semibold">
-                        Photo/Video Release (Optional)
-                      </Label>
-                      <p className="text-sm text-gray-600">
-                        I grant permission for I Can Swim to use photos/videos of my child for promotional materials, website, and social media.
-                      </p>
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3">
+                      <Checkbox
+                        id="photo_release"
+                        checked={watch('photo_release')}
+                        onCheckedChange={(checked) => setValue('photo_release', checked === true, { shouldValidate: true })}
+                      />
+                      <div className="space-y-1">
+                        <Label htmlFor="photo_release" className="font-semibold">
+                          Photo/Video Release (Optional)
+                        </Label>
+                        <p className="text-sm text-gray-600">
+                          I grant permission for I Can Swim to use photos/videos of my child for promotional materials, website, and social media.
+                        </p>
+                      </div>
                     </div>
+
+                    {watch('photo_release') && (
+                      <div className="ml-6 space-y-2">
+                        <Label htmlFor="photo_release_signature">
+                          Parent/Guardian Signature (Required if granting permission)
+                        </Label>
+                        <Input
+                          id="photo_release_signature"
+                          {...register('photo_release_signature')}
+                          placeholder="Type your full legal name as signature"
+                          className="max-w-md"
+                        />
+                        {errors.photo_release_signature && (
+                          <p className="text-sm text-red-600 mt-1">{errors.photo_release_signature.message}</p>
+                        )}
+                        <p className="text-xs text-gray-500">
+                          By typing your name, you are electronically signing this release.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
