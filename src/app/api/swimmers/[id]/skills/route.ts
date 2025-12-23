@@ -85,6 +85,43 @@ export async function GET(
           nextLevelSkills = nextSkillsData || [];
         }
       }
+    } else {
+      // If swimmer has no current level, use the first level (White level)
+      const { data: firstLevelData } = await supabase
+        .from('swim_levels')
+        .select('*')
+        .order('sequence', { ascending: true })
+        .limit(1);
+      currentLevel = firstLevelData?.[0] || null;
+
+      if (currentLevel) {
+        // Get all skills for the first level
+        const { data: skillsData } = await supabase
+          .from('skills')
+          .select('*')
+          .eq('level_id', currentLevel.id)
+          .order('sequence', { ascending: true });
+        currentLevelSkills = skillsData || [];
+
+        // Get the next level (one level above first)
+        const { data: nextLevelData } = await supabase
+          .from('swim_levels')
+          .select('*')
+          .gt('sequence', currentLevel.sequence)
+          .order('sequence', { ascending: true })
+          .limit(1);
+        nextLevel = nextLevelData?.[0] || null;
+
+        // Get skills for next level if it exists
+        if (nextLevel) {
+          const { data: nextSkillsData } = await supabase
+            .from('skills')
+            .select('*')
+            .eq('level_id', nextLevel.id)
+            .order('sequence', { ascending: true });
+          nextLevelSkills = nextSkillsData || [];
+        }
+      }
     }
 
     // Combine skills from current and next level

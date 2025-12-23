@@ -28,16 +28,19 @@ interface SwimmerSkill {
   sequence: number;
   level: SwimLevel;
   status: 'not_started' | 'in_progress' | 'mastered';
-  date_mastered?: string;
-  date_started?: string;
-  instructor_notes?: string;
-  updated_at?: string;
+  dateMastered?: string;
+  dateStarted?: string;
+  instructorNotes?: string;
+  updatedAt?: string;
 }
 
 interface SkillsResponse {
   swimmerId: string;
   currentLevel: SwimLevel | null;
   skills: SwimmerSkill[];
+  totalSkills?: number;
+  masteredSkills?: number;
+  inProgressSkills?: number;
   levelPromoted?: boolean;
   newLevel?: SwimLevel;
 }
@@ -84,6 +87,12 @@ export function SkillChecklist({
       }
 
       const data: SkillsResponse = await response.json();
+      console.log('Skills API response:', data);
+      console.log('Skills array:', data.skills);
+      console.log('Current level:', data.currentLevel);
+      console.log('Total skills:', data.totalSkills);
+      console.log('Mastered skills:', data.masteredSkills);
+      console.log('In progress skills:', data.inProgressSkills);
       setSkills(data.skills || []);
 
       // Initialize selections based on skill status
@@ -97,8 +106,8 @@ export function SkillChecklist({
         } else if (skill.status === 'mastered') {
           initialMasteredIds.push(skill.id);
         }
-        if (skill.instructor_notes) {
-          initialNotes[skill.id] = skill.instructor_notes;
+        if (skill.instructorNotes) {
+          initialNotes[skill.id] = skill.instructorNotes;
         }
       });
 
@@ -152,16 +161,19 @@ export function SkillChecklist({
       }
       grouped[levelId].push(skill);
     });
+    console.log('Skills grouped by level:', grouped);
     return grouped;
   }, [skills]);
 
   // Get levels sorted by sequence
   const levels = useMemo(() => {
     const levelIds = Object.keys(skillsByLevel);
-    return levelIds
+    const levels = levelIds
       .map(levelId => skills.find(s => s.level.id === levelId)?.level)
       .filter((level): level is SwimLevel => level !== undefined)
       .sort((a, b) => a.sequence - b.sequence);
+    console.log('Levels to render:', levels);
+    return levels;
   }, [skills, skillsByLevel]);
 
   // Handle skill status change
@@ -329,6 +341,7 @@ export function SkillChecklist({
 
   // Empty state
   if (skills.length === 0) {
+    console.log('No skills found, showing empty state');
     return (
       <Card>
         <CardContent className="py-8 text-center">
@@ -341,6 +354,7 @@ export function SkillChecklist({
     );
   }
 
+  console.log('Rendering SkillChecklist with', skills.length, 'skills');
   return (
     <Card>
       <CardHeader>
@@ -469,26 +483,26 @@ export function SkillChecklist({
 
                             {/* Dates */}
                             <div className="flex flex-wrap gap-3 text-xs text-gray-500">
-                              {skill.date_started && (
+                              {skill.dateStarted && (
                                 <div className="flex items-center gap-1">
                                   <Calendar className="h-3 w-3" />
-                                  <span>Started: {new Date(skill.date_started).toLocaleDateString()}</span>
+                                  <span>Started: {new Date(skill.dateStarted).toLocaleDateString()}</span>
                                 </div>
                               )}
-                              {skill.date_mastered && (
+                              {skill.dateMastered && (
                                 <div className="flex items-center gap-1">
                                   <CheckCircle className="h-3 w-3 text-green-500" />
-                                  <span>Mastered: {new Date(skill.date_mastered).toLocaleDateString()}</span>
+                                  <span>Mastered: {new Date(skill.dateMastered).toLocaleDateString()}</span>
                                 </div>
                               )}
                             </div>
 
                             {/* Notes */}
                             <div className="space-y-2">
-                              {skill.instructor_notes && !readOnly && (
+                              {skill.instructorNotes && !readOnly && (
                                 <div className="p-2 bg-white border rounded text-xs">
                                   <p className="font-medium text-gray-700">Previous Notes:</p>
-                                  <p className="text-gray-600 mt-1">{skill.instructor_notes}</p>
+                                  <p className="text-gray-600 mt-1">{skill.instructorNotes}</p>
                                 </div>
                               )}
                               {!readOnly && (
