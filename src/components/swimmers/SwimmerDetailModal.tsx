@@ -279,7 +279,7 @@ export function SwimmerDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl w-[98vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="!max-w-7xl sm:!max-w-7xl w-[98vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
