@@ -203,6 +203,10 @@ export default function PrivatePayEnrollmentPage() {
       previous_swim_lessons: 'no',
       comfortable_in_water: 'somewhat',
       flexible_swimmer: false,
+      electronic_consent: false,
+      signature_timestamp: '',
+      signature_ip: '',
+      signature_user_agent: '',
       signed_waiver: false,
       liability_waiver_signature: '',
       photo_release: false,
@@ -231,8 +235,43 @@ export default function PrivatePayEnrollmentPage() {
   const hasElopementHistory = watch('elopement_history');
   const otherAvailability = watch('availability_slots')?.includes('Other (please specify)');
 
+  // Capture signature metadata for audit trail
+  const captureSignatureMetadata = () => {
+    setValue('signature_timestamp', new Date().toISOString());
+    setValue('signature_user_agent', navigator.userAgent);
+    // IP address will be captured server-side via API
+  };
+
+  // Set up signature field change handlers
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      // When any signature field is filled, capture metadata
+      if (name && name.includes('signature') && value[name as keyof typeof value]) {
+        captureSignatureMetadata();
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
+
+  // Function to capture IP address from API
+  const captureIPAddress = async () => {
+    try {
+      const response = await fetch('/api/signature/metadata');
+      if (response.ok) {
+        const metadata = await response.json();
+        return metadata.ip;
+      }
+    } catch (error) {
+      console.error('Failed to capture IP address:', error);
+    }
+    return 'unknown';
+  };
+
   const onSubmit = async (data: PrivateEnrollmentFormData) => {
     console.log('=== FORM SUBMISSION DEBUG ===');
+    console.log('electronic_consent:', data.electronic_consent);
+    console.log('signature_timestamp:', data.signature_timestamp);
+    console.log('signature_user_agent:', data.signature_user_agent);
     console.log('signed_waiver:', data.signed_waiver);
     console.log('liability_waiver_signature:', data.liability_waiver_signature);
     console.log('photo_release:', data.photo_release);
@@ -258,6 +297,9 @@ export default function PrivatePayEnrollmentPage() {
       const dateStr = now.toISOString().split('T')[0].replace(/-/g, '');
       const randomNum = Math.floor(1000 + Math.random() * 9000);
       const clientNumber = `ICS-${dateStr}-${randomNum}`;
+
+      // Capture IP address for audit trail
+      const ipAddress = await captureIPAddress();
 
       // Prepare swimmer data - mapping form fields to database columns
       const swimmerData = {
@@ -309,6 +351,35 @@ export default function PrivatePayEnrollmentPage() {
         photo_video_signature: data.photo_release_signature || null,
         liability_waiver_signature: data.liability_waiver_signature,
         cancellation_policy_signature: data.cancellation_policy_signature,
+
+        // Electronic Signature Audit Trail (ESIGN Act Compliance)
+        electronic_consent_given: data.electronic_consent,
+        electronic_consent_timestamp: data.signature_timestamp || new Date().toISOString(),
+        signature_ip_address: ipAddress,
+        signature_user_agent: data.signature_user_agent || navigator.userAgent,
+        signature_metadata: JSON.stringify({
+          electronic_consent: data.electronic_consent,
+          consent_timestamp: data.signature_timestamp || new Date().toISOString(),
+          ip_address: ipAddress,
+          user_agent: data.signature_user_agent || navigator.userAgent,
+          signatures: {
+            liability_waiver: {
+              signed: data.signed_waiver,
+              signature: data.liability_waiver_signature ? '[REDACTED]' : null,
+              signed_at: data.signature_timestamp || new Date().toISOString(),
+            },
+            cancellation_policy: {
+              signed: data.cancellation_policy_agreement,
+              signature: data.cancellation_policy_signature ? '[REDACTED]' : null,
+              signed_at: data.signature_timestamp || new Date().toISOString(),
+            },
+            photo_release: {
+              signed: data.photo_release,
+              signature: data.photo_release_signature ? '[REDACTED]' : null,
+              signed_at: data.signature_timestamp || new Date().toISOString(),
+            },
+          },
+        }),
 
         // Status
         enrollment_status: 'pending_enrollment',
@@ -1006,6 +1077,36 @@ export default function PrivatePayEnrollmentPage() {
               <div className="space-y-6">
                 <h3 className="text-xl font-semibold">7. Consent & Agreement</h3>
 
+                {/* Electronic Signature Consent (ESIGN Act Compliance) */}
+                <div className="border-2 border-yellow-500 bg-yellow-50 p-4 rounded-lg mb-6">
+                  <h4 className="font-bold text-lg mb-2">⚠️ Electronic Signature Consent</h4>
+                  <p className="text-sm mb-3">
+                    By checking this box, you consent to use electronic signatures and records
+                    for all agreements with I Can Swim, LLC. You understand that:
+                  </p>
+                  <ul className="text-sm list-disc ml-6 mb-3 space-y-1">
+                    <li>Your electronic signature has the same legal effect as a handwritten signature</li>
+                    <li>You have the right to receive paper documents instead</li>
+                    <li>You may withdraw this consent at any time by contacting us</li>
+                    <li>You need a device capable of accessing and retaining electronic records</li>
+                  </ul>
+                  <div className="flex items-start gap-2">
+                    <Checkbox
+                      id="electronic_consent"
+                      checked={watch('electronic_consent')}
+                      onCheckedChange={(checked) => setValue('electronic_consent', checked === true, { shouldValidate: true })}
+                    />
+                    <div className="space-y-1">
+                      <Label htmlFor="electronic_consent" className="font-medium">
+                        I consent to use electronic signatures and records *
+                      </Label>
+                      {errors.electronic_consent && (
+                        <p className="text-red-500 text-sm mt-1">{errors.electronic_consent.message}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Liability Waiver */}
                 <div className="border rounded-lg p-4 bg-gray-50">
                   <div className="space-y-4">
@@ -1032,6 +1133,14 @@ export default function PrivatePayEnrollmentPage() {
 
                     {watch('signed_waiver') && (
                       <div className="ml-6 space-y-2">
+                        {/* Conspicuous Warning (California Requirement) */}
+                        <div className="bg-gray-100 border-l-4 border-red-500 p-3 mb-2">
+                          <p className="text-sm font-bold text-red-700">
+                            ⚠️ LEGAL WARNING: By typing your name below, you are legally signing this document.
+                            This signature is as binding as a handwritten signature.
+                          </p>
+                        </div>
+
                         <Label htmlFor="liability_waiver_signature">
                           Parent/Guardian Signature *
                         </Label>
@@ -1073,6 +1182,14 @@ export default function PrivatePayEnrollmentPage() {
 
                     {watch('photo_release') && (
                       <div className="ml-6 space-y-2">
+                        {/* Conspicuous Warning (California Requirement) */}
+                        <div className="bg-gray-100 border-l-4 border-red-500 p-3 mb-2">
+                          <p className="text-sm font-bold text-red-700">
+                            ⚠️ LEGAL WARNING: By typing your name below, you are legally signing this document.
+                            This signature is as binding as a handwritten signature.
+                          </p>
+                        </div>
+
                         <Label htmlFor="photo_release_signature">
                           Parent/Guardian Signature (Required if granting permission)
                         </Label>
@@ -1119,6 +1236,14 @@ export default function PrivatePayEnrollmentPage() {
 
                     {watch('cancellation_policy_agreement') && (
                       <div className="ml-6 space-y-2">
+                        {/* Conspicuous Warning (California Requirement) */}
+                        <div className="bg-gray-100 border-l-4 border-red-500 p-3 mb-2">
+                          <p className="text-sm font-bold text-red-700">
+                            ⚠️ LEGAL WARNING: By typing your name below, you are legally signing this document.
+                            This signature is as binding as a handwritten signature.
+                          </p>
+                        </div>
+
                         <Label htmlFor="cancellation_policy_signature">
                           Parent/Guardian Signature *
                         </Label>
