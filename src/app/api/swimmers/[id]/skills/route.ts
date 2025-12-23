@@ -28,74 +28,68 @@ export async function GET(
     }
 
     // Check access: parent, instructor who taught them, or admin
-    const { data: userRole } = await supabase
+    const { data: userRoles } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id)
-      .single();
+      .eq('user_id', user.id);
 
+    const userRole = userRoles?.[0];
     const isParent = swimmer.parent_id === user.id;
-    const isAdmin = userRole?.role === 'admin';
+    const isAdmin = userRoles?.some(role => role.role === 'admin') || false;
 
-    // Check if user is instructor who taught this swimmer
-    let isInstructor = false;
-    if (userRole?.role === 'instructor') {
-      const { data: taughtSession } = await supabase
-        .from('sessions')
-        .select('id')
-        .eq('instructor_id', user.id)
-        .in('id', supabase
-          .from('bookings')
-          .select('session_id')
-          .eq('swimmer_id', swimmerId)
-        )
-        .limit(1)
-        .single();
-
-      isInstructor = !!taughtSession;
-    }
+    // Check if user is instructor
+    const isInstructor = userRoles?.some(role => role.role === 'instructor') || false;
 
     if (!isParent && !isAdmin && !isInstructor) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     // Get swimmer's current level and all skills for that level
-    const { data: currentLevel } = await supabase
-      .from('swim_levels')
-      .select('*')
-      .eq('id', swimmer.current_level_id)
-      .single();
-
-    // Get the next level (one level above current)
-    const { data: nextLevel } = await supabase
-      .from('swim_levels')
-      .select('*')
-      .gt('sequence', currentLevel?.sequence || 0)
-      .order('sequence', { ascending: true })
-      .limit(1)
-      .single();
-
-    // Get all skills for current level
-    const { data: currentLevelSkills } = await supabase
-      .from('skills')
-      .select('*')
-      .eq('level_id', swimmer.current_level_id)
-      .order('sequence', { ascending: true });
-
-    // Get skills for next level if it exists
+    let currentLevel = null;
+    let currentLevelSkills = [];
+    let nextLevel = null;
     let nextLevelSkills = [];
-    if (nextLevel) {
-      const { data: nextSkills } = await supabase
+
+    if (swimmer.current_level_id) {
+      const { data: levelData } = await supabase
+        .from('swim_levels')
+        .select('*')
+        .eq('id', swimmer.current_level_id);
+      currentLevel = levelData?.[0] || null;
+
+      // Get all skills for current level
+      const { data: skillsData } = await supabase
         .from('skills')
         .select('*')
-        .eq('level_id', nextLevel.id)
+        .eq('level_id', swimmer.current_level_id)
         .order('sequence', { ascending: true });
-      nextLevelSkills = nextSkills || [];
+      currentLevelSkills = skillsData || [];
+
+      // Get the next level (one level above current)
+      if (currentLevel) {
+        const { data: nextLevelData } = await supabase
+          .from('swim_levels')
+          .select('*')
+          .gt('sequence', currentLevel.sequence)
+          .order('sequence', { ascending: true })
+          .limit(1);
+        nextLevel = nextLevelData?.[0] || null;
+
+        // Get skills for next level if it exists
+        if (nextLevel) {
+          const { data: nextSkillsData } = await supabase
+            .from('skills')
+            .select('*')
+            .eq('level_id', nextLevel.id)
+            .order('sequence', { ascending: true });
+          nextLevelSkills = nextSkillsData || [];
+        }
+      }
     }
 
     // Combine skills from current and next level
     const allSkills = [
-      ...(currentLevelSkills || []).map(skill => ({ ...skill, level: currentLevel })),
+      ...currentLevelSkills.map(skill => ({ ...skill, level: currentLevel })),
       ...nextLevelSkills.map(skill => ({ ...skill, level: nextLevel }))
     ];
 
@@ -153,14 +147,13 @@ export async function PATCH(
     }
 
     // Check if user is instructor or admin
-    const { data: userRole } = await supabase
+    const { data: userRoles } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .in('role', ['instructor', 'admin'])
-      .single();
+      .in('role', ['instructor', 'admin']);
 
-    if (!userRole) {
+    if (!userRoles || userRoles.length === 0) {
       return NextResponse.json({ error: 'Instructor access required' }, { status: 403 });
     }
 
@@ -306,20 +299,20 @@ export async function PATCH(
 
           if (allSkillsMastered) {
             // Get the next level
-            const { data: currentLevel } = await supabase
+            const { data: currentLevelData } = await supabase
               .from('swim_levels')
               .select('sequence')
-              .eq('id', swimmerData.current_level_id)
-              .single();
+              .eq('id', swimmerData.current_level_id);
 
+            const currentLevel = currentLevelData?.[0];
             if (currentLevel) {
-              const { data: nextLevel } = await supabase
+              const { data: nextLevelData } = await supabase
                 .from('swim_levels')
                 .select('*')
                 .gt('sequence', currentLevel.sequence)
                 .order('sequence', { ascending: true })
-                .limit(1)
-                .single();
+                .limit(1);
+              const nextLevel = nextLevelData?.[0];
 
               if (nextLevel) {
                 // Promote swimmer to next level

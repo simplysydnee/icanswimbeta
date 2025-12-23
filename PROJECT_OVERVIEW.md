@@ -202,9 +202,23 @@ CREATE TABLE profiles (
   full_name TEXT,
   phone TEXT,
   avatar_url TEXT,
-  role TEXT DEFAULT 'parent' CHECK (role IN ('parent', 'instructor', 'admin', 'vmrc_coordinator')),
+  bio TEXT,
+  title TEXT,
+  credentials TEXT,
+  display_on_team BOOLEAN DEFAULT FALSE,
+  display_order INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- User Roles (separate table for role assignments)
+CREATE TABLE user_roles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('parent', 'instructor', 'admin', 'vmrc_coordinator')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, role)
 );
 
 -- Swimmers
