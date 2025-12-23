@@ -19,9 +19,6 @@ import {
   Mail,
   Phone,
   AlertTriangle,
-  User,
-  ChevronDown,
-  ChevronUp,
   Target,
   Shield,
   DollarSign,
@@ -30,12 +27,11 @@ import {
   CheckCircle,
   XCircle,
   Stethoscope,
-  Heart,
-  BookOpen,
-  HelpCircle
+  Loader2
 } from 'lucide-react'
 import { RoleGuard } from '@/components/auth/RoleGuard'
 import { format, parseISO, differenceInYears } from 'date-fns'
+import { useToast } from '@/hooks/use-toast'
 
 interface Swimmer {
   id: string
@@ -50,6 +46,7 @@ interface Swimmer {
   current_level?: {
     name: string
     display_name: string
+    description?: string
     color?: string
   }
   // Medical info
@@ -142,12 +139,8 @@ export default function AdminSwimmerDetailPage() {
   const [swimmer, setSwimmer] = useState<Swimmer | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    medical: false,
-    behavioral: false,
-    swimming: false,
-    funding: false,
-  })
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchSwimmerData()
@@ -181,11 +174,61 @@ export default function AdminSwimmerDetailPage() {
     }
   }
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }))
+  const handleBookAssessment = () => {
+    router.push(`/admin/booking?tab=assessment&swimmer=${swimmerId}`)
+  }
+
+  const handleUpdateInformation = () => {
+    router.push(`/admin/swimmers/${swimmerId}/edit`)
+  }
+
+  const handleGenerateReport = async () => {
+    if (!swimmer) return
+
+    setIsGeneratingReport(true)
+    try {
+      const response = await fetch(`/api/swimmers/${swimmerId}/report`)
+      if (!response.ok) {
+        throw new Error(`Failed to generate report: ${response.statusText}`)
+      }
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${swimmer.first_name}-${swimmer.last_name}-report.pdf`
+      a.click()
+      window.URL.revokeObjectURL(url)
+
+      toast({
+        title: "Report Generated",
+        description: "The swimmer report has been downloaded.",
+      })
+    } catch (error) {
+      console.error('Error generating report:', error)
+      toast({
+        title: "Error",
+        description: "Failed to generate report. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsGeneratingReport(false)
+    }
+  }
+
+  const handleSendToCoordinator = () => {
+    if (!swimmer) return
+
+    if (swimmer.payment_type === 'funded' && swimmer.funding_coordinator_email) {
+      const subject = encodeURIComponent(`Re: ${swimmer.first_name} ${swimmer.last_name} - I Can Swim`)
+      const body = encodeURIComponent(`Hi ${swimmer.funding_coordinator_name || 'Coordinator'},\n\nRegarding ${swimmer.first_name} ${swimmer.last_name}:\n\n• Current Level: ${swimmer.current_level?.display_name || 'Not assigned'}\n• Assessment Status: ${swimmer.assessment_status}\n• Sessions Used: ${swimmer.authorized_sessions_used || 0}/${swimmer.authorized_sessions_total || 0}\n\nPlease let me know if you need any additional information.\n\nBest regards,\nI Can Swim Team`)
+      window.open(`mailto:${swimmer.funding_coordinator_email}?subject=${subject}&body=${body}`)
+    } else {
+      toast({
+        title: "No Coordinator Email",
+        description: "This swimmer doesn't have a coordinator assigned or is not a funded client.",
+        variant: "destructive",
+      })
+    }
   }
 
   const calculateAge = (dateOfBirth: string) => {
@@ -489,19 +532,46 @@ export default function AdminSwimmerDetailPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={handleBookAssessment}
+                    >
                       <Calendar className="h-4 w-4 mr-2" />
                       Book Assessment
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={handleUpdateInformation}
+                    >
                       <Edit className="h-4 w-4 mr-2" />
                       Update Information
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Generate Report
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={handleGenerateReport}
+                      disabled={isGeneratingReport}
+                    >
+                      {isGeneratingReport ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="h-4 w-4 mr-2" />
+                          Generate Report
+                        </>
+                      )}
                     </Button>
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={handleSendToCoordinator}
+                      disabled={swimmer?.payment_type !== 'funded' || !swimmer?.funding_coordinator_email}
+                    >
                       <Mail className="h-4 w-4 mr-2" />
                       Send to Coordinator
                     </Button>

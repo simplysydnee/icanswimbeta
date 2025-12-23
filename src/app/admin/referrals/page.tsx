@@ -486,15 +486,29 @@ function AdminReferralsContent() {
         childName: referral.child_name,
       })
 
-      if (emailResult.success) {
+      // 6. Send welcome enrollment email for funded swimmer
+      const welcomeEmailResult = await emailService.sendWelcomeEnrollment({
+        parentEmail: referral.parent_email,
+        parentName: referral.parent_name,
+        childName: referral.child_name,
+        isPrivatePay: false,
+        fundingSourceName: 'Regional Center', // Default for funded swimmers
+      })
+
+      if (emailResult.success && welcomeEmailResult.success) {
         toast({
           title: 'Referral Approved! ✅',
-          description: `Swimmer record created and email sent to ${referral.parent_email}.`,
+          description: `Swimmer record created and welcome email sent to ${referral.parent_email}.`,
+        })
+      } else if (emailResult.success) {
+        toast({
+          title: 'Referral Approved! ✅',
+          description: `Swimmer record created and approval email sent to ${referral.parent_email}.`,
         })
       } else {
         toast({
           title: 'Referral Approved',
-          description: 'Swimmer created. Email notification may be delayed.',
+          description: 'Swimmer created. Email notifications may be delayed.',
         })
       }
 

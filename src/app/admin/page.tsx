@@ -29,7 +29,7 @@ import {
   ClipboardList,
   UserCog
 } from 'lucide-react';
-import { format, startOfDay, endOfDay } from 'date-fns';
+import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import NeedsProgressUpdateCard from '@/components/dashboard/NeedsProgressUpdateCard';
 
@@ -91,8 +91,10 @@ export default function AdminDashboard() {
         .in('status', ['pending', 'approved_pending_auth']);
 
       // Fetch sessions for today with progress_notes check
-      const startOfToday = startOfDay(new Date()).toISOString();
-      const endOfToday = endOfDay(new Date()).toISOString();
+      // Use UTC dates to avoid timezone issues
+      const today = new Date();
+      const startOfTodayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0)).toISOString();
+      const endOfTodayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 23, 59, 59, 999)).toISOString();
 
       const { data: sessions } = await supabase
         .from('sessions')
@@ -109,8 +111,8 @@ export default function AdminDashboard() {
           ),
           progress_notes(id)
         `)
-        .gte('start_time', startOfToday)
-        .lte('start_time', endOfToday)
+        .gte('start_time', startOfTodayUTC)
+        .lte('start_time', endOfTodayUTC)
         .order('start_time');
 
       const swimmerList = swimmers || [];
