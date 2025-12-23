@@ -11,7 +11,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Clock, FileText, Award, Star, Target } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Clock, FileText, Award, Star, Target, User, ClipboardList } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 
@@ -29,6 +30,39 @@ interface SwimLevel {
   display_name: string;
   description: string;
   sequence: number;
+}
+
+interface SwimmerAssessmentData {
+  id: string;
+  first_name: string;
+  last_name: string;
+  swim_goals?: string[];
+  strengths_interests?: string;
+  comfortable_in_water?: string;
+  previous_swim_lessons?: boolean;
+  diagnosis?: string[];
+  has_medical_conditions?: boolean;
+  medical_conditions_description?: string;
+  has_allergies?: boolean;
+  allergies_description?: string;
+  communication_type?: string;
+  toilet_trained?: boolean;
+  current_level_id?: string;
+  swim_levels?: {
+    name: string;
+    display_name: string;
+  };
+}
+
+interface AssessmentData {
+  id?: string;
+  scheduled_date?: string;
+  completed_at?: string;
+  instructor_notes?: string;
+  status?: string;
+  profiles?: {
+    full_name: string;
+  };
 }
 
 interface ProgressUpdateModalProps {
@@ -59,6 +93,8 @@ export default function ProgressUpdateModal({
   const [skills, setSkills] = useState<Skill[]>([]);
   const [currentLevel, setCurrentLevel] = useState<SwimLevel | null>(null);
   const [nextLevels, setNextLevels] = useState<SwimLevel[]>([]);
+  const [swimmerAssessmentData, setSwimmerAssessmentData] = useState<SwimmerAssessmentData | null>(null);
+  const [assessmentData, setAssessmentData] = useState<AssessmentData | null>(null);
   const [lessonSummary, setLessonSummary] = useState('');
   const [instructorNotes, setInstructorNotes] = useState('');
   const [parentNotes, setParentNotes] = useState('');
@@ -93,6 +129,14 @@ export default function ProgressUpdateModal({
             setNextLevels(levelsData.nextLevels || []);
           }
         }
+      }
+
+      // Fetch swimmer assessment data
+      const assessmentResponse = await fetch(`/api/swimmers/${swimmerId}/assessment-info`);
+      if (assessmentResponse.ok) {
+        const assessmentData = await assessmentResponse.json();
+        setSwimmerAssessmentData(assessmentData.swimmer || null);
+        setAssessmentData(assessmentData.assessment || null);
       }
     } catch (error) {
       console.error('Error fetching swimmer data:', error);
@@ -169,6 +213,8 @@ export default function ProgressUpdateModal({
     setWaterComfort('');
     setFocusLevel('');
     setSkills(prev => prev.map(skill => ({ ...skill, status: undefined })));
+    setSwimmerAssessmentData(null);
+    setAssessmentData(null);
   };
 
 
