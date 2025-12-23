@@ -5,9 +5,13 @@ export async function GET(
   request: Request,
   context: any
 ) {
-  const { params } = await context.params
-  const swimmerId = params.id
   try {
+    const { params } = await context.params
+    const swimmerId = params.id
+
+    if (!swimmerId) {
+      return NextResponse.json({ error: 'Swimmer ID is required' }, { status: 400 });
+    }
     const supabase = await createClient();
 
     // Get authenticated user
@@ -51,29 +55,51 @@ export async function GET(
     let nextLevelSkills = [];
 
     if (swimmer.current_level_id) {
-      const { data: levelData } = await supabase
+      console.log('Swimmer has current_level_id:', swimmer.current_level_id);
+      const { data: levelData, error: levelError } = await supabase
         .from('swim_levels')
         .select('*')
         .eq('id', swimmer.current_level_id);
+
+      if (levelError) {
+        console.error('Error fetching level:', levelError);
+      }
+      console.log('Level data:', levelData);
+
       currentLevel = levelData?.[0] || null;
+      console.log('Current level:', currentLevel);
 
       // Get all skills for current level
-      const { data: skillsData } = await supabase
+      const { data: skillsData, error: skillsError } = await supabase
         .from('skills')
         .select('*')
         .eq('level_id', swimmer.current_level_id)
         .order('sequence', { ascending: true });
+
+      if (skillsError) {
+        console.error('Error fetching skills:', skillsError);
+      }
+      console.log('Current level skills count:', skillsData?.length || 0);
+
       currentLevelSkills = skillsData || [];
 
       // Get the next level (one level above current)
       if (currentLevel) {
-        const { data: nextLevelData } = await supabase
+        console.log('Getting next level for sequence:', currentLevel.sequence);
+        const { data: nextLevelData, error: nextLevelError } = await supabase
           .from('swim_levels')
           .select('*')
           .gt('sequence', currentLevel.sequence)
           .order('sequence', { ascending: true })
           .limit(1);
+
+        if (nextLevelError) {
+          console.error('Error fetching next level:', nextLevelError);
+        }
+        console.log('Next level data:', nextLevelData);
+
         nextLevel = nextLevelData?.[0] || null;
+        console.log('Next level:', nextLevel);
 
         // Get skills for next level if it exists
         if (nextLevel) {
@@ -83,9 +109,13 @@ export async function GET(
             .eq('level_id', nextLevel.id)
             .order('sequence', { ascending: true });
           nextLevelSkills = nextSkillsData || [];
+          console.log('Next level skills count:', nextSkillsData?.length || 0);
         }
+      } else {
+        console.log('Current level is null, cannot get next level');
       }
     } else {
+      console.log('Swimmer has no current_level_id, using first level');
       // If swimmer has no current level, use the first level (White level)
       const { data: firstLevelData } = await supabase
         .from('swim_levels')
@@ -93,6 +123,7 @@ export async function GET(
         .order('sequence', { ascending: true })
         .limit(1);
       currentLevel = firstLevelData?.[0] || null;
+      console.log('First level (fallback):', currentLevel);
 
       if (currentLevel) {
         // Get all skills for the first level
@@ -102,6 +133,7 @@ export async function GET(
           .eq('level_id', currentLevel.id)
           .order('sequence', { ascending: true });
         currentLevelSkills = skillsData || [];
+        console.log('First level skills count:', skillsData?.length || 0);
 
         // Get the next level (one level above first)
         const { data: nextLevelData } = await supabase
@@ -111,6 +143,7 @@ export async function GET(
           .order('sequence', { ascending: true })
           .limit(1);
         nextLevel = nextLevelData?.[0] || null;
+        console.log('Next level (from first):', nextLevel);
 
         // Get skills for next level if it exists
         if (nextLevel) {
@@ -120,6 +153,7 @@ export async function GET(
             .eq('level_id', nextLevel.id)
             .order('sequence', { ascending: true });
           nextLevelSkills = nextSkillsData || [];
+          console.log('Next level skills count:', nextSkillsData?.length || 0);
         }
       }
     }
@@ -153,6 +187,17 @@ export async function GET(
       };
     }) || [];
 
+    console.log('Final response:');
+    console.log('- Current level:', currentLevel);
+    console.log('- Skills count:', skillsWithProgress.length);
+    console.log('- First skill level:', skillsWithProgress[0]?.level);
+    console.log('- All skills:', skillsWithProgress.map(s => ({
+      name: s.name,
+      level: s.level?.name,
+      levelId: s.level?.id,
+      status: s.status
+    })));
+
     return NextResponse.json({
       swimmerId,
       currentLevel,
@@ -164,7 +209,12 @@ export async function GET(
 
   } catch (error) {
     console.error('Unexpected error in swimmer skills API:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+    return NextResponse.json({
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      details: process.env.NODE_ENV === 'development' ? error : undefined
+    }, { status: 500 });
   }
 }
 

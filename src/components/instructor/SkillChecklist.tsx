@@ -87,12 +87,29 @@ export function SkillChecklist({
       }
 
       const data: SkillsResponse = await response.json();
+      console.log('=== SKILLS API RESPONSE ===');
       console.log('Skills API response:', data);
+      console.log('Skills array length:', data.skills?.length);
       console.log('Skills array:', data.skills);
       console.log('Current level:', data.currentLevel);
       console.log('Total skills:', data.totalSkills);
       console.log('Mastered skills:', data.masteredSkills);
       console.log('In progress skills:', data.inProgressSkills);
+
+      // Debug each skill
+      if (data.skills) {
+        data.skills.forEach((skill, i) => {
+          console.log(`Skill ${i + 1}:`, {
+            id: skill.id,
+            name: skill.name,
+            level: skill.level,
+            levelId: skill.level?.id,
+            levelName: skill.level?.name,
+            status: skill.status
+          });
+        });
+      }
+
       setSkills(data.skills || []);
 
       // Initialize selections based on skill status
@@ -144,6 +161,15 @@ export function SkillChecklist({
     fetchSkills();
   }, [fetchSkills]);
 
+  // Debug state changes
+  useEffect(() => {
+    console.log('=== SKILLS STATE UPDATED ===');
+    console.log('Skills count:', skills.length);
+    console.log('Skills:', skills);
+    console.log('SkillsByLevel:', skillsByLevel);
+    console.log('Levels:', levels);
+  }, [skills, skillsByLevel, levels]);
+
   // Notify parent of skill changes
   useEffect(() => {
     if (onSkillsChange) {
@@ -155,6 +181,10 @@ export function SkillChecklist({
   const skillsByLevel = useMemo(() => {
     const grouped: Record<string, SwimmerSkill[]> = {};
     skills.forEach(skill => {
+      if (!skill.level || !skill.level.id) {
+        console.warn('Skill has no level or level.id:', skill);
+        return;
+      }
       const levelId = skill.level.id;
       if (!grouped[levelId]) {
         grouped[levelId] = [];
@@ -169,8 +199,11 @@ export function SkillChecklist({
   const levels = useMemo(() => {
     const levelIds = Object.keys(skillsByLevel);
     const levels = levelIds
-      .map(levelId => skills.find(s => s.level.id === levelId)?.level)
-      .filter((level): level is SwimLevel => level !== undefined)
+      .map(levelId => {
+        const skill = skills.find(s => s.level && s.level.id === levelId);
+        return skill?.level;
+      })
+      .filter((level): level is SwimLevel => level !== undefined && level !== null)
       .sort((a, b) => a.sequence - b.sequence);
     console.log('Levels to render:', levels);
     return levels;
