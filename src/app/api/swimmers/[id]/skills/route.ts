@@ -66,12 +66,38 @@ export async function GET(
       .eq('id', swimmer.current_level_id)
       .single();
 
+    // Get the next level (one level above current)
+    const { data: nextLevel } = await supabase
+      .from('swim_levels')
+      .select('*')
+      .gt('sequence', currentLevel?.sequence || 0)
+      .order('sequence', { ascending: true })
+      .limit(1)
+      .single();
+
     // Get all skills for current level
-    const { data: levelSkills } = await supabase
+    const { data: currentLevelSkills } = await supabase
       .from('skills')
       .select('*')
       .eq('level_id', swimmer.current_level_id)
       .order('sequence', { ascending: true });
+
+    // Get skills for next level if it exists
+    let nextLevelSkills = [];
+    if (nextLevel) {
+      const { data: nextSkills } = await supabase
+        .from('skills')
+        .select('*')
+        .eq('level_id', nextLevel.id)
+        .order('sequence', { ascending: true });
+      nextLevelSkills = nextSkills || [];
+    }
+
+    // Combine skills from current and next level
+    const allSkills = [
+      ...(currentLevelSkills || []).map(skill => ({ ...skill, level: currentLevel })),
+      ...nextLevelSkills.map(skill => ({ ...skill, level: nextLevel }))
+    ];
 
     // Get swimmer's skill progress
     const { data: swimmerSkills } = await supabase
@@ -80,15 +106,17 @@ export async function GET(
       .eq('swimmer_id', swimmerId);
 
     // Combine data
-    const skillsWithProgress = levelSkills?.map(skill => {
+    const skillsWithProgress = allSkills.map(skill => {
       const swimmerSkill = swimmerSkills?.find(ss => ss.skill_id === skill.id);
       return {
         id: skill.id,
         name: skill.name,
         description: skill.description,
         sequence: skill.sequence,
+        level: skill.level,
         status: swimmerSkill?.status || 'not_started',
         dateMastered: swimmerSkill?.date_mastered,
+        dateStarted: swimmerSkill?.date_started,
         instructorNotes: swimmerSkill?.instructor_notes,
         updatedAt: swimmerSkill?.updated_at,
       };
@@ -177,14 +205,30 @@ export async function PATCH(
       let result;
       if (existingRecord) {
         // Update existing
+        const updateData: any = {
+          status,
+          instructor_notes: instructorNotes,
+          updated_at: new Date().toISOString(),
+        };
+
+        // Set date_mastered when status changes to 'mastered'
+        if (status === 'mastered' && existingRecord.status !== 'mastered') {
+          updateData.date_mastered = new Date().toISOString();
+        }
+
+        // Clear date_mastered if status changes from 'mastered' to something else
+        if (status !== 'mastered' && existingRecord.status === 'mastered') {
+          updateData.date_mastered = null;
+        }
+
+        // Set date_started when status changes to 'in_progress' and date_started is not set
+        if (status === 'in_progress' && existingRecord.status !== 'in_progress' && !existingRecord.date_started) {
+          updateData.date_started = new Date().toISOString();
+        }
+
         const { data, error } = await supabase
           .from('swimmer_skills')
-          .update({
-            status,
-            instructor_notes: instructorNotes,
-            date_mastered: status === 'mastered' ? new Date().toISOString() : null,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updateData)
           .eq('id', existingRecord.id)
           .select()
           .single();
@@ -196,15 +240,26 @@ export async function PATCH(
         }
       } else {
         // Create new
+        const insertData: any = {
+          swimmer_id: swimmerId,
+          skill_id: skillId,
+          status,
+          instructor_notes: instructorNotes,
+        };
+
+        // Set date_mastered if status is 'mastered'
+        if (status === 'mastered') {
+          insertData.date_mastered = new Date().toISOString();
+        }
+
+        // Set date_started if status is 'in_progress'
+        if (status === 'in_progress') {
+          insertData.date_started = new Date().toISOString();
+        }
+
         const { data, error } = await supabase
           .from('swimmer_skills')
-          .insert({
-            swimmer_id: swimmerId,
-            skill_id: skillId,
-            status,
-            instructor_notes: instructorNotes,
-            date_mastered: status === 'mastered' ? new Date().toISOString() : null,
-          })
+          .insert(insertData)
           .select()
           .single();
 
@@ -216,9 +271,77 @@ export async function PATCH(
       }
     }
 
+    // Check for level progression after updating skills
+    let levelPromoted = false;
+    let newLevel = null;
+
+    if (results.length > 0) {
+      // Get swimmer's current level
+      const { data: swimmerData } = await supabase
+        .from('swimmers')
+        .select('current_level_id')
+        .eq('id', swimmerId)
+        .single();
+
+      if (swimmerData?.current_level_id) {
+        // Get all skills for current level
+        const { data: currentLevelSkills } = await supabase
+          .from('skills')
+          .select('id')
+          .eq('level_id', swimmerData.current_level_id);
+
+        if (currentLevelSkills && currentLevelSkills.length > 0) {
+          // Get swimmer's skill progress for current level
+          const { data: swimmerSkillsForLevel } = await supabase
+            .from('swimmer_skills')
+            .select('skill_id, status')
+            .eq('swimmer_id', swimmerId)
+            .in('skill_id', currentLevelSkills.map(skill => skill.id));
+
+          // Check if all skills in current level are mastered
+          const allSkillsMastered = currentLevelSkills.every(currentSkill => {
+            const swimmerSkill = swimmerSkillsForLevel?.find(ss => ss.skill_id === currentSkill.id);
+            return swimmerSkill?.status === 'mastered';
+          });
+
+          if (allSkillsMastered) {
+            // Get the next level
+            const { data: currentLevel } = await supabase
+              .from('swim_levels')
+              .select('sequence')
+              .eq('id', swimmerData.current_level_id)
+              .single();
+
+            if (currentLevel) {
+              const { data: nextLevel } = await supabase
+                .from('swim_levels')
+                .select('*')
+                .gt('sequence', currentLevel.sequence)
+                .order('sequence', { ascending: true })
+                .limit(1)
+                .single();
+
+              if (nextLevel) {
+                // Promote swimmer to next level
+                await supabase
+                  .from('swimmers')
+                  .update({ current_level_id: nextLevel.id })
+                  .eq('id', swimmerId);
+
+                levelPromoted = true;
+                newLevel = nextLevel;
+              }
+            }
+          }
+        }
+      }
+    }
+
     return NextResponse.json({
       success: errors.length === 0,
       updated: results.length,
+      levelPromoted,
+      newLevel,
       errors: errors.length > 0 ? errors : undefined,
       results,
     });

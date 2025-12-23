@@ -176,7 +176,7 @@ export async function POST(request: Request) {
         // Check if skill record exists
         const { data: existingSkill } = await supabase
           .from('swimmer_skills')
-          .select('id, status')
+          .select('id, status, date_started')
           .eq('swimmer_id', swimmerId)
           .eq('skill_id', skillId)
           .single();
@@ -184,13 +184,21 @@ export async function POST(request: Request) {
         if (existingSkill) {
           // Only update if not already mastered
           if (existingSkill.status !== 'mastered') {
+            // Check if we need to set date_started (when status changes to in_progress)
+            const updateData: any = {
+              status: 'in_progress',
+              instructor_notes: instructorNotes,
+              updated_at: new Date().toISOString(),
+            };
+
+            // Set date_started if status is changing to in_progress and date_started is not set
+            if (existingSkill.status !== 'in_progress' && !existingSkill.date_started) {
+              updateData.date_started = new Date().toISOString();
+            }
+
             await supabase
               .from('swimmer_skills')
-              .update({
-                status: 'in_progress',
-                instructor_notes: instructorNotes,
-                updated_at: new Date().toISOString(),
-              })
+              .update(updateData)
               .eq('id', existingSkill.id);
           }
         } else {
@@ -202,6 +210,7 @@ export async function POST(request: Request) {
               skill_id: skillId,
               status: 'in_progress',
               instructor_notes: instructorNotes,
+              date_started: new Date().toISOString(),
             });
         }
       }
