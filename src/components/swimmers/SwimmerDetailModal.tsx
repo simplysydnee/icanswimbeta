@@ -279,7 +279,7 @@ export function SwimmerDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="!max-w-7xl sm:!max-w-7xl w-[98vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="!max-w-[1400px] w-[95vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
@@ -332,7 +332,7 @@ export function SwimmerDetailModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2 mt-4">
+          <div className="flex flex-wrap gap-2 mt-4">
             <Button
               size="sm"
               variant="secondary"
@@ -402,12 +402,12 @@ export function SwimmerDetailModal({
 
           {/* Desktop Tabs (hidden on mobile, shown on medium and up) */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="hidden md:block">
-            <TabsList className="flex flex-wrap gap-0.5 mb-6">
-              <TabsTrigger value="overview" className="px-2 py-1.5 text-xs sm:text-sm">Overview</TabsTrigger>
-              <TabsTrigger value="medical" className="px-2 py-1.5 text-xs sm:text-sm">Medical & Safety</TabsTrigger>
-              <TabsTrigger value="progress" className="px-2 py-1.5 text-xs sm:text-sm">Progress & Skills</TabsTrigger>
-              <TabsTrigger value="sessions" className="px-2 py-1.5 text-xs sm:text-sm">Sessions & Bookings</TabsTrigger>
-              <TabsTrigger value="billing" className="px-2 py-1.5 text-xs sm:text-sm">Billing & Funding</TabsTrigger>
+            <TabsList className="flex flex-wrap gap-1 mb-6">
+              <TabsTrigger value="overview" className="px-2 py-1.5 text-[11px] sm:text-xs">Overview</TabsTrigger>
+              <TabsTrigger value="medical" className="px-2 py-1.5 text-[11px] sm:text-xs">Medical & Safety</TabsTrigger>
+              <TabsTrigger value="progress" className="px-2 py-1.5 text-[11px] sm:text-xs">Progress & Skills</TabsTrigger>
+              <TabsTrigger value="sessions" className="px-2 py-1.5 text-[11px] sm:text-xs">Sessions & Bookings</TabsTrigger>
+              <TabsTrigger value="billing" className="px-2 py-1.5 text-[11px] sm:text-xs">Billing & Funding</TabsTrigger>
             </TabsList>
 
           {/* Overview Tab */}
@@ -578,7 +578,7 @@ export function SwimmerDetailModal({
               <div className="space-y-4 sm:space-y-6">
                 {/* Quick Stats */}
                 <div className="bg-white border rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                  <h3 className="text-xs font-medium text-muted-foreground mb-3 whitespace-nowrap">
                     Quick Stats
                   </h3>
                   <div className="space-y-4">
