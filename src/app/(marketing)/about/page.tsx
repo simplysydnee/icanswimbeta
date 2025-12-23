@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 export default function AboutPage() {
   return (
     <div className="container mx-auto px-4 py-12">
@@ -71,24 +73,29 @@ export default function AboutPage() {
               <div className="md:w-1/3">
                 <div className="bg-gradient-to-br from-cyan-100 to-blue-100 rounded-xl p-1">
                   <div className="bg-white rounded-lg p-4">
-                    <div className="aspect-square rounded-lg bg-gradient-to-br from-cyan-200 to-blue-200 flex items-center justify-center">
-                      <span className="text-4xl font-bold text-cyan-700">SL</span>
+                    <div className="aspect-square rounded-lg overflow-hidden">
+                      <Image
+                        src="/images/sutton-lucas.jpg"
+                        alt="Sutton Lucas"
+                        width={400}
+                        height={400}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   </div>
                 </div>
               </div>
               <div className="md:w-2/3">
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Sutton Lucas</h3>
-                <p className="text-cyan-600 font-medium mb-4">Founder & Head Instructor</p>
+                <p className="text-cyan-600 font-medium mb-4">Owner & Lead Instructor</p>
                 <p className="text-gray-700 mb-4">
-                  With over a decade of experience in adaptive aquatics, Sutton brings passion, expertise, and
-                  compassion to every lesson. Certified in multiple specialized teaching methodologies, Sutton
-                  has dedicated their career to making swimming accessible and enjoyable for all children.
+                  Sutton has been teaching individuals with special needs for more than 14 years. She holds a Bachelor of Arts in Liberal Studies from Cal Poly San Luis Obispo, a Master's in Education, and three teaching credentials in Special Education. She is Level 2 Adaptive Swim Whisper certified from Swim Angelfish.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-3 py-1 bg-cyan-100 text-cyan-700 rounded-full text-sm">Adaptive Aquatics Certified</span>
-                  <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">Water Safety Instructor</span>
-                  <span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm">Special Needs Specialist</span>
+                  <span className="px-3 py-1 bg-cyan-100 text-cyan-700 rounded-full text-sm">BA Liberal Studies, Cal Poly SLO</span>
+                  <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">MA Education</span>
+                  <span className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm">3 Special Education Credentials</span>
+                  <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm">Level 2 Adaptive Swim Whisper</span>
                 </div>
               </div>
             </div>
