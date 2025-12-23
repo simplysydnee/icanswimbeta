@@ -279,7 +279,7 @@ export function SwimmerDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl w-[95vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-w-7xl w-[98vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
@@ -384,8 +384,8 @@ export function SwimmerDetailModal({
 
         {/* Tabbed Interface */}
         <div className="mt-4">
-          {/* Mobile Dropdown (visible on small screens) */}
-          <div className="block lg:hidden mb-4">
+          {/* Mobile Dropdown (visible on small and medium screens) */}
+          <div className="block md:hidden mb-4">
             <Select value={activeTab} onValueChange={setActiveTab}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select section" />
@@ -400,21 +400,21 @@ export function SwimmerDetailModal({
             </Select>
           </div>
 
-          {/* Desktop Tabs (hidden on mobile) */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="hidden lg:block">
-            <TabsList className="flex flex-wrap gap-1 mb-6">
-              <TabsTrigger value="overview" className="px-3 py-2 text-sm">Overview</TabsTrigger>
-              <TabsTrigger value="medical" className="px-3 py-2 text-sm">Medical & Safety</TabsTrigger>
-              <TabsTrigger value="progress" className="px-3 py-2 text-sm">Progress & Skills</TabsTrigger>
-              <TabsTrigger value="sessions" className="px-3 py-2 text-sm">Sessions & Bookings</TabsTrigger>
-              <TabsTrigger value="billing" className="px-3 py-2 text-sm">Billing & Funding</TabsTrigger>
+          {/* Desktop Tabs (hidden on mobile, shown on medium and up) */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="hidden md:block">
+            <TabsList className="flex flex-wrap gap-0.5 mb-6">
+              <TabsTrigger value="overview" className="px-2 py-1.5 text-xs sm:text-sm">Overview</TabsTrigger>
+              <TabsTrigger value="medical" className="px-2 py-1.5 text-xs sm:text-sm">Medical & Safety</TabsTrigger>
+              <TabsTrigger value="progress" className="px-2 py-1.5 text-xs sm:text-sm">Progress & Skills</TabsTrigger>
+              <TabsTrigger value="sessions" className="px-2 py-1.5 text-xs sm:text-sm">Sessions & Bookings</TabsTrigger>
+              <TabsTrigger value="billing" className="px-2 py-1.5 text-xs sm:text-sm">Billing & Funding</TabsTrigger>
             </TabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
               {/* Main Content */}
-              <div className="lg:col-span-3 space-y-6">
+              <div className="md:col-span-3 space-y-6">
                 {/* Status Row */}
                 <div className="flex flex-wrap gap-2">
                   <StatusBadge
