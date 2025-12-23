@@ -48,14 +48,13 @@ export default function AboutPage() {
           <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Story</h2>
           <div className="prose prose-lg text-gray-700">
             <p>
-              Founded in 2015 by Sutton Lucas, I Can Swim began with a simple observation: many children with special needs
+              Founded in 2024 by Sutton Lucas, I Can Swim began with a simple observation: many children with special needs
               were missing out on the life-changing benefits of swimming due to a lack of specialized instruction.
             </p>
             <p>
-              What started as a small program serving a handful of families in the Central Valley has grown into a
-              comprehensive swim school with multiple locations, serving hundreds of swimmers each year. Our success
-              comes from our commitment to understanding each swimmer&apos;s unique needs and creating personalized
-              learning paths that celebrate every achievement, no matter how small.
+              What started as a small program serving families in the Central Valley is growing into a
+              comprehensive swim school. Our success comes from our commitment to understanding each swimmer&apos;s
+              unique needs and creating personalized learning paths that celebrate every achievement, no matter how small.
             </p>
             <p>
               Today, we&apos;re proud to partner with Valley Mountain Regional Center (VMRC) and other organizations
@@ -99,29 +98,20 @@ export default function AboutPage() {
         {/* Locations */}
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Locations</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-8">
             <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl p-8">
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Modesto</h3>
               <p className="text-gray-700 mb-4">
                 1212 Kansas Ave, Modesto, CA 95351
               </p>
-              <div className="space-y-2 text-gray-600">
-                <p>• Heated indoor pool</p>
-                <p>• Wheelchair accessible</p>
-                <p>• Private changing rooms</p>
-                <p>• Sensory-friendly environment</p>
-              </div>
-            </div>
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Turlock</h3>
-              <p className="text-gray-700 mb-4">
-                2705 Sebastian Drive, Turlock, CA 95382
+              <p className="text-gray-600 mb-4">
+                Our lessons take place at Aquatic Dreams, a facility we rent for our swim program.
               </p>
               <div className="space-y-2 text-gray-600">
                 <p>• Heated indoor pool</p>
-                <p>• Family-friendly facility</p>
+                <p>• Private changing rooms</p>
+                <p>• Sensory-friendly environment</p>
                 <p>• Observation area for parents</p>
-                <p>• Ample parking</p>
               </div>
             </div>
           </div>
