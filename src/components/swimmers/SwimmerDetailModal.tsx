@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge } from './StatusBadge';
 import { format, parseISO } from 'date-fns';
@@ -126,6 +127,7 @@ export function SwimmerDetailModal({
   const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
   const [swimmerSkills, setSwimmerSkills] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
   const fetchAdditionalData = useCallback(async () => {
     if (!swimmer?.id) return;
@@ -381,14 +383,32 @@ export function SwimmerDetailModal({
         </DialogHeader>
 
         {/* Tabbed Interface */}
-        <Tabs defaultValue="overview" className="mt-4">
-          <TabsList className="flex flex-nowrap gap-1 mb-6 overflow-x-auto scrollbar-hide">
-            <TabsTrigger value="overview" className="px-3 py-2 text-sm whitespace-nowrap flex-shrink-0">Overview</TabsTrigger>
-            <TabsTrigger value="medical" className="px-3 py-2 text-sm whitespace-nowrap flex-shrink-0">Medical & Safety</TabsTrigger>
-            <TabsTrigger value="progress" className="px-3 py-2 text-sm whitespace-nowrap flex-shrink-0">Progress & Skills</TabsTrigger>
-            <TabsTrigger value="sessions" className="px-3 py-2 text-sm whitespace-nowrap flex-shrink-0">Sessions & Bookings</TabsTrigger>
-            <TabsTrigger value="billing" className="px-3 py-2 text-sm whitespace-nowrap flex-shrink-0">Billing & Funding</TabsTrigger>
-          </TabsList>
+        <div className="mt-4">
+          {/* Mobile Dropdown (visible on small screens) */}
+          <div className="block lg:hidden mb-4">
+            <Select value={activeTab} onValueChange={setActiveTab}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select section" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="overview">Overview</SelectItem>
+                <SelectItem value="medical">Medical & Safety</SelectItem>
+                <SelectItem value="progress">Progress & Skills</SelectItem>
+                <SelectItem value="sessions">Sessions & Bookings</SelectItem>
+                <SelectItem value="billing">Billing & Funding</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Desktop Tabs (hidden on mobile) */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="hidden lg:block">
+            <TabsList className="flex flex-wrap gap-1 mb-6">
+              <TabsTrigger value="overview" className="px-3 py-2 text-sm">Overview</TabsTrigger>
+              <TabsTrigger value="medical" className="px-3 py-2 text-sm">Medical & Safety</TabsTrigger>
+              <TabsTrigger value="progress" className="px-3 py-2 text-sm">Progress & Skills</TabsTrigger>
+              <TabsTrigger value="sessions" className="px-3 py-2 text-sm">Sessions & Bookings</TabsTrigger>
+              <TabsTrigger value="billing" className="px-3 py-2 text-sm">Billing & Funding</TabsTrigger>
+            </TabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
@@ -1140,6 +1160,7 @@ export function SwimmerDetailModal({
             </section>
           </TabsContent>
         </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
   );

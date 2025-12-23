@@ -69,6 +69,14 @@ const privateEnrollmentSchema = z.object({
   other_availability: z.string().optional(),
   flexible_swimmer: z.boolean(),
 
+  // Electronic Signature Consent (ESIGN Act Compliance)
+  electronic_consent: z.boolean().refine(val => val === true, {
+    message: 'You must consent to electronic signatures to continue',
+  }),
+  signature_timestamp: z.string().optional(),
+  signature_ip: z.string().optional(),
+  signature_user_agent: z.string().optional(),
+
   // Section 7: Consent & Agreement
   signed_waiver: z.boolean().refine(val => val === true, {
     message: 'You must agree to the liability waiver',
