@@ -3,11 +3,14 @@ import { NextResponse } from 'next/server';
 
 export async function GET(
   request: Request,
-  context: any
+  context: { params: Promise<{ id: string }> }
 ) {
+  console.log('=== ASSESSMENT-INFO API CALLED ===');
+
   try {
-    const { params } = await context.params;
+    const params = await context.params;
     const swimmerId = params.id;
+    console.log('Swimmer ID:', swimmerId);
     const supabase = await createClient();
 
     if (!swimmerId) {
@@ -83,10 +86,17 @@ export async function GET(
       assessment: assessment || null
     });
 
-  } catch (error) {
-    console.error('Error in assessment-info API:', error);
+  } catch (error: any) {
+    console.error('=== ASSESSMENT-INFO API ERROR ===');
+    console.error('Error:', error);
+    console.error('Stack:', error?.stack);
+
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        message: error?.message || 'Unknown error',
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+      },
       { status: 500 }
     );
   }
