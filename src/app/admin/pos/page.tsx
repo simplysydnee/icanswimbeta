@@ -26,7 +26,8 @@ import {
   XCircle,
   Filter,
   Download,
-  RefreshCw
+  RefreshCw,
+  DollarSign
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
