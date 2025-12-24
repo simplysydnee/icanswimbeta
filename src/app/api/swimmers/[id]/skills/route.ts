@@ -69,19 +69,46 @@ export async function GET(
       currentLevel = levelData?.[0] || null;
       console.log('Current level:', currentLevel);
 
-      // Get all skills for current level
+      // Get all skills for current level WITH level data
       const { data: skillsData, error: skillsError } = await supabase
         .from('skills')
-        .select('*')
+        .select(`
+          id,
+          name,
+          description,
+          sequence,
+          level_id,
+          swim_levels!inner (
+            id,
+            name,
+            display_name,
+            color,
+            sequence
+          )
+        `)
         .eq('level_id', swimmer.current_level_id)
         .order('sequence', { ascending: true });
 
       if (skillsError) {
-        console.error('Error fetching skills:', skillsError);
-      }
-      console.log('Current level skills count:', skillsData?.length || 0);
+        console.error('Error fetching skills with join:', skillsError);
+        // Fallback to simple query
+        const { data: simpleSkillsData } = await supabase
+          .from('skills')
+          .select('*')
+          .eq('level_id', swimmer.current_level_id)
+          .order('sequence', { ascending: true });
 
-      currentLevelSkills = skillsData || [];
+        if (simpleSkillsData) {
+          console.log('Using fallback query (no join)');
+          currentLevelSkills = simpleSkillsData.map(skill => ({
+            ...skill,
+            swim_levels: currentLevel
+          }));
+        }
+      } else {
+        console.log('Current level skills count (with join):', skillsData?.length || 0);
+        currentLevelSkills = skillsData || [];
+      }
 
       // Get the next level (one level above current)
       if (currentLevel) {
@@ -101,15 +128,47 @@ export async function GET(
         nextLevel = nextLevelData?.[0] || null;
         console.log('Next level:', nextLevel);
 
-        // Get skills for next level if it exists
+        // Get skills for next level if it exists WITH level data
         if (nextLevel) {
-          const { data: nextSkillsData } = await supabase
+          const { data: nextSkillsData, error: nextSkillsError } = await supabase
             .from('skills')
-            .select('*')
+            .select(`
+              id,
+              name,
+              description,
+              sequence,
+              level_id,
+              swim_levels!inner (
+                id,
+                name,
+                display_name,
+                color,
+                sequence
+              )
+            `)
             .eq('level_id', nextLevel.id)
             .order('sequence', { ascending: true });
-          nextLevelSkills = nextSkillsData || [];
-          console.log('Next level skills count:', nextSkillsData?.length || 0);
+
+          if (nextSkillsError) {
+            console.error('Error fetching next level skills with join:', nextSkillsError);
+            // Fallback to simple query
+            const { data: simpleNextSkillsData } = await supabase
+              .from('skills')
+              .select('*')
+              .eq('level_id', nextLevel.id)
+              .order('sequence', { ascending: true });
+
+            if (simpleNextSkillsData) {
+              console.log('Using fallback query for next level skills (no join)');
+              nextLevelSkills = simpleNextSkillsData.map(skill => ({
+                ...skill,
+                swim_levels: nextLevel
+              }));
+            }
+          } else {
+            console.log('Next level skills count (with join):', nextSkillsData?.length || 0);
+            nextLevelSkills = nextSkillsData || [];
+          }
         }
       } else {
         console.log('Current level is null, cannot get next level');
@@ -126,14 +185,46 @@ export async function GET(
       console.log('First level (fallback):', currentLevel);
 
       if (currentLevel) {
-        // Get all skills for the first level
-        const { data: skillsData } = await supabase
+        // Get all skills for the first level WITH level data
+        const { data: skillsData, error: skillsError } = await supabase
           .from('skills')
-          .select('*')
+          .select(`
+            id,
+            name,
+            description,
+            sequence,
+            level_id,
+            swim_levels!inner (
+              id,
+              name,
+              display_name,
+              color,
+              sequence
+            )
+          `)
           .eq('level_id', currentLevel.id)
           .order('sequence', { ascending: true });
-        currentLevelSkills = skillsData || [];
-        console.log('First level skills count:', skillsData?.length || 0);
+
+        if (skillsError) {
+          console.error('Error fetching skills with join (fallback):', skillsError);
+          // Fallback to simple query
+          const { data: simpleSkillsData } = await supabase
+            .from('skills')
+            .select('*')
+            .eq('level_id', currentLevel.id)
+            .order('sequence', { ascending: true });
+
+          if (simpleSkillsData) {
+            console.log('Using fallback query (no join) for first level');
+            currentLevelSkills = simpleSkillsData.map(skill => ({
+              ...skill,
+              swim_levels: currentLevel
+            }));
+          }
+        } else {
+          console.log('First level skills count (with join):', skillsData?.length || 0);
+          currentLevelSkills = skillsData || [];
+        }
 
         // Get the next level (one level above first)
         const { data: nextLevelData } = await supabase
@@ -147,21 +238,69 @@ export async function GET(
 
         // Get skills for next level if it exists
         if (nextLevel) {
-          const { data: nextSkillsData } = await supabase
+          const { data: nextSkillsData, error: nextSkillsError } = await supabase
             .from('skills')
-            .select('*')
+            .select(`
+              id,
+              name,
+              description,
+              sequence,
+              level_id,
+              swim_levels!inner (
+                id,
+                name,
+                display_name,
+                color,
+                sequence
+              )
+            `)
             .eq('level_id', nextLevel.id)
             .order('sequence', { ascending: true });
-          nextLevelSkills = nextSkillsData || [];
-          console.log('Next level skills count:', nextSkillsData?.length || 0);
+
+          if (nextSkillsError) {
+            console.error('Error fetching next level skills with join (fallback branch):', nextSkillsError);
+            // Fallback to simple query
+            const { data: simpleNextSkillsData } = await supabase
+              .from('skills')
+              .select('*')
+              .eq('level_id', nextLevel.id)
+              .order('sequence', { ascending: true });
+
+            if (simpleNextSkillsData) {
+              console.log('Using fallback query for next level skills (no join, fallback branch)');
+              nextLevelSkills = simpleNextSkillsData.map(skill => ({
+                ...skill,
+                swim_levels: nextLevel
+              }));
+            }
+          } else {
+            console.log('Next level skills count (with join, fallback branch):', nextSkillsData?.length || 0);
+            nextLevelSkills = nextSkillsData || [];
+          }
         }
       }
     }
 
     // Combine skills from current and next level
+    // Transform skills to have consistent 'level' property
+    const transformSkillWithLevel = (skill: any, fallbackLevel: any) => {
+      // If skill has swim_levels from join, use that
+      if (skill.swim_levels) {
+        return {
+          ...skill,
+          level: skill.swim_levels
+        };
+      }
+      // Otherwise use fallback level
+      return {
+        ...skill,
+        level: fallbackLevel
+      };
+    };
+
     const allSkills = [
-      ...currentLevelSkills.map(skill => ({ ...skill, level: currentLevel })),
-      ...nextLevelSkills.map(skill => ({ ...skill, level: nextLevel }))
+      ...currentLevelSkills.map(skill => transformSkillWithLevel(skill, currentLevel)),
+      ...nextLevelSkills.map(skill => transformSkillWithLevel(skill, nextLevel))
     ];
 
     // Get swimmer's skill progress
