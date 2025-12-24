@@ -18,7 +18,8 @@ import {
   Building2,
   CreditCard,
   CheckCircle,
-  Menu
+  Menu,
+  CheckSquare
 } from 'lucide-react';
 
 const navItems = [
@@ -28,6 +29,7 @@ const navItems = [
   { title: 'Session Generator', href: '/admin/sessions/generate', icon: CalendarPlus },
   { title: 'Complete Assessment', href: '/admin/assessments/complete', icon: CheckCircle },
   { title: 'Bookings', href: '/admin/bookings', icon: ClipboardList },
+  { title: 'Tasks', href: '/admin/tasks', icon: CheckSquare },
   { title: 'Referrals', href: '/admin/referrals', icon: FileText },
   { title: 'Purchase Orders', href: '/admin/pos', icon: CreditCard },
   { title: 'Users', href: '/admin/users', icon: UserCog },

@@ -33,6 +33,7 @@ import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import NeedsProgressUpdateCard from '@/components/dashboard/NeedsProgressUpdateCard';
 import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
+import { ToDoWidget } from '@/components/dashboard/ToDoWidget';
 
 interface DashboardStats {
   totalSwimmers: number;
@@ -265,9 +266,9 @@ export default function AdminDashboard() {
         {/* Quick actions skeleton */}
         <div className="space-y-4">
           <Skeleton className="h-6 w-40" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-32 rounded-lg" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-64 rounded-lg" />
             ))}
           </div>
         </div>
@@ -423,8 +424,11 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Main Content - Two Columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      {/* Main Content - Three Columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+        {/* To Do Widget */}
+        <ToDoWidget />
 
         {/* Needs Progress Update Card */}
         <NeedsProgressUpdateCard />
