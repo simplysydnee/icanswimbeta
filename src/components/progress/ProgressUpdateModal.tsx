@@ -12,18 +12,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Clock, FileText, Award, Star, Target, User, ClipboardList } from 'lucide-react';
+import { Clock, FileText, Award, Star, Target, User } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import SwimmerAssessmentInfo from './SwimmerAssessmentInfo';
-
-interface Skill {
-  id: string;
-  name: string;
-  description: string;
-  sequence: number;
-  status?: 'not_started' | 'in_progress' | 'mastered';
-}
+import { SkillChecklist } from '@/components/instructor/SkillChecklist';
 
 interface SwimLevel {
   id: string;
@@ -91,7 +84,8 @@ export default function ProgressUpdateModal({
 }: ProgressUpdateModalProps) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [skills, setSkills] = useState<Skill[]>([]);
+  const [skillsWorkingOn, setSkillsWorkingOn] = useState<string[]>([]);
+  const [skillsMastered, setSkillsMastered] = useState<string[]>([]);
   const [currentLevel, setCurrentLevel] = useState<SwimLevel | null>(null);
   const [nextLevels, setNextLevels] = useState<SwimLevel[]>([]);
   const [swimmerAssessmentData, setSwimmerAssessmentData] = useState<SwimmerAssessmentData | null>(null);
@@ -115,12 +109,11 @@ export default function ProgressUpdateModal({
   const fetchSwimmerData = async () => {
     setLoading(true);
     try {
-      // Fetch swimmer's current level and skills
+      // Fetch swimmer's current level
       const swimmerResponse = await fetch(`/api/swimmers/${swimmerId}/skills`);
       if (swimmerResponse.ok) {
         const swimmerData = await swimmerResponse.json();
         setCurrentLevel(swimmerData.currentLevel);
-        setSkills(swimmerData.skills || []);
 
         // Fetch next levels
         if (swimmerData.currentLevel) {
@@ -146,23 +139,14 @@ export default function ProgressUpdateModal({
     }
   };
 
-  const handleSkillStatusChange = (skillId: string, status: 'not_started' | 'in_progress' | 'mastered') => {
-    setSkills(prev => prev.map(skill =>
-      skill.id === skillId ? { ...skill, status } : skill
-    ));
+  const handleSkillsChange = (workingOn: string[], mastered: string[]) => {
+    setSkillsWorkingOn(workingOn);
+    setSkillsMastered(mastered);
   };
 
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      const skillsWorkingOn = skills
-        .filter(skill => skill.status === 'in_progress')
-        .map(skill => skill.id);
-
-      const skillsMastered = skills
-        .filter(skill => skill.status === 'mastered')
-        .map(skill => skill.id);
-
       const response = await fetch('/api/progress-notes', {
         method: 'POST',
         headers: {
@@ -213,7 +197,8 @@ export default function ProgressUpdateModal({
     setSwimmerMood('');
     setWaterComfort('');
     setFocusLevel('');
-    setSkills(prev => prev.map(skill => ({ ...skill, status: undefined })));
+    setSkillsWorkingOn([]);
+    setSkillsMastered([]);
     setSwimmerAssessmentData(null);
     setAssessmentData(null);
   };
@@ -349,47 +334,11 @@ export default function ProgressUpdateModal({
 
             {/* Skills */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-lg font-medium">Skills</Label>
-                <Badge variant="outline">
-                  {skills.filter(s => s.status === 'mastered').length} mastered • {skills.filter(s => s.status === 'in_progress').length} in progress
-                </Badge>
-              </div>
-
-              <div className="grid grid-cols-1 gap-2">
-                {skills.map((skill) => (
-                  <div key={skill.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex-1">
-                      <p className="font-medium">{skill.name}</p>
-                      <p className="text-sm text-muted-foreground">{skill.description}</p>
-                    </div>
-                    <RadioGroup
-                      value={skill.status || 'not_started'}
-                      onValueChange={(value) => handleSkillStatusChange(skill.id, value as any)}
-                      className="flex items-center gap-2"
-                    >
-                      <div className="flex items-center space-x-1">
-                        <RadioGroupItem value="not_started" id={`${skill.id}-not_started`} />
-                        <Label htmlFor={`${skill.id}-not_started`} className="text-xs cursor-pointer">
-                          Not Started
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <RadioGroupItem value="in_progress" id={`${skill.id}-in_progress`} />
-                        <Label htmlFor={`${skill.id}-in_progress`} className="text-xs cursor-pointer">
-                          In Progress
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <RadioGroupItem value="mastered" id={`${skill.id}-mastered`} />
-                        <Label htmlFor={`${skill.id}-mastered`} className="text-xs cursor-pointer">
-                          Mastered
-                        </Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                ))}
-              </div>
+              <SkillChecklist
+                swimmerId={swimmerId}
+                onSkillsChange={handleSkillsChange}
+                readOnly={false}
+              />
             </div>
 
             {/* Level Advancement */}

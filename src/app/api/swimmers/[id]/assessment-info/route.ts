@@ -48,17 +48,10 @@ export async function GET(
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    // Fetch swimmer details with assessment info
+    // Fetch swimmer details with assessment info (simplified query)
     const { data: swimmerDetails, error: swimmerError } = await supabase
       .from('swimmers')
-      .select(`
-        id, first_name, last_name, swim_goals, strengths_interests,
-        comfortable_in_water, previous_swim_lessons, diagnosis,
-        has_medical_conditions, medical_conditions_description,
-        has_allergies, allergies_description, communication_type,
-        toilet_trained, current_level_id,
-        swim_levels (id, name, display_name, color)
-      `)
+      .select('*')
       .eq('id', swimmerId)
       .single();
 
@@ -70,13 +63,10 @@ export async function GET(
       );
     }
 
-    // Fetch completed assessment
+    // Fetch completed assessment (simplified query)
     const { data: assessment, error: assessmentError } = await supabase
       .from('assessments')
-      .select(`
-        id, scheduled_date, completed_at, instructor_notes, status,
-        profiles!completed_by (full_name)
-      `)
+      .select('*')
       .eq('swimmer_id', swimmerId)
       .eq('status', 'completed')
       .order('completed_at', { ascending: false })

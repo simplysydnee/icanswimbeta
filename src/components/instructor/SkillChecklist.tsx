@@ -161,15 +161,6 @@ export function SkillChecklist({
     fetchSkills();
   }, [fetchSkills]);
 
-  // Debug state changes
-  useEffect(() => {
-    console.log('=== SKILLS STATE UPDATED ===');
-    console.log('Skills count:', skills.length);
-    console.log('Skills:', skills);
-    console.log('SkillsByLevel:', skillsByLevel);
-    console.log('Levels:', levels);
-  }, [skills, skillsByLevel, levels]);
-
   // Notify parent of skill changes
   useEffect(() => {
     if (onSkillsChange) {
@@ -200,14 +191,26 @@ export function SkillChecklist({
     const levelIds = Object.keys(skillsByLevel);
     const levels = levelIds
       .map(levelId => {
-        const skill = skills.find(s => s.level && s.level.id === levelId);
-        return skill?.level;
+        const levelSkills = skillsByLevel[levelId];
+        if (levelSkills && levelSkills.length > 0) {
+          return levelSkills[0].level;
+        }
+        return null;
       })
       .filter((level): level is SwimLevel => level !== undefined && level !== null)
       .sort((a, b) => a.sequence - b.sequence);
     console.log('Levels to render:', levels);
     return levels;
-  }, [skills, skillsByLevel]);
+  }, [skillsByLevel]);
+
+  // Debug state changes
+  useEffect(() => {
+    console.log('=== SKILLS STATE UPDATED ===');
+    console.log('Skills count:', skills.length);
+    console.log('Skills:', skills);
+    console.log('SkillsByLevel:', skillsByLevel);
+    console.log('Levels:', levels);
+  }, [skills, skillsByLevel, levels]);
 
   // Handle skill status change
   const handleStatusChange = async (skillId: string, newStatus: 'in_progress' | 'mastered') => {
