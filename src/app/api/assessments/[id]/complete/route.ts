@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getCurrentUser } from '@/lib/auth/server';
 import { DEFAULT_FUNDING_SOURCE_CONFIG } from '@/lib/constants';
 
 export async function POST(
@@ -10,13 +9,11 @@ export async function POST(
   try {
     const { id } = await params;
     const supabase = await createClient();
-    const user = await getCurrentUser();
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user has permission (admin or instructor)
