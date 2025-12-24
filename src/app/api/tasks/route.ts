@@ -9,9 +9,18 @@ const taskSchema = z.object({
   status: z.enum(['todo', 'in_progress', 'completed', 'needs_attention']).default('todo'),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
   category: z.enum(['swimmer_related', 'business_operations', 'follow_up', 'other']).default('other'),
-  due_date: z.string().optional().transform(val => val ? new Date(val).toISOString().split('T')[0] : null),
-  assigned_to: z.string().uuid().optional(),
-  swimmer_id: z.string().uuid().optional(),
+  due_date: z.string().optional().transform(val => {
+    if (!val) return null;
+    try {
+      const date = new Date(val);
+      if (isNaN(date.getTime())) return null;
+      return date.toISOString().split('T')[0];
+    } catch {
+      return null;
+    }
+  }),
+  assigned_to: z.string().uuid().optional().transform(val => val || null),
+  swimmer_id: z.string().uuid().optional().transform(val => val || null),
 });
 
 export async function GET(request: NextRequest) {
@@ -127,7 +136,7 @@ export async function POST(request: NextRequest) {
     const taskData = validationResult.data;
 
     // Insert task with created_by set to current user
-    const { data: task, error } = await supabase
+    const { data: tasks, error } = await supabase
       .from('tasks')
       .insert({
         ...taskData,
@@ -151,18 +160,25 @@ export async function POST(request: NextRequest) {
           last_name,
           client_number
         )
-      `)
-      .single();
+      `);
 
     if (error) {
       console.error('Error creating task:', error);
       return NextResponse.json(
-        { error: 'Failed to create task' },
+        { error: 'Failed to create task', details: error.message },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ task }, { status: 201 });
+    if (!tasks || tasks.length === 0) {
+      console.error('No task returned after insert');
+      return NextResponse.json(
+        { error: 'Task created but not returned' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ task: tasks[0] }, { status: 201 });
   } catch (error) {
     console.error('Error in tasks API:', error);
     return NextResponse.json(

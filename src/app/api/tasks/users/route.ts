@@ -12,10 +12,32 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch users from profiles table (admins and instructors)
+    // First get user IDs with admin or instructor roles
+    const { data: userRoles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .in('role', ['admin', 'instructor']);
+
+    if (rolesError) {
+      console.error('Error fetching user roles:', rolesError);
+      return NextResponse.json(
+        { error: 'Failed to fetch user roles' },
+        { status: 500 }
+      );
+    }
+
+    const userIds = userRoles?.map(ur => ur.user_id) || [];
+
+    // If no users found, return empty array
+    if (userIds.length === 0) {
+      return NextResponse.json({ users: [] });
+    }
+
+    // Fetch profiles for those users
     const { data: profiles, error } = await supabase
       .from('profiles')
       .select('id, full_name, email')
-      .in('role', ['admin', 'instructor'])
+      .in('id', userIds)
       .order('full_name', { ascending: true });
 
     if (error) {

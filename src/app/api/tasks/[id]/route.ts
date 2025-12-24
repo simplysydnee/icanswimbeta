@@ -9,9 +9,18 @@ const taskUpdateSchema = z.object({
   status: z.enum(['todo', 'in_progress', 'completed', 'needs_attention']).optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
   category: z.enum(['swimmer_related', 'business_operations', 'follow_up', 'other']).optional(),
-  due_date: z.string().optional().transform(val => val ? new Date(val).toISOString().split('T')[0] : null),
-  assigned_to: z.string().uuid().optional(),
-  swimmer_id: z.string().uuid().optional(),
+  due_date: z.string().optional().transform(val => {
+    if (!val) return null;
+    try {
+      const date = new Date(val);
+      if (isNaN(date.getTime())) return null;
+      return date.toISOString().split('T')[0];
+    } catch {
+      return null;
+    }
+  }),
+  assigned_to: z.string().uuid().optional().transform(val => val || null),
+  swimmer_id: z.string().uuid().optional().transform(val => val || null),
 });
 
 export async function GET(
