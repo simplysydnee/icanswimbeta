@@ -42,20 +42,19 @@ export async function GET(request: NextRequest) {
     const swimmerId = searchParams.get('swimmer_id');
 
     // Check if user is owner (sutton@icanswim209.com)
-    const { data: userData } = await supabase.auth.getUser();
-    const isOwner = userData.user?.email === 'sutton@icanswim209.com';
+    const isOwner = user?.email === 'sutton@icanswim209.com';
 
     // Build query
     let query = supabase
       .from('tasks')
       .select(`
         *,
-        assigned_to_user:profiles!tasks_assigned_to_fkey (
+        assigned_to_user:profiles!assigned_to (
           id,
           full_name,
           email
         ),
-        created_by_user:profiles!tasks_created_by_fkey (
+        created_by_user:profiles!created_by (
           id,
           full_name,
           email
@@ -144,12 +143,12 @@ export async function POST(request: NextRequest) {
       })
       .select(`
         *,
-        assigned_to_user:profiles!tasks_assigned_to_fkey (
+        assigned_to_user:profiles!assigned_to (
           id,
           full_name,
           email
         ),
-        created_by_user:profiles!tasks_created_by_fkey (
+        created_by_user:profiles!created_by (
           id,
           full_name,
           email

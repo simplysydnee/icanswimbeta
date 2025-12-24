@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
+import { POBillingModal } from '@/components/admin/POBillingModal';
 
 interface PurchaseOrder {
   id: string;
@@ -43,6 +44,16 @@ interface PurchaseOrder {
   end_date: string;
   created_at: string;
   notes: string | null;
+  // Billing fields
+  billing_status: string;
+  billed_amount_cents: number;
+  paid_amount_cents: number;
+  billed_at: string | null;
+  paid_at: string | null;
+  invoice_number: string | null;
+  payment_reference: string | null;
+  billing_notes: string | null;
+  due_date: string | null;
   swimmer: {
     id: string;
     first_name: string;
@@ -71,11 +82,21 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800 border-red-300', icon: XCircle },
 };
 
+const BILLING_STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  unbilled: { label: 'Unbilled', color: 'bg-gray-100 text-gray-800 border-gray-300', icon: FileText },
+  billed: { label: 'Billed', color: 'bg-blue-100 text-blue-800 border-blue-300', icon: FileText },
+  paid: { label: 'Paid', color: 'bg-green-100 text-green-800 border-green-300', icon: CheckCircle },
+  partial: { label: 'Partial', color: 'bg-yellow-100 text-yellow-800 border-yellow-300', icon: AlertCircle },
+  overdue: { label: 'Overdue', color: 'bg-red-100 text-red-800 border-red-300', icon: AlertCircle },
+  disputed: { label: 'Disputed', color: 'bg-orange-100 text-orange-800 border-orange-300', icon: AlertCircle },
+};
+
 export default function POSPage() {
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [billingStatusFilter, setBillingStatusFilter] = useState<string>('all');
   const [poTypeFilter, setPoTypeFilter] = useState<string>('all');
   const [fundingSourceFilter, setFundingSourceFilter] = useState<string>('all');
 
@@ -86,6 +107,10 @@ export default function POSPage() {
   const [approvalNotes, setApprovalNotes] = useState('');
   const [approving, setApproving] = useState(false);
 
+  // Billing modal state
+  const [billingModalOpen, setBillingModalOpen] = useState(false);
+  const [selectedPOForBilling, setSelectedPOForBilling] = useState<PurchaseOrder | null>(null);
+
   // Stats
   const [stats, setStats] = useState({
     total: 0,
@@ -95,6 +120,16 @@ export default function POSPage() {
     completed: 0,
     expired: 0,
     cancelled: 0,
+    // Billing stats
+    unbilled: 0,
+    billed: 0,
+    paid: 0,
+    partial: 0,
+    overdue: 0,
+    disputed: 0,
+    totalBilled: 0,
+    totalPaid: 0,
+    totalOutstanding: 0,
   });
 
   useEffect(() => {
@@ -122,6 +157,9 @@ export default function POSPage() {
       setPurchaseOrders(orders);
 
       // Calculate stats
+      const totalBilled = orders.reduce((sum, po) => sum + (po.billed_amount_cents || 0), 0);
+      const totalPaid = orders.reduce((sum, po) => sum + (po.paid_amount_cents || 0), 0);
+
       setStats({
         total: orders.length,
         pending: orders.filter(po => po.status === 'pending').length,
@@ -130,6 +168,16 @@ export default function POSPage() {
         completed: orders.filter(po => po.status === 'completed').length,
         expired: orders.filter(po => po.status === 'expired').length,
         cancelled: orders.filter(po => po.status === 'cancelled').length,
+        // Billing stats
+        unbilled: orders.filter(po => po.billing_status === 'unbilled').length,
+        billed: orders.filter(po => po.billing_status === 'billed').length,
+        paid: orders.filter(po => po.billing_status === 'paid').length,
+        partial: orders.filter(po => po.billing_status === 'partial').length,
+        overdue: orders.filter(po => po.billing_status === 'overdue').length,
+        disputed: orders.filter(po => po.billing_status === 'disputed').length,
+        totalBilled,
+        totalPaid,
+        totalOutstanding: totalBilled - totalPaid,
       });
     } catch (error) {
       console.error('Error fetching POs:', error);
@@ -238,17 +286,24 @@ export default function POSPage() {
     setApprovalDialogOpen(true);
   };
 
+  const openBillingModal = (po: PurchaseOrder) => {
+    setSelectedPOForBilling(po);
+    setBillingModalOpen(true);
+  };
+
   const filteredPOs = purchaseOrders.filter(po => {
     const matchesSearch = searchTerm === '' ||
       `${po.swimmer?.first_name} ${po.swimmer?.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       po.authorization_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      po.coordinator?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      po.coordinator?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      po.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || po.status === statusFilter;
+    const matchesBillingStatus = billingStatusFilter === 'all' || po.billing_status === billingStatusFilter;
     const matchesPoType = poTypeFilter === 'all' || po.po_type === poTypeFilter;
     const matchesFundingSource = fundingSourceFilter === 'all' || po.funding_source?.id === fundingSourceFilter;
 
-    return matchesSearch && matchesStatus && matchesPoType && matchesFundingSource;
+    return matchesSearch && matchesStatus && matchesBillingStatus && matchesPoType && matchesFundingSource;
   });
 
   const getFundingSources = () => {
@@ -290,7 +345,7 @@ export default function POSPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-7 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-10 gap-3 mb-6">
         <Card>
           <CardContent className="p-3">
             <div className="text-xs text-muted-foreground">Total</div>
@@ -333,7 +388,54 @@ export default function POSPage() {
             <div className="text-lg font-bold text-red-800">{stats.cancelled}</div>
           </CardContent>
         </Card>
+        {/* Billing Stats */}
+        <Card className="border-gray-200 bg-gray-50">
+          <CardContent className="p-3">
+            <div className="text-xs text-gray-700">Unbilled</div>
+            <div className="text-lg font-bold text-gray-800">{stats.unbilled}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-3">
+            <div className="text-xs text-blue-700">Billed</div>
+            <div className="text-lg font-bold text-blue-800">{stats.billed}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-3">
+            <div className="text-xs text-green-700">Paid</div>
+            <div className="text-lg font-bold text-green-800">{stats.paid}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-3">
+            <div className="text-xs text-red-700">Overdue</div>
+            <div className="text-lg font-bold text-red-800">{stats.overdue}</div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Financial Summary */}
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <div className="text-xs text-muted-foreground">Total Billed</div>
+              <div className="text-xl font-bold">${(stats.totalBilled / 100).toFixed(2)}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground">Total Paid</div>
+              <div className="text-xl font-bold text-green-600">${(stats.totalPaid / 100).toFixed(2)}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground">Outstanding</div>
+              <div className={`text-xl font-bold ${stats.totalOutstanding > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                ${(stats.totalOutstanding / 100).toFixed(2)}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card className="mb-6">
@@ -366,6 +468,20 @@ export default function POSPage() {
                   <option value="cancelled">Cancelled</option>
                 </select>
               </div>
+
+              <select
+                value={billingStatusFilter}
+                onChange={(e) => setBillingStatusFilter(e.target.value)}
+                className="border rounded-md px-3 py-2 bg-white text-sm"
+              >
+                <option value="all">All Billing</option>
+                <option value="unbilled">Unbilled</option>
+                <option value="billed">Billed</option>
+                <option value="paid">Paid</option>
+                <option value="partial">Partial</option>
+                <option value="overdue">Overdue</option>
+                <option value="disputed">Disputed</option>
+              </select>
 
               <select
                 value={poTypeFilter}
@@ -462,6 +578,42 @@ export default function POSPage() {
                         </div>
                       </div>
 
+                      {/* Billing Info */}
+                      <div className="text-right">
+                        <div className="flex items-center gap-2 justify-end mb-1">
+                          {(() => {
+                            const billingConfig = BILLING_STATUS_CONFIG[po.billing_status] || BILLING_STATUS_CONFIG.unbilled;
+                            const BillingIcon = billingConfig.icon;
+                            return (
+                              <Badge className={`${billingConfig.color} text-xs`}>
+                                <BillingIcon className="h-3 w-3 mr-1" />
+                                {billingConfig.label}
+                              </Badge>
+                            );
+                          })()}
+                          {po.due_date && new Date(po.due_date) < new Date() && po.billing_status !== 'paid' && (
+                            <Badge className="bg-red-100 text-red-800 border-red-300 text-xs">
+                              Past Due
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs">
+                          {po.billed_amount_cents > 0 && (
+                            <span className="font-medium">${(po.billed_amount_cents / 100).toFixed(2)}</span>
+                          )}
+                          {po.paid_amount_cents > 0 && (
+                            <span className={`ml-2 ${po.paid_amount_cents >= po.billed_amount_cents ? 'text-green-600' : 'text-yellow-600'}`}>
+                              Paid: ${(po.paid_amount_cents / 100).toFixed(2)}
+                            </span>
+                          )}
+                          {po.due_date && (
+                            <div className="text-muted-foreground">
+                              Due: {format(new Date(po.due_date), 'MMM d')}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
                       <div className="flex gap-2">
                         {(po.status === 'pending' || po.status === 'approved_pending_auth') && (
                           <Button size="sm" onClick={() => openApprovalDialog(po)}>
@@ -489,6 +641,17 @@ export default function POSPage() {
                             View
                           </Button>
                         )}
+
+                        {/* Billing Action */}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openBillingModal(po)}
+                          className="border-cyan-200 text-cyan-700 hover:bg-cyan-50"
+                        >
+                          <DollarSign className="h-4 w-4 mr-1" />
+                          Billing
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -578,6 +741,17 @@ export default function POSPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Billing Modal */}
+      <POBillingModal
+        po={selectedPOForBilling}
+        open={billingModalOpen}
+        onClose={() => {
+          setBillingModalOpen(false);
+          setSelectedPOForBilling(null);
+        }}
+        onUpdate={fetchPurchaseOrders}
+      />
     </div>
   );
 }

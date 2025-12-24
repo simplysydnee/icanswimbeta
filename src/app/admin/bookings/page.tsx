@@ -115,14 +115,29 @@ export default function AdminBookingsPage() {
   // Fetch instructors
   const fetchInstructors = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name')
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select(`
+          user_id,
+          profile:profiles(id, full_name)
+        `)
         .eq('role', 'instructor')
-        .order('full_name')
+        .order('profile(full_name)', { ascending: true })
 
-      if (error) throw error
-      setInstructors(data || [])
+      if (roleError) throw roleError
+
+      const instructorList = roleData
+        ?.map(r => {
+          // Handle case where profile might be an array
+          const profile = Array.isArray(r.profile) ? r.profile[0] : r.profile;
+          return profile;
+        })
+        .filter(Boolean) || [];
+
+      setInstructors(instructorList.map(profile => ({
+        id: profile.id,
+        full_name: profile.full_name
+      })) || [])
     } catch (error) {
       console.error('Error fetching instructors:', error)
     }

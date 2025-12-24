@@ -61,7 +61,17 @@ export async function PATCH(
       sessions_used,
       lesson_dates,
       notes,
-      cancellation_reason
+      cancellation_reason,
+      // Billing fields
+      billing_status,
+      billed_amount_cents,
+      paid_amount_cents,
+      billed_at,
+      paid_at,
+      invoice_number,
+      payment_reference,
+      billing_notes,
+      due_date
     } = body;
 
     // Build update object with only provided fields
@@ -74,6 +84,17 @@ export async function PATCH(
     if (lesson_dates !== undefined) updateData.lesson_dates = lesson_dates;
     if (notes !== undefined) updateData.notes = notes;
     if (cancellation_reason !== undefined) updateData.cancellation_reason = cancellation_reason;
+
+    // Billing fields
+    if (billing_status !== undefined) updateData.billing_status = billing_status;
+    if (billed_amount_cents !== undefined) updateData.billed_amount_cents = billed_amount_cents;
+    if (paid_amount_cents !== undefined) updateData.paid_amount_cents = paid_amount_cents;
+    if (billed_at !== undefined) updateData.billed_at = billed_at;
+    if (paid_at !== undefined) updateData.paid_at = paid_at;
+    if (invoice_number !== undefined) updateData.invoice_number = invoice_number;
+    if (payment_reference !== undefined) updateData.payment_reference = payment_reference;
+    if (billing_notes !== undefined) updateData.billing_notes = billing_notes;
+    if (due_date !== undefined) updateData.due_date = due_date;
 
     // If approving with auth number, set status to active
     if (authorization_number && status === 'active') {

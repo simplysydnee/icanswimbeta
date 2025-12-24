@@ -23,16 +23,8 @@ export async function GET() {
     if (!roleError && roleData?.role) {
       userRole = roleData.role;
     } else {
-      // Fall back to profiles table
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (!profileError && profileData?.role) {
-        userRole = profileData.role;
-      }
+      // If no role found in user_roles, default to 'parent'
+      userRole = 'parent';
     }
 
     const isAdmin = userRole === 'admin';
