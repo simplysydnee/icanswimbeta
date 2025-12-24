@@ -441,74 +441,74 @@ export default function AdminDashboard() {
               Admin Dashboard
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-2">
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Link href="/admin/swimmers" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto py-3">
+              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <Users className="h-4 w-4 mr-2" />
-                <div className="text-left">
+                <div className="text-left whitespace-normal">
                   <div className="font-medium">Swimmer Management</div>
                 </div>
               </Button>
             </Link>
 
             <Link href="/admin/schedule" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto py-3">
+              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <Calendar className="h-4 w-4 mr-2" />
-                <div className="text-left">
+                <div className="text-left whitespace-normal">
                   <div className="font-medium">Schedule Management</div>
                 </div>
               </Button>
             </Link>
 
             <Link href="/admin/sessions/generate" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto py-3">
+              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <CalendarPlus className="h-4 w-4 mr-2" />
-                <div className="text-left">
+                <div className="text-left whitespace-normal">
                   <div className="font-medium">Session Generator</div>
                 </div>
               </Button>
             </Link>
 
             <Link href="/admin/referrals" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto py-3">
+              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <FileText className="h-4 w-4 mr-2" />
-                <div className="text-left">
+                <div className="text-left whitespace-normal">
                   <div className="font-medium">Funding Referrals</div>
                 </div>
               </Button>
             </Link>
 
             <Link href="/admin/bookings" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto py-3">
+              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <ClipboardList className="h-4 w-4 mr-2" />
-                <div className="text-left">
+                <div className="text-left whitespace-normal">
                   <div className="font-medium">Manage Bookings</div>
                 </div>
               </Button>
             </Link>
 
             <Link href="/admin/pos" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto py-3">
+              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <FileText className="h-4 w-4 mr-2" />
-                <div className="text-left">
+                <div className="text-left whitespace-normal">
                   <div className="font-medium">Purchase Orders</div>
                 </div>
               </Button>
             </Link>
 
             <Link href="/admin/users" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto py-3">
+              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <UserCog className="h-4 w-4 mr-2" />
-                <div className="text-left">
+                <div className="text-left whitespace-normal">
                   <div className="font-medium">User Management</div>
                 </div>
               </Button>
             </Link>
 
             <Link href="/admin/settings" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto py-3">
+              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <Settings className="h-4 w-4 mr-2" />
-                <div className="text-left">
+                <div className="text-left whitespace-normal">
                   <div className="font-medium">Settings</div>
                 </div>
               </Button>
