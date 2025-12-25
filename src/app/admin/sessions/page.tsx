@@ -922,8 +922,314 @@ function AdminSessionsContent() {
         )}
 
         {/* Modals */}
-        {/* TODO: Implement session-specific modals */}
-        {/* For now, we'll use placeholder modals */}
+        {viewingSession && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Session Details</h2>
+                <Button variant="ghost" size="sm" onClick={() => setViewingSession(null)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <p><strong>Date:</strong> {format(parseISO(viewingSession.start_time), 'EEEE, MMMM d, yyyy')}</p>
+                <p><strong>Time:</strong> {format(parseISO(viewingSession.start_time), 'h:mm a')} - {format(parseISO(viewingSession.end_time), 'h:mm a')}</p>
+                <p><strong>Location:</strong> {viewingSession.location}</p>
+                <p><strong>Instructor:</strong> {viewingSession.instructor_name || 'Unassigned'}</p>
+                <p><strong>Status:</strong> {viewingSession.status}</p>
+                <p><strong>Capacity:</strong> {viewingSession.booking_count || 0}/{viewingSession.max_capacity}</p>
+                <p><strong>Type:</strong> {viewingSession.session_type}</p>
+                {viewingSession.bookings && viewingSession.bookings.length > 0 && (
+                  <div>
+                    <p className="font-medium mb-2">Bookings:</p>
+                    <ul className="list-disc pl-5">
+                      {viewingSession.bookings.map((b: any) => (
+                        <li key={b.id}>
+                          {b.swimmer?.first_name} {b.swimmer?.last_name} ({b.status})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" onClick={() => setViewingSession(null)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {editingSession && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Edit Session</h2>
+                <Button variant="ghost" size="sm" onClick={() => setEditingSession(null)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Edit session: {format(parseISO(editingSession.start_time), 'MMM d, yyyy h:mm a')}
+              </p>
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground">
+                  <p>Session editing functionality will be implemented soon.</p>
+                  <p className="mt-2">For now, use the "Change Instructor" or "Reschedule" options for specific changes.</p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" onClick={() => setEditingSession(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => {
+                  toast({
+                    title: 'Feature coming soon',
+                    description: 'Session editing will be implemented in a future update.',
+                  });
+                  setEditingSession(null);
+                }}>
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {changingInstructor && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Change Instructor</h2>
+                <Button variant="ghost" size="sm" onClick={() => setChangingInstructor(null)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Change instructor for session on {format(parseISO(changingInstructor.start_time), 'MMM d, yyyy h:mm a')}
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">Current Instructor</Label>
+                  <p className="text-muted-foreground">{changingInstructor.instructor_name || 'Unassigned'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">New Instructor</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select instructor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {instructorsData?.map(i => (
+                        <SelectItem key={i.id} value={i.id}>{i.fullName}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" onClick={() => setChangingInstructor(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => {
+                  toast({
+                    title: 'Feature coming soon',
+                    description: 'Instructor change will be implemented in a future update.',
+                  });
+                  setChangingInstructor(null);
+                }}>
+                  Change Instructor
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {reschedulingSession && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Reschedule Session</h2>
+                <Button variant="ghost" size="sm" onClick={() => setReschedulingSession(null)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Reschedule session from {format(parseISO(reschedulingSession.start_time), 'MMM d, yyyy h:mm a')}
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">New Date</Label>
+                  <Input type="date" />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">New Time</Label>
+                  <Input type="time" />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Location</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map(loc => (
+                        <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" onClick={() => setReschedulingSession(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => {
+                  toast({
+                    title: 'Feature coming soon',
+                    description: 'Session rescheduling will be implemented in a future update.',
+                  });
+                  setReschedulingSession(null);
+                }}>
+                  Reschedule
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {cancellingSession && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Cancel Session</h2>
+                <Button variant="ghost" size="sm" onClick={() => setCancellingSession(null)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Cancel session on {format(parseISO(cancellingSession.start_time), 'MMM d, yyyy h:mm a')}?
+              </p>
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground">
+                  <p>This will cancel the session and notify any booked swimmers.</p>
+                  <p className="mt-2"><strong>Note:</strong> This action cannot be undone.</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Reason for cancellation</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select reason" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="instructor_unavailable">Instructor unavailable</SelectItem>
+                      <SelectItem value="weather">Weather</SelectItem>
+                      <SelectItem value="facility_issue">Facility issue</SelectItem>
+                      <SelectItem value="low_enrollment">Low enrollment</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" onClick={() => setCancellingSession(null)}>
+                  Keep Session
+                </Button>
+                <Button variant="destructive" onClick={() => {
+                  toast({
+                    title: 'Feature coming soon',
+                    description: 'Session cancellation will be implemented in a future update.',
+                  });
+                  setCancellingSession(null);
+                }}>
+                  Cancel Session
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {bookingSession && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Book Client</h2>
+                <Button variant="ghost" size="sm" onClick={() => setBookingSession(null)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Book a client for session on {format(parseISO(bookingSession.start_time), 'MMM d, yyyy h:mm a')}
+              </p>
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground">
+                  <p>Client booking functionality will be implemented soon.</p>
+                  <p className="mt-2">For now, use the parent booking interface.</p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" onClick={() => setBookingSession(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => {
+                  toast({
+                    title: 'Feature coming soon',
+                    description: 'Client booking will be implemented in a future update.',
+                  });
+                  setBookingSession(null);
+                }}>
+                  Book Client
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {bulkChangingInstructor && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Change Instructor (Bulk)</h2>
+                <Button variant="ghost" size="sm" onClick={() => setBulkChangingInstructor(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-muted-foreground mb-4">
+                Change instructor for {selectedSessionIds.size} selected session{selectedSessionIds.size !== 1 ? 's' : ''}
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">New Instructor</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select instructor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {instructorsData?.map(i => (
+                        <SelectItem key={i.id} value={i.id}>{i.fullName}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" onClick={() => setBulkChangingInstructor(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => {
+                  toast({
+                    title: 'Feature coming soon',
+                    description: 'Bulk instructor change will be implemented in a future update.',
+                  });
+                  setBulkChangingInstructor(false);
+                }}>
+                  Change Instructor
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </RoleGuard>
