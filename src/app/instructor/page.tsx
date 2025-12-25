@@ -16,10 +16,11 @@ import {
   AlertCircle,
   ChevronRight,
   Loader2,
+  CalendarOff,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { format } from 'date-fns';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 import NeedsProgressUpdateCard from '@/components/dashboard/NeedsProgressUpdateCard';
 import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
 
@@ -56,6 +57,11 @@ export default function InstructorDashboard() {
     needsProgressUpdate: 0,
     completedThisWeek: 0,
   });
+  const [weeklyHours, setWeeklyHours] = useState<number>(0);
+  const [loadingHours, setLoadingHours] = useState(true);
+  const [pendingTimeOff, setPendingTimeOff] = useState<number>(0);
+  const [upcomingApproved, setUpcomingApproved] = useState<number>(0);
+  const [loadingTimeOff, setLoadingTimeOff] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState<{
     bookingId: string;
     sessionId: string;
@@ -143,6 +149,43 @@ export default function InstructorDashboard() {
     });
 
     setLoading(false);
+  }, [user, profile]);
+
+  // Fetch weekly hours
+  const fetchWeeklyHours = useCallback(async () => {
+    try {
+      const response = await fetch('/api/instructor/timecard/weekly-summary');
+      const data = await response.json();
+      setWeeklyHours(data.totalHours || 0);
+    } catch (error) {
+      console.error('Error fetching weekly hours:', error);
+    } finally {
+      setLoadingHours(false);
+    }
+  }, []);
+
+  // Fetch time off summary
+  const fetchTimeOffSummary = useCallback(async () => {
+    try {
+      const response = await fetch('/api/instructor/time-off');
+      const data = await response.json();
+      const requests = data.requests || [];
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const pending = requests.filter((r: any) => r.status === 'pending').length;
+      const upcoming = requests.filter((r: any) =>
+        r.status === 'approved' && new Date(r.start_date) >= today
+      ).length;
+
+      setPendingTimeOff(pending);
+      setUpcomingApproved(upcoming);
+    } catch (error) {
+      console.error('Error fetching time off:', error);
+    } finally {
+      setLoadingTimeOff(false);
+    }
   }, []);
 
   const handleUpdateProgress = (
@@ -174,8 +217,10 @@ export default function InstructorDashboard() {
   useEffect(() => {
     if (user) {
       fetchDashboardData();
+      fetchWeeklyHours();
+      fetchTimeOffSummary();
     }
-  }, [fetchDashboardData, user]);
+  }, [fetchDashboardData, fetchWeeklyHours, fetchTimeOffSummary, user]);
 
   if (authLoading || loading) {
     return (
@@ -187,8 +232,8 @@ export default function InstructorDashboard() {
         </div>
 
         {/* Stats cards skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i}>
               <CardContent className="p-6">
                 <div className="flex justify-between items-start">
@@ -240,7 +285,7 @@ export default function InstructorDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
@@ -294,6 +339,59 @@ export default function InstructorDashboard() {
                 <CheckCircle className="h-6 w-6 text-green-600" />
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Timecard Card */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm text-muted-foreground">This Week's Hours</p>
+                <p className="text-3xl font-bold mt-1">
+                  {loadingHours ? '...' : `${weeklyHours.toFixed(1)} hrs`}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {format(startOfWeek(new Date(), { weekStartsOn: 0 }), 'MMM d')} - {format(endOfWeek(new Date(), { weekStartsOn: 0 }), 'MMM d, yyyy')}
+                </p>
+              </div>
+              <div className="p-3 bg-purple-100 rounded-full">
+                <Clock className="h-6 w-6 text-purple-600" />
+              </div>
+            </div>
+            <Button className="mt-3 w-full" variant="outline" size="sm" asChild>
+              <Link href="/instructor/timecard">
+                <Clock className="h-4 w-4 mr-2" />
+                View Timecard
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Time Off Card */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm text-muted-foreground">Time Off</p>
+                <p className="text-3xl font-bold mt-1">
+                  {loadingTimeOff ? '...' : pendingTimeOff}
+                  <span className="text-sm font-normal text-muted-foreground ml-1">pending</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {upcomingApproved} upcoming approved
+                </p>
+              </div>
+              <div className="p-3 bg-amber-100 rounded-full">
+                <CalendarOff className="h-6 w-6 text-amber-600" />
+              </div>
+            </div>
+            <Button className="mt-3 w-full" variant="outline" size="sm" asChild>
+              <Link href="/instructor/time-off">
+                <Calendar className="h-4 w-4 mr-2" />
+                Request Time Off
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
