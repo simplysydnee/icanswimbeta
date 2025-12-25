@@ -116,10 +116,10 @@ export function Sidebar({ className, onToggle }: SidebarProps) {
                                 key={child.title}
                                 href={child.href}
                                 className={cn(
-                                  'block px-3 py-2 text-sm rounded-md transition-colors',
+                                  'block px-3 py-2 text-sm rounded-md transition-all duration-200',
                                   child.isActive
-                                    ? 'bg-primary/10 text-primary font-medium'
-                                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                                    ? 'bg-primary text-primary-foreground font-medium shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-accent hover:shadow-sm'
                                 )}
                               >
                                 {child.title}
@@ -132,10 +132,10 @@ export function Sidebar({ className, onToggle }: SidebarProps) {
                       <Link
                         href={item.href}
                         className={cn(
-                          'flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-colors',
+                          'flex items-center space-x-3 px-3 py-2 text-sm rounded-md transition-all duration-200',
                           item.isActive
-                            ? 'bg-primary/10 text-primary font-medium'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                            ? 'bg-primary text-primary-foreground font-medium shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-accent hover:shadow-sm'
                         )}
                       >
                         {renderIcon(item.icon)}
@@ -157,10 +157,10 @@ export function Sidebar({ className, onToggle }: SidebarProps) {
                   <Link
                     href={item.href}
                     className={cn(
-                      'flex items-center justify-center w-10 h-10 rounded-md transition-colors group',
+                      'flex items-center justify-center w-10 h-10 rounded-md transition-all duration-200 group',
                       item.isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent hover:shadow-sm'
                     )}
                     title={item.title}
                   >

@@ -71,17 +71,27 @@ export function InstructorSidebar() {
             (item.href !== '/instructor' && pathname.startsWith(item.href));
 
           return (
-            <Link key={item.href} href={item.href}>
+            <Link key={item.href} href={item.href} className="group">
               <div
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
+                  'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200',
                   isActive
-                    ? 'bg-cyan-50 text-cyan-700 font-medium'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-cyan-600 text-white font-medium shadow-sm'
+                    : 'text-gray-700 hover:bg-cyan-50 hover:text-cyan-800 hover:shadow-sm'
                 )}
               >
-                <item.icon className="h-5 w-5 shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
+                <item.icon className={cn(
+                  "h-5 w-5 shrink-0 transition-colors",
+                  isActive ? "text-white" : "text-gray-500 group-hover:text-cyan-600"
+                )} />
+                {!collapsed && (
+                  <span className={cn(
+                    "transition-colors",
+                    isActive ? "text-white" : "text-gray-700 group-hover:text-cyan-800"
+                  )}>
+                    {item.label}
+                  </span>
+                )}
               </div>
             </Link>
           );
