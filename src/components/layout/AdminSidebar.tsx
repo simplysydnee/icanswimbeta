@@ -102,19 +102,29 @@ export function AdminSidebar() {
             (item.href !== '/admin' && pathname.startsWith(item.href));
 
           return (
-            <Link key={item.href} href={item.href}>
+            <Link key={item.href} href={item.href} className="group">
               <div
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
                   isActive
-                    ? "bg-cyan-50 text-cyan-700 font-medium"
-                    : "text-gray-600 hover:bg-gray-100",
+                    ? "bg-cyan-600 text-white font-medium shadow-sm"
+                    : "text-gray-700 hover:bg-cyan-50 hover:text-cyan-800 hover:shadow-sm",
                   collapsed && "justify-center px-2"
                 )}
                 title={collapsed ? item.title : undefined}
               >
-                <item.icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-cyan-600")} />
-                {!collapsed && <span className="text-sm">{item.title}</span>}
+                <item.icon className={cn(
+                  "h-5 w-5 flex-shrink-0 transition-colors",
+                  isActive ? "text-white" : "text-gray-500 group-hover:text-cyan-600"
+                )} />
+                {!collapsed && (
+                  <span className={cn(
+                    "text-sm font-medium transition-colors",
+                    isActive ? "text-white" : "text-gray-700 group-hover:text-cyan-800"
+                  )}>
+                    {item.title}
+                  </span>
+                )}
               </div>
             </Link>
           );

@@ -6,20 +6,27 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
 
-    // Check if user is admin
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data: userRole } = await supabase
+    // Check admin role
+    const { data: userRoles, error: roleError } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id)
-      .single();
+      .eq('user_id', user.id);
 
-    if (userRole?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (roleError) {
+      console.error('Error fetching user roles:', roleError);
+      return NextResponse.json({ error: 'Failed to check permissions' }, { status: 500 });
+    }
+
+    const isAdmin = userRoles?.some(role => role.role === 'admin') || false;
+
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     // Get query parameters

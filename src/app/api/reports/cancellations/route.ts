@@ -11,14 +11,19 @@ export async function GET(request: Request) {
     }
 
     // Check admin role
-    const { data: userRole } = await supabase
+    const { data: userRoles, error: roleError } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin')
-      .single();
+      .eq('user_id', user.id);
 
-    if (!userRole) {
+    if (roleError) {
+      console.error('Error fetching user roles:', roleError);
+      return NextResponse.json({ error: 'Failed to check permissions' }, { status: 500 });
+    }
+
+    const isAdmin = userRoles?.some(role => role.role === 'admin') || false;
+
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 

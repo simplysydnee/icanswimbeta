@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { DateRangePicker } from './DateRangePicker';
 import { exportToCSV } from '@/lib/export-csv';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Calendar, Download, Users, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Calendar, Download, Users, CheckCircle, XCircle } from 'lucide-react';
 
 interface BookingData {
   id: string;
@@ -62,9 +62,47 @@ export function BookingsReport() {
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     end: new Date()
   });
+  const [chartView, setChartView] = useState<'weekly' | 'monthly'>('weekly');
   const [data, setData] = useState<BookingsReportData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Group bookings by week
+  const groupByWeek = useCallback((bookings: BookingData[]) => {
+    const grouped: Record<string, number> = {};
+    bookings.forEach(b => {
+      const date = new Date(b.created_at);
+      // Get start of week (Sunday)
+      const startOfWeek = new Date(date);
+      startOfWeek.setDate(date.getDate() - date.getDay());
+      const weekKey = startOfWeek.toISOString().split('T')[0];
+      grouped[weekKey] = (grouped[weekKey] || 0) + 1;
+    });
+    return Object.entries(grouped)
+      .map(([week, count]) => ({
+        week,
+        count,
+        label: `Week of ${new Date(week).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+      }))
+      .sort((a, b) => a.week.localeCompare(b.week));
+  }, []);
+
+  // Group bookings by month
+  const groupByMonth = useCallback((bookings: BookingData[]) => {
+    const grouped: Record<string, number> = {};
+    bookings.forEach(b => {
+      const date = new Date(b.created_at);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      grouped[monthKey] = (grouped[monthKey] || 0) + 1;
+    });
+    return Object.entries(grouped)
+      .map(([month, count]) => ({
+        month,
+        count,
+        label: new Date(month + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+      }))
+      .sort((a, b) => a.month.localeCompare(b.month));
+  }, []);
 
   const fetchBookingsReport = useCallback(async () => {
     setLoading(true);
@@ -143,13 +181,6 @@ export function BookingsReport() {
       </Card>
     );
   }
-
-  const statusData = data ? [
-    { name: 'Confirmed', value: data.byStatus.confirmed, color: statusColors.confirmed },
-    { name: 'Completed', value: data.byStatus.completed, color: statusColors.completed },
-    { name: 'Cancelled', value: data.byStatus.cancelled, color: statusColors.cancelled },
-    { name: 'No Show', value: data.byStatus.noShow, color: statusColors.no_show }
-  ] : [];
 
   const paymentData = data ? [
     { name: 'Private Pay', value: data.byPaymentType.privatePay, color: paymentTypeColors.privatePay },
