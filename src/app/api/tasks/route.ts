@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+
     // Parse query parameters
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get('status');
