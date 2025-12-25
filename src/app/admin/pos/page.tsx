@@ -151,59 +151,51 @@ export default function POSPage() {
 
   const [fundingSourceStats, setFundingSourceStats] = useState<FundingSourceStats[]>([]);
 
-  useEffect(() => {
-    fetchPurchaseOrders();
-  }, []);
-
-  const fetchPurchaseOrders = async () => {
+  const fetchPurchaseOrders = useCallback(async () => {
     setLoading(true);
-    const supabase = createClient();
-
     try {
-      const { data, error } = await supabase
-        .from('purchase_orders')
-        .select(`
-          *,
-          swimmer:swimmers(id, first_name, last_name, date_of_birth, parent_id),
-          funding_source:funding_sources(id, name, short_name),
-          coordinator:profiles!purchase_orders_coordinator_id_fkey(id, full_name, email)
-        `)
-        .order('created_at', { ascending: false });
+      const params = new URLSearchParams();
+      if (selectedMonth) {
+        params.append('month', selectedMonth);
+      }
 
-      if (error) throw error;
+      const response = await fetch(`/api/pos?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
 
-      const orders = data || [];
+      const result = await response.json();
+      const orders = result.data || [];
       setPurchaseOrders(orders);
-
-      // Calculate stats
-      const totalBilled = orders.reduce((sum, po) => sum + (po.billed_amount_cents || 0), 0);
-      const totalPaid = orders.reduce((sum, po) => sum + (po.paid_amount_cents || 0), 0);
-
-      setStats({
-        total: orders.length,
-        pending: orders.filter(po => po.status === 'pending').length,
-        needAuth: orders.filter(po => po.status === 'approved_pending_auth').length,
-        active: orders.filter(po => po.status === 'active').length,
-        completed: orders.filter(po => po.status === 'completed').length,
-        expired: orders.filter(po => po.status === 'expired').length,
-        cancelled: orders.filter(po => po.status === 'cancelled').length,
-        // Billing stats
-        unbilled: orders.filter(po => po.billing_status === 'unbilled').length,
-        billed: orders.filter(po => po.billing_status === 'billed').length,
-        paid: orders.filter(po => po.billing_status === 'paid').length,
-        partial: orders.filter(po => po.billing_status === 'partial').length,
-        overdue: orders.filter(po => po.billing_status === 'overdue').length,
-        disputed: orders.filter(po => po.billing_status === 'disputed').length,
-        totalBilled,
-        totalPaid,
-        totalOutstanding: totalBilled - totalPaid,
+      setStats(result.stats || {
+        total: 0,
+        pending: 0,
+        needAuth: 0,
+        active: 0,
+        completed: 0,
+        expired: 0,
+        cancelled: 0,
+        unbilled: 0,
+        billed: 0,
+        paid: 0,
+        partial: 0,
+        overdue: 0,
+        disputed: 0,
+        totalBilled: 0,
+        totalPaid: 0,
+        totalOutstanding: 0,
       });
+      setFundingSourceStats(result.fundingSourceStats || []);
     } catch (error) {
       console.error('Error fetching POs:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedMonth]);
+
+  useEffect(() => {
+    fetchPurchaseOrders();
+  }, [fetchPurchaseOrders]);
 
   const handleApprove = async () => {
     if (!selectedPO) return;
@@ -321,8 +313,9 @@ export default function POSPage() {
     const matchesBillingStatus = billingStatusFilter === 'all' || po.billing_status === billingStatusFilter;
     const matchesPoType = poTypeFilter === 'all' || po.po_type === poTypeFilter;
     const matchesFundingSource = fundingSourceFilter === 'all' || po.funding_source?.id === fundingSourceFilter;
+    const matchesSelectedFundingSource = !selectedFundingSource || po.funding_source?.id === selectedFundingSource;
 
-    return matchesSearch && matchesStatus && matchesBillingStatus && matchesPoType && matchesFundingSource;
+    return matchesSearch && matchesStatus && matchesBillingStatus && matchesPoType && matchesFundingSource && matchesSelectedFundingSource;
   });
 
   const getFundingSources = () => {
@@ -349,112 +342,75 @@ export default function POSPage() {
       <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-3xl font-bold">Purchase Orders</h1>
-          <p className="text-muted-foreground">Manage funding authorizations for swimmers</p>
+          <p className="text-muted-foreground">Manage funding authorizations</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchPurchaseOrders}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="border rounded-md px-3 py-2 bg-white text-sm"
+            >
+              <option value="2025-12">December 2025</option>
+              <option value="2025-11">November 2025</option>
+              <option value="2025-10">October 2025</option>
+              <option value="2025-09">September 2025</option>
+              <option value="2025-08">August 2025</option>
+              <option value="2025-07">July 2025</option>
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={fetchPurchaseOrders}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-10 gap-3 mb-6">
+      {/* Overall Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
-          <CardContent className="p-3">
+          <CardContent className="p-4">
             <div className="text-xs text-muted-foreground">Total</div>
-            <div className="text-lg font-bold">{stats.total}</div>
+            <div className="text-2xl font-bold">{stats.total}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="text-xs text-green-700">Active</div>
+            <div className="text-2xl font-bold text-green-800">{stats.active}</div>
           </CardContent>
         </Card>
         <Card className="border-yellow-200 bg-yellow-50">
-          <CardContent className="p-3">
+          <CardContent className="p-4">
             <div className="text-xs text-yellow-700">Pending</div>
-            <div className="text-lg font-bold text-yellow-800">{stats.pending}</div>
-          </CardContent>
-        </Card>
-        <Card className="border-orange-200 bg-orange-50">
-          <CardContent className="p-3">
-            <div className="text-xs text-orange-700">Need Auth#</div>
-            <div className="text-lg font-bold text-orange-800">{stats.needAuth}</div>
-          </CardContent>
-        </Card>
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="p-3">
-            <div className="text-xs text-green-700">Active</div>
-            <div className="text-lg font-bold text-green-800">{stats.active}</div>
-          </CardContent>
-        </Card>
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="p-3">
-            <div className="text-xs text-blue-700">Completed</div>
-            <div className="text-lg font-bold text-blue-800">{stats.completed}</div>
-          </CardContent>
-        </Card>
-        <Card className="border-gray-200 bg-gray-50">
-          <CardContent className="p-3">
-            <div className="text-xs text-gray-700">Expired</div>
-            <div className="text-lg font-bold text-gray-800">{stats.expired}</div>
+            <div className="text-2xl font-bold text-yellow-800">{stats.pending + stats.needAuth}</div>
           </CardContent>
         </Card>
         <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-3">
-            <div className="text-xs text-red-700">Cancelled</div>
-            <div className="text-lg font-bold text-red-800">{stats.cancelled}</div>
-          </CardContent>
-        </Card>
-        {/* Billing Stats */}
-        <Card className="border-gray-200 bg-gray-50">
-          <CardContent className="p-3">
-            <div className="text-xs text-gray-700">Unbilled</div>
-            <div className="text-lg font-bold text-gray-800">{stats.unbilled}</div>
-          </CardContent>
-        </Card>
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="p-3">
-            <div className="text-xs text-blue-700">Billed</div>
-            <div className="text-lg font-bold text-blue-800">{stats.billed}</div>
-          </CardContent>
-        </Card>
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="p-3">
-            <div className="text-xs text-green-700">Paid</div>
-            <div className="text-lg font-bold text-green-800">{stats.paid}</div>
-          </CardContent>
-        </Card>
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-3">
-            <div className="text-xs text-red-700">Overdue</div>
-            <div className="text-lg font-bold text-red-800">{stats.overdue}</div>
+          <CardContent className="p-4">
+            <div className="text-xs text-red-700">Outstanding</div>
+            <div className="text-2xl font-bold text-red-800">
+              ${(stats.totalOutstanding / 100).toFixed(2)}
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Financial Summary */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <div className="text-xs text-muted-foreground">Total Billed</div>
-              <div className="text-xl font-bold">${(stats.totalBilled / 100).toFixed(2)}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Total Paid</div>
-              <div className="text-xl font-bold text-green-600">${(stats.totalPaid / 100).toFixed(2)}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Outstanding</div>
-              <div className={`text-xl font-bold ${stats.totalOutstanding > 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                ${(stats.totalOutstanding / 100).toFixed(2)}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Funding Source Summary */}
+      <div className="mb-6">
+        <FundingSourceSummary
+          stats={fundingSourceStats}
+          onSelectSource={setSelectedFundingSource}
+          selectedSource={selectedFundingSource}
+        />
+      </div>
 
       {/* Filters */}
       <Card className="mb-6">
@@ -470,7 +426,23 @@ export default function POSPage() {
               />
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              {selectedFundingSource && (
+                <div className="flex items-center gap-2 bg-cyan-50 border border-cyan-200 rounded-md px-3 py-2">
+                  <span className="text-sm text-cyan-700">
+                    Filtered by: {fundingSourceStats.find(fs => fs.id === selectedFundingSource)?.name}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedFundingSource(null)}
+                    className="h-6 w-6 p-0 hover:bg-cyan-100"
+                  >
+                    <XCircle className="h-3 w-3 text-cyan-600" />
+                  </Button>
+                </div>
+              )}
+
               <div className="flex items-center gap-1">
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <select
@@ -535,13 +507,28 @@ export default function POSPage() {
           <CardContent className="text-center py-12 text-muted-foreground">
             <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>No purchase orders found</p>
-            {searchTerm || statusFilter !== 'all' || poTypeFilter !== 'all' || fundingSourceFilter !== 'all' ? (
+            {searchTerm || statusFilter !== 'all' || poTypeFilter !== 'all' || fundingSourceFilter !== 'all' || selectedFundingSource ? (
               <p className="text-sm mt-2">Try adjusting your filters</p>
             ) : null}
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
+          {selectedFundingSource && (
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">
+                {fundingSourceStats.find(fs => fs.id === selectedFundingSource)?.name} Purchase Orders
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedFundingSource(null)}
+                className="text-muted-foreground"
+              >
+                Clear filter
+              </Button>
+            </div>
+          )}
           {filteredPOs.map((po) => {
             const statusConfig = STATUS_CONFIG[po.status] || STATUS_CONFIG.pending;
             const StatusIcon = statusConfig.icon;
