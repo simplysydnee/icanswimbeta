@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { RoleGuard } from '@/components/auth/RoleGuard'
 import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
-import { Plus } from 'lucide-react'
+import { Plus, AlertTriangle, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 // Import booking components
@@ -64,6 +64,7 @@ export default function AdminBookingsPage() {
   const [availableSessions, setAvailableSessions] = useState<AvailableSession[]>([])
   const [loadingSessions, setLoadingSessions] = useState(false)
   const [loadingSwimmers, setLoadingSwimmers] = useState(false)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   // UI State
   const [view, setView] = useState<'table' | 'calendar'>('table')
@@ -82,6 +83,7 @@ export default function AdminBookingsPage() {
   // Fetch bookings with filters
   const fetchBookings = useCallback(async (filters: BookingFiltersType = {}) => {
     setLoading(true)
+    setFetchError(null)
     try {
       const params = new URLSearchParams()
 
@@ -95,18 +97,26 @@ export default function AdminBookingsPage() {
       if (filters.location) params.append('location', filters.location)
 
       const response = await fetch(`/api/bookings?${params.toString()}`)
-      if (!response.ok) throw new Error('Failed to fetch bookings')
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Failed to fetch bookings: ${response.status} ${response.statusText} - ${errorText}`)
+      }
 
       const data = await response.json()
       setFilteredBookings(data.bookings || [])
       setStats(data.stats || stats)
     } catch (error) {
       console.error('Error fetching bookings:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load bookings'
+      setFetchError(errorMessage)
       toast({
         title: 'Error',
-        description: 'Failed to load bookings',
+        description: errorMessage,
         variant: 'destructive'
       })
+      // Clear bookings on error
+      setFilteredBookings([])
     } finally {
       setLoading(false)
     }
@@ -685,6 +695,27 @@ export default function AdminBookingsPage() {
             onExport={handleBulkExport}
             instructors={instructors}
           />
+        )}
+
+        {/* Error Display */}
+        {fetchError && !loading && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
+                <p className="text-red-700">{fetchError}</p>
+              </div>
+              <Button
+                onClick={() => fetchBookings(filters)}
+                variant="outline"
+                size="sm"
+                className="border-red-300 text-red-700 hover:bg-red-100"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            </div>
+          </div>
         )}
 
         {/* Bookings View */}

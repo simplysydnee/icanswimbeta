@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,11 +27,13 @@ import {
   Filter,
   Download,
   RefreshCw,
-  DollarSign
+  DollarSign,
+  Calendar
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import { POBillingModal } from '@/components/admin/POBillingModal';
+import { FundingSourceSummary } from '@/components/admin/FundingSourceSummary';
 
 interface PurchaseOrder {
   id: string;
@@ -74,6 +76,18 @@ interface PurchaseOrder {
   } | null;
 }
 
+interface FundingSourceStats {
+  id: string;
+  name: string;
+  code: string;
+  activePOs: number;
+  pendingPOs: number;
+  billedAmount: number;
+  paidAmount: number;
+  outstandingBalance: number;
+  overdueCount: number;
+}
+
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800 border-yellow-300', icon: Clock },
   approved_pending_auth: { label: 'Approved (Need Auth#)', color: 'bg-orange-100 text-orange-800 border-orange-300', icon: AlertCircle },
@@ -100,6 +114,8 @@ export default function POSPage() {
   const [billingStatusFilter, setBillingStatusFilter] = useState<string>('all');
   const [poTypeFilter, setPoTypeFilter] = useState<string>('all');
   const [fundingSourceFilter, setFundingSourceFilter] = useState<string>('all');
+  const [selectedFundingSource, setSelectedFundingSource] = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
 
   // Approval dialog state
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
@@ -132,6 +148,8 @@ export default function POSPage() {
     totalPaid: 0,
     totalOutstanding: 0,
   });
+
+  const [fundingSourceStats, setFundingSourceStats] = useState<FundingSourceStats[]>([]);
 
   useEffect(() => {
     fetchPurchaseOrders();

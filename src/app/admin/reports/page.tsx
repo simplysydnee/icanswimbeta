@@ -6,7 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookingsReport } from '@/components/reports/BookingsReport';
 import { CancellationsReport } from '@/components/reports/CancellationsReport';
 import { BillingReport } from '@/components/reports/BillingReport';
-import { BarChart3, XCircle, DollarSign } from 'lucide-react';
+import { TimecardReport } from '@/components/reports/TimecardReport';
+import { BarChart3, XCircle, DollarSign, Clock } from 'lucide-react';
 
 export default function ReportsPage() {
   return (
@@ -30,6 +31,10 @@ export default function ReportsPage() {
             <DollarSign className="h-4 w-4" />
             Billing & Revenue
           </TabsTrigger>
+          <TabsTrigger value="timecards" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Timecards
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="bookings">
@@ -42,6 +47,9 @@ export default function ReportsPage() {
 
         <TabsContent value="billing">
           <BillingReport />
+        </TabsContent>
+        <TabsContent value="timecards">
+          <TimecardReport />
         </TabsContent>
       </Tabs>
     </div>

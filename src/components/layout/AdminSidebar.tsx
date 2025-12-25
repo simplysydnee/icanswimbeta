@@ -32,6 +32,7 @@ const navItems = [
   { title: 'Bookings', href: '/admin/bookings', icon: ClipboardList },
   { title: 'Tasks', href: '/admin/tasks', icon: CheckSquare },
   { title: 'Reports', href: '/admin/reports', icon: BarChart3 },
+  { title: 'Team', href: '/admin/team', icon: Users },
   { title: 'Referrals', href: '/admin/referrals', icon: FileText },
   { title: 'Purchase Orders', href: '/admin/pos', icon: CreditCard },
   { title: 'Users', href: '/admin/users', icon: UserCog },

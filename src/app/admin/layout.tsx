@@ -1,6 +1,7 @@
 'use client';
 
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -10,7 +11,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         className="min-h-screen transition-all duration-300"
         style={{ marginLeft: 'var(--sidebar-width, 4rem)' }}
       >
-        {children}
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
       </main>
     </div>
   );

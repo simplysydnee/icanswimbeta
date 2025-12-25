@@ -148,26 +148,33 @@ export async function GET(request: NextRequest) {
         stats.poStatus[po.status as keyof typeof stats.poStatus]++;
       }
 
-      // Billing Status counts
-      if (po.billing_status && stats.billingStatus.hasOwnProperty(po.billing_status)) {
-        stats.billingStatus[po.billing_status as keyof typeof stats.billingStatus]++;
+      // Billing Status counts - check if billing_status column exists
+      const billingStatus = (po as any).billing_status;
+      if (billingStatus && stats.billingStatus.hasOwnProperty(billingStatus)) {
+        stats.billingStatus[billingStatus as keyof typeof stats.billingStatus]++;
       }
 
-      // Financial totals
-      const billed = po.billed_amount_cents || 0;
-      const paid = po.paid_amount_cents || 0;
+      // Financial totals - check if billing columns exist
+      const billed = (po as any).billed_amount_cents || 0;
+      const paid = (po as any).paid_amount_cents || 0;
       const outstanding = billed - paid;
 
       stats.financial.totalBilled += billed;
       stats.financial.totalPaid += paid;
       stats.financial.totalOutstanding += outstanding;
 
-      // Check if overdue
-      if (po.due_date && po.billing_status === 'overdue') {
-        const dueDate = parseISO(po.due_date);
-        const today = new Date();
-        const daysOverdue = Math.max(0, Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)));
-        stats.financial.totalOverdue += outstanding;
+      // Check if overdue - check if due_date column exists
+      const dueDate = (po as any).due_date;
+      if (dueDate && billingStatus === 'overdue') {
+        try {
+          const parsedDueDate = parseISO(dueDate);
+          const today = new Date();
+          const daysOverdue = Math.max(0, Math.floor((today.getTime() - parsedDueDate.getTime()) / (1000 * 60 * 60 * 24)));
+          stats.financial.totalOverdue += outstanding;
+          // Note: daysOverdue is calculated but not used in this section, only in problemPOs
+        } catch (error) {
+          console.warn('Error parsing due date:', error);
+        }
       }
 
       // Funding source breakdown
@@ -214,7 +221,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Problem POs (overdue or disputed with outstanding balance)
-      if ((po.billing_status === 'overdue' || po.billing_status === 'disputed') && outstanding > 0) {
+      if ((billingStatus === 'overdue' || billingStatus === 'disputed') && outstanding > 0) {
         const swimmerName = po.swimmer
           ? `${po.swimmer.first_name} ${po.swimmer.last_name}`
           : 'Unknown Swimmer';
@@ -225,10 +232,14 @@ export async function GET(request: NextRequest) {
         const fundingSourceName = po.funding_source?.name || 'Unknown';
 
         let daysOverdue = 0;
-        if (po.due_date && po.billing_status === 'overdue') {
-          const dueDate = parseISO(po.due_date);
-          const today = new Date();
-          daysOverdue = Math.max(0, Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)));
+        if (dueDate && billingStatus === 'overdue') {
+          try {
+            const parsedDueDate = parseISO(dueDate);
+            const today = new Date();
+            daysOverdue = Math.max(0, Math.floor((today.getTime() - parsedDueDate.getTime()) / (1000 * 60 * 60 * 24)));
+          } catch (error) {
+            console.warn('Error parsing due date for problem PO:', error);
+          }
         }
 
         stats.problemPOs.push({
@@ -241,8 +252,8 @@ export async function GET(request: NextRequest) {
           daysOverdue,
           fundingSourceName,
           status: po.status,
-          billingStatus: po.billing_status,
-          dueDate: po.due_date
+          billingStatus: billingStatus || 'unknown',
+          dueDate: dueDate || null
         });
       }
     });

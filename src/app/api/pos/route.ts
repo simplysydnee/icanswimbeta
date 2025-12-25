@@ -1,9 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
 
-// GET - List purchase orders (with filters)
+interface FundingSourceStats {
+  id: string;
+  name: string;
+  code: string;
+  activePOs: number;
+  pendingPOs: number;
+  billedAmount: number;
+  paidAmount: number;
+  outstandingBalance: number;
+  overdueCount: number;
+}
+
+// GET - List purchase orders (with filters) and stats
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -18,6 +31,7 @@ export async function GET(request: NextRequest) {
     const swimmerId = searchParams.get('swimmer_id');
     const coordinatorId = searchParams.get('coordinator_id');
     const search = searchParams.get('search');
+    const month = searchParams.get('month'); // yyyy-MM format
 
     let query = supabase
       .from('purchase_orders')
@@ -63,7 +77,113 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ data: filteredData });
+    // Calculate stats by funding source
+    const fundingSourceStats: Record<string, FundingSourceStats> = {};
+    let overallStats = {
+      total: 0,
+      pending: 0,
+      needAuth: 0,
+      active: 0,
+      completed: 0,
+      expired: 0,
+      cancelled: 0,
+      unbilled: 0,
+      billed: 0,
+      paid: 0,
+      partial: 0,
+      overdue: 0,
+      disputed: 0,
+      totalBilled: 0,
+      totalPaid: 0,
+      totalOutstanding: 0,
+    };
+
+    // Set up month filter for billing amounts
+    let monthStart: Date | null = null;
+    let monthEnd: Date | null = null;
+    if (month) {
+      const [year, monthNum] = month.split('-').map(Number);
+      monthStart = startOfMonth(new Date(year, monthNum - 1));
+      monthEnd = endOfMonth(new Date(year, monthNum - 1));
+    }
+
+    data?.forEach(po => {
+      // Overall stats
+      overallStats.total++;
+      if (po.status === 'pending') overallStats.pending++;
+      if (po.status === 'approved_pending_auth') overallStats.needAuth++;
+      if (po.status === 'active') overallStats.active++;
+      if (po.status === 'completed') overallStats.completed++;
+      if (po.status === 'expired') overallStats.expired++;
+      if (po.status === 'cancelled') overallStats.cancelled++;
+
+      if (po.billing_status === 'unbilled') overallStats.unbilled++;
+      if (po.billing_status === 'billed') overallStats.billed++;
+      if (po.billing_status === 'paid') overallStats.paid++;
+      if (po.billing_status === 'partial') overallStats.partial++;
+      if (po.billing_status === 'overdue') overallStats.overdue++;
+      if (po.billing_status === 'disputed') overallStats.disputed++;
+
+      // Funding source stats
+      const fsId = po.funding_source?.id || 'private_pay';
+      const fsName = po.funding_source?.name || 'Private Pay';
+      const fsCode = po.funding_source?.short_name || 'PP';
+
+      if (!fundingSourceStats[fsId]) {
+        fundingSourceStats[fsId] = {
+          id: fsId,
+          name: fsName,
+          code: fsCode,
+          activePOs: 0,
+          pendingPOs: 0,
+          billedAmount: 0,
+          paidAmount: 0,
+          outstandingBalance: 0,
+          overdueCount: 0
+        };
+      }
+
+      // Count by status
+      if (po.status === 'in_progress' || po.status === 'approved' || po.status === 'active') {
+        fundingSourceStats[fsId].activePOs++;
+      }
+      if (po.status === 'pending' || po.status === 'approved_pending_auth') {
+        fundingSourceStats[fsId].pendingPOs++;
+      }
+
+      // Billing amounts (filter by selected month if provided)
+      let includeBilling = true;
+      if (monthStart && monthEnd && po.billed_at) {
+        includeBilling = isWithinInterval(new Date(po.billed_at), { start: monthStart, end: monthEnd });
+      }
+
+      if (includeBilling) {
+        const billedAmount = po.billed_amount_cents || 0;
+        const paidAmount = po.paid_amount_cents || 0;
+        const outstanding = billedAmount - paidAmount;
+
+        fundingSourceStats[fsId].billedAmount += billedAmount;
+        fundingSourceStats[fsId].paidAmount += paidAmount;
+        fundingSourceStats[fsId].outstandingBalance += outstanding;
+
+        overallStats.totalBilled += billedAmount;
+        overallStats.totalPaid += paidAmount;
+        overallStats.totalOutstanding += outstanding;
+      }
+
+      // Overdue count
+      if (po.billing_status === 'overdue') {
+        fundingSourceStats[fsId].overdueCount++;
+      }
+    });
+
+    const fundingSourceStatsArray = Object.values(fundingSourceStats);
+
+    return NextResponse.json({
+      data: filteredData,
+      stats: overallStats,
+      fundingSourceStats: fundingSourceStatsArray
+    });
   } catch (error) {
     console.error('POS GET error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
