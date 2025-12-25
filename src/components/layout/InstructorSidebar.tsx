@@ -15,6 +15,7 @@ import {
   ChevronRight,
   LogOut,
   CheckCircle,
+  CalendarOff,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -26,6 +27,7 @@ const navItems = [
   { label: 'Progress Notes', href: '/instructor/progress', icon: FileText },
   { label: 'Complete Assessment', href: '/instructor/assessments/complete', icon: CheckCircle },
   { label: 'Timecard', href: '/instructor/timecard', icon: Clock },
+  { label: 'Time Off', href: '/instructor/time-off', icon: CalendarOff },
 ];
 
 export function InstructorSidebar() {
