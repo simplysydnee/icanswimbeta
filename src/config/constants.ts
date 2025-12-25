@@ -32,8 +32,8 @@ export type SessionType = typeof SESSION_TYPE[keyof typeof SESSION_TYPE];
 
 // Locations
 export const LOCATIONS = [
-  { value: 'Turlock', label: 'Turlock - 2705 Sebastian Drive' },
   { value: 'Modesto', label: 'Modesto - 1212 Kansas Ave' },
+  { value: 'Turlock', label: 'Turlock - 2705 Sebastian Drive' },
 ] as const;
 
 // Session durations (in minutes)

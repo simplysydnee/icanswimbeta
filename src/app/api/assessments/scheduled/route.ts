@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
 
@@ -11,19 +11,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user role
-    const { data: profile } = await supabase
-      .from('profiles')
+    // Get user roles from user_roles table
+    const { data: roleData, error: roleError } = await supabase
+      .from('user_roles')
       .select('role')
-      .eq('id', user.id)
-      .single();
+      .eq('user_id', user.id);
 
-    if (!profile) {
-      return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
-      );
+    if (roleError) {
+      console.error('Error fetching user roles:', roleError);
+      return NextResponse.json({ error: 'Failed to check permissions' }, { status: 500 });
     }
+
+    const roles = roleData?.map(r => r.role) || [];
+    const isInstructor = roles.includes('instructor');
+    const isAdmin = roles.includes('admin');
 
     // Get today's date in local timezone
     const today = new Date();
@@ -65,8 +66,8 @@ export async function GET(request: NextRequest) {
       .lt('sessions.start_time', `${todayString}T23:59:59`)
       .order('sessions.start_time', { ascending: true });
 
-    // Filter by instructor if user is instructor
-    if (profile.role === 'instructor') {
+    // Filter by instructor if user is instructor (not admin)
+    if (isInstructor && !isAdmin) {
       query = query.eq('sessions.instructor_id', user.id);
     }
 
@@ -82,11 +83,11 @@ export async function GET(request: NextRequest) {
 
     // Transform the data
     const swimmers = bookings
-      .filter(booking => booking.sessions && booking.swimmers)
+      .filter(booking => booking.sessions && booking.sessions.length > 0 && booking.swimmers && booking.swimmers.length > 0)
       .map(booking => {
-        const swimmer = booking.swimmers;
-        const session = booking.sessions;
-        const parent = swimmer.profiles;
+        const swimmer = booking.swimmers[0];
+        const session = booking.sessions[0];
+        const parent = swimmer.profiles && swimmer.profiles.length > 0 ? swimmer.profiles[0] : null;
 
         // Format time
         const startTime = new Date(session.start_time);

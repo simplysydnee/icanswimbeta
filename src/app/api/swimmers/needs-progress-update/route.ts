@@ -10,25 +10,20 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user role from user_roles table first, then fall back to profiles table
-    let userRole = 'parent'; // default
-
-    // Try user_roles table first
+    // Get user roles from user_roles table
     const { data: roleData, error: roleError } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id)
-      .maybeSingle();
+      .eq('user_id', user.id);
 
-    if (!roleError && roleData?.role) {
-      userRole = roleData.role;
-    } else {
-      // If no role found in user_roles, default to 'parent'
-      userRole = 'parent';
+    if (roleError) {
+      console.error('Error fetching user roles:', roleError);
+      return NextResponse.json({ error: 'Failed to check permissions' }, { status: 500 });
     }
 
-    const isAdmin = userRole === 'admin';
-    const isInstructor = userRole === 'instructor';
+    const roles = roleData?.map(r => r.role) || [];
+    const isAdmin = roles.includes('admin');
+    const isInstructor = roles.includes('instructor');
 
     if (!isAdmin && !isInstructor) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

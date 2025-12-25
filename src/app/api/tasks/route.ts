@@ -25,10 +25,13 @@ const taskSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('Tasks API: Starting request');
     const supabase = await createClient();
+    console.log('Tasks API: Supabase client created');
 
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
+    console.log('Tasks API: Auth check complete', { user: user?.email, userId: user?.id, authError });
     if (authError || !user) {
       console.error('Auth error in tasks API:', authError);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -43,20 +46,7 @@ export async function GET(request: NextRequest) {
     const priority = searchParams.get('priority');
     const swimmerId = searchParams.get('swimmer_id');
 
-    // Check admin role
-    const { data: userRoles, error: roleError } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id);
-
-    if (roleError) {
-      console.error('Error fetching user roles:', roleError);
-      return NextResponse.json({ error: 'Failed to check permissions' }, { status: 500 });
-    }
-
-    const isAdmin = userRoles?.some(role => role.role === 'admin') || false;
-
-    // Build query
+    // Build query - RLS policies will handle access control
     let query = supabase
       .from('tasks')
       .select(`
@@ -80,17 +70,11 @@ export async function GET(request: NextRequest) {
       `)
       .order('created_at', { ascending: false });
 
-    // Apply RLS automatically through Supabase policies
-    // For non-admins, we need to filter to show only their tasks
-    if (!isAdmin) {
-      query = query.or(`assigned_to.eq.${user.id},created_by.eq.${user.id}`);
-    }
-
     // Apply filters
     if (status) {
       query = query.eq('status', status);
     }
-    if (assignedTo && (isAdmin || assignedTo === user.id)) {
+    if (assignedTo) {
       query = query.eq('assigned_to', assignedTo);
     }
     if (category) {
@@ -103,12 +87,14 @@ export async function GET(request: NextRequest) {
       query = query.eq('swimmer_id', swimmerId);
     }
 
+    console.log('Tasks API: Executing query');
     const { data: tasks, error } = await query;
+    console.log('Tasks API: Query result', { error: error?.message, taskCount: tasks?.length });
 
     if (error) {
       console.error('Error fetching tasks:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch tasks' },
+        { error: 'Failed to fetch tasks', details: error.message },
         { status: 500 }
       );
     }

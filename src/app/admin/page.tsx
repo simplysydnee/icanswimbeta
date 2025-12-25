@@ -478,11 +478,11 @@ export default function AdminDashboard() {
               </Button>
             </Link>
 
-            <Link href="/admin/bookings" className="block">
+            <Link href="/admin/sessions" className="block">
               <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <ClipboardList className="h-4 w-4 mr-2" />
                 <div className="text-left whitespace-normal">
-                  <div className="font-medium">Manage Bookings</div>
+                  <div className="font-medium">Session Management</div>
                 </div>
               </Button>
             </Link>

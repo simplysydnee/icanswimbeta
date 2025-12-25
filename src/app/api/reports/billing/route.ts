@@ -4,9 +4,12 @@ import { startOfMonth, endOfMonth, format, parseISO } from 'date-fns';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('Billing API: Starting request');
     const supabase = await createClient();
+    console.log('Billing API: Supabase client created');
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
+    console.log('Billing API: Auth check complete', { user: user?.email, authError });
 
     if (authError || !user) {
       console.error('Auth error in billing API:', authError);
@@ -17,17 +20,24 @@ export async function GET(request: NextRequest) {
     console.log('Billing API called, user:', user.email);
 
     // Check admin role
+    console.log('Billing API: Checking user roles for user ID:', user.id);
     const { data: userRoles, error: roleError } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id);
 
+    console.log('Billing API: User roles query result', { roleError: roleError?.message, userRoles });
+
     if (roleError) {
       console.error('Error fetching user roles:', roleError);
-      return NextResponse.json({ error: 'Failed to check permissions' }, { status: 500 });
+      // Instead of returning 500, check if we can determine admin status another way
+      // For now, assume not admin if we can't check
+      console.warn('Could not check user roles, assuming not admin');
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     const isAdmin = userRoles?.some(role => role.role === 'admin') || false;
+    console.log('Billing API: isAdmin:', isAdmin);
 
     if (!isAdmin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
