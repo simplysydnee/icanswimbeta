@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from './StatusBadge';
 import type { Swimmer } from '@/types/booking';
-import { cn } from '@/lib/utils';
+import { cn, getSwimmerStatusBadge } from '@/lib/utils';
 
 interface SwimmerCardProps {
   swimmer: Swimmer;
@@ -16,6 +16,7 @@ interface SwimmerCardProps {
 
 export function SwimmerCard({ swimmer, isSelected, disabled, onClick }: SwimmerCardProps) {
   const initials = `${swimmer.firstName[0]}${swimmer.lastName[0]}`.toUpperCase();
+  const bookingStatus = getSwimmerStatusBadge(swimmer);
 
   return (
     <button
@@ -73,6 +74,10 @@ export function SwimmerCard({ swimmer, isSelected, disabled, onClick }: SwimmerC
         {/* Status and level badges */}
         <div className="flex flex-wrap items-center gap-2">
           <StatusBadge status={swimmer.enrollmentStatus} size="sm" />
+
+          <Badge variant={bookingStatus.variant} size="sm">
+            {bookingStatus.text}
+          </Badge>
 
           {swimmer.currentLevelName && (
             <Badge variant="secondary" className="bg-secondary/20">

@@ -85,10 +85,18 @@ export function BookingWizard({}: BookingWizardProps) {
   // Navigation functions
   const handleNext = () => {
     const isWaitlist = selectedSwimmer?.enrollmentStatus === 'waitlist';
+    const isPending = selectedSwimmer?.enrollmentStatus === 'pending_enrollment';
 
     switch (currentStep) {
       case 'select-swimmer':
-        setCurrentStep(isWaitlist ? 'assessment' : 'session-type');
+        if (isWaitlist) {
+          setCurrentStep('assessment');
+        } else if (isPending) {
+          // For pending approval, skip to confirmation with message
+          setCurrentStep('confirm');
+        } else {
+          setCurrentStep('session-type');
+        }
         break;
       case 'session-type':
         setCurrentStep('select-instructor');
@@ -311,8 +319,10 @@ export function BookingWizard({}: BookingWizardProps) {
           <SessionTypeStep
             selectedType={sessionType}
             paymentType={selectedSwimmer?.paymentType}
-            isFundedClient={selectedSwimmer?.isFundedClient}
+            fundingSourceName={selectedSwimmer?.fundingSourceName}
             isFlexibleSwimmer={selectedSwimmer?.flexibleSwimmer || false}
+            enrollmentStatus={selectedSwimmer?.enrollmentStatus}
+            assessmentStatus={selectedSwimmer?.assessmentStatus}
             onSelectType={(type) => {
               setSessionType(type);
               setTimeout(() => handleNext(), 150);
@@ -379,8 +389,47 @@ export function BookingWizard({}: BookingWizardProps) {
 
       case 'confirm':
         const isAssessment = selectedSwimmer?.enrollmentStatus === 'waitlist';
+        const isPending = selectedSwimmer?.enrollmentStatus === 'pending_enrollment';
 
-        if (isAssessment) {
+        if (isPending) {
+          // Pending approval message
+          return (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 text-amber-600">
+                <AlertCircle className="h-6 w-6" />
+                <div>
+                  <p className="font-semibold">Pending Approval</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedSwimmer?.firstName} is awaiting admin approval.
+                  </p>
+                </div>
+              </div>
+
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <p className="font-medium mb-1">What happens next:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>Your swimmer's application is being reviewed by our team</li>
+                    <li>You'll receive an email notification once approved</li>
+                    <li>After approval, you can book assessments or regular lessons</li>
+                    <li>For regional center clients: Coordinator approval is also required</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <h3 className="font-semibold text-amber-900 mb-2">Current Status</h3>
+                <ul className="text-sm text-amber-800 space-y-1">
+                  <li>• Enrollment status: Pending Approval</li>
+                  <li>• Assessment status: Not available until approved</li>
+                  <li>• Booking: Not available until approved</li>
+                  <li>• Contact: info@icanswim209.com or (209) 778-7877 for questions</li>
+                </ul>
+              </div>
+            </div>
+          );
+        } else if (isAssessment) {
           // Assessment confirmation (keep existing for now)
           return (
             <div className="space-y-6">

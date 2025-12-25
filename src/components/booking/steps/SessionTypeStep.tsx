@@ -3,9 +3,10 @@
 import { Calendar, Repeat, Check, AlertCircle } from 'lucide-react';
 import { SessionType } from '@/types/booking';
 import { PRICING } from '@/lib/constants';
-import { formatPrice, cn } from '@/lib/utils';
+import { formatPrice, cn, canBookRegularLessons, needsAssessment as needsAssessmentCheck, isPendingApproval } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface SessionTypeStepProps {
   selectedType: SessionType | null;
@@ -13,13 +14,22 @@ interface SessionTypeStepProps {
   fundingSourceName?: string; // Name of funding source (e.g., "Valley Mountain Regional Center")
   isFlexibleSwimmer: boolean; // Add flexible swimmer status
   enrollmentStatus?: string; // 'waitlist', 'enrolled', 'assessment_only', etc.
+  assessmentStatus?: string | null; // 'not_started', 'scheduled', 'completed', etc.
   onSelectType: (type: SessionType) => void;
 }
 
-export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, isFlexibleSwimmer, enrollmentStatus, onSelectType }: SessionTypeStepProps) {
+export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, isFlexibleSwimmer, enrollmentStatus, assessmentStatus, onSelectType }: SessionTypeStepProps) {
   const isFunded = paymentType === 'funded' || paymentType === 'scholarship' || !!fundingSourceName;
-  // Check if swimmer is on waitlist - only show assessment option
+  // Check swimmer status using utility functions
+  const swimmer = enrollmentStatus && assessmentStatus ? {
+    enrollmentStatus: enrollmentStatus as 'waitlist' | 'pending_enrollment' | 'enrolled' | 'inactive',
+    assessmentStatus
+  } : null;
+
   const isWaitlist = enrollmentStatus === 'waitlist';
+  const canBookRegular = swimmer ? canBookRegularLessons(swimmer as any) : false;
+  const swimmerNeedsAssessment = swimmer ? needsAssessmentCheck(swimmer as any) : false;
+  const isPending = swimmer ? isPendingApproval(swimmer as any) : false;
 
   // Use assessment price for waitlist swimmers, otherwise use regular lesson price
   const sessionPrice = isWaitlist
@@ -41,46 +51,102 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
       ? `Covered by ${getFundingSourceName()}`
       : formatPrice(sessionPrice));
 
-  const sessionTypes = [
-    {
+  // Determine which session types to show based on swimmer status
+  const sessionTypes = [];
+
+  // Waitlist swimmers or those needing assessment ONLY see assessment option
+  if (isWaitlist || swimmerNeedsAssessment) {
+    sessionTypes.push({
       id: 'single' as SessionType,
-      title: isWaitlist ? 'Initial Assessment' : 'Single Lesson',
-      description: isWaitlist
-        ? 'Complete an assessment session to determine swimmer level and goals'
-        : 'Book a one-time floating session (canceled slots made available)',
+      title: 'Initial Assessment',
+      description: 'Complete an assessment session to determine swimmer level and goals',
       icon: Calendar,
-      benefits: isWaitlist
-        ? [
-            '30-minute evaluation session',
-            'Skill level assessment',
-            'Goal setting with instructor',
-            'Required before regular lessons',
-          ]
-        : [
-            'Canceled weekly slots released back',
-            'Flexible scheduling',
-            'Great for trying out',
-            'No commitment required',
-          ],
-      note: isWaitlist
-        ? 'Required for all new swimmers on waitlist'
-        : 'Available to all enrolled swimmers',
-      disabled: false,
-    },
-    {
-      id: 'recurring' as SessionType,
-      title: 'Weekly Recurring',
-      description: 'Book the same time slot every week',
-      icon: Repeat,
       benefits: [
-        'Consistent schedule',
-        'Guaranteed time slot',
-        'Better skill progression',
+        '30-minute evaluation session',
+        'Skill level assessment',
+        'Goal setting with instructor',
+        'Required before regular lessons',
       ],
-      note: 'For enrolled swimmers with active status',
-      disabled: isFlexibleSwimmer || isWaitlist, // Disabled for flexible swimmers OR waitlist
-    },
-  ];
+      note: 'Required for all new swimmers on waitlist',
+      disabled: false,
+    });
+  }
+
+  // Enrolled swimmers who can book regular lessons see all options
+  if (canBookRegular) {
+    sessionTypes.push(
+      {
+        id: 'single' as SessionType,
+        title: 'Single Lesson',
+        description: 'Book a one-time floating session (canceled slots made available)',
+        icon: Calendar,
+        benefits: [
+          'Canceled weekly slots released back',
+          'Flexible scheduling',
+          'Great for trying out',
+          'No commitment required',
+        ],
+        note: 'Available to all enrolled swimmers',
+        disabled: false,
+      },
+      {
+        id: 'recurring' as SessionType,
+        title: 'Weekly Recurring',
+        description: 'Book the same time slot every week',
+        icon: Repeat,
+        benefits: [
+          'Consistent schedule',
+          'Guaranteed time slot',
+          'Better skill progression',
+        ],
+        note: 'For enrolled swimmers with active status',
+        disabled: isFlexibleSwimmer, // Disabled only for flexible swimmers
+      }
+    );
+  }
+
+  // Show appropriate message if no session types available
+  if (sessionTypes.length === 0) {
+    if (isPending) {
+      return (
+        <div className="space-y-8">
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Booking Not Available</h3>
+            <p className="text-sm text-muted-foreground">
+              This swimmer is awaiting approval
+            </p>
+          </div>
+
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Pending Approval</AlertTitle>
+            <AlertDescription>
+              This swimmer is awaiting admin approval. You'll be notified when booking is available.
+            </AlertDescription>
+          </Alert>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-8">
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">Booking Not Available</h3>
+          <p className="text-sm text-muted-foreground">
+            Unable to determine booking options for this swimmer
+          </p>
+        </div>
+
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Booking Error</AlertTitle>
+          <AlertDescription>
+            Unable to determine booking options for this swimmer's status. Please contact support.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
