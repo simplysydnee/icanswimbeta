@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -21,6 +22,7 @@ import { PreviewSection } from './PreviewSection';
  * Combines all section components and handles form submission
  */
 export function SessionGeneratorForm() {
+  const router = useRouter();
   const { toast } = useToast();
   const { mutate: generateSessions, isPending } = useGenerateSessions();
 
@@ -35,7 +37,7 @@ export function SessionGeneratorForm() {
   const [durationMinutes, setDurationMinutes] = useState<30>(30);
   const [breaks, setBreaks] = useState<Break[]>([]);
   const [instructorIds, setInstructorIds] = useState<string[]>([]);
-  const [location, setLocation] = useState<string>('Turlock');
+  const [location, setLocation] = useState<string>('Modesto');
   const [maxCapacity, setMaxCapacity] = useState<number>(1);
   const [selectedSwimLevels, setSelectedSwimLevels] = useState<string[]>([]);
   const [notes, setNotes] = useState<string>('');
@@ -52,7 +54,7 @@ export function SessionGeneratorForm() {
     setDurationMinutes(30);
     setBreaks([]);
     setInstructorIds([]);
-    setLocation('Turlock');
+    setLocation('Modesto');
     setMaxCapacity(1);
     setSelectedSwimLevels([]);
     setNotes('');
@@ -168,20 +170,11 @@ export function SessionGeneratorForm() {
         console.log('Response:', response);
         toast({
           title: 'Sessions Generated!',
-          description: (
-            <div className="space-y-1">
-              <p>Successfully created {response.sessionsCreated} sessions</p>
-              <Link
-                href="/admin/sessions/drafts"
-                className="text-primary hover:underline font-medium inline-flex items-center gap-1"
-              >
-                View Draft Sessions →
-              </Link>
-            </div>
-          ),
+          description: `Successfully created ${response.sessionsCreated} draft sessions`,
         });
-        console.log('Toast shown, resetting form...');
+        console.log('Toast shown, resetting form and redirecting...');
         resetForm();
+        router.push('/admin/sessions?status=draft');
       },
       onError: (error) => {
         console.error('=== API Error ===');
