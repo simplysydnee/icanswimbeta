@@ -38,8 +38,18 @@ export async function GET(
 
     const taskId = params.id;
 
-    // Check if user is owner (sutton@icanswim209.com)
-    const isOwner = user?.email === 'sutton@icanswim209.com';
+    // Check admin role
+    const { data: userRoles, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+
+    if (roleError) {
+      console.error('Error fetching user roles:', roleError);
+      return NextResponse.json({ error: 'Failed to check permissions' }, { status: 500 });
+    }
+
+    const isAdmin = userRoles?.some(role => role.role === 'admin') || false;
 
     // Build query
     let query = supabase
@@ -66,8 +76,8 @@ export async function GET(
       .eq('id', taskId);
 
     // Apply RLS automatically through Supabase policies
-    // For non-owners, we need to filter to show only their tasks
-    if (!isOwner) {
+    // For non-admins, we need to filter to show only their tasks
+    if (!isAdmin) {
       query = query.or(`assigned_to.eq.${user.id},created_by.eq.${user.id}`);
     }
 
@@ -133,11 +143,8 @@ export async function PATCH(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    // Check if user is owner (sutton@icanswim209.com)
-    const isOwner = user?.email === 'sutton@icanswim209.com';
-
     // Check permissions
-    const canUpdate = isOwner ||
+    const canUpdate = isAdmin ||
       existingTask.assigned_to === user.id ||
       existingTask.created_by === user.id;
 
@@ -215,11 +222,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }
 
-    // Check if user is owner (sutton@icanswim209.com)
-    const isOwner = user?.email === 'sutton@icanswim209.com';
-
-    // Check permissions - only creator or owner can delete
-    const canDelete = isOwner || existingTask.created_by === user.id;
+    // Check permissions - only creator or admin can delete
+    const canDelete = isAdmin || existingTask.created_by === user.id;
 
     if (!canDelete) {
       return NextResponse.json({ error: 'Not authorized to delete this task' }, { status: 403 });

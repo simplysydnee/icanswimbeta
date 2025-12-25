@@ -41,8 +41,18 @@ export async function GET(request: NextRequest) {
     const priority = searchParams.get('priority');
     const swimmerId = searchParams.get('swimmer_id');
 
-    // Check if user is owner (sutton@icanswim209.com)
-    const isOwner = user?.email === 'sutton@icanswim209.com';
+    // Check admin role
+    const { data: userRoles, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+
+    if (roleError) {
+      console.error('Error fetching user roles:', roleError);
+      return NextResponse.json({ error: 'Failed to check permissions' }, { status: 500 });
+    }
+
+    const isAdmin = userRoles?.some(role => role.role === 'admin') || false;
 
     // Build query
     let query = supabase
@@ -69,8 +79,8 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     // Apply RLS automatically through Supabase policies
-    // For non-owners, we need to filter to show only their tasks
-    if (!isOwner) {
+    // For non-admins, we need to filter to show only their tasks
+    if (!isAdmin) {
       query = query.or(`assigned_to.eq.${user.id},created_by.eq.${user.id}`);
     }
 
@@ -78,7 +88,7 @@ export async function GET(request: NextRequest) {
     if (status) {
       query = query.eq('status', status);
     }
-    if (assignedTo && (isOwner || assignedTo === user.id)) {
+    if (assignedTo && (isAdmin || assignedTo === user.id)) {
       query = query.eq('assigned_to', assignedTo);
     }
     if (category) {
