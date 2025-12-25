@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { startOfMonth, endOfMonth, subMonths, format, parseISO } from 'date-fns';
+import { startOfMonth, endOfMonth, format, parseISO } from 'date-fns';
 
 export async function GET(request: NextRequest) {
   try {
@@ -306,8 +306,14 @@ export async function GET(request: NextRequest) {
       totalPOs: purchaseOrders?.length || 0
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in billing report API:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: error.message || 'Internal server error',
+        details: error.toString()
+      },
+      { status: 500 }
+    );
   }
 }

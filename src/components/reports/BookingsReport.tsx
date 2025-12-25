@@ -257,7 +257,7 @@ export function BookingsReport() {
         </CardHeader>
         <CardContent>
           <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
               <BarChart data={
                 chartView === 'weekly'
                   ? (data?.bookings ? groupByWeek(data.bookings) : [])
