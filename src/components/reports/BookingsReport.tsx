@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { DateRangePicker } from './DateRangePicker';
 import { exportToCSV } from '@/lib/export-csv';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Calendar, Download, Users, CheckCircle, XCircle } from 'lucide-react';
 
 interface BookingData {
@@ -37,25 +37,11 @@ interface BookingsReportData {
     cancelled: number;
     noShow: number;
   };
-  byPaymentType: {
-    privatePay: number;
-    regionalCenter: number;
-  };
   byDate: Array<{ date: string; count: number }>;
   bookings: BookingData[];
 }
 
-const statusColors: Record<string, string> = {
-  confirmed: '#3b82f6',
-  completed: '#10b981',
-  cancelled: '#ef4444',
-  no_show: '#f59e0b'
-};
 
-const paymentTypeColors: Record<string, string> = {
-  privatePay: '#8b5cf6',
-  regionalCenter: '#ec4899'
-};
 
 export function BookingsReport() {
   const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>({
@@ -182,10 +168,6 @@ export function BookingsReport() {
     );
   }
 
-  const paymentData = data ? [
-    { name: 'Private Pay', value: data.byPaymentType.privatePay, color: paymentTypeColors.privatePay },
-    { name: 'Regional Center', value: data.byPaymentType.regionalCenter, color: paymentTypeColors.regionalCenter }
-  ] : [];
 
   return (
     <div className="space-y-6">
@@ -251,57 +233,50 @@ export function BookingsReport() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
+      <Card className="col-span-full">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <CardTitle>Bookings Over Time</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data?.byDate || []}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="count" name="Bookings" fill="#3b82f6" />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="flex gap-2">
+              <Button
+                variant={chartView === 'weekly' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setChartView('weekly')}
+              >
+                Weekly
+              </Button>
+              <Button
+                variant={chartView === 'monthly' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setChartView('monthly')}
+              >
+                Monthly
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Payment Type Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={paymentData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {paymentData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={
+                chartView === 'weekly'
+                  ? (data?.bookings ? groupByWeek(data.bookings) : [])
+                  : (data?.bookings ? groupByMonth(data.bookings) : [])
+              }>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey={chartView === 'weekly' ? 'label' : 'label'}
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="count" name="Bookings" fill="#3b82f6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

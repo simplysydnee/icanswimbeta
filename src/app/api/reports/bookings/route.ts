@@ -62,11 +62,6 @@ export async function GET(request: Request) {
     const cancelled = bookings?.filter(b => b.status === 'cancelled').length || 0;
     const noShow = bookings?.filter(b => b.status === 'no_show').length || 0;
 
-    // By payment type
-    const privatePay = bookings?.filter(b => b.swimmer?.payment_type === 'private_pay').length || 0;
-    const regionalCenter = bookings?.filter(b =>
-      b.swimmer?.payment_type === 'regional_center' || b.swimmer?.payment_type === 'vmrc'
-    ).length || 0;
 
     // Group by date for chart
     const byDate: Record<string, number> = {};
@@ -78,7 +73,6 @@ export async function GET(request: Request) {
     return NextResponse.json({
       total,
       byStatus: { confirmed, completed, cancelled, noShow },
-      byPaymentType: { privatePay, regionalCenter },
       byDate: Object.entries(byDate).map(([date, count]) => ({ date, count })),
       bookings
     });
