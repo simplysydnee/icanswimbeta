@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, Suspense, useCallback, useEffect } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Button } from '@/components/ui/button';
@@ -11,20 +11,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertCircle, Loader2, Calendar, FilterX, Plus, MoreHorizontal, Eye, Edit, UserPlus, Users, XCircle, CheckCircle, Trash2, Download, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAllSessions, useOpenSessions, useDeleteSessions, useInstructors } from '@/hooks';
-import { format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import { format, parseISO, startOfDay, endOfDay } from 'date-fns';
 
-// Import booking modals (we'll need to adapt them for sessions)
-import { BookingDetailsModal } from '@/components/bookings/BookingDetailsModal';
-import { EditBookingModal } from '@/components/bookings/EditBookingModal';
-import { ChangeInstructorModal } from '@/components/bookings/ChangeInstructorModal';
-import { RescheduleModal } from '@/components/bookings/RescheduleModal';
-import { CancelBookingModal } from '@/components/bookings/CancelBookingModal';
-import { CreateBookingModal } from '@/components/bookings/CreateBookingModal';
 
 function AdminSessionsContent() {
   const router = useRouter();
@@ -138,11 +132,42 @@ function AdminSessionsContent() {
     no_shows: 0,
   }, [data]);
 
-  // Get unique locations
+  // Get unique locations - normalize inconsistent formats
   const locations = useMemo(() => {
     const locs = new Set<string>();
-    allSessions.forEach(s => locs.add(s.location));
-    return Array.from(locs);
+
+    allSessions.forEach(s => {
+      if (!s.location) return;
+
+      // Normalize location formats
+      let normalized = s.location.trim();
+
+      // Handle "Modesto: 1212 Kansas Ave" -> "Modesto"
+      if (normalized.includes(':') && !normalized.includes('@')) {
+        normalized = normalized.split(':')[0].trim();
+      }
+
+      // Handle full addresses - extract city name if it's a full address
+      if (normalized.includes(', CA')) {
+        // Try to extract city name from address
+        const parts = normalized.split(',');
+        if (parts.length >= 2) {
+          // Get the city part (usually the part before state)
+          const cityPart = parts[parts.length - 2].trim();
+          // If it's just a city name, use it
+          if (cityPart && !cityPart.includes(' ') && cityPart.length < 20) {
+            normalized = cityPart;
+          }
+        }
+      }
+
+      // Standardize casing
+      normalized = normalized.charAt(0).toUpperCase() + normalized.slice(1).toLowerCase();
+
+      locs.add(normalized);
+    });
+
+    return Array.from(locs).sort();
   }, [allSessions]);
 
   // Selection handlers
@@ -294,7 +319,7 @@ function AdminSessionsContent() {
       return;
     }
 
-    const headers = Object.keys(csvData[0] || {});
+    const headers = Object.keys(csvData[0] || {}) as Array<keyof typeof csvData[0]>;
     const csv = [
       headers.join(','),
       ...csvData.map(row => headers.map(h => `"${row[h] || ''}"`).join(','))
@@ -364,167 +389,190 @@ function AdminSessionsContent() {
           </div>
         </div>
 
-        {/* Summary Statistics Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-7 gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-4">
-              <p className="text-sm text-muted-foreground">Total</p>
-              <p className="text-2xl font-bold">{stats.total}</p>
+        {/* Summary Statistics Cards - Clickable */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+          <Card
+            className={`cursor-pointer hover:shadow-md transition-all ${
+              statusFilter === 'all' ? 'ring-2 ring-primary' : ''
+            }`}
+            onClick={() => handleStatusChange('all')}
+          >
+            <CardContent className="p-4">
+              <p className="text-xs sm:text-sm text-muted-foreground">Total</p>
+              <p className="text-xl sm:text-2xl font-bold">{stats.total}</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <p className="text-sm text-muted-foreground">Drafts</p>
-              <p className="text-2xl font-bold text-yellow-600">{stats.draft}</p>
+          <Card
+            className={`cursor-pointer hover:shadow-md transition-all ${
+              statusFilter === 'draft' ? 'ring-2 ring-yellow-500' : ''
+            }`}
+            onClick={() => handleStatusChange('draft')}
+          >
+            <CardContent className="p-4">
+              <p className="text-xs sm:text-sm text-muted-foreground">Drafts</p>
+              <p className="text-xl sm:text-2xl font-bold text-yellow-600">{stats.draft}</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <p className="text-sm text-muted-foreground">Open</p>
-              <p className="text-2xl font-bold text-green-600">{stats.open}</p>
+          <Card
+            className={`cursor-pointer hover:shadow-md transition-all ${
+              statusFilter === 'open' ? 'ring-2 ring-green-500' : ''
+            }`}
+            onClick={() => handleStatusChange('open')}
+          >
+            <CardContent className="p-4">
+              <p className="text-xs sm:text-sm text-muted-foreground">Open</p>
+              <p className="text-xl sm:text-2xl font-bold text-green-600">{stats.open}</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <p className="text-sm text-muted-foreground">Booked</p>
-              <p className="text-2xl font-bold text-blue-600">{stats.booked}</p>
+          <Card
+            className={`cursor-pointer hover:shadow-md transition-all ${
+              statusFilter === 'booked' ? 'ring-2 ring-blue-500' : ''
+            }`}
+            onClick={() => handleStatusChange('booked')}
+          >
+            <CardContent className="p-4">
+              <p className="text-xs sm:text-sm text-muted-foreground">Booked</p>
+              <p className="text-xl sm:text-2xl font-bold text-blue-600">{stats.booked}</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <p className="text-sm text-muted-foreground">Completed</p>
-              <p className="text-2xl font-bold text-gray-600">{stats.completed}</p>
+          <Card
+            className={`cursor-pointer hover:shadow-md transition-all ${
+              statusFilter === 'completed' ? 'ring-2 ring-gray-500' : ''
+            }`}
+            onClick={() => handleStatusChange('completed')}
+          >
+            <CardContent className="p-4">
+              <p className="text-xs sm:text-sm text-muted-foreground">Completed</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-600">{stats.completed}</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <p className="text-sm text-muted-foreground">Cancelled</p>
-              <p className="text-2xl font-bold text-orange-600">{stats.cancelled}</p>
+          <Card
+            className={`cursor-pointer hover:shadow-md transition-all ${
+              statusFilter === 'cancelled' ? 'ring-2 ring-orange-500' : ''
+            }`}
+            onClick={() => handleStatusChange('cancelled')}
+          >
+            <CardContent className="p-4">
+              <p className="text-xs sm:text-sm text-muted-foreground">Cancelled</p>
+              <p className="text-xl sm:text-2xl font-bold text-orange-600">{stats.cancelled}</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <p className="text-sm text-muted-foreground">No-Shows</p>
-              <p className="text-2xl font-bold text-red-600">{stats.no_shows}</p>
+          <Card
+            className={`cursor-pointer hover:shadow-md transition-all ${
+              statusFilter === 'no_show' ? 'ring-2 ring-red-500' : ''
+            }`}
+            onClick={() => handleStatusChange('no_show')}
+          >
+            <CardContent className="p-4">
+              <p className="text-xs sm:text-sm text-muted-foreground">No-Shows</p>
+              <p className="text-xl sm:text-2xl font-bold text-red-600">{stats.no_shows}</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Status Tabs */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <Tabs value={statusFilter} onValueChange={handleStatusChange}>
-              <TabsList className="grid grid-cols-7 w-full">
-                <TabsTrigger value="all" className="flex flex-col items-center gap-1">
-                  <span>All</span>
-                  <Badge variant="secondary" className="text-xs">{stats.total}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="draft" className="flex flex-col items-center gap-1">
-                  <span>Drafts</span>
-                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300 text-xs">{stats.draft}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="open" className="flex flex-col items-center gap-1">
-                  <span>Open</span>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300 text-xs">{stats.open}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="booked" className="flex flex-col items-center gap-1">
-                  <span>Booked</span>
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300 text-xs">{stats.booked}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="completed" className="flex flex-col items-center gap-1">
-                  <span>Completed</span>
-                  <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-300 text-xs">{stats.completed}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="cancelled" className="flex flex-col items-center gap-1">
-                  <span>Cancelled</span>
-                  <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300 text-xs">{stats.cancelled}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="no_show" className="flex flex-col items-center gap-1">
-                  <span>No-Shows</span>
-                  <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300 text-xs">{stats.no_shows}</Badge>
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </CardContent>
-        </Card>
+        {/* Active Filter Indicator */}
+        {statusFilter !== 'all' && (
+          <div className="flex items-center gap-2 mb-6">
+            <Badge variant="secondary" className="capitalize">
+              Showing: {statusFilter.replace('_', '-')} sessions
+            </Badge>
+            <Button variant="ghost" size="sm" onClick={() => handleStatusChange('all')}>
+              <X className="h-3 w-3 mr-1" /> Clear
+            </Button>
+          </div>
+        )}
 
         {/* Filters Section */}
         <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Filters</CardTitle>
-            <CardDescription>Filter sessions by date, time, instructor, location, or search</CardDescription>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg">Filters</CardTitle>
+            <p className="text-sm text-muted-foreground">Filter sessions by date, time, instructor, location, or search</p>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
               {/* Date Range */}
-              <div className="flex gap-2">
-                <Input
-                  type="date"
-                  value={filters.startDate}
-                  onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
-                  className="w-32"
-                  placeholder="Start date"
-                />
-                <Input
-                  type="date"
-                  value={filters.endDate}
-                  onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
-                  className="w-32"
-                  placeholder="End date"
-                />
+              <div className="sm:col-span-2">
+                <Label className="text-sm text-muted-foreground mb-2 block">Date Range</Label>
+                <div className="flex gap-2 items-center">
+                  <Input
+                    type="date"
+                    value={filters.startDate}
+                    onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                    className="flex-1"
+                  />
+                  <span className="text-muted-foreground text-sm">to</span>
+                  <Input
+                    type="date"
+                    value={filters.endDate}
+                    onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                    className="flex-1"
+                  />
+                </div>
               </div>
 
               {/* Time of Day */}
-              <Select value={filters.timeFilter} onValueChange={(value) => setFilters(prev => ({ ...prev, timeFilter: value }))}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Time" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Times</SelectItem>
-                  <SelectItem value="morning">Morning</SelectItem>
-                  <SelectItem value="afternoon">Afternoon</SelectItem>
-                  <SelectItem value="evening">Evening</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <Label className="text-sm text-muted-foreground mb-2 block">Time of Day</Label>
+                <Select value={filters.timeFilter} onValueChange={(value) => setFilters(prev => ({ ...prev, timeFilter: value }))}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All Times" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Times</SelectItem>
+                    <SelectItem value="morning">Morning (6am-12pm)</SelectItem>
+                    <SelectItem value="afternoon">Afternoon (12pm-5pm)</SelectItem>
+                    <SelectItem value="evening">Evening (5pm-9pm)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Instructor */}
-              <Select value={filters.instructorFilter} onValueChange={(value) => setFilters(prev => ({ ...prev, instructorFilter: value }))}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Instructor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Instructors</SelectItem>
-                  {instructorsData?.map(i => (
-                    <SelectItem key={i.id} value={i.id}>{i.full_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div>
+                <Label className="text-sm text-muted-foreground mb-2 block">Instructor</Label>
+                <Select value={filters.instructorFilter} onValueChange={(value) => setFilters(prev => ({ ...prev, instructorFilter: value }))}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All Instructors" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Instructors</SelectItem>
+                    {instructorsData?.map(i => (
+                      <SelectItem key={i.id} value={i.id}>{i.fullName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Location */}
-              <Select value={filters.locationFilter} onValueChange={(value) => setFilters(prev => ({ ...prev, locationFilter: value }))}>
-                <SelectTrigger className="w-36">
-                  <SelectValue placeholder="Location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Locations</SelectItem>
-                  {locations.map(loc => (
-                    <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div>
+                <Label className="text-sm text-muted-foreground mb-2 block">Location</Label>
+                <Select value={filters.locationFilter} onValueChange={(value) => setFilters(prev => ({ ...prev, locationFilter: value }))}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All Locations" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Locations</SelectItem>
+                    {locations.map(loc => (
+                      <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              {/* Search */}
-              <Input
-                placeholder="Search swimmer or instructor..."
-                value={filters.search}
-                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                className="w-64"
-              />
-
-              {/* Clear Filters */}
-              <Button variant="outline" onClick={clearFilters}>
-                <FilterX className="h-4 w-4 mr-2" /> Clear
-              </Button>
+              {/* Search + Clear */}
+              <div className="sm:col-span-2 lg:col-span-1 xl:col-span-1">
+                <Label className="text-sm text-muted-foreground mb-2 block">Search</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Search swimmer or instructor..."
+                    value={filters.search}
+                    onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                    className="flex-1"
+                  />
+                  <Button variant="outline" onClick={clearFilters} size="icon" className="shrink-0" aria-label="Clear filters">
+                    <FilterX className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
