@@ -8,14 +8,10 @@ export const APP_CONFIG = {
   version: '1.0.0',
   owner: 'Sutton Lucas',
   company: 'I Can Swim, LLC',
-  email: 'sutton@icanswim209.com',
-  phone: '209-985-1538',
+  email: 'info@icanswim209.com',
+  phone: '209-778-7877',
   website: 'icanswim209.com',
   locations: {
-    turlock: {
-      name: 'Turlock',
-      address: '2705 Sebastian Drive, Turlock, CA 95382',
-    },
     modesto: {
       name: 'Modesto',
       address: '1212 Kansas Ave, Modesto, CA 95351',

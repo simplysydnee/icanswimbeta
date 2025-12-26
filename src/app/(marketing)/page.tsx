@@ -183,7 +183,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-[#1E3A5F] font-inter">Flexible Scheduling</h3>
               <p className="text-gray-600 font-inter leading-relaxed">
-                Convenient locations in Turlock and Modesto with flexible scheduling to fit your family&apos;s needs
+                Convenient location in Modesto with flexible scheduling to fit your family&apos;s needs
               </p>
             </div>
           </div>

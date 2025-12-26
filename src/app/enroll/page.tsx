@@ -354,7 +354,7 @@ export default function EnrollmentPage() {
                   I Can Swim provides adaptive swim lessons for swimmers with special needs
                 </p>
                 <p className="mt-1">
-                  Turlock: 2705 Sebastian Drive • Modesto: 1212 Kansas Ave
+                  Modesto: 1212 Kansas Ave
                 </p>
               </div>
             </div>

@@ -21,7 +21,7 @@ export default function ContactPage() {
                 <Phone className="h-6 w-6 text-cyan-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Call Us</h3>
-              <p className="text-gray-700">(209) 985-1538</p>
+              <p className="text-gray-700">(209) 778-7877</p>
               <p className="text-sm text-gray-600 mt-2">Mon-Fri, 9am-5pm</p>
             </div>
 
@@ -30,7 +30,7 @@ export default function ContactPage() {
                 <Mail className="h-6 w-6 text-blue-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Email Us</h3>
-              <p className="text-gray-700">sutton@icanswim209.com</p>
+              <p className="text-gray-700">info@icanswim209.com</p>
               <p className="text-sm text-gray-600 mt-2">Typically reply within 24 hours</p>
             </div>
 
@@ -39,8 +39,8 @@ export default function ContactPage() {
                 <MapPin className="h-6 w-6 text-cyan-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Visit Us</h3>
-              <p className="text-gray-700">Modesto & Turlock</p>
-              <p className="text-sm text-gray-600 mt-2">See locations below</p>
+              <p className="text-gray-700">By Appointment Only</p>
+              <p className="text-sm text-gray-600 mt-2">Lessons at Aquatic Dreams, Modesto</p>
             </div>
 
             <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 text-center">
@@ -48,8 +48,8 @@ export default function ContactPage() {
                 <MessageSquare className="h-6 w-6 text-blue-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Quick Response</h3>
-              <p className="text-gray-700">Text for faster reply</p>
-              <p className="text-sm text-gray-600 mt-2">Same phone number</p>
+              <p className="text-gray-700">Text: 209-643-7969</p>
+              <p className="text-sm text-gray-600 mt-2">For fastest response</p>
             </div>
           </div>
         </div>
@@ -189,31 +189,6 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              {/* Turlock Location */}
-              <div className="mb-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <h3 className="text-xl font-semibold text-gray-900">Turlock Location</h3>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <div className="flex items-start gap-3 mb-4">
-                    <MapPin className="h-5 w-5 text-gray-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-medium text-gray-900">2705 Sebastian Drive</p>
-                      <p className="text-gray-600">Turlock, CA 95382</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Clock className="h-5 w-5 text-gray-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-medium text-gray-900">Hours</p>
-                      <p className="text-gray-600">Monday - Friday: 10:00 AM - 6:00 PM</p>
-                      <p className="text-gray-600">Saturday: 10:00 AM - 2:00 PM</p>
-                      <p className="text-gray-600">Sunday: Closed</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               {/* FAQ Preview */}
               <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-2xl p-6">

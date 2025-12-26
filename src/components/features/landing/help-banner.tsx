@@ -20,7 +20,7 @@ export function HelpBanner() {
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
-              <Link href="tel:209-985-1538">
+              <Link href="tel:209-778-7877">
                 Call Now
               </Link>
             </Button>

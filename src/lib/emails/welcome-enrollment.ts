@@ -116,7 +116,6 @@ export function generatePrivatePayWelcomeEmail(data: WelcomeEmailData): EmailCon
         <p>We're looking forward to helping ${data.swimmerName} become a confident swimmer!</p>
         <p><strong>Sutton Lucas</strong><br>
         Owner, I Can Swim</p>
-        <p>📍 Turlock: 2705 Sebastian Drive, Turlock, CA 95382</p>
         <p>📍 Modesto: 1212 Kansas Ave, Modesto, CA 95351</p>
       </div>
     </div>
@@ -234,7 +233,6 @@ export function generateFundedWelcomeEmail(data: WelcomeEmailData): EmailContent
         <p>We're looking forward to helping ${data.swimmerName} become a confident swimmer!</p>
         <p><strong>Sutton Lucas</strong><br>
         Owner, I Can Swim</p>
-        <p>📍 Turlock: 2705 Sebastian Drive, Turlock, CA 95382</p>
         <p>📍 Modesto: 1212 Kansas Ave, Modesto, CA 95351</p>
       </div>
     </div>
@@ -336,7 +334,6 @@ export function generateAccountCreatedEmail(data: AccountCreatedEmailData): Emai
         <p><strong>Warm regards,</strong><br>
         <strong>Sutton Lucas</strong><br>
         Owner, I Can Swim</p>
-        <p>📍 Turlock: 2705 Sebastian Drive, Turlock, CA 95382</p>
         <p>📍 Modesto: 1212 Kansas Ave, Modesto, CA 95351</p>
       </div>
     </div>
