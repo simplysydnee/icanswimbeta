@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Calendar, Users, AlertCircle, CheckCircle, XCircle, Clock, Filter, Search, CalendarOff } from 'lucide-react';
+import { Calendar, Users, AlertCircle, CheckCircle, XCircle, Clock, Filter, Search, CalendarOff, User, AlertTriangle, RefreshCw, XCircle as XCircleIcon } from 'lucide-react';
 import { format, isWithinInterval, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
@@ -46,7 +46,15 @@ interface SessionConflict {
   start_time: string;
   end_time: string;
   location: string;
+  status: string;
+  instructor_id: string;
   swimmer_count: number;
+  bookings?: Array<{
+    id: string;
+    status: string;
+    swimmer: { first_name: string; last_name: string };
+    parent: { id: string; full_name: string; email: string; phone: string };
+  }>;
 }
 
 const REASON_LABELS: Record<string, string> = {
@@ -68,6 +76,10 @@ export default function AdminTimeOffPage() {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [conflicts, setConflicts] = useState<SessionConflict[]>([]);
   const [loadingConflicts, setLoadingConflicts] = useState(false);
+  const [cancellingSession, setCancellingSession] = useState<string | null>(null);
+  const [replacingSession, setReplacingSession] = useState<string | null>(null);
+  const [selectedReplacements, setSelectedReplacements] = useState<Record<string, string>>({});
+  const [availableInstructors, setAvailableInstructors] = useState<any[]>([]);
   const [filters, setFilters] = useState({
     status: 'all',
     instructorId: 'all',
@@ -110,6 +122,92 @@ export default function AdminTimeOffPage() {
     }
   }, []);
 
+  // Fetch available instructors for replacement
+  const fetchAvailableInstructors = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/instructors');
+      const data = await response.json();
+      setAvailableInstructors(data.instructors || []);
+    } catch (error) {
+      console.error('Error fetching instructors:', error);
+    }
+  }, []);
+
+  // Cancel session handler
+  const handleCancelSession = async (sessionId: string) => {
+    setCancellingSession(sessionId);
+    try {
+      const response = await fetch(`/api/admin/sessions/${sessionId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reason: 'Cancelled due to instructor time off',
+          notify_parents: true
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to cancel session');
+
+      const data = await response.json();
+
+      if (data.notified_parents?.length > 0) {
+        toast.success(`Session cancelled. ${data.notified_parents.length} parent(s) notified.`);
+      } else {
+        toast.success(`Session cancelled. ${data.cancelled_bookings} booking(s) affected.`);
+      }
+
+      // Refresh conflicts
+      if (selectedRequest) {
+        fetchConflicts(selectedRequest);
+      }
+    } catch (error) {
+      toast.error('Failed to cancel session');
+    } finally {
+      setCancellingSession(null);
+    }
+  };
+
+  // Replace instructor handler
+  const handleReplaceInstructor = async (sessionId: string) => {
+    const newInstructorId = selectedReplacements[sessionId];
+    if (!newInstructorId) {
+      toast.error('Please select a replacement instructor');
+      return;
+    }
+
+    setReplacingSession(sessionId);
+    try {
+      const response = await fetch(`/api/admin/sessions/${sessionId}/replace-instructor`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          new_instructor_id: newInstructorId,
+          notify_parents: true
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to replace instructor');
+
+      const data = await response.json();
+
+      if (data.notified_parents?.length > 0) {
+        toast.success(`Instructor changed to ${data.session.instructor?.full_name}. ${data.notified_parents.length} parent(s) notified.`);
+      } else {
+        toast.success(`Instructor changed to ${data.session.instructor?.full_name}`);
+      }
+
+      // Clear selection and refresh conflicts
+      setSelectedReplacements(prev => ({ ...prev, [sessionId]: '' }));
+      if (selectedRequest) {
+        fetchConflicts(selectedRequest);
+      }
+    } catch (error) {
+      toast.error('Failed to replace instructor');
+    } finally {
+      setReplacingSession(null);
+    }
+  };
+
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
@@ -119,7 +217,9 @@ export default function AdminTimeOffPage() {
     setReviewStatus('approved');
     setAdminNotes('');
     setConflicts([]);
+    setSelectedReplacements({});
     fetchConflicts(request);
+    fetchAvailableInstructors();
     setShowReviewModal(true);
   };
 
@@ -603,25 +703,86 @@ export default function AdminTimeOffPage() {
                   <Skeleton className="h-4 w-full" />
                 </div>
               ) : conflicts.length > 0 ? (
-                <div className="space-y-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                    <p className="text-sm font-medium text-red-800">Schedule Conflicts Detected</p>
+                <div className="space-y-4">
+                  <div className="space-y-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-red-600" />
+                      <p className="text-sm font-medium text-red-800">Schedule Conflicts Detected</p>
+                    </div>
+                    <p className="text-sm text-red-700">
+                      This instructor has {conflicts.length} scheduled session(s) during this time off period.
+                    </p>
                   </div>
-                  <p className="text-sm text-red-700">
-                    This instructor has {conflicts.length} scheduled session(s) during this time off period.
-                  </p>
-                  <div className="space-y-1">
-                    {conflicts.slice(0, 3).map((conflict, index) => (
-                      <div key={index} className="text-xs text-red-600">
-                        • {format(new Date(conflict.start_time), 'MMM d, h:mm a')} - {conflict.location} ({conflict.swimmer_count} swimmers)
+
+                  {/* Per-session actions */}
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Resolve Conflicts:</p>
+                    {conflicts.map((session) => (
+                      <div key={session.id} className="bg-white rounded-lg p-4 border">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <p className="font-medium">
+                              {format(new Date(session.start_time), 'EEE, MMM d @ h:mm a')}
+                            </p>
+                            <p className="text-sm text-muted-foreground">{session.location}</p>
+                          </div>
+                          <Badge variant="outline">
+                            {session.swimmer_count || 0} booked
+                          </Badge>
+                        </div>
+
+                        {/* Action buttons for this specific session */}
+                        <div className="flex flex-col sm:flex-row gap-2 mt-3 pt-3 border-t">
+                          {/* Replace Instructor */}
+                          <div className="flex gap-2 flex-1">
+                            <Select
+                              value={selectedReplacements[session.id] || ''}
+                              onValueChange={(value) => setSelectedReplacements(prev => ({ ...prev, [session.id]: value }))}
+                            >
+                              <SelectTrigger className="flex-1">
+                                <SelectValue placeholder="Select replacement..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableInstructors
+                                  .filter(i => i.id !== selectedRequest?.instructor.id)
+                                  .map(i => (
+                                    <SelectItem key={i.id} value={i.id}>
+                                      {i.full_name}
+                                    </SelectItem>
+                                  ))
+                                }
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              size="sm"
+                              onClick={() => handleReplaceInstructor(session.id)}
+                              disabled={!selectedReplacements[session.id] || replacingSession === session.id}
+                              className="whitespace-nowrap"
+                            >
+                              {replacingSession === session.id ? (
+                                <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Replacing...</>
+                              ) : (
+                                <><Users className="h-4 w-4 mr-2" /> Replace & Notify</>
+                              )}
+                            </Button>
+                          </div>
+
+                          {/* Cancel Session */}
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleCancelSession(session.id)}
+                            disabled={cancellingSession === session.id}
+                          >
+                            {cancellingSession === session.id ? (
+                              <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Cancelling...</>
+                            ) : (
+                              <><XCircleIcon className="h-4 w-4 mr-2" /> Cancel Session & Notify Parents</>
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     ))}
-                    {conflicts.length > 3 && (
-                      <div className="text-xs text-red-600">
-                        • ...and {conflicts.length - 3} more
-                      </div>
-                    )}
                   </div>
                 </div>
               ) : (

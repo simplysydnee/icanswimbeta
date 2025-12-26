@@ -11,6 +11,7 @@ type EmailTemplate =
   | 'assessment_completion'  // NEW
   | 'welcome_enrollment'  // NEW
   | 'account_created'  // NEW - for users with no swimmers enrolled yet
+  | 'instructor_change'  // NEW - for instructor replacement notifications
 
 interface SendEmailParams {
   to: string
@@ -227,6 +228,31 @@ export const emailService = {
       to: params.parentEmail,
       templateType: 'account_created',
       parentName: params.parentName,
+    })
+  },
+
+  async sendInstructorChange(params: {
+    parentEmail: string
+    parentName: string
+    childName: string
+    date: string
+    time: string
+    location: string
+    previousInstructor: string
+    newInstructor: string
+  }) {
+    return sendEmail({
+      to: params.parentEmail,
+      templateType: 'instructor_change',
+      parentName: params.parentName,
+      childName: params.childName,
+      customData: {
+        date: params.date,
+        time: params.time,
+        location: params.location,
+        previousInstructor: params.previousInstructor,
+        newInstructor: params.newInstructor,
+      },
     })
   },
 }
