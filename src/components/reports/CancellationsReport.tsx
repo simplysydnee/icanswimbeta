@@ -210,7 +210,7 @@ export function CancellationsReport() {
             <CardTitle>Cancellation Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-80 min-h-[200px]">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
                 <LineChart data={data?.byDate || []}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -230,7 +230,7 @@ export function CancellationsReport() {
             <CardTitle>Cancellations by Reason</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-80 min-h-[200px]">
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
                 <BarChart data={reasonData}>
                   <CartesianGrid strokeDasharray="3 3" />

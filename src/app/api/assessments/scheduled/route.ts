@@ -19,7 +19,14 @@ export async function GET() {
 
     if (roleError) {
       console.error('Error fetching user roles:', roleError);
-      return NextResponse.json({ error: 'Failed to check permissions' }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: 'Failed to check permissions',
+          details: roleError.message,
+          hint: 'Check if user_roles table exists and has proper permissions'
+        },
+        { status: 500 }
+      );
     }
 
     const roles = roleData?.map(r => r.role) || [];
@@ -76,7 +83,11 @@ export async function GET() {
     if (error) {
       console.error('Error fetching scheduled assessments:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch scheduled assessments' },
+        {
+          error: 'Failed to fetch scheduled assessments',
+          details: error.message,
+          hint: 'Check if all required tables (bookings, sessions, swimmers, profiles) exist and have proper relationships'
+        },
         { status: 500 }
       );
     }

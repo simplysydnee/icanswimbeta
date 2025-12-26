@@ -57,10 +57,28 @@ export async function GET(request: NextRequest) {
     const endDate = endOfMonth(new Date(targetYear, targetMonth, 1));
 
     // Fetch purchase orders with related data
+    // Use explicit column selection to avoid issues with missing billing columns
     const { data: purchaseOrders, error: poError } = await supabase
       .from('purchase_orders')
       .select(`
-        *,
+        id,
+        swimmer_id,
+        funding_source_id,
+        coordinator_id,
+        status,
+        authorization_number,
+        created_at,
+        updated_at,
+        total_amount_cents,
+        billing_status,
+        billed_amount_cents,
+        paid_amount_cents,
+        due_date,
+        billed_at,
+        paid_at,
+        invoice_number,
+        payment_reference,
+        billing_notes,
         swimmer:swimmers(
           id,
           first_name,
@@ -91,7 +109,14 @@ export async function GET(request: NextRequest) {
 
     if (poError) {
       console.error('Error fetching purchase orders:', poError);
-      return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
+      return NextResponse.json(
+        {
+          error: 'Failed to fetch purchase orders data',
+          details: poError.message,
+          hint: 'Check if purchase_orders table exists and has required columns. Billing columns may need migration.'
+        },
+        { status: 500 }
+      );
     }
 
     // Calculate statistics
@@ -183,21 +208,22 @@ export async function GET(request: NextRequest) {
         try {
           const parsedDueDate = parseISO(dueDate);
           const today = new Date();
-          const daysOverdue = Math.max(0, Math.floor((today.getTime() - parsedDueDate.getTime()) / (1000 * 60 * 60 * 24)));
+          // Calculate daysOverdue for tracking (used in problemPOs section)
+          Math.max(0, Math.floor((today.getTime() - parsedDueDate.getTime()) / (1000 * 60 * 60 * 24)));
           stats.financial.totalOverdue += outstanding;
-          // Note: daysOverdue is calculated but not used in this section, only in problemPOs
         } catch (error) {
           console.warn('Error parsing due date:', error);
         }
       }
 
       // Funding source breakdown
-      if (po.funding_source) {
-        const fsKey = po.funding_source.id;
+      if (po.funding_source && po.funding_source.length > 0) {
+        const fundingSource = po.funding_source[0];
+        const fsKey = fundingSource.id;
         if (!stats.byFundingSource[fsKey]) {
           stats.byFundingSource[fsKey] = {
-            name: po.funding_source.name,
-            shortName: po.funding_source.short_name || po.funding_source.name,
+            name: fundingSource.name,
+            shortName: fundingSource.short_name || fundingSource.name,
             poCount: 0,
             billed: 0,
             paid: 0,
@@ -211,13 +237,14 @@ export async function GET(request: NextRequest) {
       }
 
       // Coordinator breakdown
-      if (po.coordinator) {
-        const coordKey = po.coordinator.id;
+      if (po.coordinator && po.coordinator.length > 0) {
+        const coordinator = po.coordinator[0];
+        const coordKey = coordinator.id;
         if (!stats.byCoordinator[coordKey]) {
           stats.byCoordinator[coordKey] = {
-            name: po.coordinator.full_name || 'Unknown',
-            email: po.coordinator.email || '',
-            phone: po.coordinator.phone || '',
+            name: coordinator.full_name || 'Unknown',
+            email: coordinator.email || '',
+            phone: coordinator.phone || '',
             totalPOs: 0,
             completedAuth: 0,
             pendingAuth: 0,
@@ -236,14 +263,22 @@ export async function GET(request: NextRequest) {
 
       // Problem POs (overdue or disputed with outstanding balance)
       if ((billingStatus === 'overdue' || billingStatus === 'disputed') && outstanding > 0) {
-        const swimmerName = po.swimmer
-          ? `${po.swimmer.first_name} ${po.swimmer.last_name}`
+        const swimmerName = po.swimmer && po.swimmer.length > 0
+          ? `${po.swimmer[0].first_name} ${po.swimmer[0].last_name}`
           : 'Unknown Swimmer';
 
-        const coordinatorName = po.coordinator?.full_name || 'Unknown';
-        const coordinatorEmail = po.coordinator?.email || '';
-        const coordinatorPhone = po.coordinator?.phone || '';
-        const fundingSourceName = po.funding_source?.name || 'Unknown';
+        const coordinatorName = po.coordinator && po.coordinator.length > 0
+          ? po.coordinator[0].full_name || 'Unknown'
+          : 'Unknown';
+        const coordinatorEmail = po.coordinator && po.coordinator.length > 0
+          ? po.coordinator[0].email || ''
+          : '';
+        const coordinatorPhone = po.coordinator && po.coordinator.length > 0
+          ? po.coordinator[0].phone || ''
+          : '';
+        const fundingSourceName = po.funding_source && po.funding_source.length > 0
+          ? po.funding_source[0].name || 'Unknown'
+          : 'Unknown';
 
         let daysOverdue = 0;
         if (dueDate && billingStatus === 'overdue') {

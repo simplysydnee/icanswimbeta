@@ -256,7 +256,7 @@ export function BookingsReport() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="h-80">
+          <div className="h-80 min-h-[200px]">
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
               <BarChart data={
                 chartView === 'weekly'
