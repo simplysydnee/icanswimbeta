@@ -257,12 +257,13 @@ export function BookingsReport() {
         </CardHeader>
         <CardContent>
           <div className="h-80 min-h-[200px]">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
-              <BarChart data={
-                chartView === 'weekly'
-                  ? (data?.bookings ? groupByWeek(data.bookings) : [])
-                  : (data?.bookings ? groupByMonth(data.bookings) : [])
-              }>
+            {data?.bookings && data.bookings.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
+                <BarChart data={
+                  chartView === 'weekly'
+                    ? groupByWeek(data.bookings)
+                    : groupByMonth(data.bookings)
+                }>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis
                   dataKey={chartView === 'weekly' ? 'label' : 'label'}
@@ -274,6 +275,11 @@ export function BookingsReport() {
                 <Bar dataKey="count" name="Bookings" fill="#3b82f6" />
               </BarChart>
             </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                No booking data available for the selected period
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

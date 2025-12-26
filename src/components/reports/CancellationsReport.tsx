@@ -211,16 +211,22 @@ export function CancellationsReport() {
           </CardHeader>
           <CardContent>
             <div className="h-80 min-h-[200px]">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
-                <LineChart data={data?.byDate || []}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="count" name="Cancellations" stroke="#ef4444" activeDot={{ r: 8 }} />
-                </LineChart>
-              </ResponsiveContainer>
+              {data?.byDate && data.byDate.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
+                  <LineChart data={data.byDate}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="count" name="Cancellations" stroke="#ef4444" activeDot={{ r: 8 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  No cancellation data available for the selected period
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -231,20 +237,26 @@ export function CancellationsReport() {
           </CardHeader>
           <CardContent>
             <div className="h-80 min-h-[200px]">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
-                <BarChart data={reasonData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="value" name="Count">
-                    {reasonData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {reasonData && reasonData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
+                  <BarChart data={reasonData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="value" name="Count">
+                      {reasonData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  No cancellation reason data available
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

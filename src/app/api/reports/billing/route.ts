@@ -56,9 +56,13 @@ export async function GET(request: NextRequest) {
     const startDate = startOfMonth(new Date(targetYear, targetMonth, 1));
     const endDate = endOfMonth(new Date(targetYear, targetMonth, 1));
 
-    // Fetch purchase orders with related data
-    // Use explicit column selection to avoid issues with missing billing columns
-    const { data: purchaseOrders, error: poError } = await supabase
+    // Try to fetch purchase orders with billing columns first
+    // If that fails, try without billing columns (for databases without migration)
+    let purchaseOrders: any[] = [];
+    let poError: any = null;
+
+    // First try with billing columns
+    const queryWithBilling = supabase
       .from('purchase_orders')
       .select(`
         id,
@@ -107,13 +111,73 @@ export async function GET(request: NextRequest) {
       .gte('created_at', startDate.toISOString())
       .lte('created_at', endDate.toISOString());
 
+    const { data: dataWithBilling, error: errorWithBilling } = await queryWithBilling;
+
+    if (errorWithBilling) {
+      console.warn('Failed to fetch with billing columns, trying without:', errorWithBilling.message);
+
+      // Try without billing columns
+      const queryWithoutBilling = supabase
+        .from('purchase_orders')
+        .select(`
+          id,
+          swimmer_id,
+          funding_source_id,
+          coordinator_id,
+          status,
+          authorization_number,
+          created_at,
+          updated_at,
+          total_amount_cents,
+          swimmer:swimmers(
+            id,
+            first_name,
+            last_name,
+            parent_id,
+            parent:profiles!swimmers_parent_id_fkey(
+              full_name,
+              email,
+              phone
+            )
+          ),
+          funding_source:funding_sources(
+            id,
+            name,
+            short_name,
+            code,
+            price_cents
+          ),
+          coordinator:profiles!purchase_orders_coordinator_id_fkey(
+            id,
+            full_name,
+            email,
+            phone
+          )
+        `)
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString());
+
+      const { data: dataWithoutBilling, error: errorWithoutBilling } = await queryWithoutBilling;
+
+      if (errorWithoutBilling) {
+        poError = errorWithoutBilling;
+        console.error('Error fetching purchase orders (even without billing columns):', errorWithoutBilling);
+      } else {
+        purchaseOrders = dataWithoutBilling || [];
+        console.log('Fetched purchase orders without billing columns, count:', purchaseOrders.length);
+      }
+    } else {
+      purchaseOrders = dataWithBilling || [];
+      console.log('Fetched purchase orders with billing columns, count:', purchaseOrders.length);
+    }
+
     if (poError) {
       console.error('Error fetching purchase orders:', poError);
       return NextResponse.json(
         {
           error: 'Failed to fetch purchase orders data',
           details: poError.message,
-          hint: 'Check if purchase_orders table exists and has required columns. Billing columns may need migration.'
+          hint: 'Check if purchase_orders table exists. Billing columns may need migration (20251224_add_billing_columns_to_purchase_orders.sql).'
         },
         { status: 500 }
       );
@@ -191,6 +255,9 @@ export async function GET(request: NextRequest) {
       const billingStatus = (po as any).billing_status;
       if (billingStatus && stats.billingStatus.hasOwnProperty(billingStatus)) {
         stats.billingStatus[billingStatus as keyof typeof stats.billingStatus]++;
+      } else if (billingStatus === undefined || billingStatus === null) {
+        // If billing_status column doesn't exist, count as 'unbilled'
+        stats.billingStatus.unbilled++;
       }
 
       // Financial totals - check if billing columns exist
