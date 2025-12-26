@@ -151,9 +151,9 @@ export default function AdminTimeOffPage() {
       const data = await response.json();
 
       if (data.notified_parents?.length > 0) {
-        toast.success(`Session cancelled. ${data.notified_parents.length} parent(s) notified.`);
+        toast({ title: "Success", description: `Session cancelled. ${data.notified_parents.length} parent(s) notified.` });
       } else {
-        toast.success(`Session cancelled. ${data.cancelled_bookings} booking(s) affected.`);
+        toast({ title: "Success", description: `Session cancelled. ${data.cancelled_bookings} booking(s) affected.` });
       }
 
       // Refresh conflicts
@@ -161,7 +161,7 @@ export default function AdminTimeOffPage() {
         fetchConflicts(selectedRequest);
       }
     } catch (error) {
-      toast.error('Failed to cancel session');
+      toast({ title: "Error", description: 'Failed to cancel session', variant: 'destructive' });
     } finally {
       setCancellingSession(null);
     }
@@ -171,7 +171,7 @@ export default function AdminTimeOffPage() {
   const handleReplaceInstructor = async (sessionId: string) => {
     const newInstructorId = selectedReplacements[sessionId];
     if (!newInstructorId) {
-      toast.error('Please select a replacement instructor');
+      toast({ title: "Error", description: 'Please select a replacement instructor', variant: 'destructive' });
       return;
     }
 
@@ -191,9 +191,9 @@ export default function AdminTimeOffPage() {
       const data = await response.json();
 
       if (data.notified_parents?.length > 0) {
-        toast.success(`Instructor changed to ${data.session.instructor?.full_name}. ${data.notified_parents.length} parent(s) notified.`);
+        toast({ title: "Success", description: `Instructor changed to ${data.session.instructor?.full_name}. ${data.notified_parents.length} parent(s) notified.` });
       } else {
-        toast.success(`Instructor changed to ${data.session.instructor?.full_name}`);
+        toast({ title: "Success", description: `Instructor changed to ${data.session.instructor?.full_name}` });
       }
 
       // Clear selection and refresh conflicts
@@ -202,7 +202,7 @@ export default function AdminTimeOffPage() {
         fetchConflicts(selectedRequest);
       }
     } catch (error) {
-      toast.error('Failed to replace instructor');
+      toast({ title: "Error", description: 'Failed to replace instructor', variant: 'destructive' });
     } finally {
       setReplacingSession(null);
     }
