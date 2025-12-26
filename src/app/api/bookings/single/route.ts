@@ -79,7 +79,7 @@ export async function POST(request: Request) {
       if (fundingSource?.requires_authorization) {
         const { data: purchaseOrders } = await supabase
           .from('purchase_orders')
-          .select('id, allowed_lessons, lessons_booked')
+          .select('id, sessions_authorized, sessions_booked')
           .eq('swimmer_id', swimmerId)
           .eq('status', 'approved')
           .lte('start_date', session.start_time)
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
         }
 
         const activePo = purchaseOrders[0];
-        if (activePo.lessons_booked >= activePo.allowed_lessons) {
+        if (activePo.sessions_booked >= activePo.sessions_authorized) {
           return NextResponse.json({ error: 'Funding source authorization exhausted' }, { status: 400 });
         }
         activePoId = activePo.id;
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
     if (fundingSourceId && activePoId) {
       await supabase
         .from('purchase_orders')
-        .update({ lessons_booked: supabase.raw('lessons_booked + 1') })
+        .update({ sessions_booked: supabase.raw('sessions_booked + 1') })
         .eq('id', activePoId);
     }
 

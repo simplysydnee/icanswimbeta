@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       if (fundingSource?.requires_authorization) {
         const { data: purchaseOrders } = await supabase
           .from('purchase_orders')
-          .select('id, allowed_lessons, lessons_booked')
+          .select('id, sessions_authorized, sessions_booked')
           .eq('swimmer_id', swimmerId)
           .eq('status', 'approved')
           .order('end_date', { ascending: true })
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
         }
 
         const activePo = purchaseOrders[0];
-        const remainingSessions = activePo.allowed_lessons - (activePo.lessons_booked || 0);
+        const remainingSessions = activePo.sessions_authorized - (activePo.sessions_booked || 0);
         if (remainingSessions < sessionIds.length) {
           return NextResponse.json({
             error: 'Not enough funding source sessions available',
@@ -148,7 +148,7 @@ export async function POST(request: Request) {
     if (fundingSourceId && activePoId) {
       await supabase
         .from('purchase_orders')
-        .update({ lessons_booked: supabase.raw(`lessons_booked + ${sessionIds.length}`) })
+        .update({ sessions_booked: supabase.raw(`sessions_booked + ${sessionIds.length}`) })
         .eq('id', activePoId);
     }
 

@@ -35,7 +35,7 @@ interface PurchaseOrder {
   id: string;
   status: string;
   po_type: string;
-  allowed_lessons: number;
+  sessions_authorized: number;
   swimmer: { first_name: string; last_name: string };
 }
 
@@ -75,7 +75,7 @@ export default function CoordinatorDashboard() {
     if (clientIds.length > 0) {
       const { data } = await supabase
         .from('purchase_orders')
-        .select('id, status, po_type, allowed_lessons, swimmer:swimmers(first_name, last_name)')
+        .select('id, status, po_type, sessions_authorized, swimmer:swimmers(first_name, last_name)')
         .in('swimmer_id', clientIds)
         .eq('status', 'pending');
       posData = (data || []) as PurchaseOrder[];
@@ -241,7 +241,7 @@ export default function CoordinatorDashboard() {
                       <div>
                         <p className="font-medium">{po.swimmer?.first_name} {po.swimmer?.last_name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {po.po_type === 'assessment' ? 'Assessment' : 'Lessons'} • {po.allowed_lessons} sessions
+                          {po.po_type === 'assessment' ? 'Assessment' : 'Lessons'} • {po.sessions_authorized} sessions
                         </p>
                       </div>
                       <Badge className="bg-orange-200 text-orange-800">Pending</Badge>

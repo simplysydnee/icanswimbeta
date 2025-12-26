@@ -709,9 +709,15 @@ export default function AdminTimeOffPage() {
                       <AlertCircle className="h-4 w-4 text-red-600" />
                       <p className="text-sm font-medium text-red-800">Schedule Conflicts Detected</p>
                     </div>
-                    <p className="text-sm text-red-700">
-                      This instructor has {conflicts.length} scheduled session(s) during this time off period.
-                    </p>
+                    <div className="text-sm text-red-700">
+                      <p>This instructor has {conflicts.length} scheduled session(s) during this time off period.</p>
+                      {conflicts.some(s => s.status === 'cancelled' || s.status === 'reassigned') && (
+                        <p className="mt-1">
+                          {conflicts.filter(s => s.status === 'cancelled' || s.status === 'reassigned').length} resolved,{' '}
+                          {conflicts.filter(s => s.status !== 'cancelled' && s.status !== 'reassigned').length} need action
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Per-session actions */}
@@ -726,61 +732,78 @@ export default function AdminTimeOffPage() {
                             </p>
                             <p className="text-sm text-muted-foreground">{session.location}</p>
                           </div>
-                          <Badge variant="outline">
-                            {session.swimmer_count || 0} booked
-                          </Badge>
+                          <div className="flex flex-col items-end gap-1">
+                            {session.status === 'cancelled' ? (
+                              <Badge className="bg-gray-100 text-gray-600">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Cancelled
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-orange-50">
+                                {session.bookings?.filter((b: any) => b.status !== 'cancelled').length || session.swimmer_count || 0} booked
+                              </Badge>
+                            )}
+                            {session.status === 'reassigned' && (
+                              <Badge className="bg-blue-50 text-blue-700">
+                                <Users className="h-3 w-3 mr-1" />
+                                Reassigned
+                              </Badge>
+                            )}
+                          </div>
                         </div>
 
-                        {/* Action buttons for this specific session */}
-                        <div className="flex flex-col sm:flex-row gap-2 mt-3 pt-3 border-t">
-                          {/* Replace Instructor */}
-                          <div className="flex gap-2 flex-1">
-                            <Select
-                              value={selectedReplacements[session.id] || ''}
-                              onValueChange={(value) => setSelectedReplacements(prev => ({ ...prev, [session.id]: value }))}
-                            >
-                              <SelectTrigger className="flex-1">
-                                <SelectValue placeholder="Select replacement..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availableInstructors
-                                  .filter(i => i.id !== selectedRequest?.instructor.id)
-                                  .map(i => (
-                                    <SelectItem key={i.id} value={i.id}>
-                                      {i.full_name}
-                                    </SelectItem>
-                                  ))
-                                }
-                              </SelectContent>
-                            </Select>
+                        {/* Action buttons for this specific session - only show if not already resolved */}
+                        {session.status !== 'cancelled' && session.status !== 'reassigned' && (
+                          <div className="flex flex-col sm:flex-row gap-2 mt-3 pt-3 border-t">
+                            {/* Replace Instructor */}
+                            <div className="flex gap-2 flex-1">
+                              <Select
+                                value={selectedReplacements[session.id] || ''}
+                                onValueChange={(value) => setSelectedReplacements(prev => ({ ...prev, [session.id]: value }))}
+                              >
+                                <SelectTrigger className="flex-1">
+                                  <SelectValue placeholder="Select replacement..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {availableInstructors
+                                    .filter(i => i.id !== selectedRequest?.instructor.id)
+                                    .map(i => (
+                                      <SelectItem key={i.id} value={i.id}>
+                                        {i.full_name}
+                                      </SelectItem>
+                                    ))
+                                  }
+                                </SelectContent>
+                              </Select>
+                              <Button
+                                size="sm"
+                                onClick={() => handleReplaceInstructor(session.id)}
+                                disabled={!selectedReplacements[session.id] || replacingSession === session.id}
+                                className="whitespace-nowrap"
+                              >
+                                {replacingSession === session.id ? (
+                                  <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Replacing...</>
+                                ) : (
+                                  <><Users className="h-4 w-4 mr-2" /> Replace & Notify</>
+                                )}
+                              </Button>
+                            </div>
+
+                            {/* Cancel Session */}
                             <Button
                               size="sm"
-                              onClick={() => handleReplaceInstructor(session.id)}
-                              disabled={!selectedReplacements[session.id] || replacingSession === session.id}
-                              className="whitespace-nowrap"
+                              variant="destructive"
+                              onClick={() => handleCancelSession(session.id)}
+                              disabled={cancellingSession === session.id}
                             >
-                              {replacingSession === session.id ? (
-                                <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Replacing...</>
+                              {cancellingSession === session.id ? (
+                                <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Cancelling...</>
                               ) : (
-                                <><Users className="h-4 w-4 mr-2" /> Replace & Notify</>
+                                <><XCircleIcon className="h-4 w-4 mr-2" /> Cancel Session & Notify Parents</>
                               )}
                             </Button>
                           </div>
-
-                          {/* Cancel Session */}
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleCancelSession(session.id)}
-                            disabled={cancellingSession === session.id}
-                          >
-                            {cancellingSession === session.id ? (
-                              <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Cancelling...</>
-                            ) : (
-                              <><XCircleIcon className="h-4 w-4 mr-2" /> Cancel Session & Notify Parents</>
-                            )}
-                          </Button>
-                        </div>
+                        )}
                       </div>
                     ))}
                   </div>
