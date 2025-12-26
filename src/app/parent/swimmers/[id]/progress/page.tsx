@@ -122,15 +122,13 @@ export default function SwimmerProgressPage() {
           )
         `)
         .eq('swimmer_id', swimmerId)
-        .order('skill.level.sequence', { ascending: true })
-        .order('skill.sequence', { ascending: true })
 
       if (skillsError) {
         console.error('Skills query error:', skillsError)
         throw skillsError
       }
 
-      // Transform skills data
+      // Transform skills data and sort client-side
       const transformedSkills = (skillsData || []).map((item: any) => ({
         id: item.skill.id,
         name: item.skill.name,
@@ -140,6 +138,13 @@ export default function SwimmerProgressPage() {
         status: item.status,
         date_mastered: item.date_mastered
       }))
+      // Sort by level sequence first, then skill sequence
+      transformedSkills.sort((a, b) => {
+        const levelSeqA = a.level?.sequence || 0;
+        const levelSeqB = b.level?.sequence || 0;
+        if (levelSeqA !== levelSeqB) return levelSeqA - levelSeqB;
+        return (a.sequence || 0) - (b.sequence || 0);
+      })
       setSkills(transformedSkills)
 
       // Fetch progress notes

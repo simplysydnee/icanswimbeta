@@ -12,8 +12,7 @@ export async function GET() {
         user_id,
         profile:profiles(id, full_name, avatar_url, email)
       `)
-      .eq('role', 'instructor')
-      .order('profile(full_name)', { ascending: true });
+      .eq('role', 'instructor');
 
     if (roleError) {
       console.error('Error fetching instructors from user_roles:', roleError);
@@ -27,6 +26,9 @@ export async function GET() {
         return profile;
       })
       .filter(Boolean) || [];
+
+    // Sort by full_name client-side
+    instructorList.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
 
     // Transform snake_case to camelCase
     const transformedData = instructorList.map(profile => ({
