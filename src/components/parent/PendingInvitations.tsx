@@ -30,20 +30,32 @@ export function PendingInvitations() {
   }, [user]);
 
   const fetchInvitations = async () => {
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
 
-    const { data } = await supabase
-      .from('parent_invitations')
-      .select(`
-        id,
-        swimmer:swimmers(id, first_name, last_name)
-      `)
-      .eq('parent_email', user?.email?.toLowerCase())
-      .eq('status', 'pending')
-      .gt('expires_at', new Date().toISOString());
+      const { data, error } = await supabase
+        .from('parent_invitations')
+        .select(`
+          id,
+          swimmer:swimmers(id, first_name, last_name)
+        `)
+        .eq('parent_email', user?.email?.toLowerCase())
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString());
 
-    setInvitations(data || []);
-    setLoading(false);
+      if (error) {
+        console.error('Error fetching invitations:', error);
+        // Continue with empty invitations array
+        setInvitations([]);
+      } else {
+        setInvitations(data || []);
+      }
+    } catch (error) {
+      console.error('Error in fetchInvitations:', error);
+      setInvitations([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleClaim = async (invitationId: string) => {

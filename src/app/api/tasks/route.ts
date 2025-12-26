@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get('status');
     const assignedTo = searchParams.get('assigned_to');
+    const createdBy = searchParams.get('created_by');
     const category = searchParams.get('category');
     const priority = searchParams.get('priority');
     const swimmerId = searchParams.get('swimmer_id');
@@ -76,6 +77,9 @@ export async function GET(request: NextRequest) {
     }
     if (assignedTo) {
       query = query.eq('assigned_to', assignedTo);
+    }
+    if (createdBy) {
+      query = query.eq('created_by', createdBy);
     }
     if (category) {
       query = query.eq('category', category);

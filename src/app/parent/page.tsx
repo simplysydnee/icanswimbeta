@@ -92,15 +92,20 @@ export default function ParentDashboard() {
             `)
             .eq('parent_id', user.id)
             .eq('status', 'confirmed')
-            .gte('session.start_time', new Date().toISOString())
-            .order('session.start_time', { ascending: true })
-            .limit(5)
 
           if (bookingsError) {
             console.error('Error fetching bookings:', bookingsError)
             // Continue with empty bookings array
           } else {
-            setBookings(bookingsData || [])
+            // Filter to upcoming bookings client-side
+            const now = new Date()
+            const upcomingBookings = (bookingsData || [])
+              .filter(b => b.session && new Date(b.session.start_time) >= now)
+              .sort((a, b) =>
+                new Date(a.session.start_time).getTime() - new Date(b.session.start_time).getTime()
+              )
+              .slice(0, 5)
+            setBookings(upcomingBookings)
           }
         } catch (error) {
           console.error('Error in bookings fetch:', error)

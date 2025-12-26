@@ -11,6 +11,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { UserBadge } from '@/components/ui/user-badge';
+import { getUserColor } from '@/lib/user-colors';
+import { cn } from '@/lib/utils';
 
 interface Task {
   id: string;
@@ -91,9 +94,11 @@ export function TaskCard({ task, onEdit, onDelete, formatDueDate, getPriorityCol
       style={style}
       {...attributes}
       {...listeners}
-      className={`bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow cursor-move ${
-        isDragging ? 'opacity-50' : ''
-      }`}
+      className={cn(
+        "bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow cursor-move",
+        task.assignee?.id && `border-l-4 ${getUserColor(task.assignee.id).border}`,
+        isDragging && 'opacity-50'
+      )}
     >
       <div className="flex justify-between items-start mb-2">
         <h3 className="font-medium text-sm line-clamp-2 flex-1">{task.title}</h3>
@@ -139,13 +144,6 @@ export function TaskCard({ task, onEdit, onDelete, formatDueDate, getPriorityCol
           </div>
         )}
 
-        {task.assigned_to_user && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <User className="h-3 w-3" />
-            {task.assigned_to_user.full_name || task.assigned_to_user.email}
-          </div>
-        )}
-
         {task.swimmer && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Users className="h-3 w-3" />
@@ -153,6 +151,34 @@ export function TaskCard({ task, onEdit, onDelete, formatDueDate, getPriorityCol
           </div>
         )}
       </div>
+
+      {/* User badges section */}
+      {(task.created_by_user || task.assigned_to_user) && (
+        <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t text-xs">
+          {task.created_by_user && (
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground">By:</span>
+              <UserBadge
+                userId={task.created_by_user.id}
+                fullName={task.created_by_user.full_name}
+                email={task.created_by_user.email}
+                size="sm"
+              />
+            </div>
+          )}
+          {task.assigned_to_user && (
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground">For:</span>
+              <UserBadge
+                userId={task.assigned_to_user.id}
+                fullName={task.assigned_to_user.full_name}
+                email={task.assigned_to_user.email}
+                size="sm"
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

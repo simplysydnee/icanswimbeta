@@ -1,0 +1,213 @@
+### New console messages
+- [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_c...
+- [LOG] [Fast Refresh] done in 515ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dis...
+- [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_c...
+- [LOG] [Fast Refresh] done in 3352ms @ http://localhost:3000/_next/static/chunks/node_modules_next_di...
+- [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_c...
+- [LOG] [Fast Refresh] done in 133ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dis...
+- [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_c...
+
+### Page state
+- Page URL: http://localhost:3000/admin/tasks
+- Page Title: I Can Swim
+- Page Snapshot:
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - main [ref=e3]:
+      - generic [ref=e4]:
+        - complementary [ref=e5]:
+          - button "Expand sidebar" [ref=e7]:
+            - img
+          - navigation [ref=e8]:
+            - link [ref=e9] [cursor=pointer]:
+              - /url: /admin
+              - generic "Dashboard" [ref=e10]:
+                - img [ref=e11]
+            - link [ref=e16] [cursor=pointer]:
+              - /url: /admin/swimmers
+              - generic "Swimmers" [ref=e17]:
+                - img [ref=e18]
+            - link [ref=e23] [cursor=pointer]:
+              - /url: /admin/schedule
+              - generic "Schedule" [ref=e24]:
+                - img [ref=e25]
+            - link [ref=e27] [cursor=pointer]:
+              - /url: /admin/sessions/generate
+              - generic "Session Generator" [ref=e28]:
+                - img [ref=e29]
+            - link [ref=e31] [cursor=pointer]:
+              - /url: /admin/assessments/complete
+              - generic "Complete Assessment" [ref=e32]:
+                - img [ref=e33]
+            - link [ref=e36] [cursor=pointer]:
+              - /url: /admin/bookings
+              - generic "Bookings" [ref=e37]:
+                - img [ref=e38]
+            - link [ref=e41] [cursor=pointer]:
+              - /url: /admin/tasks
+              - generic "Tasks" [ref=e42]:
+                - img [ref=e43]
+            - link [ref=e46] [cursor=pointer]:
+              - /url: /admin/reports
+              - generic "Reports" [ref=e47]:
+                - img [ref=e48]
+            - link [ref=e50] [cursor=pointer]:
+              - /url: /admin/team
+              - generic "Team" [ref=e51]:
+                - img [ref=e52]
+            - link [ref=e57] [cursor=pointer]:
+              - /url: /admin/referrals
+              - generic "Referrals" [ref=e58]:
+                - img [ref=e59]
+            - link [ref=e62] [cursor=pointer]:
+              - /url: /admin/pos
+              - generic "Purchase Orders" [ref=e63]:
+                - img [ref=e64]
+            - link [ref=e66] [cursor=pointer]:
+              - /url: /admin/users
+              - generic "Users" [ref=e67]:
+                - img [ref=e68]
+            - link [ref=e80] [cursor=pointer]:
+              - /url: /admin/funding-sources
+              - generic "Funding Sources" [ref=e81]:
+                - img [ref=e82]
+            - link [ref=e86] [cursor=pointer]:
+              - /url: /admin/settings
+              - generic "Settings" [ref=e87]:
+                - img [ref=e88]
+        - main [ref=e91]:
+          - generic [ref=e92]:
+            - generic [ref=e93]:
+              - generic [ref=e94]:
+                - heading "Task Management" [level=1] [ref=e155]
+                - paragraph [ref=e156]: Manage tasks and assignments for your team
+              - generic [ref=e99]:
+                - button "Filters" [ref=e157]:
+                  - img
+                  - text: Filters
+                - button "Create Task" [ref=e158]:
+                  - img
+                  - text: Create Task
+            - generic [ref=e159]:
+              - generic [ref=e162]:
+                - generic [ref=e163]:
+                  - paragraph [ref=e164]: To Do
+                  - paragraph [ref=e165]: "2"
+                - img [ref=e167]
+              - generic [ref=e172]:
+                - generic [ref=e173]:
+                  - paragraph [ref=e174]: In Progress
+                  - paragraph [ref=e175]: "0"
+                - img [ref=e177]
+              - generic [ref=e182]:
+                - generic [ref=e183]:
+                  - paragraph [ref=e184]: Completed
+                  - paragraph [ref=e185]: "0"
+                - img [ref=e187]
+              - generic [ref=e192]:
+                - generic [ref=e193]:
+                  - paragraph [ref=e194]: Needs Attention
+                  - paragraph [ref=e195]: "0"
+                - img [ref=e197]
+            - generic [ref=e199]:
+              - generic [ref=e200]:
+                - generic [ref=e201]:
+                  - generic [ref=e203]:
+                    - generic [ref=e204]:
+                      - generic [ref=e205]: 📝
+                      - text: To Do
+                    - generic [ref=e206]: "1"
+                  - button "Test task from SQL medium Other" [ref=e210]:
+                    - generic [ref=e211]:
+                      - heading "Test task from SQL" [level=3] [ref=e212]
+                      - button [ref=e213]:
+                        - img
+                    - generic [ref=e214]:
+                      - generic [ref=e215]: medium
+                      - generic [ref=e216]: Other
+                - generic [ref=e217]:
+                  - generic [ref=e219]:
+                    - generic [ref=e220]:
+                      - generic [ref=e221]: ⏳
+                      - text: In Progress
+                    - generic [ref=e222]: "1"
+                  - button "Test task after FK fix medium Other" [ref=e226]:
+                    - generic [ref=e227]:
+                      - heading "Test task after FK fix" [level=3] [ref=e228]
+                      - button [ref=e229]:
+                        - img
+                    - generic [ref=e230]:
+                      - generic [ref=e231]: medium
+                      - generic [ref=e232]: Other
+                - generic [ref=e233]:
+                  - generic [ref=e235]:
+                    - generic [ref=e236]:
+                      - generic [ref=e237]: ✅
+                      - text: Completed
+                    - generic [ref=e238]: "0"
+                  - generic [ref=e241]:
+                    - paragraph [ref=e242]: No tasks in this column
+                    - paragraph [ref=e243]: Drag tasks here or create new ones
+                - generic [ref=e244]:
+                  - generic [ref=e246]:
+                    - generic [ref=e247]:
+                      - generic [ref=e248]: ⚠️
+                      - text: Needs Attention
+                    - generic [ref=e249]: "0"
+                  - generic [ref=e252]:
+                    - paragraph [ref=e253]: No tasks in this column
+                    - paragraph [ref=e254]: Drag tasks here or create new ones
+              - status [ref=e255]: Draggable item 9c3a2e0d-92cd-4a5f-9eab-04054143add4 was dropped over droppable area in_progress
+    - contentinfo [ref=e105]:
+      - generic [ref=e106]:
+        - generic [ref=e107]:
+          - generic [ref=e108]:
+            - img "I Can Swim" [ref=e110]
+            - paragraph [ref=e111]: Building confidence, safety, and joy in the water through personalized, adaptive instruction tailored to each swimmer's unique needs. Serving Central Valley families since 2015.
+            - generic [ref=e112]:
+              - generic [ref=e113]:
+                - img [ref=e114]
+                - generic [ref=e116]: (209) 778-7877
+              - generic [ref=e117]:
+                - img [ref=e118]
+                - generic [ref=e121]: info@icanswim209.com
+              - generic [ref=e122]:
+                - link [ref=e123] [cursor=pointer]:
+                  - /url: https://facebook.com/icanswim209
+                  - img [ref=e124]
+                - link [ref=e126] [cursor=pointer]:
+                  - /url: https://instagram.com/icanswim209
+                  - img [ref=e127]
+          - generic [ref=e130]:
+            - heading "Our Location" [level=3] [ref=e131]
+            - list [ref=e132]:
+              - listitem [ref=e133]:
+                - generic [ref=e134]:
+                  - img [ref=e135]
+                  - generic [ref=e138]:
+                    - strong [ref=e139]: Modesto
+                    - text: 1212 Kansas Ave
+                    - text: Modesto, CA 95351
+          - generic [ref=e140]:
+            - heading "Quick Links" [level=3] [ref=e141]
+            - list [ref=e142]:
+              - listitem [ref=e143]:
+                - link "Book Assessment" [ref=e144] [cursor=pointer]:
+                  - /url: /signup
+              - listitem [ref=e145]:
+                - link "Parent Dashboard" [ref=e146] [cursor=pointer]:
+                  - /url: /login
+              - listitem [ref=e147]:
+                - link "About Our Program" [ref=e148] [cursor=pointer]:
+                  - /url: /about
+              - listitem [ref=e149]:
+                - link "Contact Us" [ref=e150] [cursor=pointer]:
+                  - /url: /contact
+        - generic [ref=e151]:
+          - paragraph [ref=e152]: © 2024 I Can Swim, LLC. All rights reserved.
+          - paragraph [ref=e153]: Adaptive Swim Lessons for Every Child
+  - alert [ref=e154]
+  - button "Open Next.js Dev Tools" [ref=e261] [cursor=pointer]:
+    - img [ref=e262]
+```

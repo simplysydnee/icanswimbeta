@@ -26,6 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { UserBadge } from '@/components/ui/user-badge';
 import { KanbanColumn } from './KanbanColumn';
 import { TaskCard } from './TaskCard';
 
@@ -69,10 +70,10 @@ interface KanbanBoardProps {
 }
 
 const columns = [
-  { id: 'todo', title: 'To Do', color: 'bg-gray-100', icon: '📝' },
-  { id: 'in_progress', title: 'In Progress', color: 'bg-blue-100', icon: '⏳' },
-  { id: 'completed', title: 'Completed', color: 'bg-green-100', icon: '✅' },
-  { id: 'needs_attention', title: 'Needs Attention', color: 'bg-red-100', icon: '⚠️' },
+  { id: 'column-todo', title: 'To Do', color: 'bg-gray-100', icon: '📝' },
+  { id: 'column-in_progress', title: 'In Progress', color: 'bg-blue-100', icon: '⏳' },
+  { id: 'column-completed', title: 'Completed', color: 'bg-green-100', icon: '✅' },
+  { id: 'column-needs_attention', title: 'Needs Attention', color: 'bg-red-100', icon: '⚠️' },
 ];
 
 export function KanbanBoard({ tasks, onTaskUpdate, onTaskEdit, onTaskDelete }: KanbanBoardProps) {
@@ -82,7 +83,7 @@ export function KanbanBoard({ tasks, onTaskUpdate, onTaskEdit, onTaskDelete }: K
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 1,
       },
     })
   );
@@ -94,11 +95,15 @@ export function KanbanBoard({ tasks, onTaskUpdate, onTaskEdit, onTaskDelete }: K
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    console.log('Drag end:', { activeId: active.id, overId: over?.id });
 
     if (!over) {
+      console.log('No drop target');
       setActiveTask(null);
       return;
     }
+
+    console.log('Over ID:', over.id, 'Is column?', columns.some(col => col.id === over.id));
 
     if (active.id !== over.id) {
       const activeTask = tasksState.find(t => t.id === active.id);
@@ -106,26 +111,38 @@ export function KanbanBoard({ tasks, onTaskUpdate, onTaskEdit, onTaskDelete }: K
 
       // If dragging to a column (not a task within the same column)
       if (columns.some(col => col.id === overColumnId) && activeTask) {
+        console.log('Dropping on column:', overColumnId, 'Updating task:', activeTask.id);
+        // Remove 'column-' prefix to get status
+        const status = overColumnId.replace('column-', '') as Task['status'];
         // Update task status
-        const updatedTask = { ...activeTask, status: overColumnId as Task['status'] };
-        onTaskUpdate(activeTask.id, { status: overColumnId as Task['status'] });
+        const updatedTask = { ...activeTask, status };
+        onTaskUpdate(activeTask.id, { status });
         setTasksState(prev => prev.map(t => t.id === activeTask.id ? updatedTask : t));
       } else {
+        console.log('Not dropping on column, trying reorder');
         // Reorder within same column
         const oldIndex = tasksState.findIndex(t => t.id === active.id);
         const newIndex = tasksState.findIndex(t => t.id === over.id);
 
+        console.log('Reorder indices:', { oldIndex, newIndex });
+
         if (oldIndex !== -1 && newIndex !== -1) {
           const newTasks = arrayMove(tasksState, oldIndex, newIndex);
           setTasksState(newTasks);
+        } else {
+          console.log('Invalid indices for reorder');
         }
       }
+    } else {
+      console.log('Dropped on itself');
     }
 
     setActiveTask(null);
   };
 
-  const getTasksByStatus = (status: string) => {
+  const getTasksByStatus = (columnId: string) => {
+    // Remove 'column-' prefix to get status
+    const status = columnId.replace('column-', '');
     return tasksState.filter(task => task.status === status);
   };
 
@@ -161,6 +178,7 @@ export function KanbanBoard({ tasks, onTaskUpdate, onTaskEdit, onTaskDelete }: K
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        modifiers={[]}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {columns.map(column => (
@@ -172,23 +190,29 @@ export function KanbanBoard({ tasks, onTaskUpdate, onTaskEdit, onTaskDelete }: K
               color={column.color}
               taskCount={getTasksByStatus(column.id).length}
             >
-              <SortableContext
-                items={getTasksByStatus(column.id).map(t => t.id)}
-                strategy={verticalListSortingStrategy}
-              >
+              {getTasksByStatus(column.id).length > 0 ? (
+                <SortableContext
+                  items={getTasksByStatus(column.id).map(t => t.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {getTasksByStatus(column.id).map(task => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        onEdit={() => onTaskEdit(task)}
+                        onDelete={() => onTaskDelete(task.id)}
+                        formatDueDate={formatDueDate}
+                        getPriorityColor={getPriorityColor}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              ) : (
                 <div className="space-y-3">
-                  {getTasksByStatus(column.id).map(task => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      onEdit={() => onTaskEdit(task)}
-                      onDelete={() => onTaskDelete(task.id)}
-                      formatDueDate={formatDueDate}
-                      getPriorityColor={getPriorityColor}
-                    />
-                  ))}
+                  {/* Empty column - still droppable */}
                 </div>
-              </SortableContext>
+              )}
             </KanbanColumn>
           ))}
         </div>
@@ -208,10 +232,30 @@ export function KanbanBoard({ tasks, onTaskUpdate, onTaskEdit, onTaskDelete }: K
                   {formatDueDate(activeTask.due_date)}
                 </div>
               )}
-              {activeTask.assigned_to_user && (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <User className="h-3 w-3" />
-                  {activeTask.assigned_to_user.full_name || activeTask.assigned_to_user.email}
+              {(activeTask.created_by_user || activeTask.assigned_to_user) && (
+                <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t text-xs">
+                  {activeTask.created_by_user && (
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground">By:</span>
+                      <UserBadge
+                        userId={activeTask.created_by_user.id}
+                        fullName={activeTask.created_by_user.full_name}
+                        email={activeTask.created_by_user.email}
+                        size="sm"
+                      />
+                    </div>
+                  )}
+                  {activeTask.assigned_to_user && (
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground">For:</span>
+                      <UserBadge
+                        userId={activeTask.assigned_to_user.id}
+                        fullName={activeTask.assigned_to_user.full_name}
+                        email={activeTask.assigned_to_user.email}
+                        size="sm"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>

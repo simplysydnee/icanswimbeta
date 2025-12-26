@@ -91,7 +91,7 @@ export default function SwimmerDetailPage() {
           .from('swimmers')
           .select(`
             *,
-            current_level:swim_levels(name, display_name, color),
+            current_level:swim_levels(name, display_name, color)
           `)
           .eq('id', swimmerId)
           .eq('parent_id', user.id)
@@ -124,8 +124,6 @@ export default function SwimmerDetailPage() {
           `)
           .eq('swimmer_id', swimmerId)
           .eq('status', 'confirmed')
-          .gte('session.start_time', new Date().toISOString())
-          // .order('session.start_time', { ascending: true }) // Temporarily removed to test
 
         if (bookingsError) {
           console.error('Bookings query error:', bookingsError)
@@ -151,27 +149,29 @@ export default function SwimmerDetailPage() {
         }
 
         // Transform bookings data to match the Booking interface
-        const transformedBookings: Booking[] = (bookingsData || []).map((rawBooking) => ({
-          id: rawBooking.id,
-          session: {
-            id: rawBooking.session[0]?.id || '',
-            start_time: rawBooking.session[0]?.start_time || '',
-            end_time: rawBooking.session[0]?.end_time || '',
-            location: rawBooking.session[0]?.location || '',
-            instructor: rawBooking.session[0]?.instructor?.[0] ? {
-              full_name: rawBooking.session[0]?.instructor[0]?.full_name
-            } : undefined
-          },
-          swimmer: {
-            first_name: rawBooking.swimmer[0]?.first_name || '',
-            last_name: rawBooking.swimmer[0]?.last_name || ''
-          }
-        }))
-
-        // Sort bookings by session start time (since we can't use .order() with joined tables)
-        transformedBookings.sort((a, b) =>
-          new Date(a.session.start_time).getTime() - new Date(b.session.start_time).getTime()
-        )
+        const transformedBookings: Booking[] = (bookingsData || [])
+          .map((rawBooking) => ({
+            id: rawBooking.id,
+            session: {
+              id: rawBooking.session[0]?.id || '',
+              start_time: rawBooking.session[0]?.start_time || '',
+              end_time: rawBooking.session[0]?.end_time || '',
+              location: rawBooking.session[0]?.location || '',
+              instructor: rawBooking.session[0]?.instructor?.[0] ? {
+                full_name: rawBooking.session[0]?.instructor[0]?.full_name
+              } : undefined
+            },
+            swimmer: {
+              first_name: rawBooking.swimmer[0]?.first_name || '',
+              last_name: rawBooking.swimmer[0]?.last_name || ''
+            }
+          }))
+          // Filter to upcoming bookings only
+          .filter(b => b.session.start_time && new Date(b.session.start_time) >= new Date())
+          // Sort bookings by session start time (since we can't use .order() with joined tables)
+          .sort((a, b) =>
+            new Date(a.session.start_time).getTime() - new Date(b.session.start_time).getTime()
+          )
 
         setSwimmer(transformedSwimmer)
         setBookings(transformedBookings)

@@ -75,6 +75,7 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     assigned_to: '',
+    created_by: '',
     category: '',
     priority: '',
     swimmer_id: '',
@@ -88,6 +89,7 @@ export default function TasksPage() {
     try {
       const queryParams = new URLSearchParams();
       if (filters.assigned_to) queryParams.append('assigned_to', filters.assigned_to);
+      if (filters.created_by) queryParams.append('created_by', filters.created_by);
       if (filters.category) queryParams.append('category', filters.category);
       if (filters.priority) queryParams.append('priority', filters.priority);
       if (filters.swimmer_id) queryParams.append('swimmer_id', filters.swimmer_id);
@@ -222,6 +224,7 @@ export default function TasksPage() {
   const clearFilters = () => {
     setFilters({
       assigned_to: '',
+      created_by: '',
       category: '',
       priority: '',
       swimmer_id: '',
@@ -329,7 +332,26 @@ export default function TasksPage() {
       {showFilters && (
         <Card className="mb-6">
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div>
+                <Label htmlFor="created_by">Created By</Label>
+                <Select
+                  value={filters.created_by}
+                  onValueChange={(value) => setFilters(prev => ({ ...prev, created_by: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All creators" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All creators</SelectItem>
+                    {users.map(user => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.full_name || user.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label htmlFor="assigned_to">Assigned To</Label>
                 <Select

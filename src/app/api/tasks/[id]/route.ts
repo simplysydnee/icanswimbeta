@@ -24,7 +24,7 @@ const taskUpdateSchema = z.object({
 });
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -119,6 +119,19 @@ export async function PATCH(
 
     const taskId = params.id;
 
+    // Check admin role
+    const { data: userRoles, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+
+    if (roleError) {
+      console.error('Error fetching user roles:', roleError);
+      return NextResponse.json({ error: 'Failed to check permissions' }, { status: 500 });
+    }
+
+    const isAdmin = userRoles?.some(role => role.role === 'admin') || false;
+
     // Parse and validate request body
     const body = await request.json();
     const validationResult = taskUpdateSchema.safeParse(body);
@@ -197,7 +210,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -210,6 +223,19 @@ export async function DELETE(
     }
 
     const taskId = params.id;
+
+    // Check admin role
+    const { data: userRoles, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+
+    if (roleError) {
+      console.error('Error fetching user roles:', roleError);
+      return NextResponse.json({ error: 'Failed to check permissions' }, { status: 500 });
+    }
+
+    const isAdmin = userRoles?.some(role => role.role === 'admin') || false;
 
     // First, check if user has permission to delete this task
     const { data: existingTask } = await supabase
