@@ -19,6 +19,14 @@ interface SessionTypeStepProps {
 }
 
 export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, isFlexibleSwimmer, enrollmentStatus, assessmentStatus, onSelectType }: SessionTypeStepProps) {
+  console.log('SessionTypeStep received:', {
+    enrollmentStatus,
+    assessmentStatus,
+    paymentType,
+    fundingSourceName,
+    isFlexibleSwimmer
+  });
+
   const isFunded = paymentType === 'funded' || paymentType === 'scholarship' || !!fundingSourceName;
   // Check swimmer status using utility functions
   const swimmer = enrollmentStatus && assessmentStatus ? {
@@ -26,10 +34,21 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
     assessmentStatus
   } : null;
 
+  console.log('Swimmer object created:', swimmer);
+
   const isWaitlist = enrollmentStatus === 'waitlist' || enrollmentStatus === 'pending_assessment';
   const canBookRegular = swimmer ? canBookRegularLessons(swimmer as any) : false;
   const swimmerNeedsAssessment = swimmer ? needsAssessmentCheck(swimmer as any) : false;
   const isPending = swimmer ? isPendingApproval(swimmer as any) : false;
+
+  console.log('Status checks:', {
+    isWaitlist,
+    canBookRegular,
+    swimmerNeedsAssessment,
+    isPending,
+    enrollmentStatus,
+    assessmentStatus
+  });
 
   // Use assessment price for waitlist swimmers, otherwise use regular lesson price
   const sessionPrice = isWaitlist
@@ -54,8 +73,16 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
   // Determine which session types to show based on swimmer status
   const sessionTypes = [];
 
+  console.log('Building session types with:', {
+    isWaitlist,
+    swimmerNeedsAssessment,
+    canBookRegular,
+    isFlexibleSwimmer
+  });
+
   // Waitlist swimmers or those needing assessment ONLY see assessment option
   if (isWaitlist || swimmerNeedsAssessment) {
+    console.log('Adding assessment option (isWaitlist or needsAssessment)');
     sessionTypes.push({
       id: 'single' as SessionType,
       title: 'Initial Assessment',
@@ -74,6 +101,7 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
 
   // Enrolled swimmers who can book regular lessons see all options
   if (canBookRegular) {
+    console.log('Adding regular lesson options (canBookRegular)');
     sessionTypes.push(
       {
         id: 'single' as SessionType,
@@ -104,6 +132,8 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
       }
     );
   }
+
+  console.log('Final sessionTypes count:', sessionTypes.length);
 
   // Show appropriate message if no session types available
   if (sessionTypes.length === 0) {
