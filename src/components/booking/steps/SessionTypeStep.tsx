@@ -27,9 +27,29 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
     isFlexibleSwimmer
   });
 
+  // Safety: Show loading if status not yet available
+  // enrollmentStatus can be undefined (not loaded) or a string (loaded)
+  // assessmentStatus can be undefined (not loaded), null (no assessment), or string (loaded)
+  if (enrollmentStatus === undefined || assessmentStatus === undefined) {
+    return (
+      <div className="space-y-8">
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">Loading...</h3>
+          <p className="text-sm text-muted-foreground">
+            Loading swimmer information...
+          </p>
+        </div>
+        <div className="animate-pulse space-y-4">
+          <div className="h-32 rounded-lg bg-muted"></div>
+          <div className="h-32 rounded-lg bg-muted"></div>
+        </div>
+      </div>
+    );
+  }
+
   const isFunded = paymentType === 'funded' || paymentType === 'scholarship' || !!fundingSourceName;
   // Check swimmer status using utility functions
-  const swimmer = enrollmentStatus && assessmentStatus ? {
+  const swimmer = enrollmentStatus ? {
     enrollmentStatus: enrollmentStatus as 'waitlist' | 'pending_enrollment' | 'enrolled' | 'active' | 'inactive' | 'declined' | 'pending_assessment',
     assessmentStatus
   } : null;
