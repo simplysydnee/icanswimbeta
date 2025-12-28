@@ -74,11 +74,11 @@ export default function TasksPage() {
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    assigned_to: '',
-    created_by: '',
-    category: '',
-    priority: '',
-    swimmer_id: '',
+    assigned_to: 'all',
+    created_by: 'all',
+    category: 'all',
+    priority: 'all',
+    swimmer_id: 'all',
   });
   const [showFilters, setShowFilters] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -88,11 +88,11 @@ export default function TasksPage() {
   const fetchTasks = useCallback(async () => {
     try {
       const queryParams = new URLSearchParams();
-      if (filters.assigned_to) queryParams.append('assigned_to', filters.assigned_to);
-      if (filters.created_by) queryParams.append('created_by', filters.created_by);
-      if (filters.category) queryParams.append('category', filters.category);
-      if (filters.priority) queryParams.append('priority', filters.priority);
-      if (filters.swimmer_id) queryParams.append('swimmer_id', filters.swimmer_id);
+      if (filters.assigned_to && filters.assigned_to !== 'all') queryParams.append('assigned_to', filters.assigned_to);
+      if (filters.created_by && filters.created_by !== 'all') queryParams.append('created_by', filters.created_by);
+      if (filters.category && filters.category !== 'all') queryParams.append('category', filters.category);
+      if (filters.priority && filters.priority !== 'all') queryParams.append('priority', filters.priority);
+      if (filters.swimmer_id && filters.swimmer_id !== 'all') queryParams.append('swimmer_id', filters.swimmer_id);
 
       const response = await fetch(`/api/tasks?${queryParams.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch tasks');
@@ -223,11 +223,11 @@ export default function TasksPage() {
 
   const clearFilters = () => {
     setFilters({
-      assigned_to: '',
-      created_by: '',
-      category: '',
-      priority: '',
-      swimmer_id: '',
+      assigned_to: 'all',
+      created_by: 'all',
+      category: 'all',
+      priority: 'all',
+      swimmer_id: 'all',
     });
   };
 
@@ -343,7 +343,7 @@ export default function TasksPage() {
                     <SelectValue placeholder="All creators" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All creators</SelectItem>
+                    <SelectItem value="all">All creators</SelectItem>
                     {users.map(user => (
                       <SelectItem key={user.id} value={user.id}>
                         {user.full_name || user.email}
@@ -362,7 +362,7 @@ export default function TasksPage() {
                     <SelectValue placeholder="All users" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All users</SelectItem>
+                    <SelectItem value="all">All users</SelectItem>
                     {users.map(user => (
                       <SelectItem key={user.id} value={user.id}>
                         {user.full_name || user.email}
@@ -381,7 +381,7 @@ export default function TasksPage() {
                     <SelectValue placeholder="All categories" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All categories</SelectItem>
+                    <SelectItem value="all">All categories</SelectItem>
                     <SelectItem value="swimmer_related">Swimmer Related</SelectItem>
                     <SelectItem value="business_operations">Business Operations</SelectItem>
                     <SelectItem value="follow_up">Follow-up</SelectItem>
@@ -399,7 +399,7 @@ export default function TasksPage() {
                     <SelectValue placeholder="All priorities" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All priorities</SelectItem>
+                    <SelectItem value="all">All priorities</SelectItem>
                     <SelectItem value="urgent">Urgent</SelectItem>
                     <SelectItem value="high">High</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
@@ -417,7 +417,7 @@ export default function TasksPage() {
                     <SelectValue placeholder="All swimmers" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All swimmers</SelectItem>
+                    <SelectItem value="all">All swimmers</SelectItem>
                     {swimmers.map(swimmer => (
                       <SelectItem key={swimmer.id} value={swimmer.id}>
                         {swimmer.first_name} {swimmer.last_name}

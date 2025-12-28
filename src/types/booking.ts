@@ -7,8 +7,10 @@ export type EnrollmentStatus =
   | 'waitlist'
   | 'pending_enrollment'
   | 'enrolled'
+  | 'active'
   | 'inactive'
-  | 'declined';
+  | 'declined'
+  | 'pending_assessment';
 
 // Payment type options
 export type PaymentType =

@@ -57,8 +57,8 @@ export function EditTaskModal({ task, users, swimmers, onSubmit, onCancel }: Edi
     priority: task.priority,
     category: task.category,
     due_date: task.due_date ? new Date(task.due_date) : undefined as Date | undefined,
-    assigned_to: task.assigned_to || '',
-    swimmer_id: task.swimmer_id || '',
+    assigned_to: task.assigned_to || 'none',
+    swimmer_id: task.swimmer_id || 'none',
   });
   const [loading, setLoading] = useState(false);
 
@@ -74,8 +74,8 @@ export function EditTaskModal({ task, users, swimmers, onSubmit, onCancel }: Edi
         priority: formData.priority,
         category: formData.category,
         due_date: formData.due_date ? format(formData.due_date, 'yyyy-MM-dd') : null,
-        assigned_to: formData.assigned_to || null,
-        swimmer_id: formData.swimmer_id || null,
+        assigned_to: formData.assigned_to === 'none' ? null : formData.assigned_to,
+        swimmer_id: formData.swimmer_id === 'none' ? null : formData.swimmer_id,
       };
 
       await onSubmit(updates);
@@ -208,7 +208,7 @@ export function EditTaskModal({ task, users, swimmers, onSubmit, onCancel }: Edi
             <SelectValue placeholder="Select user (optional)" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Unassigned</SelectItem>
+            <SelectItem value="none">Unassigned</SelectItem>
             {users.map(user => (
               <SelectItem key={user.id} value={user.id}>
                 {user.full_name || user.email}
@@ -228,7 +228,7 @@ export function EditTaskModal({ task, users, swimmers, onSubmit, onCancel }: Edi
             <SelectValue placeholder="Select swimmer (optional)" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">None</SelectItem>
+            <SelectItem value="none">None</SelectItem>
             {swimmers.map(swimmer => (
               <SelectItem key={swimmer.id} value={swimmer.id}>
                 {swimmer.first_name} {swimmer.last_name} ({swimmer.client_number})

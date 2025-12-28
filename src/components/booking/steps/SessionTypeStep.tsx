@@ -22,11 +22,11 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
   const isFunded = paymentType === 'funded' || paymentType === 'scholarship' || !!fundingSourceName;
   // Check swimmer status using utility functions
   const swimmer = enrollmentStatus && assessmentStatus ? {
-    enrollmentStatus: enrollmentStatus as 'waitlist' | 'pending_enrollment' | 'enrolled' | 'inactive',
+    enrollmentStatus: enrollmentStatus as 'waitlist' | 'pending_enrollment' | 'enrolled' | 'active' | 'inactive' | 'declined' | 'pending_assessment',
     assessmentStatus
   } : null;
 
-  const isWaitlist = enrollmentStatus === 'waitlist';
+  const isWaitlist = enrollmentStatus === 'waitlist' || enrollmentStatus === 'pending_assessment';
   const canBookRegular = swimmer ? canBookRegularLessons(swimmer as any) : false;
   const swimmerNeedsAssessment = swimmer ? needsAssessmentCheck(swimmer as any) : false;
   const isPending = swimmer ? isPendingApproval(swimmer as any) : false;

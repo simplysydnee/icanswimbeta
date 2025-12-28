@@ -93,7 +93,7 @@ export default function ProgressUpdateModal({
   const [lessonSummary, setLessonSummary] = useState('');
   const [instructorNotes, setInstructorNotes] = useState('');
   const [parentNotes, setParentNotes] = useState('');
-  const [selectedNextLevelId, setSelectedNextLevelId] = useState<string>('');
+  const [selectedNextLevelId, setSelectedNextLevelId] = useState<string>('keep_current');
   const [sharedWithParent, setSharedWithParent] = useState(false);
   const [attendanceStatus, setAttendanceStatus] = useState('present');
   const [swimmerMood, setSwimmerMood] = useState('');
@@ -161,7 +161,7 @@ export default function ProgressUpdateModal({
           parentNotes,
           skillsWorkingOn,
           skillsMastered,
-          currentLevelId: selectedNextLevelId || currentLevel?.id,
+          currentLevelId: selectedNextLevelId === 'keep_current' ? currentLevel?.id : selectedNextLevelId,
           sharedWithParent,
           attendanceStatus,
           swimmerMood,
@@ -353,7 +353,7 @@ export default function ProgressUpdateModal({
                     <SelectValue placeholder="Select next level (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Keep at current level</SelectItem>
+                    <SelectItem value="keep_current">Keep at current level</SelectItem>
                     {nextLevels.map((level) => (
                       <SelectItem key={level.id} value={level.id}>
                         {level.display_name || level.name} - {level.description}

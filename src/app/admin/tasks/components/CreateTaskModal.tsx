@@ -39,8 +39,8 @@ export function CreateTaskModal({ users, swimmers, onSubmit, onCancel }: CreateT
     priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
     category: 'other' as 'swimmer_related' | 'business_operations' | 'follow_up' | 'other',
     due_date: undefined as Date | undefined,
-    assigned_to: '',
-    swimmer_id: '',
+    assigned_to: 'none',
+    swimmer_id: 'none',
   });
   const [loading, setLoading] = useState(false);
 
@@ -52,8 +52,8 @@ export function CreateTaskModal({ users, swimmers, onSubmit, onCancel }: CreateT
       const taskData = {
         ...formData,
         due_date: formData.due_date ? format(formData.due_date, 'yyyy-MM-dd') : undefined,
-        assigned_to: formData.assigned_to || undefined,
-        swimmer_id: formData.swimmer_id || undefined,
+        assigned_to: formData.assigned_to === 'none' ? undefined : formData.assigned_to,
+        swimmer_id: formData.swimmer_id === 'none' ? undefined : formData.swimmer_id,
       };
 
       await onSubmit(taskData);
@@ -166,7 +166,7 @@ export function CreateTaskModal({ users, swimmers, onSubmit, onCancel }: CreateT
             <SelectValue placeholder="Select user (optional)" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Unassigned</SelectItem>
+            <SelectItem value="none">Unassigned</SelectItem>
             {users.map(user => (
               <SelectItem key={user.id} value={user.id}>
                 {user.full_name || user.email}
@@ -186,7 +186,7 @@ export function CreateTaskModal({ users, swimmers, onSubmit, onCancel }: CreateT
             <SelectValue placeholder="Select swimmer (optional)" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">None</SelectItem>
+            <SelectItem value="none">None</SelectItem>
             {swimmers.map(swimmer => (
               <SelectItem key={swimmer.id} value={swimmer.id}>
                 {swimmer.first_name} {swimmer.last_name} ({swimmer.client_number})
