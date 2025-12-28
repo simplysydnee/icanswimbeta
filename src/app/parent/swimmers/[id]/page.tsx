@@ -43,6 +43,12 @@ interface Swimmer {
   funding_source_id?: string
   funding_source_name?: string
   funding_source_short_name?: string
+  funding_source?: Array<{
+    id: string
+    name: string
+    short_name?: string
+    type?: string
+  }>
   funding_coordinator_name?: string
   funding_coordinator_email?: string
   funding_coordinator_phone?: string
@@ -91,7 +97,8 @@ export default function SwimmerDetailPage() {
           .from('swimmers')
           .select(`
             *,
-            current_level:swim_levels(name, display_name, color)
+            current_level:swim_levels(name, display_name, color),
+            funding_source:funding_source_id(id, name, short_name, type)
           `)
           .eq('id', swimmerId)
           .eq('parent_id', user.id)
@@ -483,7 +490,7 @@ export default function SwimmerDetailPage() {
                   <>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">
-                        {swimmer.funding_source_name || 'Funding Source'} Coordinator
+                        {swimmer.funding_source?.[0]?.name || 'Funding Source'} Coordinator
                       </label>
                       <p className="text-sm">
                         {swimmer.funding_coordinator_name || 'Not specified'}
@@ -492,7 +499,7 @@ export default function SwimmerDetailPage() {
                     {swimmer.sessions_authorized !== undefined && swimmer.sessions_used !== undefined && (
                       <div>
                         <label className="text-sm font-medium text-muted-foreground">
-                          {swimmer.funding_source_name || 'Funding Source'} Session Usage
+                          {swimmer.funding_source?.[0]?.name || 'Funding Source'} Session Usage
                         </label>
                         <div className="mt-2">
                           <div className="flex justify-between text-sm mb-1">
@@ -554,7 +561,7 @@ export default function SwimmerDetailPage() {
               </Button>
               {swimmer.funding_source_id && swimmer.sessions_authorized && swimmer.sessions_used && (
                 <div className="pt-2 border-t">
-                  <div className="text-xs text-muted-foreground mb-2">{swimmer.funding_source_name || 'Funding Source'} Status</div>
+                  <div className="text-xs text-muted-foreground mb-2">{swimmer.funding_source?.[0]?.name || 'Funding Source'} Status</div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Sessions remaining:</span>
                     <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">

@@ -110,7 +110,8 @@ export default function InstructorSwimmerDetailPage() {
         .select(`
           *,
           parent:profiles!swimmers_parent_id_fkey(id, full_name, email, phone),
-          current_level:swim_levels(*)
+          current_level:swim_levels(*),
+          funding_source:funding_source_id(id, name, short_name, type)
         `)
         .eq('id', swimmerId)
         .single()
@@ -376,7 +377,7 @@ export default function InstructorSwimmerDetailPage() {
                     </div>
                     {swimmer.funding_source_id && (
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">{swimmer.funding_source_name || 'Funding Source'} Sessions</p>
+                        <p className="text-sm font-medium text-muted-foreground">{swimmer.funding_source?.[0]?.name || 'Funding Source'} Sessions</p>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-xl font-bold">{swimmer.authorized_sessions_used || 0}</span>
                           <span className="text-muted-foreground">/ {swimmer.authorized_sessions_total || 0}</span>

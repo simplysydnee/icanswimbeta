@@ -88,6 +88,7 @@ export default function SwimmersPage() {
           } : undefined,
           payment_type: swimmer.paymentType,
           funding_source_id: swimmer.fundingSourceId,
+          funding_source_name: swimmer.fundingSourceName,
           lessons_completed: swimmer.lessonsCompleted,
           next_session: swimmer.nextSession ? {
             start_time: swimmer.nextSession.startTime,
