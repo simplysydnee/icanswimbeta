@@ -33,6 +33,7 @@ export async function GET() {
         vmrc_coordinator_name,
         funding_coordinator_name,
         swim_levels:current_level_id(name, display_name, color),
+        funding_source:funding_source_id(id, name, short_name, type),
         bookings!bookings_swimmer_id_fkey(
           id,
           status,
@@ -83,9 +84,11 @@ export async function GET() {
           displayName: swimmer.swim_levels[0].display_name,
           color: swimmer.swim_levels[0].color
         } : null,
-        paymentType: swimmer.payment_type === 'vmrc' ? 'funded' : swimmer.payment_type,
+        paymentType: swimmer.funding_source_id ? 'funded' : (swimmer.payment_type || 'private_pay'),
         fundingSourceId: swimmer.funding_source_id,
-        fundingSourceName: swimmer.is_vmrc_client ? 'VMRC' : swimmer.funding_coordinator_name || null,
+        fundingSourceName: swimmer.funding_source?.[0]?.name || swimmer.funding_coordinator_name || null,
+        fundingSourceShortName: swimmer.funding_source?.[0]?.short_name || null,
+        fundingSourceType: swimmer.funding_source?.[0]?.type || null,
         flexibleSwimmer: swimmer.flexible_swimmer || false,
         authorizedSessionsUsed: swimmer.authorized_sessions_used,
         authorizedSessionsTotal: swimmer.authorized_sessions_total,
