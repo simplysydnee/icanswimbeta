@@ -38,6 +38,7 @@ export function needsAssessment(swimmer: Swimmer): boolean {
   return swimmer.enrollmentStatus === 'waitlist' ||
          swimmer.enrollmentStatus === 'pending_assessment' ||
          swimmer.assessmentStatus === 'not_started' ||
+         swimmer.assessmentStatus === 'not_scheduled' || // Not scheduled yet
          swimmer.assessmentStatus === 'scheduled' || // Already has assessment scheduled
          swimmer.assessmentStatus === null; // No assessment status set
 }
