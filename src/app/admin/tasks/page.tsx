@@ -332,20 +332,20 @@ export default function TasksPage() {
       {showFilters && (
         <Card className="mb-6">
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
-                <Label htmlFor="created_by">Created By</Label>
+                <Label htmlFor="created_by" className="text-xs sm:text-sm">Created By</Label>
                 <Select
                   value={filters.created_by}
                   onValueChange={(value) => setFilters(prev => ({ ...prev, created_by: value }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 text-xs sm:text-sm">
                     <SelectValue placeholder="All creators" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All creators</SelectItem>
                     {users.map(user => (
-                      <SelectItem key={user.id} value={user.id}>
+                      <SelectItem key={user.id} value={user.id} className="text-xs sm:text-sm">
                         {user.full_name || user.email}
                       </SelectItem>
                     ))}
@@ -353,18 +353,18 @@ export default function TasksPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="assigned_to">Assigned To</Label>
+                <Label htmlFor="assigned_to" className="text-xs sm:text-sm">Assigned To</Label>
                 <Select
                   value={filters.assigned_to}
                   onValueChange={(value) => setFilters(prev => ({ ...prev, assigned_to: value }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 text-xs sm:text-sm">
                     <SelectValue placeholder="All users" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All users</SelectItem>
                     {users.map(user => (
-                      <SelectItem key={user.id} value={user.id}>
+                      <SelectItem key={user.id} value={user.id} className="text-xs sm:text-sm">
                         {user.full_name || user.email}
                       </SelectItem>
                     ))}
@@ -372,12 +372,12 @@ export default function TasksPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category" className="text-xs sm:text-sm">Category</Label>
                 <Select
                   value={filters.category}
                   onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 text-xs sm:text-sm">
                     <SelectValue placeholder="All categories" />
                   </SelectTrigger>
                   <SelectContent>
@@ -390,12 +390,12 @@ export default function TasksPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="priority">Priority</Label>
+                <Label htmlFor="priority" className="text-xs sm:text-sm">Priority</Label>
                 <Select
                   value={filters.priority}
                   onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 text-xs sm:text-sm">
                     <SelectValue placeholder="All priorities" />
                   </SelectTrigger>
                   <SelectContent>
@@ -408,18 +408,18 @@ export default function TasksPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="swimmer_id">Related Swimmer</Label>
+                <Label htmlFor="swimmer_id" className="text-xs sm:text-sm">Related Swimmer</Label>
                 <Select
                   value={filters.swimmer_id}
                   onValueChange={(value) => setFilters(prev => ({ ...prev, swimmer_id: value }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 text-xs sm:text-sm">
                     <SelectValue placeholder="All swimmers" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All swimmers</SelectItem>
                     {swimmers.map(swimmer => (
-                      <SelectItem key={swimmer.id} value={swimmer.id}>
+                      <SelectItem key={swimmer.id} value={swimmer.id} className="text-xs sm:text-sm">
                         {swimmer.first_name} {swimmer.last_name}
                       </SelectItem>
                     ))}
@@ -428,8 +428,8 @@ export default function TasksPage() {
               </div>
             </div>
             <div className="flex justify-end mt-4">
-              <Button variant="ghost" onClick={clearFilters} className="flex items-center gap-2">
-                <X className="h-4 w-4" />
+              <Button variant="ghost" onClick={clearFilters} className="flex items-center gap-2 text-xs sm:text-sm h-8 sm:h-9">
+                <X className="h-3 w-3 sm:h-4 sm:w-4" />
                 Clear Filters
               </Button>
             </div>
@@ -438,63 +438,63 @@ export default function TasksPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">To Do</p>
-                <p className="text-2xl font-bold">
+                <p className="text-xs sm:text-sm text-muted-foreground">To Do</p>
+                <p className="text-xl sm:text-2xl font-bold">
                   {tasks.filter(t => t.status === 'todo').length}
                 </p>
               </div>
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <CheckSquare className="h-5 w-5 text-gray-600" />
+              <div className="p-1.5 sm:p-2 bg-gray-100 rounded-lg">
+                <CheckSquare className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">In Progress</p>
-                <p className="text-2xl font-bold">
+                <p className="text-xs sm:text-sm text-muted-foreground">In Progress</p>
+                <p className="text-xl sm:text-2xl font-bold">
                   {tasks.filter(t => t.status === 'in_progress').length}
                 </p>
               </div>
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Clock className="h-5 w-5 text-blue-600" />
+              <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Completed</p>
-                <p className="text-2xl font-bold">
+                <p className="text-xs sm:text-sm text-muted-foreground">Completed</p>
+                <p className="text-xl sm:text-2xl font-bold">
                   {tasks.filter(t => t.status === 'completed').length}
                 </p>
               </div>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-600" />
+              <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg">
+                <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
               </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Needs Attention</p>
-                <p className="text-2xl font-bold">
+                <p className="text-xs sm:text-sm text-muted-foreground">Needs Attention</p>
+                <p className="text-xl sm:text-2xl font-bold">
                   {tasks.filter(t => t.status === 'needs_attention').length}
                 </p>
               </div>
-              <div className="p-2 bg-red-100 rounded-lg">
-                <AlertCircle className="h-5 w-5 text-red-600" />
+              <div className="p-1.5 sm:p-2 bg-red-100 rounded-lg">
+                <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
               </div>
             </div>
           </CardContent>

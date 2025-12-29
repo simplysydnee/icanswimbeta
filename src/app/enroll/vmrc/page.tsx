@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Edit, User, Mail } from 'lucide-react';
+import { formatNameField } from '@/lib/name-utils';
 
 // Helper function to handle circular references in JSON.stringify
 const getCircularReplacer = () => {
@@ -63,6 +64,19 @@ function ParentFundingReferralContent() {
     setChildInfo({ firstName, lastName, dob });
   }, [searchParams]);
 
+  // Function to format name fields on blur
+  const handleNameBlur = (fieldName: keyof ParentReferralFormData) => {
+    return (event: React.FocusEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      if (value && value.trim()) {
+        const formatted = formatNameField(value);
+        if (formatted !== value) {
+          setValue(fieldName, formatted, { shouldValidate: true });
+        }
+      }
+    };
+  };
+
   const {
     register,
     handleSubmit,
@@ -98,8 +112,16 @@ function ParentFundingReferralContent() {
     setSubmitResult(null);
 
     try {
-      console.log('Submitting referral request:', data);
-      const result = await apiClient.createParentReferralRequest(data);
+      // Format names before submission
+      const formattedData = {
+        ...data,
+        parent_name: formatNameField(data.parent_name),
+        child_name: formatNameField(data.child_name),
+        coordinator_name: formatNameField(data.coordinator_name),
+      };
+
+      console.log('Submitting referral request:', formattedData);
+      const result = await apiClient.createParentReferralRequest(formattedData);
       console.log('Referral request submitted successfully:', result);
 
       setSubmitResult({
@@ -253,6 +275,7 @@ function ParentFundingReferralContent() {
                   <Input
                     id="parent_name"
                     {...register('parent_name')}
+                    onBlur={handleNameBlur('parent_name')}
                     placeholder="Your full name"
                     readOnly={!!user}
                     className={user ? 'bg-gray-50' : ''}
@@ -312,6 +335,7 @@ function ParentFundingReferralContent() {
                   <Input
                     id="coordinator_name"
                     {...register('coordinator_name')}
+                    onBlur={handleNameBlur('coordinator_name')}
                     placeholder="Coordinator's full name"
                   />
                   {errors.coordinator_name && (

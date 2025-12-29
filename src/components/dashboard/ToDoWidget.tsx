@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { CheckSquare, AlertCircle, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getUserColor, getUserInitials } from '@/lib/user-colors';
+import { cn } from '@/lib/utils';
 
 interface Task {
   id: string;
@@ -14,6 +16,11 @@ interface Task {
   priority: string;
   due_date: string | null;
   status: string;
+  assigned_to_user?: {
+    id: string;
+    full_name: string | null;
+    email: string;
+  } | null;
 }
 
 export function ToDoWidget() {
@@ -113,15 +120,31 @@ export function ToDoWidget() {
                 className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{task.title}</p>
-                  {task.due_date && (
-                    <p className="text-xs text-muted-foreground">
-                      Due: {formatDueDate(task.due_date)}
-                    </p>
-                  )}
+                  <div className="flex items-center gap-2 mb-1">
+                    {task.assigned_to_user && (
+                      <span className={cn(
+                        "inline-flex items-center justify-center rounded-full font-medium text-[10px] h-5 w-5 flex-shrink-0",
+                        getUserColor(task.assigned_to_user.id).bg,
+                        getUserColor(task.assigned_to_user.id).text
+                      )}>
+                        {getUserInitials(task.assigned_to_user.full_name)}
+                      </span>
+                    )}
+                    <p className="text-sm font-medium truncate">{task.title}</p>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    {task.due_date && (
+                      <span>Due: {formatDueDate(task.due_date)}</span>
+                    )}
+                    {task.assigned_to_user && (
+                      <span className="truncate max-w-[120px]">
+                        For: {task.assigned_to_user.full_name || task.assigned_to_user.email}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <Badge
-                  className={`${getPriorityColor(task.priority)} ml-2`}
+                  className={`${getPriorityColor(task.priority)} ml-2 flex-shrink-0`}
                   variant="outline"
                 >
                   {task.priority}

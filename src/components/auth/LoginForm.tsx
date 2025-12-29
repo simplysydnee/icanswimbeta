@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
+import { LoadingButton } from '@/components/ui/loading-button'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Eye, EyeOff } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
@@ -19,7 +21,6 @@ export default function LoginForm() {
   })
   const [formError, setFormError] = useState<string | null>(null)
   const [redirectTo, setRedirectTo] = useState<string | null>(null)
-  const [showPassword, setShowPassword] = useState(false)
   const searchParams = useSearchParams()
 
   useEffect(() => {
@@ -139,32 +140,15 @@ export default function LoginForm() {
                 Forgot password?
               </Link>
             </div>
-            <div className="relative">
-              <Input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                disabled={loading}
-                required
-                className="pr-10"
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={loading}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
+            <PasswordInput
+              id="password"
+              name="password"
+              placeholder="Enter your password"
+              value={formData.password}
+              onChange={handleChange}
+              disabled={loading}
+              required
+            />
           </div>
           
           {(error || formError) && (
@@ -175,20 +159,14 @@ export default function LoginForm() {
             </Alert>
           )}
 
-          <Button
+          <LoadingButton
             type="submit"
             className="w-full"
-            disabled={loading}
+            loading={loading}
+            loadingText="Signing in..."
           >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              'Sign In'
-            )}
-          </Button>
+            Sign In
+          </LoadingButton>
 
           <div className="text-center text-sm">
             Don&apos;t have an account?{' '}

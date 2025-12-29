@@ -52,9 +52,14 @@ export function InstructorNavbar() {
             return (
               <Link key={item.href} href={item.href}>
                 <Button
-                  variant={isActive ? 'secondary' : 'ghost'}
+                  variant="ghost"
                   size="sm"
-                  className={cn('gap-2', isActive && 'bg-blue-50 text-blue-700')}
+                  className={cn(
+                    'gap-2 transition-all duration-150',
+                    isActive && 'bg-brand-100 text-brand-600 font-semibold border-b-2 border-brand-500',
+                    !isActive && 'hover:bg-brand-50 hover:text-brand-600',
+                    'active:bg-brand-200 active:scale-[0.98]'
+                  )}
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
@@ -62,7 +67,7 @@ export function InstructorNavbar() {
               </Link>
             );
           })}
-          <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2 text-gray-500 hover:text-red-600">
+          <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2 text-gray-500 transition-all duration-150 hover:bg-red-50 hover:text-red-600 active:bg-red-100 active:scale-[0.98]">
             <LogOut className="h-4 w-4" />
             Logout
           </Button>
@@ -76,7 +81,12 @@ export function InstructorNavbar() {
               (item.href !== '/instructor' && pathname.startsWith(item.href));
             return (
               <Link key={item.href} href={item.href}>
-                <Button variant={isActive ? 'secondary' : 'ghost'} size="icon" className={cn(isActive && 'bg-blue-50 text-blue-700')}>
+                <Button variant="ghost" size="icon" className={cn(
+                  'transition-all duration-150',
+                  isActive && 'bg-brand-100 text-brand-600 border-b-2 border-brand-500',
+                  !isActive && 'hover:bg-brand-50 hover:text-brand-600',
+                  'active:bg-brand-200 active:scale-[0.98]'
+                )}>
                   <Icon className="h-5 w-5" />
                 </Button>
               </Link>

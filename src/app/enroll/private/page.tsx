@@ -19,6 +19,7 @@ import { Loader2 } from 'lucide-react';
 import { SWIM_GOALS, AVAILABILITY_SLOTS, DIAGNOSIS_OPTIONS } from '@/lib/constants';
 import { LiabilityWaiverModal, CancellationPolicyModal } from '@/components/enrollment';
 import { getAllFundingSources } from '@/lib/funding-utils';
+import { formatNameField } from '@/lib/name-utils';
 
 // Form validation schema
 const privateEnrollmentSchema = z.object({
@@ -178,6 +179,19 @@ export default function PrivatePayEnrollmentPage() {
     }
   }, [user, authLoading, router]);
 
+  // Function to format name fields on blur
+  const handleNameBlur = (fieldName: keyof PrivateEnrollmentFormData) => {
+    return (event: React.FocusEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      if (value && value.trim()) {
+        const formatted = formatNameField(value);
+        if (formatted !== value) {
+          setValue(fieldName, formatted, { shouldValidate: true });
+        }
+      }
+    };
+  };
+
   const {
     register,
     handleSubmit,
@@ -332,8 +346,8 @@ export default function PrivatePayEnrollmentPage() {
       // Prepare swimmer data - mapping form fields to database columns
       const swimmerData = {
         parent_id: user.id,
-        first_name: data.child_first_name,
-        last_name: data.child_last_name,
+        first_name: formatNameField(data.child_first_name),
+        last_name: formatNameField(data.child_last_name),
         date_of_birth: data.child_date_of_birth,
         gender: data.child_gender,
         client_number: clientNumber,
@@ -397,7 +411,7 @@ export default function PrivatePayEnrollmentPage() {
 
       // Update parent profile information
       const profileData = {
-        full_name: data.parent_name,
+        full_name: formatNameField(data.parent_name),
         phone: data.parent_phone,
         // Note: email is already in auth.users, but we can update it in profiles too
       };
@@ -566,6 +580,7 @@ export default function PrivatePayEnrollmentPage() {
                     <Input
                       id="parent_name"
                       {...register('parent_name')}
+                      onBlur={handleNameBlur('parent_name')}
                       placeholder="Your full name"
                     />
                     {errors.parent_name && (
@@ -662,6 +677,7 @@ export default function PrivatePayEnrollmentPage() {
                     <Input
                       id="child_first_name"
                       {...register('child_first_name')}
+                      onBlur={handleNameBlur('child_first_name')}
                       placeholder="Child's first name"
                     />
                     {errors.child_first_name && (
@@ -674,6 +690,7 @@ export default function PrivatePayEnrollmentPage() {
                     <Input
                       id="child_last_name"
                       {...register('child_last_name')}
+                      onBlur={handleNameBlur('child_last_name')}
                       placeholder="Child's last name"
                     />
                     {errors.child_last_name && (
@@ -1280,6 +1297,7 @@ export default function PrivatePayEnrollmentPage() {
                       <Input
                         id="emergency_contact_name"
                         {...register('emergency_contact_name')}
+                        onBlur={handleNameBlur('emergency_contact_name')}
                         placeholder="Full name"
                       />
                       {errors.emergency_contact_name && (

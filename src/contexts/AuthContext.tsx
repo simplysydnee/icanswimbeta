@@ -63,84 +63,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   })
 
 
-  // Initialize auth state
-  useEffect(() => {
-    // Fetch user profile and role
-    const fetchUserProfile = async (userId: string, userEmail?: string, retryCount = 0) => {
+  // Fetch user profile and role (only called when we have a user)
+  const fetchUserProfile = async (userId: string, userEmail?: string, retryCount = 0) => {
+    try {
+      setIsLoadingProfile(true)
+
+      // Set a global timeout for the entire fetchUserProfile operation (reduced from 30s)
+      const globalTimeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Auth fetch timeout after 10 seconds')), 10000)
+      );
+
+      // Set a timeout for individual database queries (reduced from 10s)
+      const queryTimeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Database query timeout after 5 seconds')), 5000)
+      );
+
+      // Fetch profile
+      let profileData: Profile | null = null;
+      let profileError: { code?: string; message?: string; details?: string; hint?: string } | null = null;
+
       try {
-        setIsLoadingProfile(true)
+        const profilePromise = supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
 
-        // Set a global timeout for the entire fetchUserProfile operation (reduced from 30s)
-        const globalTimeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Auth fetch timeout after 10 seconds')), 10000)
-        );
+        const profileResult = await Promise.race([profilePromise, queryTimeoutPromise, globalTimeoutPromise]) as any;
+        profileData = profileResult.data;
+        profileError = profileResult.error;
+      } catch {
+        profileError = {
+          code: 'TIMEOUT',
+          message: 'Profile query timeout',
+          details: '',
+          hint: ''
+        };
+      }
 
-        // Set a timeout for individual database queries (reduced from 10s)
-        const queryTimeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Database query timeout after 5 seconds')), 5000)
-        );
+      // Small delay between queries to reduce database load
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-        // Fetch profile
-        let profileData: Profile | null = null;
-        let profileError: { code?: string; message?: string; details?: string; hint?: string } | null = null;
+      let finalProfileData = profileData;
 
-        try {
-          const profilePromise = supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
+      // If profile doesn't exist, create one
+      if (profileError && profileError.code === 'PGRST116') { // PGRST116 is "No rows returned"
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            email: userEmail || '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single()
 
-          const profileResult = await Promise.race([profilePromise, queryTimeoutPromise, globalTimeoutPromise]) as any;
-          profileData = profileResult.data;
-          profileError = profileResult.error;
-        } catch {
-          profileError = {
-            code: 'TIMEOUT',
-            message: 'Profile query timeout',
-            details: '',
-            hint: ''
-          };
-        }
-
-        // Small delay between queries to reduce database load
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-        let finalProfileData = profileData;
-
-        // If profile doesn't exist, create one
-        if (profileError && profileError.code === 'PGRST116') { // PGRST116 is "No rows returned"
-          const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert({
-              id: userId,
-              email: userEmail || '',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-            .select()
-            .single()
-
-          if (createError) {
-            // Create a minimal profile object to prevent the error at line 183
-            finalProfileData = {
-              id: userId,
-              email: userEmail || '',
-              full_name: null,
-              phone: null,
-              avatar_url: null,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            };
-          } else {
-            // Use the newly created profile
-            finalProfileData = newProfile;
-          }
-        } else if (profileError && retryCount === 0 && profileError.code !== 'PGRST116') {
-          // If profile fetch fails for other reasons (not "not found") and we haven't retried yet, wait and retry once
-          await new Promise(resolve => setTimeout(resolve, 500))
-          return fetchUserProfile(userId, userEmail, 1)
-        } else if (profileError) {
+        if (createError) {
           // Create a minimal profile object to prevent the error at line 183
           finalProfileData = {
             id: userId,
@@ -151,118 +130,139 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
+        } else {
+          // Use the newly created profile
+          finalProfileData = newProfile;
         }
+      } else if (profileError && retryCount === 0 && profileError.code !== 'PGRST116') {
+        // If profile fetch fails for other reasons (not "not found") and we haven't retried yet, wait and retry once
+        await new Promise(resolve => setTimeout(resolve, 500))
+        return fetchUserProfile(userId, userEmail, 1)
+      } else if (profileError) {
+        // Create a minimal profile object to prevent the error at line 183
+        finalProfileData = {
+          id: userId,
+          email: userEmail || '',
+          full_name: null,
+          phone: null,
+          avatar_url: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+      }
 
-        // Fetch roles
-        let rolesData: UserRoleRecord[] | null = null;
-        let rolesError: { code?: string; message?: string; details?: string; hint?: string } | null = null;
+      // Fetch roles
+      let rolesData: UserRoleRecord[] | null = null;
+      let rolesError: { code?: string; message?: string; details?: string; hint?: string } | null = null;
 
+      try {
+        const rolesPromise = supabase
+          .from('user_roles')
+          .select('*')
+          .eq('user_id', userId);
+
+        const rolesResult = await Promise.race([rolesPromise, queryTimeoutPromise, globalTimeoutPromise]) as any;
+        rolesData = rolesResult.data;
+        rolesError = rolesResult.error;
+      } catch {
+        rolesError = {
+          code: 'TIMEOUT',
+          message: 'Roles query timeout',
+          details: '',
+          hint: ''
+        };
+      }
+
+      // If roles fetch fails and we haven't retried yet, wait and retry once
+      if (rolesError && retryCount === 0) {
+        await new Promise(resolve => setTimeout(resolve, 500))
+        return fetchUserProfile(userId, userEmail, 1)
+      }
+
+      // Get primary role (first role in the array)
+      // Handle case where rolesData might be null or undefined
+      const primaryRole = rolesData && Array.isArray(rolesData) && rolesData[0]?.role || 'parent'
+
+      // Make sure finalProfileData is not null or undefined
+      if (!finalProfileData) {
+        // Create a minimal profile object
+        finalProfileData = {
+          id: userId,
+          email: userEmail || '',
+          full_name: null,
+          phone: null,
+          avatar_url: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+      }
+
+      const userWithRole: UserWithRole = {
+        ...finalProfileData,
+        role: primaryRole,
+        roles: rolesData || []
+      }
+
+      setProfile(userWithRole)
+      setRole(primaryRole)
+    } catch (error) {
+      // Try to extract as much error information as possible
+      let errorDetails: any = {
+        errorType: typeof error,
+        errorString: String(error),
+        userId,
+        retryCount
+      };
+
+      // Try to get error properties
+      if (error && typeof error === 'object') {
         try {
-          const rolesPromise = supabase
-            .from('user_roles')
-            .select('*')
-            .eq('user_id', userId);
-
-          const rolesResult = await Promise.race([rolesPromise, queryTimeoutPromise, globalTimeoutPromise]) as any;
-          rolesData = rolesResult.data;
-          rolesError = rolesResult.error;
-        } catch {
-          rolesError = {
-            code: 'TIMEOUT',
-            message: 'Roles query timeout',
-            details: '',
-            hint: ''
+          const err = error as any;
+          errorDetails = {
+            ...errorDetails,
+            message: err.message,
+            name: err.name,
+            stack: err.stack,
+            // Try to get Supabase error properties
+            code: err.code,
+            details: err.details,
+            hint: err.hint,
           };
+        } catch (e) {
+          errorDetails.extractionError = String(e);
         }
+      }
 
-        // If roles fetch fails and we haven't retried yet, wait and retry once
-        if (rolesError && retryCount === 0) {
-          await new Promise(resolve => setTimeout(resolve, 500))
-          return fetchUserProfile(userId, userEmail, 1)
-        }
-
-        // Get primary role (first role in the array)
-        // Handle case where rolesData might be null or undefined
-        const primaryRole = rolesData && Array.isArray(rolesData) && rolesData[0]?.role || 'parent'
-
-        // Make sure finalProfileData is not null or undefined
-        if (!finalProfileData) {
-          // Create a minimal profile object
-          finalProfileData = {
-            id: userId,
-            email: userEmail || '',
-            full_name: null,
-            phone: null,
-            avatar_url: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-        }
-
-        const userWithRole: UserWithRole = {
-          ...finalProfileData,
-          role: primaryRole,
-          roles: rolesData || []
-        }
-
-        setProfile(userWithRole)
-        setRole(primaryRole)
-      } catch (error) {
-        // Try to extract as much error information as possible
-        let errorDetails: any = {
-          errorType: typeof error,
-          errorString: String(error),
-          userId,
-          retryCount
+      // Check if it's a timeout error
+      const errorMessage = String(error);
+      if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+        // Create a minimal profile object to allow the UI to render
+        const minimalProfile: UserWithRole = {
+          id: userId,
+          email: userEmail || '',
+          full_name: null,
+          phone: null,
+          avatar_url: null,
+          role: 'parent' as UserRole,
+          roles: [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
 
-        // Try to get error properties
-        if (error && typeof error === 'object') {
-          try {
-            const err = error as any;
-            errorDetails = {
-              ...errorDetails,
-              message: err.message,
-              name: err.name,
-              stack: err.stack,
-              // Try to get Supabase error properties
-              code: err.code,
-              details: err.details,
-              hint: err.hint,
-            };
-          } catch (e) {
-            errorDetails.extractionError = String(e);
-          }
-        }
-
-        // Check if it's a timeout error
-        const errorMessage = String(error);
-        if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
-          // Create a minimal profile object to allow the UI to render
-          const minimalProfile: UserWithRole = {
-            id: userId,
-            email: userEmail || '',
-            full_name: null,
-            phone: null,
-            avatar_url: null,
-            role: 'parent' as UserRole,
-            roles: [],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-
-          setProfile(minimalProfile);
-          setRole('parent');
-        } else {
-          // Set default values instead of null to prevent UI issues
-          setProfile(null);
-          setRole('parent'); // Default role
-        }
-      } finally {
-        setIsLoadingProfile(false)
+        setProfile(minimalProfile);
+        setRole('parent');
+      } else {
+        // Set default values instead of null to prevent UI issues
+        setProfile(null);
+        setRole('parent'); // Default role
       }
+    } finally {
+      setIsLoadingProfile(false)
     }
+  }
 
+  // Initialize auth state
+  useEffect(() => {
     const initializeAuth = async () => {
       try {
         // Use getUser() instead of getSession() to check for stale tokens
@@ -276,10 +276,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setProfile(null)
             setRole(null)
           } else if (getUserError.message.includes('Auth session missing')) {
-            // This is normal for unauthenticated users
+            // This is normal for unauthenticated users - set loading to false immediately
             setUser(null)
             setProfile(null)
             setRole(null)
+            setLoading(false) // Non-authenticated users shouldn't see loading
+            return
           } else {
             setError(getUserError.message)
           }
@@ -293,10 +295,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Set default role if profile fetch fails
             setRole('parent')
           })
+        } else {
+          // No user found - set loading to false immediately
+          setLoading(false)
         }
       } catch {
         setError('Failed to initialize authentication')
-      } finally {
+        // Even on error, set loading to false to prevent UI from hanging
         setLoading(false)
       }
     }
@@ -311,6 +316,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(null)
           setProfile(null)
           setRole(null)
+          setLoading(false) // Sign out completes immediately
         } else if (session?.user) {
           const authUser = transformUser(session.user)
           setUser(authUser)
@@ -320,12 +326,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Set default role if profile fetch fails
             setRole('parent')
           })
+          // Don't set loading to false here - let fetchUserProfile handle it
         } else {
+          // No session/user - this is a non-authenticated state
           setUser(null)
           setProfile(null)
           setRole(null)
+          setLoading(false) // Non-authenticated users shouldn't see loading
         }
-        setLoading(false)
         router.refresh()
       }
     )

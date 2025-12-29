@@ -9,6 +9,12 @@ export default function DashboardRedirect() {
   const { user, role, loading, isLoadingProfile } = useAuth();
   const router = useRouter();
 
+  // Early redirect for non-authenticated users
+  if (!loading && !isLoadingProfile && !user) {
+    router.replace('/login');
+    return null;
+  }
+
   useEffect(() => {
     const isLoading = loading || isLoadingProfile;
     if (!isLoading && user) {
@@ -28,8 +34,6 @@ export default function DashboardRedirect() {
           router.replace('/parent');
           break;
       }
-    } else if (!isLoading && !user) {
-      router.replace('/login');
     }
   }, [user, role, loading, isLoadingProfile, router]);
 

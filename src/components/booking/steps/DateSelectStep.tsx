@@ -104,7 +104,27 @@ export function DateSelectStep({
       if (!response.ok) {
         throw new Error('Failed to fetch sessions');
       }
-      return response.json() as Promise<AvailableSession[]>;
+      const data = await response.json();
+      // API returns { sessions: AvailableSession[], sessionsByDate: Record<string, any[]>, total: number }
+      // We need to extract and transform the sessions
+      const sessions = data.sessions || [];
+      // Transform snake_case to camelCase and flatten instructor object
+      return sessions.map((session: any) => ({
+        id: session.id,
+        startTime: session.start_time,
+        endTime: session.end_time,
+        dayOfWeek: new Date(session.start_time).getDay(),
+        instructorId: session.instructor_id,
+        instructorName: session.instructor?.full_name || 'Unknown Instructor',
+        instructorAvatarUrl: session.instructor?.avatar_url || null,
+        location: session.location,
+        sessionType: session.session_type,
+        maxCapacity: session.max_capacity,
+        currentBookings: session.booking_count || 0,
+        isFull: session.is_full,
+        priceCents: session.price_cents,
+        spotsRemaining: session.max_capacity - (session.booking_count || 0)
+      })) as AvailableSession[];
     },
     enabled: sessionType === 'single',
   });
@@ -131,7 +151,27 @@ export function DateSelectStep({
       if (!response.ok) {
         throw new Error('Failed to fetch sessions');
       }
-      return response.json() as Promise<AvailableSession[]>;
+      const data = await response.json();
+      // API returns { sessions: AvailableSession[], sessionsByDate: Record<string, any[]>, total: number }
+      // We need to extract and transform the sessions
+      const sessions = data.sessions || [];
+      // Transform snake_case to camelCase and flatten instructor object
+      return sessions.map((session: any) => ({
+        id: session.id,
+        startTime: session.start_time,
+        endTime: session.end_time,
+        dayOfWeek: new Date(session.start_time).getDay(),
+        instructorId: session.instructor_id,
+        instructorName: session.instructor?.full_name || 'Unknown Instructor',
+        instructorAvatarUrl: session.instructor?.avatar_url || null,
+        location: session.location,
+        sessionType: session.session_type,
+        maxCapacity: session.max_capacity,
+        currentBookings: session.booking_count || 0,
+        isFull: session.is_full,
+        priceCents: session.price_cents,
+        spotsRemaining: session.max_capacity - (session.booking_count || 0)
+      })) as AvailableSession[];
     },
     enabled: sessionType === 'recurring' && !!localStartDate && !!localEndDate,
   });
@@ -216,8 +256,9 @@ export function DateSelectStep({
   };
 
   // Single session mode - Calendly style
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
   if (sessionType === 'single') {
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
     // Filter sessions for selected date
     const sessionsForSelectedDate = selectedDate

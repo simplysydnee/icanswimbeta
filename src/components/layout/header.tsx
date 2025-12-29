@@ -105,28 +105,32 @@ export function Header() {
 
         {/* Desktop Auth Buttons */}
         <div className="hidden md:flex items-center space-x-4">
-          {!loading && (
-            user ? (
-              <>
-                <Button variant="outline" onClick={() => signOut()}>
-                  Sign Out
-                </Button>
-                <UserMenu />
-              </>
-            ) : (
-              <>
-                <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline">Login</Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <div className="space-y-4">
-                      <div>
-                        <DialogTitle className="text-2xl font-bold">Welcome back</DialogTitle>
-                        <DialogDescription className="text-sm text-gray-500 mt-1">
-                          Sign in to your I Can Swim account
-                        </DialogDescription>
-                      </div>
+          {/* Show loading spinner only briefly during initial auth check */}
+          {loading ? (
+            <div className="w-20 h-10 flex items-center justify-center">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-cyan-600" />
+            </div>
+          ) : user ? (
+            <>
+              <Button variant="outline" onClick={() => signOut()}>
+                Sign Out
+              </Button>
+              <UserMenu />
+            </>
+          ) : (
+            <>
+              <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">Login</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <div className="space-y-4">
+                    <div>
+                      <DialogTitle className="text-2xl font-bold">Welcome back</DialogTitle>
+                      <DialogDescription className="text-sm text-gray-500 mt-1">
+                        Sign in to your I Can Swim account
+                      </DialogDescription>
+                    </div>
 
                       {loginError && (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
@@ -226,8 +230,11 @@ export function Header() {
             <div className="flex flex-col space-y-4 mt-4">
               <Navigation />
               <div className="border-t pt-4 space-y-2">
-                {!loading && (
-                  user ? (
+                {loading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-cyan-600" />
+                  </div>
+                ) : user ? (
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <div className="text-sm font-medium">{user.fullName || user.email}</div>
