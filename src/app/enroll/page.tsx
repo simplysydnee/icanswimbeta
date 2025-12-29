@@ -7,38 +7,46 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CalendarIcon, Phone, Mail, CreditCard, Building } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface FundingSource {
   id: string;
   name: string;
   short_name: string;
   description: string;
+  type: string;
 }
 
 export default function EnrollmentPage() {
   const router = useRouter();
   const supabase = createClient();
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     dob: '',
-    paymentType: '', // 'private_pay', 'funding_source'
-    fundingSourceId: '',
+    paymentMethod: 'private_pay' as 'private_pay' | 'regional_center',
+    selectedFundingSourceId: null as string | null,
+    coordinatorName: '',
+    coordinatorEmail: '',
+    coordinatorPhone: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fundingSources, setFundingSources] = useState<FundingSource[]>([]);
-  const [loadingFundingSources, setLoadingFundingSources] = useState(true);
+  const [fundingSourcesLoading, setFundingSourcesLoading] = useState(true);
 
   useEffect(() => {
     const fetchFundingSources = async () => {
       try {
         const { data, error } = await supabase
           .from('funding_sources')
-          .select('id, name, short_name, description')
+          .select('id, name, short_name')
           .eq('is_active', true)
           .order('name');
 
@@ -47,7 +55,7 @@ export default function EnrollmentPage() {
       } catch (error) {
         console.error('Error fetching funding sources:', error);
       } finally {
-        setLoadingFundingSources(false);
+        setFundingSourcesLoading(false);
       }
     };
 
@@ -60,6 +68,36 @@ export default function EnrollmentPage() {
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
+  };
+
+  const validatePaymentInfo = () => {
+    if (formData.paymentMethod === 'regional_center') {
+      if (!formData.selectedFundingSourceId) {
+        toast({
+          title: 'Regional Center Required',
+          description: 'Please select your Regional Center from the dropdown.',
+          variant: 'destructive'
+        });
+        return false;
+      }
+      if (!formData.coordinatorName?.trim()) {
+        toast({
+          title: 'Coordinator Name Required',
+          description: 'Please enter your Regional Center coordinator\'s name.',
+          variant: 'destructive'
+        });
+        return false;
+      }
+      if (!formData.coordinatorEmail?.trim()) {
+        toast({
+          title: 'Coordinator Email Required',
+          description: 'Please enter your Regional Center coordinator\'s email.',
+          variant: 'destructive'
+        });
+        return false;
+      }
+    }
+    return true;
   };
 
   const validateForm = () => {
@@ -83,46 +121,47 @@ export default function EnrollmentPage() {
       }
     }
 
-    if (!formData.paymentType) {
-      newErrors.paymentType = 'Please select how lessons will be paid for';
-    } else if (formData.paymentType === 'funding_source' && !formData.fundingSourceId) {
-      newErrors.fundingSourceId = 'Please select a funding source';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
       return;
     }
 
+    if (!validatePaymentInfo()) {
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Build query string
+    // Build query string with basic info
     const queryParams = new URLSearchParams({
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
       dob: formData.dob,
-      paymentType: formData.paymentType,
     });
 
-    // Add additional parameters based on payment type
-    if (formData.paymentType === 'funding_source') {
-      queryParams.append('fundingSourceId', formData.fundingSourceId);
-      const selectedSource = fundingSources.find(s => s.id === formData.fundingSourceId);
+    // Add payment information based on payment method
+    if (formData.paymentMethod === 'private_pay') {
+      queryParams.append('paymentType', 'private_pay');
+      router.push(`/enroll/private?${queryParams.toString()}`);
+    } else if (formData.paymentMethod === 'regional_center') {
+      // For regional center, we need to pass all data
+      queryParams.append('paymentType', 'funding_source');
+      queryParams.append('fundingSourceId', formData.selectedFundingSourceId || '');
+      const selectedSource = fundingSources.find(s => s.id === formData.selectedFundingSourceId);
       if (selectedSource) {
         queryParams.append('fundingSourceName', selectedSource.name);
       }
-    }
-
-    // Navigate based on payment type
-    if (formData.paymentType === 'private_pay') {
-      router.push(`/enroll/private?${queryParams.toString()}`);
-    } else if (formData.paymentType === 'funding_source') {
+      queryParams.append('coordinatorName', formData.coordinatorName);
+      queryParams.append('coordinatorEmail', formData.coordinatorEmail);
+      if (formData.coordinatorPhone) {
+        queryParams.append('coordinatorPhone', formData.coordinatorPhone);
+      }
       router.push(`/enroll/vmrc?${queryParams.toString()}`);
     }
   };
@@ -130,12 +169,14 @@ export default function EnrollmentPage() {
   const isFormValid = () => {
     const hasBasicInfo = formData.firstName.trim() && formData.lastName.trim() && formData.dob;
 
-    if (!hasBasicInfo || !formData.paymentType) {
+    if (!hasBasicInfo) {
       return false;
     }
 
-    if (formData.paymentType === 'funding_source' && !formData.fundingSourceId) {
-      return false;
+    if (formData.paymentMethod === 'regional_center') {
+      if (!formData.selectedFundingSourceId || !formData.coordinatorName.trim() || !formData.coordinatorEmail.trim()) {
+        return false;
+      }
     }
 
     return true;
@@ -222,10 +263,10 @@ export default function EnrollmentPage() {
                 </div>
               </div>
 
-              {/* Payment/Funding Selection */}
+              {/* Payment Method Section */}
               <div className="space-y-4">
-                <Label className="text-gray-700 text-base font-semibold">
-                  How will swim lessons be paid for? *
+                <Label className="text-base font-semibold">
+                  How will lessons be paid? <span className="text-red-500">*</span>
                 </Label>
 
                 <RadioGroup
@@ -239,67 +280,69 @@ export default function EnrollmentPage() {
                   }}
                   className="space-y-3"
                 >
-                  {/* Private Pay Option */}
-                  <div className={`flex items-start space-x-3 p-4 rounded-lg border ${formData.paymentType === 'private_pay' ? 'border-[#2a5e84]/30 bg-[#f0f7ff]' : 'border-gray-200'}`}>
+                  {/* Option 1: Private Pay */}
+                  <div
+                    className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.paymentType === 'private_pay' ? 'border-[#2a5e84] bg-[#f0f7ff]' : 'border-gray-200 hover:border-[#2a5e84]/50 hover:bg-[#f0f7ff]/50'}`}
+                    onClick={() => handleInputChange('paymentType', 'private_pay')}
+                  >
                     <RadioGroupItem value="private_pay" id="private_pay" />
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <CreditCard className="h-4 w-4 text-gray-600" />
-                        <Label htmlFor="private_pay" className="font-medium text-gray-900 cursor-pointer">
-                          Private Pay
-                        </Label>
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        I will pay for lessons out of pocket ($75 per lesson)
+                    <Label htmlFor="private_pay" className="cursor-pointer flex-1">
+                      <span className="font-medium text-base">Private Pay</span>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        I will pay for lessons directly
                       </p>
-                    </div>
+                    </Label>
                   </div>
 
-                  {/* Funding Source Options */}
-                  {loadingFundingSources ? (
-                    <div className="p-4 rounded-lg border border-gray-200">
-                      <p className="text-sm text-gray-600">Loading funding sources...</p>
-                    </div>
-                  ) : fundingSources.length > 0 ? (
-                    <div className="space-y-3">
-                      {fundingSources.map((source) => (
-                        <div
-                          key={source.id}
-                          className={`flex items-start space-x-3 p-4 rounded-lg border ${formData.paymentType === 'funding_source' && formData.fundingSourceId === source.id ? 'border-[#2a5e84]/30 bg-[#f0f7ff]' : 'border-gray-200'}`}
-                          onClick={() => {
-                            handleInputChange('paymentType', 'funding_source');
-                            handleInputChange('fundingSourceId', source.id);
-                          }}
-                        >
-                          <RadioGroupItem
-                            value="funding_source"
-                            id={`source_${source.id}`}
-                            checked={formData.paymentType === 'funding_source' && formData.fundingSourceId === source.id}
-                            onChange={() => {
-                              handleInputChange('paymentType', 'funding_source');
-                              handleInputChange('fundingSourceId', source.id);
-                            }}
-                          />
-                          <div className="space-y-1">
-                            <div className="flex items-center space-x-2">
-                              <Building className="h-4 w-4 text-gray-600" />
-                              <Label htmlFor={`source_${source.id}`} className="font-medium text-gray-900 cursor-pointer">
-                                {source.name} ({source.short_name})
-                              </Label>
-                            </div>
-                            <p className="text-sm text-gray-600">
-                              {source.description || 'State-funded swim lessons through regional center'}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-4 rounded-lg border border-gray-200">
-                      <p className="text-sm text-gray-600">No funding sources available</p>
-                    </div>
-                  )}
+                  {/* Option 2: Regional Center */}
+                  <div
+                    className={`flex items-start space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.paymentType === 'funding_source' ? 'border-[#2a5e84] bg-[#f0f7ff]' : 'border-gray-200 hover:border-[#2a5e84]/50 hover:bg-[#f0f7ff]/50'}`}
+                    onClick={() => handleInputChange('paymentType', 'funding_source')}
+                  >
+                    <RadioGroupItem value="funding_source" id="funding_source" className="mt-0.5" />
+                    <div className="flex-1">
+                      <Label htmlFor="funding_source" className="cursor-pointer">
+                        <span className="font-medium text-base">I am a client of a Regional Center</span>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          Lessons will be funded through my Regional Center
+                        </p>
+                      </Label>
 
+                      {/* Funding Source Dropdown - Only shown when Regional Center selected */}
+                      {formData.paymentType === 'funding_source' && (
+                        <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+                          <Label htmlFor="funding_source_select" className="text-sm font-medium">
+                            Select your Regional Center <span className="text-red-500">*</span>
+                          </Label>
+                          {loadingFundingSources ? (
+                            <div className="mt-1.5 p-3 border rounded-md bg-gray-50">
+                              <p className="text-sm text-gray-600">Loading Regional Centers...</p>
+                            </div>
+                          ) : fundingSources.length === 0 ? (
+                            <div className="mt-1.5 p-3 border rounded-md bg-gray-50">
+                              <p className="text-sm text-gray-600">No Regional Centers available</p>
+                            </div>
+                          ) : (
+                            <Select
+                              value={formData.fundingSourceId}
+                              onValueChange={(value) => handleInputChange('fundingSourceId', value)}
+                            >
+                              <SelectTrigger className="mt-1.5">
+                                <SelectValue placeholder="Choose your Regional Center..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {fundingSources.map((source) => (
+                                  <SelectItem key={source.id} value={source.id}>
+                                    {source.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </RadioGroup>
 
                 {errors.paymentType && (

@@ -520,7 +520,7 @@ export default function PrivatePayEnrollmentPage() {
                 <li>After assessment, you can book regular weekly lessons</li>
               </ul>
               <div className="pt-4">
-                <Button onClick={() => router.push('/dashboard')}>
+                <Button variant="outline" onClick={() => router.push('/dashboard')}>
                   Return to Dashboard
                 </Button>
               </div>
