@@ -410,7 +410,8 @@ export default function PrivatePayEnrollmentPage() {
       console.error('Error submitting enrollment:', {
         error,
         errorString: String(error),
-        errorJSON: JSON.stringify(error, null, 2),
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
         user: user?.id
       });
       setSubmitResult({

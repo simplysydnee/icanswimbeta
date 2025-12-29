@@ -271,7 +271,10 @@ function AdminReferralsContent() {
       setLastFetchTime(now)
     } catch (err) {
       console.error('Error fetching referrals:', err)
-      console.error('Error stringified:', JSON.stringify(err, null, 2))
+      console.error('Error details:', {
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined
+      })
 
       // Try to extract error message
       let errorMessage = 'Unknown error'
@@ -516,7 +519,10 @@ function AdminReferralsContent() {
       fetchReferrals(true) // Force refresh after approval
     } catch (err) {
       console.error('Error approving referral:', err)
-      console.error('Error details:', JSON.stringify(err, null, 2))
+      console.error('Error details:', {
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined
+      })
 
       // Get better error message
       let errorMessage = 'Unknown error'
@@ -580,7 +586,10 @@ function AdminReferralsContent() {
       fetchReferrals(true) // Force refresh after decline
     } catch (err) {
       console.error('Error declining referral:', err)
-      console.error('Error details:', JSON.stringify(err, null, 2))
+      console.error('Error details:', {
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined
+      })
       toast({
         title: 'Error',
         description: `Unable to decline referral: ${err instanceof Error ? err.message : 'Unknown error'}`,

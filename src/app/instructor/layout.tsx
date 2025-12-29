@@ -1,6 +1,6 @@
 'use client';
 
-import { InstructorSidebar } from '@/components/layout/InstructorSidebar';
+import { InstructorNavbar } from '@/components/layout/InstructorNavbar';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 
 export default function InstructorLayout({
@@ -10,9 +10,9 @@ export default function InstructorLayout({
 }) {
   return (
     <RoleGuard allowedRoles={['instructor', 'admin']}>
-      <div className="flex h-screen bg-gray-50">
-        <InstructorSidebar />
-        <main className="flex-1 overflow-auto">
+      <div className="min-h-screen bg-gray-50">
+        <InstructorNavbar />
+        <main className="container mx-auto px-4 py-6">
           {children}
         </main>
       </div>

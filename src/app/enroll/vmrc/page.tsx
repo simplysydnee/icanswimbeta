@@ -14,6 +14,20 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Edit, User, Mail } from 'lucide-react';
 
+// Helper function to handle circular references in JSON.stringify
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  return (key: string, value: any) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return '[Circular Reference]';
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
+
 // Form validation schema
 const parentReferralSchema = z.object({
   parent_name: z.string().min(1, 'Your name is required'),
@@ -348,10 +362,10 @@ function ParentFundingReferralContent() {
           {process.env.NODE_ENV === 'development' && (
             <div className="mt-6 p-4 bg-gray-100 rounded-lg text-xs">
               <h4 className="font-semibold mb-2">Debug Info:</h4>
-              <p>Child Info: {JSON.stringify(childInfo)}</p>
+              <p>Child Info: {JSON.stringify(childInfo, null, 2)}</p>
               <p>User: {user ? 'Logged in' : 'Not logged in'}</p>
               <p>Profile: {profile ? 'Loaded' : 'Not loaded'}</p>
-              <p>Form values: {JSON.stringify(watch())}</p>
+              <p>Form values: {JSON.stringify(watch(), getCircularReplacer(), 2)}</p>
             </div>
           )}
         </CardContent>

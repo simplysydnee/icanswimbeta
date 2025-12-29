@@ -19,11 +19,11 @@ export default function BookingRedirect() {
       const swimmerId = urlParams.get('swimmer');
 
       if (user) {
-        // User is logged in, redirect to parent booking with swimmer parameter if provided
+        // User is logged in, redirect to parent book with swimmer parameter if provided
         if (swimmerId) {
-          router.replace(`/parent/booking?swimmer=${swimmerId}`);
+          router.replace(`/parent/book?swimmerId=${swimmerId}`);
         } else {
-          router.replace('/parent/booking');
+          router.replace('/parent/book');
         }
       } else {
         // User is not logged in, redirect to login with return URL

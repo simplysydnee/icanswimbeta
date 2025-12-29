@@ -2,7 +2,7 @@ import { Phone, Mail, MapPin, Clock, MessageSquare } from 'lucide-react';
 
 export default function ContactPage() {
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="w-full px-4 py-12">
         {/* Hero Section */}
         <div className="max-w-4xl mx-auto text-center mb-12">
           <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-[#2a5e84] to-[#23a1c0] bg-clip-text text-transparent font-playfair-display tracking-tight mb-4">
@@ -14,7 +14,7 @@ export default function ContactPage() {
         </div>
 
         {/* Contact Info Cards */}
-        <div className="max-w-6xl mx-auto mb-16">
+        <div className="max-w-6xl mx-auto mb-16 px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl p-6 text-center">
               <div className="inline-flex items-center justify-center w-12 h-12 bg-cyan-100 rounded-full mb-4">
@@ -55,7 +55,7 @@ export default function ContactPage() {
         </div>
 
         {/* Contact Form & Info */}
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Contact Form */}
             <div>

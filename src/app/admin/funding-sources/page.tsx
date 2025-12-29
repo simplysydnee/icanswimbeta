@@ -262,7 +262,10 @@ export default function FundingSourcesPage() {
       setIsDialogOpen(false)
     } catch (error) {
       console.error('Error saving funding source:', error)
-      console.error('Error details:', JSON.stringify(error))
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      })
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to save funding source',

@@ -1,6 +1,6 @@
 'use client';
 
-import { CoordinatorSidebar } from '@/components/layout/CoordinatorSidebar';
+import { CoordinatorNavbar } from '@/components/layout/CoordinatorNavbar';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 
 export default function CoordinatorLayout({
@@ -10,9 +10,9 @@ export default function CoordinatorLayout({
 }) {
   return (
     <RoleGuard allowedRoles={['coordinator', 'admin']}>
-      <div className="flex h-screen bg-gray-50">
-        <CoordinatorSidebar />
-        <main className="flex-1 overflow-auto">
+      <div className="min-h-screen bg-gray-50">
+        <CoordinatorNavbar />
+        <main className="container mx-auto px-4 py-6">
           {children}
         </main>
       </div>

@@ -14,13 +14,14 @@ import { AssessmentTab } from '@/components/features/booking/AssessmentTab';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useSwimmers } from '@/hooks/useSwimmers';
 
 // Props interface
 interface BookingWizardProps {
-  // Can add props later if needed
+  preselectedSwimmerId?: string | null;
 }
 
-export function BookingWizard({}: BookingWizardProps) {
+export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
@@ -29,6 +30,7 @@ export function BookingWizard({}: BookingWizardProps) {
 
   // Swimmer selection
   const [selectedSwimmer, setSelectedSwimmer] = useState<Swimmer | null>(null);
+  const { data: swimmers } = useSwimmers();
 
   // Session type (for enrolled swimmers)
   const [sessionType, setSessionType] = useState<SessionType | null>(null);
@@ -37,6 +39,24 @@ export function BookingWizard({}: BookingWizardProps) {
   const [selectedInstructorId, setSelectedInstructorId] = useState<string | null>(null);
   const [instructorPreference, setInstructorPreference] = useState<'any' | 'specific'>('any');
   const [instructorName, setInstructorName] = useState<string | null>(null);
+
+  // Handle preselected swimmer from URL
+  useEffect(() => {
+    if (preselectedSwimmerId && swimmers && swimmers.length > 0) {
+      const swimmer = swimmers.find(s => s.id === preselectedSwimmerId);
+      if (swimmer) {
+        setSelectedSwimmer(swimmer);
+        // Skip to step 2 (session type) if swimmer is enrolled
+        if (swimmer.enrollmentStatus === 'enrolled') {
+          setCurrentStep('session-type');
+        } else if (swimmer.enrollmentStatus === 'waitlist') {
+          setCurrentStep('assessment');
+        } else if (swimmer.enrollmentStatus === 'pending_enrollment') {
+          setCurrentStep('confirm');
+        }
+      }
+    }
+  }, [preselectedSwimmerId, swimmers]);
 
   // Single session selection
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);

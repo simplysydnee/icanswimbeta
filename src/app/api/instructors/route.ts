@@ -1,34 +1,43 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const supabase = await createClient();
+    // Use service role key to bypass RLS for public instructor listing
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 
-    // Query instructors from user_roles table with profile join
-    const { data: roleData, error: roleError } = await supabase
-      .from('user_roles')
-      .select(`
-        user_id,
-        profile:profiles(id, full_name, avatar_url, email)
-      `)
-      .eq('role', 'instructor');
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase environment variables');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
+    }
 
-    if (roleError) {
-      console.error('Error fetching instructors from user_roles:', roleError);
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+
+    // Query profiles with display_on_team = true to get instructors
+    console.log('Fetching instructors from profiles where display_on_team = true...');
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url, email')
+      .eq('display_on_team', true)
+      .eq('is_active', true);
+
+    if (profilesError) {
+      console.error('Error fetching instructors from profiles:', profilesError);
       return NextResponse.json({ error: 'Failed to fetch instructors' }, { status: 500 });
     }
 
-    const instructorList = roleData
-      ?.map(r => {
-        // Handle case where profile might be an array
-        const profile = Array.isArray(r.profile) ? r.profile[0] : r.profile;
-        return profile;
-      })
-      .filter(Boolean) || [];
+    const instructorList = profiles || [];
 
     // Sort by full_name client-side
     instructorList.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+
+    console.log('Instructor list after processing:', instructorList);
 
     // Transform snake_case to camelCase
     const transformedData = instructorList.map(profile => ({
@@ -38,6 +47,7 @@ export async function GET() {
       email: profile.email,
     }));
 
+    console.log('Transformed data:', transformedData);
     return NextResponse.json(transformedData);
   } catch (error) {
     console.error('Unexpected error in instructors API:', error);

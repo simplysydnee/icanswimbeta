@@ -184,7 +184,10 @@ export default function SwimmerDetailPage() {
         setBookings(transformedBookings)
       } catch (error) {
         console.error('Error fetching swimmer data:', error)
-        console.error('Error details:', JSON.stringify(error, null, 2))
+        console.error('Error details:', {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        })
         console.error('Swimmer ID:', swimmerId)
         console.error('User ID:', user?.id)
         router.push('/parent/swimmers')
@@ -305,7 +308,7 @@ export default function SwimmerDetailPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild>
-            <Link href={`/booking?swimmer=${swimmer.id}`}>
+            <Link href={`/booking?swimmerId=${swimmer.id}`}>
               <Calendar className="h-4 w-4 mr-2" />
               Book Lesson
             </Link>
@@ -540,7 +543,7 @@ export default function SwimmerDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <Button className="w-full" asChild>
-                <Link href={`/booking?swimmer=${swimmer.id}`}>
+                <Link href={`/booking?swimmerId=${swimmer.id}`}>
                   <Calendar className="h-4 w-4 mr-2" />
                   Book Lesson
                 </Link>
