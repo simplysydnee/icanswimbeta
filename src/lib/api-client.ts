@@ -255,12 +255,37 @@ export class ApiClient {
       .single();
 
     if (error) {
+      // Safe serialization to prevent "Maximum call stack size exceeded" error
+      let serializedSwimmerData = '[Unable to serialize]';
+      try {
+        // Use a custom replacer to handle circular references and non-serializable values
+        serializedSwimmerData = JSON.stringify(swimmerData, (key, value) => {
+          // Handle Date objects
+          if (value instanceof Date) {
+            return value.toISOString();
+          }
+          // Handle other non-serializable values
+          if (typeof value === 'function' || typeof value === 'symbol') {
+            return `[${typeof value}]`;
+          }
+          // Handle undefined
+          if (value === undefined) {
+            return null;
+          }
+          return value;
+        }, 2);
+      } catch (serializationError) {
+        console.warn('Failed to serialize swimmerData for logging:', serializationError);
+        // Create a minimal safe representation
+        serializedSwimmerData = `{ keys: ${Object.keys(swimmerData).join(', ')} }`;
+      }
+
       console.error('Error creating swimmer:', {
         message: error.message,
         details: error.details,
         hint: error.hint,
         code: error.code,
-        swimmerData: JSON.stringify(swimmerData, null, 2)
+        swimmerData: serializedSwimmerData
       });
       throw error;
     }
@@ -277,13 +302,38 @@ export class ApiClient {
       .single();
 
     if (error) {
+      // Safe serialization to prevent "Maximum call stack size exceeded" error
+      let serializedProfileData = '[Unable to serialize]';
+      try {
+        // Use a custom replacer to handle circular references and non-serializable values
+        serializedProfileData = JSON.stringify(profileData, (key, value) => {
+          // Handle Date objects
+          if (value instanceof Date) {
+            return value.toISOString();
+          }
+          // Handle other non-serializable values
+          if (typeof value === 'function' || typeof value === 'symbol') {
+            return `[${typeof value}]`;
+          }
+          // Handle undefined
+          if (value === undefined) {
+            return null;
+          }
+          return value;
+        }, 2);
+      } catch (serializationError) {
+        console.warn('Failed to serialize profileData for logging:', serializationError);
+        // Create a minimal safe representation
+        serializedProfileData = `{ keys: ${Object.keys(profileData).join(', ')} }`;
+      }
+
       console.error('Error updating profile:', {
         message: error.message,
         details: error.details,
         hint: error.hint,
         code: error.code,
         userId,
-        profileData: JSON.stringify(profileData, null, 2)
+        profileData: serializedProfileData
       });
       throw error;
     }

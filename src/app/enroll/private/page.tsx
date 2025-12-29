@@ -301,6 +301,34 @@ export default function PrivatePayEnrollmentPage() {
       // Capture IP address for audit trail
       const ipAddress = await captureIPAddress();
 
+      // CRITICAL FIX: Create a clean, serializable metadata object
+      // to prevent "Maximum call stack size exceeded" error
+      const signatureTimestamp = data.signature_timestamp || new Date().toISOString();
+
+      const signatureMetadata = {
+        electronic_consent: data.electronic_consent,
+        consent_timestamp: signatureTimestamp,
+        ip_address: ipAddress,
+        user_agent: data.signature_user_agent || navigator.userAgent,
+        signatures: {
+          liability_waiver: {
+            signed: data.signed_waiver,
+            signature: data.liability_waiver_signature ? '[REDACTED]' : null,
+            signed_at: signatureTimestamp,
+          },
+          cancellation_policy: {
+            signed: data.cancellation_policy_agreement,
+            signature: data.cancellation_policy_signature ? '[REDACTED]' : null,
+            signed_at: signatureTimestamp,
+          },
+          photo_release: {
+            signed: data.photo_release,
+            signature: data.photo_release_signature ? '[REDACTED]' : null,
+            signed_at: signatureTimestamp,
+          },
+        },
+      };
+
       // Prepare swimmer data - mapping form fields to database columns
       const swimmerData = {
         parent_id: user.id,
@@ -354,32 +382,10 @@ export default function PrivatePayEnrollmentPage() {
 
         // Electronic Signature Audit Trail (ESIGN Act Compliance)
         electronic_consent_given: data.electronic_consent,
-        electronic_consent_timestamp: data.signature_timestamp || new Date().toISOString(),
+        electronic_consent_timestamp: signatureTimestamp,
         signature_ip_address: ipAddress,
         signature_user_agent: data.signature_user_agent || navigator.userAgent,
-        signature_metadata: JSON.stringify({
-          electronic_consent: data.electronic_consent,
-          consent_timestamp: data.signature_timestamp || new Date().toISOString(),
-          ip_address: ipAddress,
-          user_agent: data.signature_user_agent || navigator.userAgent,
-          signatures: {
-            liability_waiver: {
-              signed: data.signed_waiver,
-              signature: data.liability_waiver_signature ? '[REDACTED]' : null,
-              signed_at: data.signature_timestamp || new Date().toISOString(),
-            },
-            cancellation_policy: {
-              signed: data.cancellation_policy_agreement,
-              signature: data.cancellation_policy_signature ? '[REDACTED]' : null,
-              signed_at: data.signature_timestamp || new Date().toISOString(),
-            },
-            photo_release: {
-              signed: data.photo_release,
-              signature: data.photo_release_signature ? '[REDACTED]' : null,
-              signed_at: data.signature_timestamp || new Date().toISOString(),
-            },
-          },
-        }),
+        signature_metadata: JSON.stringify(signatureMetadata),
 
         // Status
         enrollment_status: 'pending_enrollment',
