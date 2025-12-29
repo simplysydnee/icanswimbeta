@@ -239,7 +239,7 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="w-full px-6 py-6 space-y-6">
         {/* Header skeleton */}
         <div className="space-y-2">
           <Skeleton className="h-8 w-64" />
@@ -277,7 +277,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="w-full px-6 py-6 max-w-full">
       {/* Header */}
       <div className="flex justify-between items-start mb-6">
         <div>
@@ -441,11 +441,11 @@ export default function AdminDashboard() {
               Admin Dashboard
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Link href="/admin/swimmers" className="block">
               <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <Users className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal">
+                <div className="text-left whitespace-normal break-words">
                   <div className="font-medium">Swimmer Management</div>
                 </div>
               </Button>
@@ -454,7 +454,7 @@ export default function AdminDashboard() {
             <Link href="/admin/schedule" className="block">
               <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <Calendar className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal">
+                <div className="text-left whitespace-normal break-words">
                   <div className="font-medium">Schedule Management</div>
                 </div>
               </Button>
@@ -463,7 +463,7 @@ export default function AdminDashboard() {
             <Link href="/admin/sessions/generate" className="block">
               <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <CalendarPlus className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal">
+                <div className="text-left whitespace-normal break-words">
                   <div className="font-medium">Session Generator</div>
                 </div>
               </Button>
@@ -472,7 +472,7 @@ export default function AdminDashboard() {
             <Link href="/admin/referrals" className="block">
               <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <FileText className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal">
+                <div className="text-left whitespace-normal break-words">
                   <div className="font-medium">Funding Referrals</div>
                 </div>
               </Button>
@@ -481,7 +481,7 @@ export default function AdminDashboard() {
             <Link href="/admin/sessions" className="block">
               <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <ClipboardList className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal">
+                <div className="text-left whitespace-normal break-words">
                   <div className="font-medium">Session Management</div>
                 </div>
               </Button>
@@ -490,7 +490,7 @@ export default function AdminDashboard() {
             <Link href="/admin/pos" className="block">
               <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <FileText className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal">
+                <div className="text-left whitespace-normal break-words">
                   <div className="font-medium">Purchase Orders</div>
                 </div>
               </Button>
@@ -499,7 +499,7 @@ export default function AdminDashboard() {
             <Link href="/admin/users" className="block">
               <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <UserCog className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal">
+                <div className="text-left whitespace-normal break-words">
                   <div className="font-medium">User Management</div>
                 </div>
               </Button>
@@ -508,7 +508,7 @@ export default function AdminDashboard() {
             <Link href="/admin/settings" className="block">
               <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
                 <Settings className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal">
+                <div className="text-left whitespace-normal break-words">
                   <div className="font-medium">Settings</div>
                 </div>
               </Button>

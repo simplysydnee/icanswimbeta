@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,8 +20,10 @@ import {
   CheckCircle,
   Menu,
   CheckSquare,
-  BarChart3
+  BarChart3,
+  LogOut
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 const navItems = [
   { title: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -44,6 +46,13 @@ export function AdminSidebar() {
   // Collapsed by default
   const [collapsed, setCollapsed] = useState(true);
   const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
 
   // Update CSS variable for main content margin
   useEffect(() => {
@@ -130,6 +139,31 @@ export function AdminSidebar() {
             </Link>
           );
         })}
+
+        {/* Logout Button */}
+        <div className={cn(
+          "mt-auto px-3 py-2",
+          collapsed && "px-2"
+        )}>
+          <button
+            onClick={handleLogout}
+            className={cn(
+              "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg transition-all duration-200 text-gray-700 hover:bg-red-50 hover:text-red-800",
+              collapsed && "justify-center px-2"
+            )}
+            title={collapsed ? "Logout" : undefined}
+          >
+            <LogOut className={cn(
+              "h-5 w-5 flex-shrink-0",
+              "text-gray-500 group-hover:text-red-600"
+            )} />
+            {!collapsed && (
+              <span className="text-sm font-medium">
+                Logout
+              </span>
+            )}
+          </button>
+        </div>
       </nav>
     </aside>
   );
