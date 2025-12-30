@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import { generateReferralRequestEmail, generateReferralConfirmationEmail } from '@/lib/emails'
+import { generateReferralRequestEmail, generateReferralConfirmationEmail, generateAssessmentBookingEmail, generateLessonBookingEmail, generateRecurringBookingEmail, generateCancellationEmail } from '@/lib/emails'
 
 type EmailTemplate =
   | 'enrollment_invite'
@@ -339,6 +339,114 @@ export const emailService = {
     coordinatorEmail: string
   }) {
     const { subject, html } = generateReferralConfirmationEmail(params)
+
+    return sendEmail({
+      to: params.parentEmail,
+      templateType: 'custom',
+      toName: params.parentName,
+      customData: { subject, html }
+    })
+  },
+
+  async sendAssessmentConfirmation(params: {
+    parentName: string
+    parentEmail: string
+    swimmerName: string
+    instructorName: string
+    sessionDate: string
+    sessionTime: string
+  }) {
+    const { subject, html } = generateAssessmentBookingEmail({
+      parentName: params.parentName,
+      parentEmail: params.parentEmail,
+      swimmerName: params.swimmerName,
+      instructorName: params.instructorName,
+      sessionDate: params.sessionDate,
+      sessionTime: params.sessionTime,
+    })
+
+    return sendEmail({
+      to: params.parentEmail,
+      templateType: 'custom',
+      toName: params.parentName,
+      customData: { subject, html }
+    })
+  },
+
+  async sendLessonConfirmation(params: {
+    parentName: string
+    parentEmail: string
+    swimmerName: string
+    instructorName: string
+    sessionDate: string
+    sessionTime: string
+  }) {
+    const { subject, html } = generateLessonBookingEmail({
+      parentName: params.parentName,
+      parentEmail: params.parentEmail,
+      swimmerName: params.swimmerName,
+      instructorName: params.instructorName,
+      sessionDate: params.sessionDate,
+      sessionTime: params.sessionTime,
+    })
+
+    return sendEmail({
+      to: params.parentEmail,
+      templateType: 'custom',
+      toName: params.parentName,
+      customData: { subject, html }
+    })
+  },
+
+  async sendRecurringConfirmation(params: {
+    parentName: string
+    parentEmail: string
+    swimmerName: string
+    instructorName: string
+    dayOfWeek: string
+    time: string
+    sessions: Array<{ date: string; time: string }>
+    totalSessions: number
+  }) {
+    const { subject, html } = generateRecurringBookingEmail({
+      parentName: params.parentName,
+      parentEmail: params.parentEmail,
+      swimmerName: params.swimmerName,
+      instructorName: params.instructorName,
+      dayOfWeek: params.dayOfWeek,
+      time: params.time,
+      sessions: params.sessions,
+      totalSessions: params.totalSessions,
+    })
+
+    return sendEmail({
+      to: params.parentEmail,
+      templateType: 'custom',
+      toName: params.parentName,
+      customData: { subject, html }
+    })
+  },
+
+  async sendCancellationNotice(params: {
+    parentName: string
+    parentEmail: string
+    swimmerName: string
+    sessionDate: string
+    sessionTime: string
+    cancelledBy: 'parent' | 'admin' | 'instructor'
+    reason?: string
+    isLateCancellation: boolean
+  }) {
+    const { subject, html } = generateCancellationEmail({
+      parentName: params.parentName,
+      parentEmail: params.parentEmail,
+      swimmerName: params.swimmerName,
+      sessionDate: params.sessionDate,
+      sessionTime: params.sessionTime,
+      cancelledBy: params.cancelledBy,
+      reason: params.reason,
+      isLateCancellation: params.isLateCancellation,
+    })
 
     return sendEmail({
       to: params.parentEmail,
