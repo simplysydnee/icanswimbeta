@@ -101,7 +101,7 @@ export function Sidebar({ className, onToggle }: SidebarProps) {
                         >
                           <div className="flex items-center space-x-3">
                             {renderIcon(item.icon)}
-                            <span className="text-sm font-medium">{item.title}</span>
+                            <span className="text-sm font-medium truncate max-w-[140px]">{item.title}</span>
                           </div>
                           {expandedSections.has(item.title) ? (
                             <ChevronDown className="h-4 w-4" />
@@ -122,7 +122,7 @@ export function Sidebar({ className, onToggle }: SidebarProps) {
                                     : 'text-muted-foreground hover:text-foreground hover:bg-accent hover:shadow-sm'
                                 )}
                               >
-                                {child.title}
+                                <span className="truncate max-w-[140px] block">{child.title}</span>
                               </Link>
                             ))}
                           </div>
@@ -139,7 +139,7 @@ export function Sidebar({ className, onToggle }: SidebarProps) {
                         )}
                       >
                         {renderIcon(item.icon)}
-                        <span>{item.title}</span>
+                        <span className="truncate max-w-[140px]">{item.title}</span>
                       </Link>
                     )}
                   </div>

@@ -20,9 +20,10 @@ interface Props {
   stats: FundingSourceStats[];
   onSelectSource: (sourceId: string | null) => void;
   selectedSource: string | null;
+  onViewDetails?: (sourceId: string) => void;
 }
 
-export function FundingSourceSummary({ stats, onSelectSource, selectedSource }: Props) {
+export function FundingSourceSummary({ stats, onSelectSource, selectedSource, onViewDetails }: Props) {
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -60,7 +61,13 @@ export function FundingSourceSummary({ stats, onSelectSource, selectedSource }: 
               <TableRow
                 key={source.id}
                 className={`cursor-pointer hover:bg-muted/50 ${selectedSource === source.id ? 'bg-muted' : ''}`}
-                onClick={() => onSelectSource(selectedSource === source.id ? null : source.id)}
+                onClick={(e) => {
+                  if (onViewDetails) {
+                    onViewDetails(source.id);
+                  } else {
+                    onSelectSource(selectedSource === source.id ? null : source.id);
+                  }
+                }}
               >
                 <TableCell className="font-medium">
                   {source.name}
@@ -103,7 +110,7 @@ export function FundingSourceSummary({ stats, onSelectSource, selectedSource }: 
           </TableBody>
         </Table>
         <p className="text-sm text-muted-foreground mt-2">
-          Click a row to filter POs by that funding source
+          {onViewDetails ? 'Click a row to view details' : 'Click a row to filter POs by that funding source'}
         </p>
       </CardContent>
     </Card>

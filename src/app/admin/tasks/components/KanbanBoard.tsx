@@ -89,52 +89,77 @@ export function KanbanBoard({ tasks, onTaskUpdate, onTaskEdit, onTaskDelete }: K
   );
 
   const handleDragStart = (event: DragStartEvent) => {
+    console.log('🎯 Drag started:', event.active.id);
     const task = tasksState.find(t => t.id === event.active.id);
+    console.log('🎯 Found task:', task?.title);
     setActiveTask(task || null);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    console.log('Drag end:', { activeId: active.id, overId: over?.id });
+    console.log('🎯 Drag end:', { activeId: active.id, overId: over?.id, overData: over?.data?.current });
 
     if (!over) {
-      console.log('No drop target');
+      console.log('🎯 No drop target');
       setActiveTask(null);
       return;
     }
 
-    console.log('Over ID:', over.id, 'Is column?', columns.some(col => col.id === over.id));
+    // Check if we're dropping on a column (empty column area or column itself)
+    const isColumn = columns.some(col => col.id === over.id);
+    console.log('🎯 Over analysis:', { overId: over.id, isColumn, overData: over.data?.current });
 
     if (active.id !== over.id) {
       const activeTask = tasksState.find(t => t.id === active.id);
-      const overColumnId = over.id as string;
 
-      // If dragging to a column (not a task within the same column)
-      if (columns.some(col => col.id === overColumnId) && activeTask) {
-        console.log('Dropping on column:', overColumnId, 'Updating task:', activeTask.id);
-        // Remove 'column-' prefix to get status
-        const status = overColumnId.replace('column-', '') as Task['status'];
-        // Update task status
-        const updatedTask = { ...activeTask, status };
-        onTaskUpdate(activeTask.id, { status });
-        setTasksState(prev => prev.map(t => t.id === activeTask.id ? updatedTask : t));
-      } else {
-        console.log('Not dropping on column, trying reorder');
-        // Reorder within same column
-        const oldIndex = tasksState.findIndex(t => t.id === active.id);
-        const newIndex = tasksState.findIndex(t => t.id === over.id);
+      // Determine the target column ID
+      let targetColumnId: string | null = null;
 
-        console.log('Reorder indices:', { oldIndex, newIndex });
-
-        if (oldIndex !== -1 && newIndex !== -1) {
-          const newTasks = arrayMove(tasksState, oldIndex, newIndex);
-          setTasksState(newTasks);
-        } else {
-          console.log('Invalid indices for reorder');
+      // Case 1: Dropping directly on a column (empty column area)
+      if (isColumn) {
+        targetColumnId = over.id as string;
+        console.log('🎯 Dropping directly on column:', targetColumnId);
+      }
+      // Case 2: Dropping on a task within a column
+      else {
+        // Find which column the over task belongs to
+        const overTask = tasksState.find(t => t.id === over.id);
+        if (overTask) {
+          targetColumnId = `column-${overTask.status}`;
+          console.log('🎯 Dropping on task in column:', targetColumnId, 'Task status:', overTask.status);
         }
       }
+
+      if (activeTask && targetColumnId) {
+        // Remove 'column-' prefix to get status
+        const status = targetColumnId.replace('column-', '') as Task['status'];
+
+        // Only update if status is changing
+        if (activeTask.status !== status) {
+          console.log('🎯 Updating task status from', activeTask.status, 'to', status);
+          const updatedTask = { ...activeTask, status };
+          onTaskUpdate(activeTask.id, { status });
+          setTasksState(prev => prev.map(t => t.id === activeTask.id ? updatedTask : t));
+        } else {
+          console.log('🎯 Same column, attempting reorder');
+          // Reorder within same column
+          const oldIndex = tasksState.findIndex(t => t.id === active.id);
+          const newIndex = tasksState.findIndex(t => t.id === over.id);
+
+          console.log('🎯 Reorder indices:', { oldIndex, newIndex });
+
+          if (oldIndex !== -1 && newIndex !== -1) {
+            const newTasks = arrayMove(tasksState, oldIndex, newIndex);
+            setTasksState(newTasks);
+          } else {
+            console.log('🎯 Invalid indices for reorder');
+          }
+        }
+      } else {
+        console.log('🎯 Could not determine target column or find active task');
+      }
     } else {
-      console.log('Dropped on itself');
+      console.log('🎯 Dropped on itself');
     }
 
     setActiveTask(null);
@@ -176,7 +201,10 @@ export function KanbanBoard({ tasks, onTaskUpdate, onTaskEdit, onTaskDelete }: K
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
-        onDragStart={handleDragStart}
+        onDragStart={(e) => {
+          console.log('🎯 DndContext dragStart triggered');
+          handleDragStart(e);
+        }}
         onDragEnd={handleDragEnd}
         modifiers={[]}
       >

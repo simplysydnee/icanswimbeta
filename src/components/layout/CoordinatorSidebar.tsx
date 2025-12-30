@@ -29,7 +29,7 @@ const navItems = [
 export function CoordinatorSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   const handleSignOut = async () => {
     const supabase = createClient();

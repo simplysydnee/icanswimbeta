@@ -31,10 +31,11 @@ import {
   Calendar,
   Mail
 } from 'lucide-react';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import { POBillingModal } from '@/components/admin/POBillingModal';
 import { FundingSourceSummary } from '@/components/admin/FundingSourceSummary';
+import { FundingSourceDetailModal } from '@/components/admin/FundingSourceDetailModal';
 
 interface PurchaseOrder {
   id: string;
@@ -117,6 +118,10 @@ export default function POSPage() {
   const [fundingSourceFilter, setFundingSourceFilter] = useState<string>('all');
   const [selectedFundingSource, setSelectedFundingSource] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
+
+  // Funding source detail modal state
+  const [fundingSourceDetailOpen, setFundingSourceDetailOpen] = useState(false);
+  const [selectedFundingSourceForDetail, setSelectedFundingSourceForDetail] = useState<string | null>(null);
 
   // Approval dialog state
   const [selectedPO, setSelectedPO] = useState<PurchaseOrder | null>(null);
@@ -413,6 +418,10 @@ export default function POSPage() {
           stats={fundingSourceStats}
           onSelectSource={setSelectedFundingSource}
           selectedSource={selectedFundingSource}
+          onViewDetails={(sourceId) => {
+            setSelectedFundingSourceForDetail(sourceId);
+            setFundingSourceDetailOpen(true);
+          }}
         />
       </div>
 
@@ -795,6 +804,40 @@ I Can Swim Team`;
         }}
         onUpdate={fetchPurchaseOrders}
       />
+
+      {/* Funding Source Detail Modal */}
+      {selectedFundingSourceForDetail && (
+        <FundingSourceDetailModal
+          open={fundingSourceDetailOpen}
+          onOpenChange={(open) => {
+            setFundingSourceDetailOpen(open);
+            if (!open) {
+              setSelectedFundingSourceForDetail(null);
+            }
+          }}
+          fundingSource={fundingSourceStats.find(fs => fs.id === selectedFundingSourceForDetail)?.name || selectedFundingSourceForDetail}
+          stats={{
+            activeCount: fundingSourceStats.find(fs => fs.id === selectedFundingSourceForDetail)?.activePOs || 0,
+            pendingCount: fundingSourceStats.find(fs => fs.id === selectedFundingSourceForDetail)?.pendingPOs || 0,
+            overdueCount: fundingSourceStats.find(fs => fs.id === selectedFundingSourceForDetail)?.overdueCount || 0,
+            totalBilled: (fundingSourceStats.find(fs => fs.id === selectedFundingSourceForDetail)?.billedAmount || 0) / 100,
+            totalPaid: (fundingSourceStats.find(fs => fs.id === selectedFundingSourceForDetail)?.paidAmount || 0) / 100,
+            balance: (fundingSourceStats.find(fs => fs.id === selectedFundingSourceForDetail)?.outstandingBalance || 0) / 100,
+          }}
+          purchaseOrders={purchaseOrders.filter(po =>
+            po.funding_source?.id === selectedFundingSourceForDetail
+          )}
+          onSendReminder={(po) => {
+            // TODO: Implement send reminder functionality
+            console.log('Send reminder for PO:', po.id);
+          }}
+          onViewPO={(po) => {
+            setSelectedPO(po);
+            setFundingSourceDetailOpen(false);
+            setSelectedFundingSourceForDetail(null);
+          }}
+        />
+      )}
     </div>
   );
 }

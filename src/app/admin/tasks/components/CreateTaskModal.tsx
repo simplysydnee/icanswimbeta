@@ -43,7 +43,6 @@ export function CreateTaskModal({ users, swimmers, onSubmit, onCancel }: CreateT
     swimmer_id: 'none',
   });
   const [loading, setLoading] = useState(false);
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,7 +132,7 @@ export function CreateTaskModal({ users, swimmers, onSubmit, onCancel }: CreateT
 
       <div className="space-y-2">
         <Label>Due Date</Label>
-        <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+        <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -141,41 +140,30 @@ export function CreateTaskModal({ users, swimmers, onSubmit, onCancel }: CreateT
                 "w-full justify-start text-left font-normal",
                 !formData.due_date && "text-muted-foreground"
               )}
-              onClick={() => setDatePickerOpen(true)}
+              onClick={() => console.log('📅 Date button clicked')}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {formData.due_date ? format(formData.due_date, "PPP") : "Select date"}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
+          <PopoverContent
+            className="w-auto p-0"
+            onPointerDownOutside={(e) => console.log('📅 Pointer down outside:', e)}
+            onOpenAutoFocus={(e) => {
+              console.log('📅 Popover auto focus');
+              e.preventDefault();
+            }}
+          >
             <Calendar
               mode="single"
               selected={formData.due_date}
               onSelect={(date) => {
+                console.log('📅 Calendar onSelect fired:', date);
                 handleChange('due_date', date);
-                setDatePickerOpen(false); // Close popover after selection
               }}
+              className="pointer-events-auto"
               initialFocus
             />
-            <div className="flex justify-between items-center p-2 border-t">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  handleChange('due_date', undefined);
-                  setDatePickerOpen(false);
-                }}
-              >
-                No due date
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setDatePickerOpen(false)}
-              >
-                Cancel
-              </Button>
-            </div>
           </PopoverContent>
         </Popover>
       </div>

@@ -68,7 +68,7 @@ const coordinatorNavItems: NavItem[] = [
 ]
 
 export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
   const pathname = usePathname()
   const { role, signOut } = useAuth()
 
