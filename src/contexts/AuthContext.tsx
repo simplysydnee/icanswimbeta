@@ -286,15 +286,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setError(getUserError.message)
           }
         } else if (user) {
+          console.log('Auth: User found during initialization:', user.id, user.email)
           const authUser = transformUser(user)
           setUser(authUser)
 
           // Start profile fetch but don't wait for it to complete
           // This prevents the page from hanging if profile fetch is slow
-          fetchUserProfile(user.id, user.email).catch(() => {
+          fetchUserProfile(user.id, user.email).catch((error) => {
+            console.error('Auth: Profile fetch failed during initialization:', error)
             // Set default role if profile fetch fails
             setRole('parent')
           })
+
+          // Set loading to false immediately since we have a user
+          // Profile fetch will handle isLoadingProfile separately
+          console.log('Auth: Setting loading to false (user exists)')
+          setLoading(false)
         } else {
           // No user found - set loading to false immediately
           setLoading(false)
@@ -318,15 +325,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setRole(null)
           setLoading(false) // Sign out completes immediately
         } else if (session?.user) {
+          console.log('Auth: Auth state change - user signed in:', session.user.id, session.user.email)
           const authUser = transformUser(session.user)
           setUser(authUser)
 
           // Start profile fetch but don't wait for it to complete
-          fetchUserProfile(session.user.id, session.user.email).catch(() => {
+          fetchUserProfile(session.user.id, session.user.email).catch((error) => {
+            console.error('Auth: Profile fetch failed during auth state change:', error)
             // Set default role if profile fetch fails
             setRole('parent')
           })
-          // Don't set loading to false here - let fetchUserProfile handle it
+          // Set loading to false immediately since we have a user
+          // Profile fetch will handle isLoadingProfile separately
+          console.log('Auth: Setting loading to false (auth state change)')
+          setLoading(false)
         } else {
           // No session/user - this is a non-authenticated state
           setUser(null)
