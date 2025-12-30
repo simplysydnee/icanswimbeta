@@ -3,3 +3,4 @@ export * from './assessment-completion';
 export * from './welcome-enrollment';
 export * from './referral-request';
 export * from './referral-confirmation';
+export * from './email-wrapper';

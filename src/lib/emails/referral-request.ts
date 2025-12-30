@@ -1,49 +1,50 @@
-export function generateReferralRequestEmail(data: {
+import { wrapEmailWithHeader, createButton, BRAND_MAIN } from './email-wrapper'
+
+const APP_URL = 'https://icanswimbeta.vercel.app'
+
+export interface ReferralRequestData {
   coordinatorName: string
+  coordinatorEmail: string
   parentName: string
   parentEmail: string
-  parentPhone?: string
-  childName: string
+  parentPhone: string
+  childFirstName: string
+  childLastName: string
   childDOB: string
   referralToken: string
-}) {
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #2a5e84;">New Referral Request</h2>
+}
 
-      <p>Hi ${data.coordinatorName},</p>
+export function generateReferralRequestEmail(data: ReferralRequestData): { subject: string; html: string } {
+  const subject = `New Swim Lesson Referral Request - ${data.childFirstName} ${data.childLastName}`
 
-      <p><strong>${data.parentName}</strong> has requested a referral for adaptive swim lessons
-      through I Can Swim.</p>
+  const referralUrl = `${APP_URL}/referral?token=${data.referralToken}`
 
-      <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
-        <h3 style="margin-top: 0;">Child Information</h3>
-        <p><strong>Name:</strong> ${data.childName}</p>
-        <p><strong>Date of Birth:</strong> ${data.childDOB}</p>
+  const content = `
+    <h2 style="color: ${BRAND_MAIN}; margin-top: 0;">New Referral Request</h2>
 
-        <h3>Parent/Guardian</h3>
-        <p><strong>Name:</strong> ${data.parentName}</p>
-        <p><strong>Email:</strong> ${data.parentEmail}</p>
-        ${data.parentPhone ? `<p><strong>Phone:</strong> ${data.parentPhone}</p>` : ''}
-      </div>
+    <p>Hi ${data.coordinatorName},</p>
 
-      <p>To complete this referral, please click the link below to fill out the required information:</p>
+    <p><strong>${data.parentName}</strong> has requested a referral for adaptive swim lessons through I Can Swim.</p>
 
-      <p><a href="https://icanswim209.com/referral?token=${data.referralToken}"
-            style="background: #2a5e84; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-        Complete Referral Form
-      </a></p>
+    <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="margin-top: 0; color: #334155;">Child Information</h3>
+      <p style="margin: 5px 0;"><strong>Name:</strong> ${data.childFirstName} ${data.childLastName}</p>
+      <p style="margin: 5px 0;"><strong>Date of Birth:</strong> ${data.childDOB}</p>
 
-      <p style="color: #666; font-size: 14px;">
-        This link will allow you to enter the child's medical profile, behavioral information,
-        and other details needed for swim instruction.
-      </p>
-
-      <p style="color: #666; font-size: 14px; margin-top: 30px;">
-        Questions? Contact us at info@icanswim209.com or (209) 778-7877
-      </p>
-
-      <p>Thank you for your partnership,<br><strong>Sutton Lucas</strong><br>Owner, I Can Swim</p>
+      <h3 style="margin-top: 20px; color: #334155;">Parent/Guardian</h3>
+      <p style="margin: 5px 0;"><strong>Name:</strong> ${data.parentName}</p>
+      <p style="margin: 5px 0;"><strong>Email:</strong> ${data.parentEmail}</p>
+      <p style="margin: 5px 0;"><strong>Phone:</strong> ${data.parentPhone}</p>
     </div>
+
+    ${createButton('Complete Referral Form', referralUrl)}
+
+    <p style="color: #64748b; font-size: 14px;">
+      Or copy this link: <a href="${referralUrl}" style="color: ${BRAND_MAIN};">${referralUrl}</a>
+    </p>
   `
+
+  const html = wrapEmailWithHeader(content)
+
+  return { subject, html }
 }
