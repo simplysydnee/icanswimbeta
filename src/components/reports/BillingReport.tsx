@@ -348,18 +348,18 @@ export function BillingReport() {
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.entries(stats.byFundingSource).map(([id, fs]) => (
+                    {stats.byFundingSource && Object.entries(stats.byFundingSource).map(([id, fs]) => (
                       <tr key={id} className="border-b hover:bg-gray-50">
                         <td className="py-3 px-4">
                           <div className="font-medium">{fs.name}</div>
                           <div className="text-sm text-muted-foreground">{fs.shortName}</div>
                         </td>
                         <td className="py-3 px-4">{fs.poCount}</td>
-                        <td className="py-3 px-4">${fs.billed.toFixed(2)}</td>
-                        <td className="py-3 px-4">${fs.paid.toFixed(2)}</td>
+                        <td className="py-3 px-4">${(fs.billed || 0).toFixed(2)}</td>
+                        <td className="py-3 px-4">${(fs.paid || 0).toFixed(2)}</td>
                         <td className="py-3 px-4">
-                          <span className={fs.outstanding > 0 ? 'text-yellow-600 font-medium' : ''}>
-                            ${fs.outstanding.toFixed(2)}
+                          <span className={(fs.outstanding || 0) > 0 ? 'text-yellow-600 font-medium' : ''}>
+                            ${(fs.outstanding || 0).toFixed(2)}
                           </span>
                         </td>
                         <td className="py-3 px-4">
@@ -367,16 +367,23 @@ export function BillingReport() {
                             <div className="w-full bg-gray-200 rounded-full h-2.5 mr-2">
                               <div
                                 className="bg-green-600 h-2.5 rounded-full"
-                                style={{ width: `${fs.billed > 0 ? Math.min(100, (fs.paid / fs.billed) * 100) : 0}%` }}
+                                style={{ width: `${(fs.billed || 0) > 0 ? Math.min(100, ((fs.paid || 0) / (fs.billed || 0)) * 100) : 0}%` }}
                               />
                             </div>
                             <span className="text-sm">
-                              {fs.billed > 0 ? Math.round((fs.paid / fs.billed) * 100) : 0}%
+                              {(fs.billed || 0) > 0 ? Math.round(((fs.paid || 0) / (fs.billed || 0)) * 100) : 0}%
                             </span>
                           </div>
                         </td>
                       </tr>
                     ))}
+                    {(!stats.byFundingSource || Object.keys(stats.byFundingSource).length === 0) && (
+                      <tr>
+                        <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                          No funding source data available
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

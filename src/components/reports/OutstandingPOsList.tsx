@@ -80,21 +80,21 @@ export function OutstandingPOsList({ problemPOs }: OutstandingPOsListProps) {
   };
 
   // Sort by days overdue (descending) and amount owed (descending)
-  const sortedPOs = [...problemPOs].sort((a, b) => {
+  const sortedPOs = problemPOs ? [...problemPOs].sort((a, b) => {
     if (b.daysOverdue !== a.daysOverdue) {
       return b.daysOverdue - a.daysOverdue;
     }
     return b.amountOwed - a.amountOwed;
-  });
+  }) : [];
 
   // Calculate totals
-  const totalOutstanding = sortedPOs.reduce((sum, po) => sum + po.amountOwed, 0);
+  const totalOutstanding = sortedPOs.reduce((sum, po) => sum + (po.amountOwed || 0), 0);
   const totalOverdue = sortedPOs
     .filter(po => po.billingStatus === 'overdue')
-    .reduce((sum, po) => sum + po.amountOwed, 0);
+    .reduce((sum, po) => sum + (po.amountOwed || 0), 0);
   const totalDisputed = sortedPOs
     .filter(po => po.billingStatus === 'disputed')
-    .reduce((sum, po) => sum + po.amountOwed, 0);
+    .reduce((sum, po) => sum + (po.amountOwed || 0), 0);
 
   return (
     <>

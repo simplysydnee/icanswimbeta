@@ -40,9 +40,9 @@ export function CoordinatorPerformance({ coordinators }: CoordinatorPerformanceP
   const [showPendingModal, setShowPendingModal] = useState(false);
 
   // Convert coordinators object to array and sort by completion rate (descending)
-  const coordinatorArray = Object.entries(coordinators)
+  const coordinatorArray = coordinators ? Object.entries(coordinators)
     .map(([id, data]) => ({ id, ...data }))
-    .sort((a, b) => b.completionRate - a.completionRate);
+    .sort((a, b) => b.completionRate - a.completionRate) : [];
 
   const getCompletionRateColor = (rate: number) => {
     if (rate >= 80) return 'bg-green-100 text-green-800 border-green-300';
