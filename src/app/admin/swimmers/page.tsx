@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { SwimmerManagementTable } from '@/components/swimmers/SwimmerManagementTable';
 import { SwimmerCard } from '@/components/swimmers/SwimmerCard';
+import { SwimmerAnalyticsModal } from '@/components/admin/SwimmerAnalyticsModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Download, Filter, BarChart3, Clock, UserCheck, UserX, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,6 +15,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 export default function AdminSwimmersPage() {
   const { data: metrics, isLoading, error } = useSwimmerMetrics();
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
 
   return (
     <RoleGuard allowedRoles={['admin']}>
@@ -30,7 +33,7 @@ export default function AdminSwimmersPage() {
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => setAnalyticsOpen(true)}>
               <BarChart3 className="h-4 w-4 mr-2" />
               Analytics
             </Button>
@@ -159,6 +162,12 @@ export default function AdminSwimmersPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Analytics Modal */}
+        <SwimmerAnalyticsModal
+          open={analyticsOpen}
+          onOpenChange={setAnalyticsOpen}
+        />
       </div>
     </RoleGuard>
   );
