@@ -495,6 +495,41 @@ export class ApiClient {
       throw error;
     }
 
+    // Send email notification to coordinator
+    try {
+      const { emailService } = await import('@/lib/email-service');
+      await emailService.sendReferralRequest({
+        coordinatorEmail: data.coordinator_email,
+        coordinatorName: data.coordinator_name,
+        parentName: data.parent_name,
+        parentEmail: data.parent_email,
+        parentPhone: data.parent_phone,
+        childName: data.child_name,
+        childDOB: data.child_date_of_birth || '',
+        referralToken: referral.referral_token,
+      });
+      console.log(`Referral request email sent to coordinator: ${data.coordinator_email}`);
+    } catch (emailError) {
+      console.error('Failed to send referral request email:', emailError);
+      // Don't throw - email failure shouldn't block the referral creation
+    }
+
+    // Send confirmation email to parent
+    try {
+      const { emailService } = await import('@/lib/email-service');
+      await emailService.sendReferralConfirmation({
+        parentName: data.parent_name,
+        parentEmail: data.parent_email,
+        childName: data.child_name,
+        coordinatorName: data.coordinator_name,
+        coordinatorEmail: data.coordinator_email
+      });
+      console.log(`Parent confirmation email sent to: ${data.parent_email}`);
+    } catch (emailError) {
+      console.error('Failed to send parent confirmation email:', emailError);
+      // Don't throw - email failure shouldn't block the referral creation
+    }
+
     return referral;
   }
 

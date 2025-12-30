@@ -132,85 +132,85 @@ export function Header() {
                       </DialogDescription>
                     </div>
 
-                      {loginError && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
-                          {loginError}
-                        </div>
-                      )}
-
-                      <form onSubmit={handleLoginSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            placeholder="you@example.com"
-                            value={loginData.email}
-                            onChange={handleInputChange}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="password">Password</Label>
-                          <Input
-                            id="password"
-                            name="password"
-                            type="password"
-                            placeholder="••••••••"
-                            value={loginData.password}
-                            onChange={handleInputChange}
-                            required
-                          />
-                        </div>
-                        <Button type="submit" className="w-full" disabled={isLoggingIn}>
-                          {isLoggingIn ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Signing in...
-                            </>
-                          ) : (
-                            'Sign in'
-                          )}
-                        </Button>
-                      </form>
-
-                      <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                          <div className="w-full border-t"></div>
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                          <span className="bg-background px-2 text-gray-500">Or continue with</span>
-                        </div>
+                    {loginError && (
+                      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+                        {loginError}
                       </div>
+                    )}
 
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full"
-                        onClick={handleGoogleLogin}
-                        disabled={isLoggingIn}
-                      >
+                    <form onSubmit={handleLoginSubmit} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          name="email"
+                          type="email"
+                          placeholder="you@example.com"
+                          value={loginData.email}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="password">Password</Label>
+                        <Input
+                          id="password"
+                          name="password"
+                          type="password"
+                          placeholder="••••••••"
+                          value={loginData.password}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      <Button type="submit" className="w-full" disabled={isLoggingIn}>
                         {isLoggingIn ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Connecting...
+                            Signing in...
                           </>
                         ) : (
-                          'Google'
+                          'Sign in'
                         )}
                       </Button>
+                    </form>
 
-                      <div className="text-center text-sm text-gray-500">
-                        Don't have an account?{' '}
-                        <Button variant="link" className="p-0 h-auto" asChild>
-                          <Link href="/signup">Sign up</Link>
-                        </Button>
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t"></div>
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-gray-500">Or continue with</span>
                       </div>
                     </div>
-                  </DialogContent>
-                </Dialog>
-                <Button asChild>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={handleGoogleLogin}
+                      disabled={isLoggingIn}
+                    >
+                      {isLoggingIn ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Connecting...
+                        </>
+                      ) : (
+                        'Google'
+                      )}
+                    </Button>
+
+                    <div className="text-center text-sm text-gray-500">
+                      Don't have an account?{' '}
+                      <Button variant="link" className="p-0 h-auto" asChild>
+                        <Link href="/signup">Sign up</Link>
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              <Button asChild>
                   <Link href="/signup">Get Started</Link>
                 </Button>
               </>

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { generateReferralRequestEmail, generateReferralConfirmationEmail } from '@/lib/emails'
 
 type EmailTemplate =
   | 'enrollment_invite'
@@ -12,6 +13,27 @@ type EmailTemplate =
   | 'welcome_enrollment'  // NEW
   | 'account_created'  // NEW - for users with no swimmers enrolled yet
   | 'instructor_change'  // NEW - for instructor replacement notifications
+  | 'referral_request'  // NEW - for coordinator referral notifications
+  | 'custom'  // For custom HTML emails
+
+interface EmailCustomData {
+  subject?: string
+  html?: string
+  date?: string
+  time?: string
+  location?: string
+  instructor?: string
+  sessions?: Array<{ date: string; time: string }>
+  instructorName?: string
+  reason?: string
+  swimmerNames?: string[]
+  contactPhone?: string
+  isPrivatePay?: boolean
+  fundingSourceName?: string
+  previousInstructor?: string
+  newInstructor?: string
+  [key: string]: unknown // For additional properties while maintaining type safety
+}
 
 interface SendEmailParams {
   to: string
@@ -19,7 +41,8 @@ interface SendEmailParams {
   parentName?: string
   childName?: string
   coordinatorName?: string
-  customData?: Record<string, any>
+  toName?: string
+  customData?: EmailCustomData
 }
 
 export async function sendEmail(params: SendEmailParams): Promise<{ success: boolean; error?: string }> {
@@ -44,6 +67,11 @@ export async function sendEmail(params: SendEmailParams): Promise<{ success: boo
 
 // Convenience functions for specific email types
 export const emailService = {
+  // Generic email sending method
+  async sendEmail(params: SendEmailParams) {
+    return sendEmail(params)
+  },
+
   async sendEnrollmentInvite(params: {
     parentEmail: string
     parentName: string
@@ -253,6 +281,70 @@ export const emailService = {
         previousInstructor: params.previousInstructor,
         newInstructor: params.newInstructor,
       },
+    })
+  },
+
+  async sendReferralRequest(params: {
+    coordinatorEmail: string
+    coordinatorName: string
+    parentName: string
+    parentEmail: string
+    parentPhone?: string
+    childName: string
+    childDOB: string
+    referralToken: string
+  }) {
+    const html = generateReferralRequestEmail({
+      coordinatorName: params.coordinatorName,
+      parentName: params.parentName,
+      parentEmail: params.parentEmail,
+      parentPhone: params.parentPhone,
+      childName: params.childName,
+      childDOB: params.childDOB,
+      referralToken: params.referralToken,
+    })
+
+    return sendEmail({
+      to: params.coordinatorEmail,
+      templateType: 'referral_request',
+      customData: {
+        subject: `New Swim Lesson Referral Request - ${params.childName}`,
+        html,
+      },
+    })
+  },
+
+  async sendPOSNotification(params: {
+    to: string
+    toName?: string
+    subject: string
+    html: string
+  }) {
+    return sendEmail({
+      to: params.to,
+      templateType: 'custom',
+      toName: params.toName,
+      customData: {
+        subject: params.subject,
+        html: params.html,
+      },
+    })
+  },
+
+  async sendReferralConfirmation(params: {
+    parentName: string
+    parentEmail: string
+    childName: string
+    coordinatorName: string
+    coordinatorEmail: string
+  }) {
+    const { subject, html } = generateReferralConfirmationEmail(params)
+
+    return sendEmail({
+      to: params.parentEmail,
+      templateType: 'custom',
+      toName: params.parentName,
+      customData: { subject, html }
     })
   },
 }

@@ -87,6 +87,14 @@ function ParentFundingReferralContent() {
     resolver: zodResolver(parentReferralSchema),
   });
 
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      const currentParams = new URLSearchParams(window.location.search);
+      router.push(`/login?redirect=/enroll/vmrc?${currentParams.toString()}`);
+    }
+  }, [user, authLoading, router]);
+
   // Auto-fill parent info if logged in
   useEffect(() => {
     if (profile && !authLoading) {

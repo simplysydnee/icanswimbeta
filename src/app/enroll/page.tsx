@@ -9,10 +9,10 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CalendarIcon, Phone, Mail, CreditCard, Building } from 'lucide-react';
+import { CalendarIcon, Phone, Mail } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface FundingSource {
   id: string;
@@ -26,11 +26,12 @@ export default function EnrollmentPage() {
   const router = useRouter();
   const supabase = createClient();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     dob: '',
-    paymentMethod: 'private_pay' as 'private_pay' | 'regional_center',
+    paymentType: 'private_pay' as 'private_pay' | 'regional_center',
     selectedFundingSourceId: null as string | null,
     coordinatorName: '',
     coordinatorEmail: '',
@@ -71,7 +72,7 @@ export default function EnrollmentPage() {
   };
 
   const validatePaymentInfo = () => {
-    if (formData.paymentMethod === 'regional_center') {
+    if (formData.paymentType === 'regional_center') {
       if (!formData.selectedFundingSourceId) {
         toast({
           title: 'Regional Center Required',
@@ -146,13 +147,20 @@ export default function EnrollmentPage() {
     });
 
     // Add payment information based on payment method
-    if (formData.paymentMethod === 'private_pay') {
+    if (formData.paymentType === 'private_pay') {
       queryParams.append('paymentType', 'private_pay');
-      router.push(`/enroll/private?${queryParams.toString()}`);
-    } else if (formData.paymentMethod === 'regional_center') {
+      const targetPath = `/enroll/private?${queryParams.toString()}`;
+
+      if (!user) {
+        // Redirect to login first, then back to enrollment
+        router.push(`/login?redirect=${encodeURIComponent(targetPath)}`);
+      } else {
+        router.push(targetPath);
+      }
+    } else if (formData.paymentType === 'regional_center') {
       // For regional center, we need to pass all data
       queryParams.append('paymentType', 'funding_source');
-      queryParams.append('fundingSourceId', formData.selectedFundingSourceId || '');
+      queryParams.append('selectedFundingSourceId', formData.selectedFundingSourceId || '');
       const selectedSource = fundingSources.find(s => s.id === formData.selectedFundingSourceId);
       if (selectedSource) {
         queryParams.append('fundingSourceName', selectedSource.name);
@@ -162,7 +170,14 @@ export default function EnrollmentPage() {
       if (formData.coordinatorPhone) {
         queryParams.append('coordinatorPhone', formData.coordinatorPhone);
       }
-      router.push(`/enroll/vmrc?${queryParams.toString()}`);
+      const targetPath = `/enroll/vmrc?${queryParams.toString()}`;
+
+      if (!user) {
+        // Redirect to login first, then back to enrollment
+        router.push(`/login?redirect=${encodeURIComponent(targetPath)}`);
+      } else {
+        router.push(targetPath);
+      }
     }
   };
 
@@ -173,7 +188,7 @@ export default function EnrollmentPage() {
       return false;
     }
 
-    if (formData.paymentMethod === 'regional_center') {
+    if (formData.paymentType === 'regional_center') {
       if (!formData.selectedFundingSourceId || !formData.coordinatorName.trim() || !formData.coordinatorEmail.trim()) {
         return false;
       }
@@ -272,10 +287,10 @@ export default function EnrollmentPage() {
                 <RadioGroup
                   value={formData.paymentType}
                   onValueChange={(value) => {
-                    handleInputChange('paymentType', value);
+                    handleInputChange('paymentType', value as 'private_pay' | 'regional_center');
                     // Clear dependent fields when payment type changes
-                    if (value !== 'funding_source') {
-                      handleInputChange('fundingSourceId', '');
+                    if (value !== 'regional_center') {
+                      handleInputChange('selectedFundingSourceId', '');
                     }
                   }}
                   className="space-y-3"
@@ -296,12 +311,12 @@ export default function EnrollmentPage() {
 
                   {/* Option 2: Regional Center */}
                   <div
-                    className={`flex items-start space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.paymentType === 'funding_source' ? 'border-[#2a5e84] bg-[#f0f7ff]' : 'border-gray-200 hover:border-[#2a5e84]/50 hover:bg-[#f0f7ff]/50'}`}
-                    onClick={() => handleInputChange('paymentType', 'funding_source')}
+                    className={`flex items-start space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.paymentType === 'regional_center' ? 'border-[#2a5e84] bg-[#f0f7ff]' : 'border-gray-200 hover:border-[#2a5e84]/50 hover:bg-[#f0f7ff]/50'}`}
+                    onClick={() => handleInputChange('paymentType', 'regional_center')}
                   >
-                    <RadioGroupItem value="funding_source" id="funding_source" className="mt-0.5" />
+                    <RadioGroupItem value="regional_center" id="regional_center" className="mt-0.5" />
                     <div className="flex-1">
-                      <Label htmlFor="funding_source" className="cursor-pointer">
+                      <Label htmlFor="regional_center" className="cursor-pointer">
                         <span className="font-medium text-base">I am a client of a Regional Center</span>
                         <p className="text-sm text-muted-foreground mt-0.5">
                           Lessons will be funded through my Regional Center
@@ -309,12 +324,12 @@ export default function EnrollmentPage() {
                       </Label>
 
                       {/* Funding Source Dropdown - Only shown when Regional Center selected */}
-                      {formData.paymentType === 'funding_source' && (
+                      {formData.paymentType === 'regional_center' && (
                         <div className="mt-4" onClick={(e) => e.stopPropagation()}>
                           <Label htmlFor="funding_source_select" className="text-sm font-medium">
                             Select your Regional Center <span className="text-red-500">*</span>
                           </Label>
-                          {loadingFundingSources ? (
+                          {fundingSourcesLoading ? (
                             <div className="mt-1.5 p-3 border rounded-md bg-gray-50">
                               <p className="text-sm text-gray-600">Loading Regional Centers...</p>
                             </div>
@@ -324,8 +339,8 @@ export default function EnrollmentPage() {
                             </div>
                           ) : (
                             <Select
-                              value={formData.fundingSourceId}
-                              onValueChange={(value) => handleInputChange('fundingSourceId', value)}
+                              value={formData.selectedFundingSourceId || ''}
+                              onValueChange={(value) => handleInputChange('selectedFundingSourceId', value)}
                             >
                               <SelectTrigger className="mt-1.5">
                                 <SelectValue placeholder="Choose your Regional Center..." />
@@ -348,8 +363,8 @@ export default function EnrollmentPage() {
                 {errors.paymentType && (
                   <p className="text-sm text-red-600">{errors.paymentType}</p>
                 )}
-                {errors.fundingSourceId && (
-                  <p className="text-sm text-red-600">{errors.fundingSourceId}</p>
+                {errors.selectedFundingSourceId && (
+                  <p className="text-sm text-red-600">{errors.selectedFundingSourceId}</p>
                 )}
               </div>
 

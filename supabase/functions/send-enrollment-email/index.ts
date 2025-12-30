@@ -14,7 +14,7 @@ interface EmailRequest {
   coordinatorName?: string
   toName?: string
   html?: string
-  templateType: 'enrollment_invite' | 'approval_notification' | 'booking_confirmation' | 'assessment_booking' | 'recurring_lesson_booking' | 'single_lesson_booking' | 'assessment_completion' | 'custom'
+  templateType: 'enrollment_invite' | 'approval_notification' | 'booking_confirmation' | 'assessment_booking' | 'recurring_lesson_booking' | 'single_lesson_booking' | 'assessment_completion' | 'welcome_enrollment' | 'account_created' | 'instructor_change' | 'referral_request' | 'custom'
   customData?: Record<string, any>
 }
 
@@ -363,6 +363,16 @@ const getEmailTemplate = (type: string, data: any): { subject: string; html: str
         html: data.customData?.html || '<p>Assessment results are available in your portal.</p>'
       }
 
+    case 'welcome_enrollment':
+    case 'account_created':
+    case 'instructor_change':
+    case 'referral_request':
+      // These use pre-generated HTML from TypeScript templates
+      return {
+        subject: data.customData?.subject || 'I Can Swim Notification',
+        html: data.customData?.html || '<p>No content provided</p>'
+      }
+
     case 'custom':
       // For custom emails, use provided html and subject directly
       return {
@@ -387,6 +397,9 @@ serve(async (req) => {
   try {
     const requestData: EmailRequest = await req.json()
     const { to, templateType, parentName, childName, coordinatorName, toName, subject, html, customData } = requestData
+
+    // Log request details for monitoring
+    console.log(`Email function called: ${templateType} to ${to}`)
 
     // Get email template
     const template = getEmailTemplate(templateType, {
@@ -435,6 +448,7 @@ serve(async (req) => {
     })
 
     // Send email
+
     await client.send({
       from: `I Can Swim <${GMAIL_USER}>`,
       to: to,

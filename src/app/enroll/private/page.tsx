@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 import { SWIM_GOALS, AVAILABILITY_SLOTS, DIAGNOSIS_OPTIONS } from '@/lib/constants';
 import { LiabilityWaiverModal, CancellationPolicyModal } from '@/components/enrollment';
 import { getAllFundingSources } from '@/lib/funding-utils';
@@ -202,9 +202,17 @@ export default function PrivatePayEnrollmentPage() {
   } = useForm<PrivateEnrollmentFormData>({
     resolver: zodResolver(privateEnrollmentSchema),
     defaultValues: {
+      parent_name: '',
+      parent_email: '',
+      parent_phone: '',
+      parent_address: '',
+      parent_city: '',
+      parent_state: 'CA',
+      parent_zip: '',
       child_first_name: queryParams.firstName || '',
       child_last_name: queryParams.lastName || '',
       child_date_of_birth: queryParams.dob || '',
+      child_gender: '',
       has_allergies: 'no',
       has_medical_conditions: 'no',
       history_of_seizures: 'no',
@@ -227,6 +235,9 @@ export default function PrivatePayEnrollmentPage() {
       photo_release_signature: '',
       cancellation_policy_agreement: false,
       cancellation_policy_signature: '',
+      emergency_contact_name: '',
+      emergency_contact_phone: '',
+      emergency_contact_relationship: '',
     },
   });
 
@@ -240,6 +251,25 @@ export default function PrivatePayEnrollmentPage() {
       });
     }
   }, [queryParams, reset]);
+
+  // Auto-fill parent info from profile when profile loads
+  useEffect(() => {
+    if (profile && !authLoading) {
+      // Only set values if they're currently empty to avoid overwriting user edits
+      const currentValues = watch();
+      if (!currentValues.parent_name && profile.full_name) {
+        setValue('parent_name', profile.full_name);
+      }
+      if (!currentValues.parent_email && (profile.email || user?.email)) {
+        setValue('parent_email', profile.email || user?.email || '');
+      }
+      if (!currentValues.parent_phone && profile.phone) {
+        setValue('parent_phone', profile.phone);
+      }
+      // Note: Address fields might not be in the profile table yet
+      // We can add them later if needed
+    }
+  }, [profile, authLoading, user, setValue, watch]);
 
   // Watch values for conditional fields
   const hasAllergies = watch('has_allergies');
@@ -574,6 +604,13 @@ export default function PrivatePayEnrollmentPage() {
               <div className="space-y-6">
                 <h3 className="text-xl font-semibold">1. Parent/Guardian Information</h3>
 
+                {profile && (
+                  <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Auto-filled from your account</span>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
                     <Label htmlFor="parent_name">Full Name *</Label>
@@ -582,6 +619,8 @@ export default function PrivatePayEnrollmentPage() {
                       {...register('parent_name')}
                       onBlur={handleNameBlur('parent_name')}
                       placeholder="Your full name"
+                      readOnly={!!profile?.full_name}
+                      className={profile?.full_name ? 'bg-gray-50' : ''}
                     />
                     {errors.parent_name && (
                       <p className="text-sm text-red-600 mt-1">{errors.parent_name.message}</p>
@@ -595,6 +634,8 @@ export default function PrivatePayEnrollmentPage() {
                       type="email"
                       {...register('parent_email')}
                       placeholder="your@email.com"
+                      readOnly={!!(profile?.email || user?.email)}
+                      className={(profile?.email || user?.email) ? 'bg-gray-50' : ''}
                     />
                     {errors.parent_email && (
                       <p className="text-sm text-red-600 mt-1">{errors.parent_email.message}</p>
@@ -607,6 +648,8 @@ export default function PrivatePayEnrollmentPage() {
                       id="parent_phone"
                       {...register('parent_phone')}
                       placeholder="(209) 555-1234"
+                      readOnly={!!profile?.phone}
+                      className={profile?.phone ? 'bg-gray-50' : ''}
                     />
                     {errors.parent_phone && (
                       <p className="text-sm text-red-600 mt-1">{errors.parent_phone.message}</p>
@@ -670,6 +713,13 @@ export default function PrivatePayEnrollmentPage() {
             {currentSection === 2 && (
               <div className="space-y-6">
                 <h3 className="text-xl font-semibold">2. Child Information</h3>
+
+                {(queryParams.firstName || queryParams.lastName || queryParams.dob) && (
+                  <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Pre-filled from previous step. You can edit if needed.</span>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
