@@ -19,12 +19,13 @@ export default function RegionalCentersPage() {
           <div className="flex flex-col lg:flex-row items-center gap-8">
             <div className="lg:w-1/3">
               <div className="bg-white rounded-xl p-4 shadow-sm">
-                <div className="relative h-48 w-full">
+                <div className="relative w-full aspect-video max-h-48">
                   <Image
                     src="/images/vmrc-logo.jpg"
                     alt="Valley Mountain Regional Center Logo"
                     fill
                     className="object-contain"
+                    sizes="(max-width: 768px) 100vw, 33vw"
                   />
                 </div>
               </div>
@@ -93,12 +94,13 @@ export default function RegionalCentersPage() {
           <div className="flex flex-col lg:flex-row items-center gap-8">
             <div className="lg:w-1/3">
               <div className="bg-white rounded-xl p-4 shadow-sm">
-                <div className="relative h-48 w-full">
+                <div className="relative w-full aspect-video max-h-48">
                   <Image
                     src="/images/cvrc-logo.webp"
                     alt="Central Valley Regional Center Logo"
                     fill
                     className="object-contain"
+                    sizes="(max-width: 768px) 100vw, 33vw"
                   />
                 </div>
               </div>

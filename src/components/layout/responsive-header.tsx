@@ -6,6 +6,11 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 
 export function ResponsiveHeader() {
   const { user } = useAuth()
@@ -27,14 +32,33 @@ export function ResponsiveHeader() {
 
         {/* Right side - notifications & profile */}
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] text-white flex items-center justify-center">
-              3
-            </span>
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="end">
+              <div className="p-4">
+                <div className="mb-2">
+                  <h3 className="font-semibold">Notifications</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Notifications feature coming soon
+                  </p>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  <p>Email notifications are currently sent for:</p>
+                  <ul className="list-disc pl-4 mt-1 space-y-1">
+                    <li>Booking changes</li>
+                    <li>Assessment completions</li>
+                    <li>POS approvals</li>
+                  </ul>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user?.user_metadata?.avatar_url} />
+            <AvatarImage src={user?.avatarUrl} />
             <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
         </div>
