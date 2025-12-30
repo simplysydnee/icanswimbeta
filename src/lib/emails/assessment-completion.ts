@@ -3,6 +3,10 @@
  * Replicates Airtable workflow for sending assessment results to parents
  */
 
+import { wrapEmailWithHeader, createButton, BRAND_MAIN } from './email-wrapper'
+
+const APP_URL = 'https://icanswimbeta.vercel.app'
+
 export interface AssessmentEmailData {
   clientName: string;
   parentName: string;
@@ -115,74 +119,44 @@ export function categorizeSkills(swimSkills: Record<string, string>) {
 export function generateDroppedEmail(data: AssessmentEmailData): EmailContent {
   const subject = `Assessment Results for ${data.clientName} - I Can Swim`;
 
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #2a5e84; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-    .header h1 { margin: 0; font-size: 24px; }
-    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
-    .section { margin: 25px 0; }
-    .section-title { color: #2a5e84; font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #e8f4f8; padding-bottom: 5px; }
-    .highlight { background: #e8f4f8; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #2a5e84; }
-    .footer { text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px; }
-    .info-row { margin: 8px 0; }
-    .label { color: #666; }
-    .preformatted { white-space: pre-line; font-family: monospace; background: #f5f5f5; padding: 15px; border-radius: 4px; margin: 10px 0; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>🏊 Assessment Results</h1>
+  const content = `
+    <h2 style="color: ${BRAND_MAIN}; margin-top: 0;">Assessment Results</h2>
+
+    <p>Hi ${data.parentName},</p>
+
+    <p>Thank you for bringing <strong>${data.clientName}</strong> for their swim assessment with I Can Swim.</p>
+
+    <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${BRAND_MAIN};">
+      <p style="margin: 5px 0;"><strong>Assessment Status:</strong> Not Approved at this time</p>
+      <p style="margin: 5px 0;">After careful evaluation, our team has determined that ${data.clientName} would benefit from additional preparation before starting swim lessons.</p>
     </div>
-    <div class="content">
-      <p>Hi ${data.parentName},</p>
 
-      <p>Thank you for bringing <strong>${data.clientName}</strong> for their swim assessment with I Can Swim.</p>
+    <div style="margin: 25px 0;">
+      <h3 style="color: ${BRAND_MAIN}; font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #e8f4f8; padding-bottom: 5px;">Assessment Summary</h3>
 
-      <div class="highlight">
-        <p><strong>Assessment Status:</strong> Not Approved at this time</p>
-        <p>After careful evaluation, our team has determined that ${data.clientName} would benefit from additional preparation before starting swim lessons.</p>
-      </div>
+      <p><strong>Strengths:</strong></p>
+      <div style="white-space: pre-line; font-family: monospace; background: #f5f5f5; padding: 15px; border-radius: 4px; margin: 10px 0;">${data.assessmentData.strengths}</div>
 
-      <div class="section">
-        <div class="section-title">Assessment Summary</div>
+      <p><strong>Areas for Development:</strong></p>
+      <div style="white-space: pre-line; font-family: monospace; background: #f5f5f5; padding: 15px; border-radius: 4px; margin: 10px 0;">${data.assessmentData.challenges}</div>
 
-        <p><strong>Strengths:</strong></p>
-        <div class="preformatted">${data.assessmentData.strengths}</div>
-
-        <p><strong>Areas for Development:</strong></p>
-        <div class="preformatted">${data.assessmentData.challenges}</div>
-
-        <p><strong>Goals:</strong></p>
-        <div class="preformatted">${data.assessmentData.goals}</div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">Next Steps</div>
-        <p>We recommend focusing on water comfort and basic safety skills before reconsidering swim lessons. Our team is available for guidance on preparing for future assessments.</p>
-
-        <p>You can view the full assessment details in your parent portal.</p>
-      </div>
-
-      <p>Thank you for considering I Can Swim for your child's aquatic education.</p>
-
-      <div class="footer">
-        <p><strong>I Can Swim</strong></p>
-        <p>📍 Modesto: 1212 Kansas Ave, Modesto, CA 95351</p>
-        <p>📞 (209) 778-7877 | ✉️ info@icanswim209.com</p>
-      </div>
+      <p><strong>Goals:</strong></p>
+      <div style="white-space: pre-line; font-family: monospace; background: #f5f5f5; padding: 15px; border-radius: 4px; margin: 10px 0;">${data.assessmentData.goals}</div>
     </div>
-  </div>
-</body>
-</html>
+
+    <div style="margin: 25px 0;">
+      <h3 style="color: ${BRAND_MAIN}; font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #e8f4f8; padding-bottom: 5px;">Next Steps</h3>
+      <p>We recommend focusing on water comfort and basic safety skills before reconsidering swim lessons. Our team is available for guidance on preparing for future assessments.</p>
+
+      <p>You can view the full assessment details in your parent portal.</p>
+    </div>
+
+    ${createButton('Contact Us', 'mailto:info@icanswim209.com')}
+
+    <p>Thank you for considering I Can Swim for your child's aquatic education.</p>
   `;
+
+  const html = wrapEmailWithHeader(content);
 
   return { subject, html };
 }
@@ -192,105 +166,72 @@ export function generateApprovedEmail(data: AssessmentEmailData): EmailContent {
   const { currentSkills, skillsToDevelop } = categorizeSkills(data.assessmentData.swimSkills);
   const isPrivatePay = data.isPrivatePay;
 
-  const subject = `🎉 ${data.clientName} is Approved for Swim Lessons!`;
+  const subject = `${data.clientName} is Approved for Swim Lessons!`;
 
   const welcomeInfoHtml = WELCOME_INFO.split('\n').map(line => {
     if (line.includes('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')) {
-      return `<div style="text-align: center; color: #2a5e84; font-weight: bold; margin: 20px 0; padding: 10px; background: #e8f4f8; border-radius: 4px;">${line}</div>`;
+      return `<div style="text-align: center; color: ${BRAND_MAIN}; font-weight: bold; margin: 20px 0; padding: 10px; background: #e8f4f8; border-radius: 4px;">${line}</div>`;
     }
     return `<p style="margin: 8px 0;">${line}</p>`;
   }).join('');
 
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #2a5e84; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-    .header h1 { margin: 0; font-size: 24px; }
-    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
-    .section { margin: 25px 0; }
-    .section-title { color: #2a5e84; font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #e8f4f8; padding-bottom: 5px; }
-    .highlight { background: #e8f4f8; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #2a5e84; }
-    .button { display: inline-block; background: #2a5e84; color: white !important; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: bold; }
-    .footer { text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 14px; }
-    .info-row { margin: 8px 0; }
-    .label { color: #666; }
-    .preformatted { white-space: pre-line; font-family: monospace; background: #f5f5f5; padding: 15px; border-radius: 4px; margin: 10px 0; }
-    .skill-list { margin: 10px 0; padding-left: 20px; }
-    .skill-item { margin: 5px 0; }
-    .ready-to-book { background: #d1fae5; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #10b981; }
-    .awaiting-po { background: #fef3c7; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #f59e0b; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>🎉 Assessment Complete - Approved!</h1>
+  // Determine which button to show based on payment type
+  const buttonHtml = isPrivatePay
+    ? createButton('Book Your Lessons', `${APP_URL}/parent/book`)
+    : createButton('Log In to Your Account', `${APP_URL}/login`);
+
+  const content = `
+    <h2 style="color: ${BRAND_MAIN}; margin-top: 0;">Assessment Complete - Approved!</h2>
+
+    <p>Hi ${data.parentName},</p>
+
+    <p>Great news! <strong>${data.clientName}</strong> has successfully completed their swim assessment and is approved for swim lessons with I Can Swim!</p>
+
+    <div style="background: #d1fae5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+      <h3 style="margin-top: 0; color: #065f46;">Ready to Book!</h3>
+      <p>You can now book recurring swim lessons for ${data.clientName}.</p>
+      ${isPrivatePay ? `
+      <p>As a private-pay client, sessions will be billed after each lesson.</p>
+      ` : `
+      <p>Your 12-session authorization has been submitted to your coordinator for approval. You can start booking lessons now!</p>
+      `}
     </div>
-    <div class="content">
-      <p>Hi ${data.parentName},</p>
 
-      <p>Great news! <strong>${data.clientName}</strong> has successfully completed their swim assessment and is approved for swim lessons with I Can Swim!</p>
+    ${buttonHtml}
 
-      <div class="ready-to-book">
-        <h3 style="margin-top: 0; color: #065f46;">✅ Ready to Book!</h3>
-        <p>You can now book recurring swim lessons for ${data.clientName}.</p>
-        ${isPrivatePay ? `
-        <p>As a private-pay client, sessions will be billed after each lesson.</p>
-        ` : `
-        <p>Your 12-session authorization has been submitted to your coordinator for approval. You can start booking lessons now!</p>
-        `}
-        <p style="text-align: center;">
-          <a href="https://icanswim209.com/booking" class="button">Book Lessons Now</a>
-        </p>
-      </div>
+    <div style="margin: 25px 0;">
+      <h3 style="color: ${BRAND_MAIN}; font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #e8f4f8; padding-bottom: 5px;">Assessment Summary</h3>
 
-      <div class="section">
-        <div class="section-title">Assessment Summary</div>
+      <p style="margin: 5px 0;"><strong>Instructor:</strong> ${data.assessmentData.instructorName || 'I Can Swim Instructor'}</p>
+      <p style="margin: 5px 0;"><strong>Assessment Date:</strong> ${data.assessmentData.assessmentDate || new Date().toLocaleDateString()}</p>
 
-        <p><strong>Instructor:</strong> ${data.assessmentData.instructorName || 'I Can Swim Instructor'}</p>
-        <p><strong>Assessment Date:</strong> ${data.assessmentData.assessmentDate || new Date().toLocaleDateString()}</p>
+      <p><strong>Strengths:</strong></p>
+      <div style="white-space: pre-line; font-family: monospace; background: #f5f5f5; padding: 15px; border-radius: 4px; margin: 10px 0;">${data.assessmentData.strengths}</div>
 
-        <p><strong>Strengths:</strong></p>
-        <div class="preformatted">${data.assessmentData.strengths}</div>
+      <p><strong>Areas for Development:</strong></p>
+      <div style="white-space: pre-line; font-family: monospace; background: #f5f5f5; padding: 15px; border-radius: 4px; margin: 10px 0;">${data.assessmentData.challenges}</div>
 
-        <p><strong>Areas for Development:</strong></p>
-        <div class="preformatted">${data.assessmentData.challenges}</div>
+      <p><strong>Current Skills:</strong></p>
+      <div style="white-space: pre-line; font-family: monospace; background: #f5f5f5; padding: 15px; border-radius: 4px; margin: 10px 0;">${currentSkills}</div>
 
-        <p><strong>Current Skills:</strong></p>
-        <div class="preformatted">${currentSkills}</div>
+      <p><strong>Skills to Develop:</strong></p>
+      <div style="white-space: pre-line; font-family: monospace; background: #f5f5f5; padding: 15px; border-radius: 4px; margin: 10px 0;">${skillsToDevelop}</div>
 
-        <p><strong>Skills to Develop:</strong></p>
-        <div class="preformatted">${skillsToDevelop}</div>
+      <p><strong>Goals:</strong></p>
+      <div style="white-space: pre-line; font-family: monospace; background: #f5f5f5; padding: 15px; border-radius: 4px; margin: 10px 0;">${data.assessmentData.goals}</div>
+    </div>
 
-        <p><strong>Goals:</strong></p>
-        <div class="preformatted">${data.assessmentData.goals}</div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">Welcome to I Can Swim!</div>
-        <div style="background: #f8fafc; padding: 20px; border-radius: 6px; margin: 15px 0;">
-          ${welcomeInfoHtml}
-        </div>
-      </div>
-
-      <p>We're excited to work with ${data.clientName} and help them achieve their swimming goals!</p>
-
-      <div class="footer">
-        <p><strong>I Can Swim</strong></p>
-        <p>📍 Modesto: 1212 Kansas Ave, Modesto, CA 95351</p>
-        <p>📞 (209) 778-7877 | ✉️ info@icanswim209.com</p>
+    <div style="margin: 25px 0;">
+      <h3 style="color: ${BRAND_MAIN}; font-size: 18px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #e8f4f8; padding-bottom: 5px;">Welcome to I Can Swim!</h3>
+      <div style="background: #f8fafc; padding: 20px; border-radius: 6px; margin: 15px 0;">
+        ${welcomeInfoHtml}
       </div>
     </div>
-  </div>
-</body>
-</html>
+
+    <p>We're excited to work with ${data.clientName} and help them achieve their swimming goals!</p>
   `;
+
+  const html = wrapEmailWithHeader(content);
 
   return { subject, html };
 }
