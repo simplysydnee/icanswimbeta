@@ -28,7 +28,8 @@ import {
   Download,
   RefreshCw,
   DollarSign,
-  Calendar
+  Calendar,
+  Mail
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
@@ -310,7 +311,10 @@ export default function POSPage() {
       po.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = statusFilter === 'all' || po.status === statusFilter;
-    const matchesBillingStatus = billingStatusFilter === 'all' || po.billing_status === billingStatusFilter;
+    const matchesBillingStatus = billingStatusFilter === 'all' ||
+      (billingStatusFilter === 'overdue'
+        ? (po.due_date && new Date(po.due_date) < new Date() && po.billing_status !== 'paid')
+        : po.billing_status === billingStatusFilter);
     const matchesPoType = poTypeFilter === 'all' || po.po_type === poTypeFilter;
     const matchesFundingSource = fundingSourceFilter === 'all' || po.funding_source?.id === fundingSourceFilter;
     const matchesSelectedFundingSource = !selectedFundingSource || po.funding_source?.id === selectedFundingSource;
@@ -598,9 +602,42 @@ export default function POSPage() {
                             );
                           })()}
                           {po.due_date && new Date(po.due_date) < new Date() && po.billing_status !== 'paid' && (
-                            <Badge className="bg-red-100 text-red-800 border-red-300 text-xs">
-                              Past Due
-                            </Badge>
+                            <div className="flex items-center gap-1">
+                              <Badge className="bg-red-100 text-red-800 border-red-300 text-xs">
+                                Past Due
+                              </Badge>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 w-6 p-0 text-xs"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Use coordinator email if available
+                                  const email = po.coordinator?.email;
+                                  if (email) {
+                                    const amountOwed = ((po.billed_amount_cents || 0) - (po.paid_amount_cents || 0)) / 100;
+                                    const swimmerName = `${po.swimmer?.first_name || ''} ${po.swimmer?.last_name || ''}`.trim();
+                                    const subject = `Payment Reminder - PO ${po.authorization_number || po.id}`;
+                                    const body = `Hello ${po.coordinator?.full_name || 'Coordinator'},
+
+This is a reminder that PO ${po.authorization_number || po.id} for ${swimmerName} is past due.
+
+Amount owed: $${amountOwed.toFixed(2)}
+Due date: ${po.due_date ? new Date(po.due_date).toLocaleDateString() : 'N/A'}
+
+Please let us know when we can expect payment.
+
+Thank you,
+I Can Swim Team`;
+                                    window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                                  } else {
+                                    alert('No coordinator email on file for this PO');
+                                  }
+                                }}
+                              >
+                                <Mail className="h-3 w-3" />
+                              </Button>
+                            </div>
                           )}
                         </div>
                         <div className="text-xs">
