@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,12 +22,12 @@ import {
   Target,
   Shield,
   DollarSign,
+  Loader2,
   Building2,
   Clock,
   CheckCircle,
   XCircle,
-  Stethoscope,
-  Loader2
+  Stethoscope
 } from 'lucide-react'
 import { RoleGuard } from '@/components/auth/RoleGuard'
 import { format, parseISO, differenceInYears } from 'date-fns'
@@ -129,7 +129,7 @@ const paymentDisplayNames: Record<string, string> = {
   other: "Other",
 }
 
-export default function AdminSwimmerDetailPage() {
+function AdminSwimmerDetailContent() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -1178,5 +1178,17 @@ export default function AdminSwimmerDetailPage() {
         </Tabs>
       </div>
     </RoleGuard>
+  )
+}
+
+export default function AdminSwimmerDetailPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-8 flex justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    }>
+      <AdminSwimmerDetailContent />
+    </Suspense>
   )
 }
