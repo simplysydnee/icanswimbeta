@@ -55,6 +55,14 @@ export interface Swimmer {
   assessment_status?: string;
   approval_status?: 'pending' | 'approved' | 'declined';
 
+  // Priority Booking
+  is_priority_booking?: boolean;
+  priority_booking_reason?: 'manual' | 'attendance' | 'medical' | 'behavioral' | null;
+  priority_booking_notes?: string | null;
+  priority_booking_set_at?: string | null;
+  priority_booking_set_by?: string | null;
+  priority_booking_expires_at?: string | null;
+
   // Level
   current_level_id?: string;
   current_level?: {
