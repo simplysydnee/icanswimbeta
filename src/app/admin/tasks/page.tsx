@@ -488,7 +488,7 @@ export default function TasksPage() {
 
       {/* Kanban Board */}
       <KanbanBoard
-        tasks={tasks.filter(t => t.status !== 'completed')}
+        tasks={tasks}
         onTaskUpdate={handleTaskUpdate}
         onTaskEdit={(task) => {
           setSelectedTask(task);

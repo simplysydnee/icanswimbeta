@@ -117,14 +117,32 @@ export function BillingReport() {
       const response = await fetch(`/api/reports/billing?month=${month}&year=${year}`);
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch billing data: ${response.statusText}`);
+        // Try to get error message from response
+        let errorMessage = `Failed to fetch billing data: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (e) {
+          // If we can't parse JSON, use the status text
+        }
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
+
+      // Check if the API returned an error in the response body
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
       setData(result);
     } catch (err) {
       console.error('Error fetching billing data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load billing data');
+      // Clear data on error to prevent showing stale data
+      setData(null);
     } finally {
       setLoading(false);
     }
@@ -173,11 +191,21 @@ export function BillingReport() {
     );
   }
 
-  if (!data || !data.stats) {
+  if (!data) {
     return null;
   }
 
-  const { stats, totalPOs } = data;
+  // Ensure stats object exists with defaults
+  const stats = data.stats || {
+    poStatus: {},
+    billingStatus: {},
+    financial: { totalBilled: 0, totalPaid: 0, totalOutstanding: 0, totalOverdue: 0 },
+    byFundingSource: {},
+    byCoordinator: {},
+    problemPOs: []
+  };
+
+  const totalPOs = data.totalPOs || 0;
 
   return (
     <div className="space-y-6">
@@ -189,7 +217,7 @@ export function BillingReport() {
 
       {/* Summary Cards - PO Status */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        {stats.poStatus && Object.entries(stats.poStatus).map(([status, count]) => {
+        {Object.entries(stats.poStatus).map(([status, count]) => {
           const config = STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-800 border-gray-300', icon: FileText };
           const Icon = config.icon;
 
@@ -214,7 +242,7 @@ export function BillingReport() {
 
       {/* Summary Cards - Billing Status */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-        {stats.billingStatus && Object.entries(stats.billingStatus).map(([status, count]) => {
+        {Object.entries(stats.billingStatus).map(([status, count]) => {
           const config = BILLING_STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-800 border-gray-300', icon: FileText };
           const Icon = config.icon;
 
@@ -265,11 +293,11 @@ export function BillingReport() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              ${stats.financial?.totalPaid?.toFixed(2) || '0.00'}
+              ${(stats.financial?.totalPaid || 0).toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {stats.financial?.totalBilled > 0
-                ? `${Math.round(((stats.financial.totalPaid || 0) / stats.financial.totalBilled) * 100)}% collection rate`
+              {(stats.financial?.totalBilled || 0) > 0
+                ? `${Math.round(((stats.financial?.totalPaid || 0) / (stats.financial?.totalBilled || 1)) * 100)}% collection rate`
                 : 'No billing'}
             </p>
           </CardContent>
@@ -287,9 +315,9 @@ export function BillingReport() {
               ${stats.financial?.totalOutstanding?.toFixed(2) || '0.00'}
             </div>
             <p className="text-xs text-muted-foreground">
-              {stats.financial?.totalOverdue > 0 && (
+              {(stats.financial?.totalOverdue || 0) > 0 && (
                 <span className="text-red-600">
-                  ${(stats.financial.totalOverdue || 0).toFixed(2)} overdue
+                  ${(stats.financial?.totalOverdue || 0).toFixed(2)} overdue
                 </span>
               )}
             </p>
@@ -348,7 +376,7 @@ export function BillingReport() {
                     </tr>
                   </thead>
                   <tbody>
-                    {stats.byFundingSource && Object.entries(stats.byFundingSource).map(([id, fs]) => (
+                    {Object.entries(stats.byFundingSource).map(([id, fs]) => (
                       <tr key={id} className="border-b hover:bg-gray-50">
                         <td className="py-3 px-4">
                           <div className="font-medium">{fs.name}</div>
@@ -377,7 +405,7 @@ export function BillingReport() {
                         </td>
                       </tr>
                     ))}
-                    {(!stats.byFundingSource || Object.keys(stats.byFundingSource).length === 0) && (
+                    {Object.keys(stats.byFundingSource).length === 0 && (
                       <tr>
                         <td colSpan={6} className="py-8 text-center text-muted-foreground">
                           No funding source data available
