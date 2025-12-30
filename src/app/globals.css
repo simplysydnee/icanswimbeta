@@ -96,8 +96,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: 210 60% 35%; /* #2a5e84 - Same as light mode for consistency */
+  --primary-foreground: 0 0% 100%; /* White text */
   --secondary: 195 70% 65%; /* #6abedc */
   --secondary-foreground: 0 0% 100%;
   --muted: oklch(0.269 0 0);
