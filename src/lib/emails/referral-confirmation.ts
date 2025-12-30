@@ -1,6 +1,5 @@
 import { wrapEmailWithHeader, createButton, BRAND_MAIN } from './email-wrapper'
-
-const APP_URL = 'https://icanswimbeta.vercel.app'
+import { emailUrls } from './url-helpers'
 
 export interface ReferralConfirmationData {
   parentName: string
@@ -31,7 +30,7 @@ export function generateReferralConfirmationEmail(data: ReferralConfirmationData
 
     <p>This process typically takes a few days. You can log in anytime to check your account status.</p>
 
-    ${createButton('Log In to Your Account', `${APP_URL}/login`)}
+    ${createButton('Log In to Your Account', emailUrls.login(data.parentEmail))}
 
     <p style="margin-top: 30px;">Thank you for choosing I Can Swim!</p>
 

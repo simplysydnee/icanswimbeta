@@ -1,8 +1,7 @@
 // Email notifications for POS (Purchase Order System)
 import { emailService } from '../email-service'
 import { wrapEmailWithHeader, createButton, BRAND_MAIN } from '../emails/email-wrapper'
-
-const APP_URL = 'https://icanswimbeta.vercel.app'
+import { emailUrls } from '../emails/url-helpers'
 
 interface POSEmailData {
   swimmerName: string;
@@ -43,7 +42,7 @@ export async function notifyCoordinatorNewPOS(data: POSEmailData) {
       ${data.authorizationNumber ? `<p style="margin: 5px 0;"><strong>Authorization #:</strong> ${data.authorizationNumber}</p>` : ''}
     </div>
 
-    ${createButton('Review POS Request', `${APP_URL}/coordinator/pos`)}
+    ${createButton('Review POS Request', emailUrls.coordinatorPos(data.coordinatorEmail))}
 
     <p>Thank you for your partnership,<br><strong>I Can Swim</strong></p>
   `
@@ -84,7 +83,7 @@ export async function notifyParentPOSApproved(data: POSEmailData) {
 
     <p>You can now book swim sessions for ${data.swimmerName} through your parent portal:</p>
 
-    ${createButton('Book Your Lessons', `${APP_URL}/parent/book`)}
+    ${createButton('Book Your Lessons', emailUrls.parentBook(data.parentEmail))}
 
     <p>Thank you,<br><strong>I Can Swim</strong></p>
   `
@@ -181,7 +180,7 @@ export async function notifyCoordinatorPOSExpiring(data: POSEmailData & {
     Email: ${data.parentEmail}<br>
     Phone: (209) 778-7877</p>
 
-    ${createButton('Review POS', `${APP_URL}/coordinator/pos`)}
+    ${createButton('Review POS', emailUrls.coordinatorPos(data.coordinatorEmail))}
 
     <p>Thank you,<br><strong>I Can Swim</strong></p>
   `
@@ -236,7 +235,7 @@ export async function notifyInstructorProgressNeeded(data: {
       <li>Any behavioral or safety notes</li>
     </ul>
 
-    ${createButton('Submit Progress Notes', `${APP_URL}/instructor/progress`)}
+    ${createButton('Submit Progress Notes', emailUrls.instructorProgress(data.instructorEmail))}
 
     <p>Thank you,<br><strong>I Can Swim</strong></p>
   `

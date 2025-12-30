@@ -26,8 +26,14 @@ export default function LoginForm() {
   useEffect(() => {
     // Get redirect parameter from URL
     const redirect = searchParams.get('redirect')
+    const email = searchParams.get('email')
+
     if (redirect) {
       setRedirectTo(redirect)
+    }
+
+    if (email) {
+      setFormData(prev => ({ ...prev, email: decodeURIComponent(email) }))
     }
   }, [searchParams])
 
@@ -71,6 +77,13 @@ export default function LoginForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {searchParams.get('email') && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-800">
+              Your email has been pre-filled. Sign in to continue.
+            </p>
+          </div>
+        )}
         <div className="space-y-4">
           <Button
             type="button"
@@ -161,6 +174,7 @@ export default function LoginForm() {
 
           <LoadingButton
             type="submit"
+            variant="default"
             className="w-full"
             loading={loading}
             loadingText="Signing in..."
@@ -170,7 +184,10 @@ export default function LoginForm() {
 
           <div className="text-center text-sm">
             Don&apos;t have an account?{' '}
-            <Link href={`/signup${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`} className="text-primary hover:underline">
+            <Link
+              href={`/signup${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}${formData.email ? `${redirectTo ? '&' : '?'}email=${encodeURIComponent(formData.email)}` : ''}`}
+              className="text-primary hover:underline"
+            >
               Sign up
             </Link>
           </div>

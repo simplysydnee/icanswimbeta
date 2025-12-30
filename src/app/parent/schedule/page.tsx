@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { RequireAuthRedirect } from '@/components/auth/RequireAuthRedirect';
 import { Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 
-export default function ParentSchedulePage() {
+function ParentScheduleContent() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
@@ -90,5 +91,13 @@ export default function ParentSchedulePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ParentSchedulePage() {
+  return (
+    <RequireAuthRedirect>
+      <ParentScheduleContent />
+    </RequireAuthRedirect>
   );
 }

@@ -1,4 +1,6 @@
-const APP_URL = 'https://icanswimbeta.vercel.app'
+import { APP_CONFIG } from '@/lib/constants'
+
+const APP_URL = APP_CONFIG.url
 const LOGO_URL = `${APP_URL}/images/logo.jpg`
 
 // Brand colors
@@ -44,4 +46,4 @@ export function createButton(text: string, url: string): string {
   `
 }
 
-export { BRAND_MAIN, BRAND_ACCENT }
+export { BRAND_MAIN, BRAND_ACCENT, APP_URL }

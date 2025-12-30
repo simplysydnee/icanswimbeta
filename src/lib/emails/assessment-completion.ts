@@ -4,8 +4,7 @@
  */
 
 import { wrapEmailWithHeader, createButton, BRAND_MAIN } from './email-wrapper'
-
-const APP_URL = 'https://icanswimbeta.vercel.app'
+import { emailUrls } from './url-helpers'
 
 export interface AssessmentEmailData {
   clientName: string;
@@ -177,8 +176,8 @@ export function generateApprovedEmail(data: AssessmentEmailData): EmailContent {
 
   // Determine which button to show based on payment type
   const buttonHtml = isPrivatePay
-    ? createButton('Book Your Lessons', `${APP_URL}/parent/book`)
-    : createButton('Log In to Your Account', `${APP_URL}/login`);
+    ? createButton('Book Your Lessons', emailUrls.parentBook(data.parentEmail))
+    : createButton('Log In to Your Account', emailUrls.login(data.parentEmail));
 
   const content = `
     <h2 style="color: ${BRAND_MAIN}; margin-top: 0;">Assessment Complete - Approved!</h2>

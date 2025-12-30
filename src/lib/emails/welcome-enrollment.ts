@@ -4,8 +4,7 @@
  */
 
 import { wrapEmailWithHeader, createButton, BRAND_MAIN } from './email-wrapper'
-
-const APP_URL = 'https://icanswimbeta.vercel.app'
+import { emailUrls } from './url-helpers'
 
 export interface WelcomeEmailData {
   parentName: string;
@@ -42,7 +41,7 @@ export function generatePrivatePayWelcomeEmail(data: WelcomeEmailData): EmailCon
       </ul>
     </div>
 
-    ${createButton('Book Your Assessment', `${APP_URL}/parent/book`)}
+    ${createButton('Book Your Assessment', emailUrls.parentBook(data.parentEmail))}
 
     <div style="margin: 30px 0;">
       <h3 style="color: ${BRAND_MAIN};">After Assessment: Regular Lessons</h3>
@@ -114,7 +113,7 @@ export function generateFundedWelcomeEmail(data: WelcomeEmailData): EmailContent
       </ul>
     </div>
 
-    ${createButton('Log In to Your Account', `${APP_URL}/login`)}
+    ${createButton('Log In to Your Account', emailUrls.login(data.parentEmail))}
 
     <div style="margin: 30px 0;">
       <h3 style="color: ${BRAND_MAIN};">After Assessment: Regular Lessons</h3>
@@ -210,7 +209,7 @@ export function generateAccountCreatedEmail(data: AccountCreatedEmailData): Emai
       </div>
     </div>
 
-    ${createButton('Start Enrollment', `${APP_URL}/enroll`)}
+    ${createButton('Start Enrollment', emailUrls.enroll(data.parentEmail))}
 
     <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #0ea5e9;">
       <h3 style="margin-top: 0; color: #0ea5e9;">Questions?</h3>

@@ -1,6 +1,5 @@
 import { wrapEmailWithHeader, createButton, BRAND_MAIN } from './email-wrapper'
-
-const APP_URL = 'https://icanswimbeta.vercel.app'
+import { emailUrls } from './url-helpers'
 
 export interface ReferralRequestData {
   coordinatorName: string
@@ -17,7 +16,7 @@ export interface ReferralRequestData {
 export function generateReferralRequestEmail(data: ReferralRequestData): { subject: string; html: string } {
   const subject = `New Swim Lesson Referral Request - ${data.childFirstName} ${data.childLastName}`
 
-  const referralUrl = `${APP_URL}/referral?token=${data.referralToken}`
+  const referralUrl = emailUrls.referral(data.referralToken, data.coordinatorEmail)
 
   const content = `
     <h2 style="color: ${BRAND_MAIN}; margin-top: 0;">New Referral Request</h2>

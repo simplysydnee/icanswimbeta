@@ -1,7 +1,6 @@
 import { wrapEmailWithHeader, createButton, BRAND_MAIN } from './email-wrapper'
+import { emailUrls } from './url-helpers'
 import { format } from 'date-fns'
-
-const APP_URL = 'https://icanswimbeta.vercel.app'
 
 // Types
 export interface AssessmentBookingData {
@@ -91,7 +90,7 @@ export function generateAssessmentBookingEmail(data: AssessmentBookingData): { s
 
     <p>If you have any questions or need to reschedule, just reply to this email—we're happy to help!</p>
 
-    ${createButton('View My Schedule', `${APP_URL}/parent/schedule`)}
+    ${createButton('View My Schedule', emailUrls.parentSchedule(data.parentEmail))}
 
     <p style="margin-top: 30px;">See you at the pool!</p>
 
@@ -129,7 +128,7 @@ export function generateLessonBookingEmail(data: LessonBookingData): { subject: 
 
     <p>If you have any questions or need to reschedule, just reply to this email!</p>
 
-    ${createButton('View My Schedule', `${APP_URL}/parent/schedule`)}
+    ${createButton('View My Schedule', emailUrls.parentSchedule(data.parentEmail))}
 
     <p style="margin-top: 30px;">See you at the pool!</p>
 
@@ -178,7 +177,7 @@ export function generateRecurringBookingEmail(data: RecurringBookingData): { sub
 
     <p>If you have any questions, just reply to this email—we're happy to help!</p>
 
-    ${createButton('View My Schedule', `${APP_URL}/parent/schedule`)}
+    ${createButton('View My Schedule', emailUrls.parentSchedule(data.parentEmail))}
 
     <p style="margin-top: 30px;">See you at the pool!</p>
 
@@ -223,7 +222,7 @@ export function generateCancellationEmail(data: BookingCancellationData): { subj
 
     <p>Need to book a new session? Click below to schedule.</p>
 
-    ${createButton('Book New Session', `${APP_URL}/parent/book`)}
+    ${createButton('Book New Session', emailUrls.parentBook(data.parentEmail))}
 
     <p style="margin-top: 30px;">Questions? Just reply to this email.</p>
 

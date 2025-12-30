@@ -136,7 +136,7 @@ export default function ResetPasswordForm() {
           </div>
           <div className="space-y-2">
             <Link href="/forgot-password">
-              <Button className="w-full">
+              <Button variant="default" className="w-full">
                 Request New Reset Link
               </Button>
             </Link>
@@ -257,6 +257,7 @@ export default function ResetPasswordForm() {
 
           <Button
             type="submit"
+            variant="default"
             className="w-full"
             disabled={loading}
           >

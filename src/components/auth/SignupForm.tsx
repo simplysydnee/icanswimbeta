@@ -29,14 +29,16 @@ export default function SignupForm() {
   const [isFromReferral, setIsFromReferral] = useState(false)
   const [childName, setChildName] = useState('')
   const [redirectUrl, setRedirectUrl] = useState('')
+  const [emailParam, setEmailParam] = useState('')
 
   useEffect(() => {
-    const emailParam = searchParams.get('email')
+    const emailParamValue = searchParams.get('email')
     const childParam = searchParams.get('child')
     const redirectParam = searchParams.get('redirect')
 
-    if (emailParam) {
-      setFormData(prev => ({ ...prev, email: decodeURIComponent(emailParam) }))
+    if (emailParamValue) {
+      setEmailParam(decodeURIComponent(emailParamValue))
+      setFormData(prev => ({ ...prev, email: decodeURIComponent(emailParamValue) }))
       setIsFromReferral(true)
     }
     if (childParam) {
@@ -122,6 +124,14 @@ export default function SignupForm() {
             </p>
             <p className="text-xs text-gray-600 mt-1">
               After signing up, you'll be able to complete the enrollment form.
+            </p>
+          </div>
+        )}
+
+        {emailParam && !isFromReferral && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-800">
+              Create an account to continue. Your email has been pre-filled.
             </p>
           </div>
         )}
@@ -283,6 +293,7 @@ export default function SignupForm() {
 
           <LoadingButton
             type="submit"
+            variant="default"
             className="w-full"
             loading={loading}
             loadingText="Creating account..."
@@ -292,7 +303,10 @@ export default function SignupForm() {
 
           <div className="text-center text-sm">
             Already have an account?{' '}
-            <Link href="/login" className="text-primary hover:underline">
+            <Link
+              href={`/login${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}${emailParam ? `${redirectUrl ? '&' : '?'}email=${encodeURIComponent(emailParam)}` : ''}${childName ? `${(redirectUrl || emailParam) ? '&' : '?'}child=${encodeURIComponent(childName)}` : ''}`}
+              className="text-primary hover:underline"
+            >
               Sign in
             </Link>
           </div>

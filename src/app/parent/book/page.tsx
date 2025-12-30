@@ -1,6 +1,7 @@
 'use client';
 
 import { BookingWizard } from '@/components/booking/BookingWizard';
+import { RequireAuthRedirect } from '@/components/auth/RequireAuthRedirect';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
@@ -23,15 +24,17 @@ function BookPageContent() {
 
 export default function BookPage() {
   return (
-    <Suspense fallback={
-      <div className="container max-w-6xl py-8 px-4">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Book a Session</h1>
-          <p className="text-muted-foreground mt-2">Loading...</p>
+    <RequireAuthRedirect>
+      <Suspense fallback={
+        <div className="container max-w-6xl py-8 px-4">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold">Book a Session</h1>
+            <p className="text-muted-foreground mt-2">Loading...</p>
+          </div>
         </div>
-      </div>
-    }>
-      <BookPageContent />
-    </Suspense>
+      }>
+        <BookPageContent />
+      </Suspense>
+    </RequireAuthRedirect>
   );
 }
