@@ -25,7 +25,9 @@ export function wrapEmailWithHeader(content: string): string {
           Modesto, CA
         </p>
         <p style="margin: 0;">
-          📧 info@icanswim209.com | 📞 (209) 778-7877
+          Email: <a href="mailto:info@icanswim209.com" style="color: #2a5e84;">info@icanswim209.com</a><br>
+          Phone: <a href="tel:+12097787877" style="color: #2a5e84;">(209) 778-7877</a><br>
+          Text: <a href="sms:+12096437969" style="color: #2a5e84;">209-643-7969</a>
         </p>
       </div>
     </div>

@@ -374,10 +374,12 @@ const getEmailTemplate = (type: string, data: any): { subject: string; html: str
       }
 
     case 'custom':
-      // For custom emails, use provided html and subject directly
+      // For custom emails, check both direct parameters and customData
+      const customSubject = data.subject || data.customData?.subject || 'Message from I Can Swim'
+      const customHtml = data.html || data.customData?.html || '<p>You have a message from I Can Swim.</p>'
       return {
-        subject: data.subject || 'Message from I Can Swim',
-        html: data.html || '<p>You have a message from I Can Swim.</p>'
+        subject: customSubject,
+        html: customHtml
       }
 
     default:
@@ -400,6 +402,12 @@ serve(async (req) => {
 
     // Log request details for monitoring
     console.log(`Email function called: ${templateType} to ${to}`)
+    console.log('Template type:', templateType)
+    console.log('CustomData received:', customData ? 'Yes' : 'No')
+    console.log('CustomData.subject:', customData?.subject)
+    console.log('CustomData.html length:', customData?.html?.length || 0)
+    console.log('Top-level subject:', subject)
+    console.log('Top-level html length:', html?.length || 0)
 
     // Get email template
     const template = getEmailTemplate(templateType, {

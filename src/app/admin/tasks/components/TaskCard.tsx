@@ -121,7 +121,7 @@ export function TaskCard({ task, onEdit, onDelete, formatDueDate, getPriorityCol
                 {getUserInitials(task.assigned_to_user.full_name)}
               </span>
               <span className="text-xs font-medium text-muted-foreground truncate hidden sm:inline">
-                For: {task.assigned_to_user.full_name || task.assigned_to_user.email}
+                Assigned to: {task.assigned_to_user.full_name || task.assigned_to_user.email}
               </span>
               <span className="text-xs font-medium text-muted-foreground truncate sm:hidden">
                 {task.assigned_to_user.full_name?.split(' ')[0] || task.assigned_to_user.email.split('@')[0]}

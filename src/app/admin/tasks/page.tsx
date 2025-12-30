@@ -3,19 +3,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Plus, Filter, X, CheckSquare, AlertCircle, Clock, CheckCircle, MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { Plus, Filter, X, CheckSquare, AlertCircle, Clock, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { KanbanBoard } from './components/KanbanBoard';
 import { CreateTaskModal } from './components/CreateTaskModal';
@@ -81,6 +84,7 @@ export default function TasksPage() {
     swimmer_id: 'all',
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [showPastTasks, setShowPastTasks] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -231,25 +235,6 @@ export default function TasksPage() {
     });
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'todo': return <CheckSquare className="h-4 w-4" />;
-      case 'in_progress': return <Clock className="h-4 w-4" />;
-      case 'completed': return <CheckCircle className="h-4 w-4" />;
-      case 'needs_attention': return <AlertCircle className="h-4 w-4" />;
-      default: return <CheckSquare className="h-4 w-4" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'todo': return 'bg-gray-100 text-gray-800';
-      case 'in_progress': return 'bg-blue-100 text-blue-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'needs_attention': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -503,7 +488,7 @@ export default function TasksPage() {
 
       {/* Kanban Board */}
       <KanbanBoard
-        tasks={tasks}
+        tasks={tasks.filter(t => t.status !== 'completed')}
         onTaskUpdate={handleTaskUpdate}
         onTaskEdit={(task) => {
           setSelectedTask(task);
@@ -511,6 +496,80 @@ export default function TasksPage() {
         }}
         onTaskDelete={handleTaskDelete}
       />
+
+      {/* Past Tasks Table */}
+      <div className="mt-8">
+        <Button
+          variant="outline"
+          onClick={() => setShowPastTasks(!showPastTasks)}
+          className="flex items-center gap-2 mb-4"
+        >
+          {showPastTasks ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+          Past Tasks ({tasks.filter(t => t.status === 'completed').length})
+        </Button>
+
+        {showPastTasks && (
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Task</TableHead>
+                    <TableHead>Assigned To</TableHead>
+                    <TableHead>Completed</TableHead>
+                    <TableHead>Created By</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Category</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tasks
+                    .filter(t => t.status === 'completed')
+                    .map(task => (
+                      <TableRow key={task.id}>
+                        <TableCell className="font-medium">{task.title}</TableCell>
+                        <TableCell>
+                          {task.assigned_to_user ? (
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center justify-center rounded-full bg-gray-200 text-xs h-6 w-6">
+                                {task.assigned_to_user.full_name?.charAt(0) || task.assigned_to_user.email.charAt(0)}
+                              </span>
+                              <span>{task.assigned_to_user.full_name || task.assigned_to_user.email}</span>
+                            </div>
+                          ) : (
+                            'Unassigned'
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {task.completed_at ? format(new Date(task.completed_at), 'MMM d, yyyy') : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          {task.created_by_user?.full_name || task.created_by_user?.email || 'Unknown'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getPriorityColor(task.priority)}>
+                            {task.priority}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {task.category === 'swimmer_related' ? 'Swimmer' :
+                             task.category === 'business_operations' ? 'Business' :
+                             task.category === 'follow_up' ? 'Follow-up' : 'Other'}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Edit Task Modal */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>

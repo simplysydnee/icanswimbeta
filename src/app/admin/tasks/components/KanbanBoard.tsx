@@ -247,7 +247,7 @@ export function KanbanBoard({ tasks, onTaskUpdate, onTaskEdit, onTaskDelete }: K
                   )}
                   {activeTask.assigned_to_user && (
                     <div className="flex items-center gap-1">
-                      <span className="text-muted-foreground">For:</span>
+                      <span className="text-muted-foreground">Assigned to:</span>
                       <UserBadge
                         userId={activeTask.assigned_to_user.id}
                         fullName={activeTask.assigned_to_user.full_name}
