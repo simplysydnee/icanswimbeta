@@ -443,74 +443,74 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Link href="/admin/swimmers" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
-                <Users className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal break-words">
-                  <div className="font-medium">Swimmer Management</div>
-                </div>
+              <Button variant="outline" className="w-full h-auto min-h-[70px] py-3 px-2 flex flex-col items-center justify-center gap-1.5">
+                <Users className="h-5 w-5 shrink-0" />
+                <span className="text-xs text-center leading-tight whitespace-normal break-words">
+                  Swimmer Management
+                </span>
               </Button>
             </Link>
 
             <Link href="/admin/schedule" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
-                <Calendar className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal break-words">
-                  <div className="font-medium">Schedule Management</div>
-                </div>
+              <Button variant="outline" className="w-full h-auto min-h-[70px] py-3 px-2 flex flex-col items-center justify-center gap-1.5">
+                <Calendar className="h-5 w-5 shrink-0" />
+                <span className="text-xs text-center leading-tight whitespace-normal break-words">
+                  Schedule Management
+                </span>
               </Button>
             </Link>
 
             <Link href="/admin/sessions/generate" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
-                <CalendarPlus className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal break-words">
-                  <div className="font-medium">Session Generator</div>
-                </div>
+              <Button variant="outline" className="w-full h-auto min-h-[70px] py-3 px-2 flex flex-col items-center justify-center gap-1.5">
+                <CalendarPlus className="h-5 w-5 shrink-0" />
+                <span className="text-xs text-center leading-tight whitespace-normal break-words">
+                  Session Generator
+                </span>
               </Button>
             </Link>
 
             <Link href="/admin/referrals" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
-                <FileText className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal break-words">
-                  <div className="font-medium">Funding Referrals</div>
-                </div>
+              <Button variant="outline" className="w-full h-auto min-h-[70px] py-3 px-2 flex flex-col items-center justify-center gap-1.5">
+                <FileText className="h-5 w-5 shrink-0" />
+                <span className="text-xs text-center leading-tight whitespace-normal break-words">
+                  Funding Referrals
+                </span>
               </Button>
             </Link>
 
             <Link href="/admin/sessions" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
-                <ClipboardList className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal break-words">
-                  <div className="font-medium">Session Management</div>
-                </div>
+              <Button variant="outline" className="w-full h-auto min-h-[70px] py-3 px-2 flex flex-col items-center justify-center gap-1.5">
+                <ClipboardList className="h-5 w-5 shrink-0" />
+                <span className="text-xs text-center leading-tight whitespace-normal break-words">
+                  Session Management
+                </span>
               </Button>
             </Link>
 
             <Link href="/admin/pos" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
-                <FileText className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal break-words">
-                  <div className="font-medium">Purchase Orders</div>
-                </div>
+              <Button variant="outline" className="w-full h-auto min-h-[70px] py-3 px-2 flex flex-col items-center justify-center gap-1.5">
+                <FileText className="h-5 w-5 shrink-0" />
+                <span className="text-xs text-center leading-tight whitespace-normal break-words">
+                  Purchase Orders
+                </span>
               </Button>
             </Link>
 
             <Link href="/admin/users" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
-                <UserCog className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal break-words">
-                  <div className="font-medium">User Management</div>
-                </div>
+              <Button variant="outline" className="w-full h-auto min-h-[70px] py-3 px-2 flex flex-col items-center justify-center gap-1.5">
+                <UserCog className="h-5 w-5 shrink-0" />
+                <span className="text-xs text-center leading-tight whitespace-normal break-words">
+                  User Management
+                </span>
               </Button>
             </Link>
 
             <Link href="/admin/settings" className="block">
-              <Button variant="outline" className="w-full justify-start h-auto min-h-[64px] py-3 whitespace-normal">
-                <Settings className="h-4 w-4 mr-2" />
-                <div className="text-left whitespace-normal break-words">
-                  <div className="font-medium">Settings</div>
-                </div>
+              <Button variant="outline" className="w-full h-auto min-h-[70px] py-3 px-2 flex flex-col items-center justify-center gap-1.5">
+                <Settings className="h-5 w-5 shrink-0" />
+                <span className="text-xs text-center leading-tight whitespace-normal break-words">
+                  Settings
+                </span>
               </Button>
             </Link>
           </CardContent>

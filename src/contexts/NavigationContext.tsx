@@ -29,7 +29,7 @@ export function useNavigation() {
 
 export function NavigationProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarSections, setSidebarSections] = useState<SidebarSection[]>([]);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
   const [currentSection, setCurrentSection] = useState<string | undefined>();
