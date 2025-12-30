@@ -5,36 +5,65 @@ import { Instructor } from '@/types/booking'
 import { InstructorAvatar } from '@/components/ui/instructor-avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Users, User, AlertCircle, Check } from 'lucide-react'
+import { Users, User, AlertCircle, Check, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { priorityBookingService } from '@/lib/priority-booking-service'
 
 interface InstructorStepProps {
   selectedInstructorId: string | null
   instructorPreference: 'any' | 'specific'
+  swimmerId?: string | null
   onSelectInstructor: (id: string | null, preference: 'any' | 'specific') => void
 }
 
 export default function InstructorStep({
   selectedInstructorId,
   instructorPreference,
+  swimmerId,
   onSelectInstructor,
 }: InstructorStepProps) {
-  // Fetch instructors using React Query
+  // Fetch instructors using React Query with priority booking logic
   const {
-    data: instructors = [],
+    data: instructorData,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ['instructors'],
+    queryKey: ['instructors', swimmerId],
     queryFn: async () => {
-      const response = await fetch('/api/instructors')
-      if (!response.ok) {
-        throw new Error('Failed to fetch instructors')
+      if (swimmerId) {
+        // Use priority booking service to get available instructors for this swimmer
+        const result = await priorityBookingService.getAvailableInstructorsForSwimmer(swimmerId)
+        return {
+          instructors: result.instructors.map(instructor => ({
+            id: instructor.id,
+            fullName: instructor.full_name,
+            email: instructor.email,
+            // Add other required fields if needed
+            avatarUrl: null
+          })),
+          isPriority: result.isPriority,
+          reason: result.reason
+        }
+      } else {
+        // Fallback to fetching all instructors if no swimmerId
+        const response = await fetch('/api/instructors')
+        if (!response.ok) {
+          throw new Error('Failed to fetch instructors')
+        }
+        const allInstructors = await response.json() as Instructor[]
+        return {
+          instructors: allInstructors,
+          isPriority: false,
+          reason: null
+        }
       }
-      return response.json() as Promise<Instructor[]>
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
   })
+
+  const instructors = instructorData?.instructors || []
+  const isPriority = instructorData?.isPriority || false
+  const priorityReason = instructorData?.reason || null
 
 
   // Loading state
@@ -91,6 +120,24 @@ export default function InstructorStep({
 
   return (
     <div className="space-y-6">
+      {/* Priority booking indicator */}
+      {isPriority && (
+        <Alert className="bg-yellow-50 border-yellow-200 text-yellow-800">
+          <Star className="h-4 w-4 fill-yellow-400" />
+          <AlertDescription>
+            <div className="flex flex-col gap-1">
+              <span className="font-medium">Priority Booking Active</span>
+              <span className="text-sm">
+                {priorityReason && `Reason: ${priorityReason}`}
+                {instructors.length === 0
+                  ? ' No assigned instructors available. Please contact admin.'
+                  : ` Showing ${instructors.length} assigned instructor(s) only.`}
+              </span>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Any Available Instructor card */}
       <button
         type="button"

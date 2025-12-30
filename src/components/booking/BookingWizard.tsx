@@ -355,6 +355,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
           <InstructorStep
             selectedInstructorId={selectedInstructorId}
             instructorPreference={instructorPreference}
+            swimmerId={selectedSwimmer?.id || null}
             onSelectInstructor={(id, preference) => {
               setSelectedInstructorId(id);
               setInstructorPreference(preference);
