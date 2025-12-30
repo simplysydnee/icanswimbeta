@@ -211,11 +211,11 @@ export function Header() {
                 </DialogContent>
               </Dialog>
               <Button asChild>
-                  <Link href="/signup">Get Started</Link>
-                </Button>
+                <Link href="/signup">Get Started</Link>
+              </Button>
               </>
-            )
-          )}
+            )}
+
         </div>
 
         {/* Mobile Menu */}
@@ -350,8 +350,8 @@ export function Header() {
                         <Link href="/signup">Get Started</Link>
                       </Button>
                     </>
-                  )
-                )}
+                  )}
+
               </div>
             </div>
           </SheetContent>
