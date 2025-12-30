@@ -10,7 +10,7 @@ function BookPageContent() {
   const preselectedSwimmerId = searchParams.get('swimmerId');
 
   return (
-    <div className="container max-w-6xl py-8 px-4">
+    <div className="container max-w-full md:max-w-6xl py-8 px-4">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Book a Session</h1>
         <p className="text-muted-foreground mt-2">
@@ -25,7 +25,7 @@ function BookPageContent() {
 export default function BookPage() {
   return (
     <Suspense fallback={
-      <div className="container max-w-6xl py-8 px-4">
+      <div className="container max-w-full md:max-w-6xl py-8 px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Book a Session</h1>
           <p className="text-muted-foreground mt-2">Loading...</p>

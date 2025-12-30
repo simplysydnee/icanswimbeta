@@ -56,42 +56,72 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
-    // Calculate stats with CORRECT field names
-    const stats = {
-      total_pos: purchaseOrders?.length || 0,
-      active_pos: purchaseOrders?.filter(po => po.status === 'approved' || po.status === 'in_progress').length || 0,
-      pending_pos: purchaseOrders?.filter(po => po.status === 'pending').length || 0,
+    // Calculate stats with structure expected by BillingReport component
+    const poStatus = {
+      pending: purchaseOrders?.filter(po => po.status === 'pending').length || 0,
+      in_progress: purchaseOrders?.filter(po => po.status === 'in_progress').length || 0,
+      approved: purchaseOrders?.filter(po => po.status === 'approved').length || 0,
+      completed: purchaseOrders?.filter(po => po.status === 'completed').length || 0,
+      expired: purchaseOrders?.filter(po => po.status === 'expired').length || 0,
+    };
 
-      // Session stats
-      total_sessions_authorized: purchaseOrders?.reduce((sum, po) => sum + (po.sessions_authorized || 0), 0) || 0,
-      total_sessions_used: purchaseOrders?.reduce((sum, po) => sum + (po.sessions_used || 0), 0) || 0,
-      total_sessions_booked: purchaseOrders?.reduce((sum, po) => sum + (po.sessions_booked || 0), 0) || 0,
-
-      // Billing stats
-      total_billed_cents: purchaseOrders?.reduce((sum, po) => sum + (po.billed_amount_cents || 0), 0) || 0,
-      total_paid_cents: purchaseOrders?.reduce((sum, po) => sum + (po.paid_amount_cents || 0), 0) || 0,
-      outstanding_cents: purchaseOrders?.reduce((sum, po) => {
-        const billed = po.billed_amount_cents || 0;
-        const paid = po.paid_amount_cents || 0;
-        return sum + (billed - paid);
-      }, 0) || 0,
-
-      // Billing status counts
+    const billingStatus = {
       unbilled: purchaseOrders?.filter(po => !po.billing_status || po.billing_status === 'unbilled').length || 0,
       billed: purchaseOrders?.filter(po => po.billing_status === 'billed').length || 0,
       paid: purchaseOrders?.filter(po => po.billing_status === 'paid').length || 0,
+      partial: purchaseOrders?.filter(po => po.billing_status === 'partial').length || 0,
       overdue: purchaseOrders?.filter(po =>
         po.billing_status === 'billed' &&
         po.due_date &&
         new Date(po.due_date) < new Date()
       ).length || 0,
+      disputed: purchaseOrders?.filter(po => po.billing_status === 'disputed').length || 0,
+    };
+
+    const totalBilled = purchaseOrders?.reduce((sum, po) => sum + (po.billed_amount_cents || 0), 0) || 0;
+    const totalPaid = purchaseOrders?.reduce((sum, po) => sum + (po.paid_amount_cents || 0), 0) || 0;
+    const totalOutstanding = totalBilled - totalPaid;
+    const totalOverdue = purchaseOrders?.reduce((sum, po) => {
+      if (po.billing_status === 'billed' && po.due_date && new Date(po.due_date) < new Date()) {
+        const billed = po.billed_amount_cents || 0;
+        const paid = po.paid_amount_cents || 0;
+        return sum + (billed - paid);
+      }
+      return sum;
+    }, 0) || 0;
+
+    // For now, return empty objects for byFundingSource, byCoordinator, and problemPOs
+    // These would need more complex queries to populate
+    const byFundingSource: Record<string, any> = {};
+    const byCoordinator: Record<string, any> = {};
+    const problemPOs: any[] = [];
+
+    const stats = {
+      poStatus,
+      billingStatus,
+      financial: {
+        totalBilled: totalBilled / 100, // Convert cents to dollars
+        totalPaid: totalPaid / 100,
+        totalOutstanding: totalOutstanding / 100,
+        totalOverdue: totalOverdue / 100,
+      },
+      byFundingSource,
+      byCoordinator,
+      problemPOs,
+    };
+
+    // Calculate date range for the response
+    const dateRange = {
+      start: startDate.toISOString(),
+      end: endDate.toISOString(),
     };
 
     return NextResponse.json({
-      purchase_orders: purchaseOrders || [],
-      stats,
       month,
-      year
+      year,
+      dateRange,
+      stats,
+      totalPOs: purchaseOrders?.length || 0,
     });
   } catch (error: any) {
     console.error('Billing API error:', error);

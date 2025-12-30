@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { SwimmerCard } from '@/components/swimmers/SwimmerCard';
 import {
   Users,
   FileText,
@@ -51,6 +53,7 @@ export default function CoordinatorDashboard() {
     pendingPOs: 0,
     expiringPOs: 0,
   });
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const fetchDashboardData = useCallback(async () => {
     const supabase = createClient();
@@ -132,7 +135,7 @@ export default function CoordinatorDashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 lg:p-8 max-w-full overflow-x-hidden space-y-6">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
@@ -275,6 +278,23 @@ export default function CoordinatorDashboard() {
                     Submit a Referral
                   </Button>
                 </Link>
+              </div>
+            ) : isMobile ? (
+              <div className="space-y-3">
+                {clients.slice(0, 5).map((client) => (
+                  <SwimmerCard
+                    key={client.id}
+                    swimmer={{
+                      id: client.id,
+                      first_name: client.first_name,
+                      last_name: client.last_name,
+                      photo_url: client.photo_url,
+                      enrollment_status: client.enrollment_status,
+                      // SwimmerCard doesn't show session counts, so we can omit them
+                    }}
+                    onClick={() => window.location.href = `/coordinator/clients/${client.id}`}
+                  />
+                ))}
               </div>
             ) : (
               <div className="space-y-3">

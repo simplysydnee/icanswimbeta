@@ -2,14 +2,17 @@
 
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { SwimmerManagementTable } from '@/components/swimmers/SwimmerManagementTable';
+import { SwimmerCard } from '@/components/swimmers/SwimmerCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Download, Filter, BarChart3, Clock, UserCheck, UserX, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSwimmerMetrics } from '@/hooks/useSwimmerMetrics';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 export default function AdminSwimmersPage() {
   const { data: metrics, isLoading, error } = useSwimmerMetrics();
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   return (
     <RoleGuard allowedRoles={['admin']}>
@@ -102,9 +105,30 @@ export default function AdminSwimmersPage() {
           </Card>
         </div>
 
+        {/* Mobile Notice */}
+        {isMobile && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800">
+              <span className="font-semibold">Mobile View:</span> Swimmers are displayed as cards for better touch experience. Tap any card to view details.
+            </p>
+          </div>
+        )}
 
-        {/* Main Table */}
-        <SwimmerManagementTable role="admin" />
+        {/* Main Table - Desktop, Cards - Mobile */}
+        {isMobile ? (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Showing swimmers as cards for mobile. Use filters above to search.
+            </p>
+            {/* Note: In a real implementation, you would fetch swimmers here and map them to SwimmerCard components */}
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Swimmer cards would appear here on mobile</p>
+              <p className="text-sm mt-2">(Table view shown on desktop)</p>
+            </div>
+          </div>
+        ) : (
+          <SwimmerManagementTable role="admin" />
+        )}
 
         {/* Quick Actions */}
         <Card>

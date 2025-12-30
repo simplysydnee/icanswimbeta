@@ -4,6 +4,33 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Prevent horizontal scroll on mobile */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Ensure all containers respect viewport on mobile */
+@media (max-width: 768px) {
+  .container {
+    max-width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Mobile-first touch targets (44px minimum) */
+@media (max-width: 768px) {
+  button, a, input, select, textarea {
+    min-height: 44px;
+  }
+
+  /* Larger text for readability */
+  body {
+    font-size: 16px;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -162,7 +189,7 @@
 
 @layer components {
   .container {
-    @apply w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8;
+    @apply w-full max-w-full md:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 }
 

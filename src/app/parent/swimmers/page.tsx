@@ -8,6 +8,7 @@ import { GradientButton } from '@/components/ui/gradient-button'
 import { ExpandableSwimmerCard } from '@/components/parent/expandable-swimmer-card'
 import Link from 'next/link'
 import { Plus, Users } from 'lucide-react'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface Swimmer {
   id: string
@@ -46,6 +47,7 @@ export default function SwimmersPage() {
   const [loading, setLoading] = useState(true)
   const [expandedSwimmerId, setExpandedSwimmerId] = useState<string | null>(null)
   const supabase = createClient()
+  const isMobile = useMediaQuery('(max-width: 768px)')
 
   useEffect(() => {
     const fetchSwimmers = async () => {
@@ -184,7 +186,7 @@ export default function SwimmersPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
+    <div className="p-4 md:p-6 lg:p-8 space-y-8 max-w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>

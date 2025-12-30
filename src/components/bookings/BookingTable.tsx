@@ -35,6 +35,8 @@ import {
 } from 'lucide-react'
 import { Booking } from './types'
 import Link from 'next/link'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { BookingCard } from './BookingCard'
 
 interface BookingTableProps {
   bookings: Booking[]

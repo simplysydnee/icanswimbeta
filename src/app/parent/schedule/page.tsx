@@ -2,15 +2,18 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { RequireAuthRedirect } from '@/components/auth/RequireAuthRedirect';
 import { Calendar } from 'lucide-react';
 import { format } from 'date-fns';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { BookingCard } from '@/components/bookings/BookingCard';
 
 function ParentScheduleContent() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
     async function fetchBookings() {
@@ -47,8 +50,9 @@ function ParentScheduleContent() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Upcoming Sessions</h1>
+    <div className="p-4 md:p-6 lg:p-8 max-w-full overflow-x-hidden">
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Upcoming Sessions</h1>
 
       {bookings.length === 0 ? (
         <Card>
@@ -60,6 +64,18 @@ function ParentScheduleContent() {
             </a>
           </CardContent>
         </Card>
+      ) : isMobile ? (
+        <div className="space-y-3">
+          {bookings.map((booking) => (
+            <BookingCard
+              key={booking.id}
+              booking={{
+                ...booking,
+                status: 'confirmed' // All bookings on this page are confirmed
+              }}
+            />
+          ))}
+        </div>
       ) : (
         <div className="space-y-4">
           {bookings.map((booking) => (
@@ -90,6 +106,7 @@ function ParentScheduleContent() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

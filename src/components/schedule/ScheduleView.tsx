@@ -25,6 +25,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import {
   ChevronLeft,
   ChevronRight,
@@ -81,6 +82,7 @@ interface ScheduleViewProps {
 export function ScheduleView({ role, userId }: ScheduleViewProps) {
   const { toast } = useToast()
   const supabase = createClient()
+  const isMobile = useMediaQuery('(max-width: 768px)')
 
   const [view, setView] = useState<'day' | 'week'>('day')
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -446,7 +448,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
   const handlePrint = () => window.print()
 
   return (
-    <div className="p-6 max-w-full mx-auto" id="schedule-content">
+    <div className="p-4 md:p-6 lg:p-8 max-w-full mx-auto overflow-x-hidden" id="schedule-content">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 print:hidden">
         <div>
@@ -613,7 +615,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                   {filteredInstructors.map((instructor) => {
                     const color = INSTRUCTOR_COLORS[instructor.colorIndex]
                     return (
-                      <th key={instructor.id} className="border p-2 text-center min-w-[180px]">
+                      <th key={instructor.id} className="border p-2 text-center min-w-[150px] md:min-w-[180px]">
                         <div className="flex flex-col items-center gap-1">
                           <Avatar className="h-8 w-8 print:hidden">
                             <AvatarImage src={instructor.avatar_url || undefined} />
@@ -684,22 +686,22 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
             </table>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse min-w-[800px]">
+              <table className="w-full border-collapse min-w-[600px] md:min-w-[800px]">
                 <thead>
                   <tr className="bg-gray-50">
-                    <th className="border p-2 text-left w-28 text-sm font-semibold sticky left-0 bg-gray-50">Day</th>
+                    <th className="border p-2 text-left w-24 md:w-28 text-sm font-semibold sticky left-0 bg-gray-50">Day</th>
                     {filteredInstructors.map((instructor) => {
                       const color = INSTRUCTOR_COLORS[instructor.colorIndex]
                       return (
-                        <th key={instructor.id} className="border p-2 text-center min-w-[150px]">
+                        <th key={instructor.id} className="border p-2 text-center min-w-[120px] md:min-w-[150px]">
                           <div className="flex flex-col items-center gap-1">
-                            <Avatar className="h-6 w-6 print:hidden">
+                            <Avatar className="h-5 w-5 md:h-6 md:w-6 print:hidden">
                               <AvatarImage src={instructor.avatar_url || undefined} />
                               <AvatarFallback className={`${color.bg} ${color.text} text-xs`}>
                                 {getInitials(instructor.full_name)}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-xs font-semibold">{instructor.full_name}</span>
+                            <span className="text-xs font-semibold truncate max-w-[100px]">{instructor.full_name}</span>
                           </div>
                         </th>
                       )

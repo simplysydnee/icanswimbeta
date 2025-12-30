@@ -173,7 +173,7 @@ export function BillingReport() {
     );
   }
 
-  if (!data) {
+  if (!data || !data.stats) {
     return null;
   }
 
@@ -189,7 +189,7 @@ export function BillingReport() {
 
       {/* Summary Cards - PO Status */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        {Object.entries(stats.poStatus).map(([status, count]) => {
+        {stats.poStatus && Object.entries(stats.poStatus).map(([status, count]) => {
           const config = STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-800 border-gray-300', icon: FileText };
           const Icon = config.icon;
 
@@ -214,7 +214,7 @@ export function BillingReport() {
 
       {/* Summary Cards - Billing Status */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-        {Object.entries(stats.billingStatus).map(([status, count]) => {
+        {stats.billingStatus && Object.entries(stats.billingStatus).map(([status, count]) => {
           const config = BILLING_STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-800 border-gray-300', icon: FileText };
           const Icon = config.icon;
 
@@ -248,7 +248,7 @@ export function BillingReport() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${stats.financial.totalBilled.toFixed(2)}
+              ${stats.financial?.totalBilled?.toFixed(2) || '0.00'}
             </div>
             <p className="text-xs text-muted-foreground">
               Total amount invoiced
@@ -265,11 +265,11 @@ export function BillingReport() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              ${stats.financial.totalPaid.toFixed(2)}
+              ${stats.financial?.totalPaid?.toFixed(2) || '0.00'}
             </div>
             <p className="text-xs text-muted-foreground">
-              {stats.financial.totalBilled > 0
-                ? `${Math.round((stats.financial.totalPaid / stats.financial.totalBilled) * 100)}% collection rate`
+              {stats.financial?.totalBilled > 0
+                ? `${Math.round(((stats.financial.totalPaid || 0) / stats.financial.totalBilled) * 100)}% collection rate`
                 : 'No billing'}
             </p>
           </CardContent>
@@ -284,12 +284,12 @@ export function BillingReport() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              ${stats.financial.totalOutstanding.toFixed(2)}
+              ${stats.financial?.totalOutstanding?.toFixed(2) || '0.00'}
             </div>
             <p className="text-xs text-muted-foreground">
-              {stats.financial.totalOverdue > 0 && (
+              {stats.financial?.totalOverdue > 0 && (
                 <span className="text-red-600">
-                  ${stats.financial.totalOverdue.toFixed(2)} overdue
+                  ${(stats.financial.totalOverdue || 0).toFixed(2)} overdue
                 </span>
               )}
             </p>
