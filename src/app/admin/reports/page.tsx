@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookingsReport } from '@/components/reports/BookingsReport';
 import { CancellationsReport } from '@/components/reports/CancellationsReport';
-import { BillingReport } from '@/components/reports/BillingReport';
+import { ComprehensiveBillingReport } from '@/components/reports/ComprehensiveBillingReport';
 import { TimecardReport } from '@/components/reports/TimecardReport';
 import { BarChart3, XCircle, DollarSign, Clock } from 'lucide-react';
 
@@ -46,7 +46,7 @@ export default function ReportsPage() {
         </TabsContent>
 
         <TabsContent value="billing">
-          <BillingReport />
+          <ComprehensiveBillingReport />
         </TabsContent>
         <TabsContent value="timecards">
           <TimecardReport />
