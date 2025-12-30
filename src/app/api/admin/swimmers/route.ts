@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 interface SwimmersQueryParams {
   search?: string;
   status?: 'enrolled' | 'waitlist' | 'pending' | 'inactive' | 'all';
+  priority?: 'all' | 'priority' | 'standard';
   funding?: 'private_pay' | 'funded' | 'scholarship' | 'other' | 'all';
   level?: string; // level_id or "none" or "all"
   sortBy?: 'name' | 'age' | 'status' | 'lessons' | 'nextSession';
@@ -51,6 +52,11 @@ interface SwimmerResponse {
     startTime: string;
     instructorName?: string;
   } | null;
+  // Priority Booking
+  isPriorityBooking?: boolean;
+  priorityBookingReason?: string | null;
+  priorityBookingNotes?: string | null;
+  priorityBookingExpiresAt?: string | null;
 }
 
 // Response type
@@ -110,6 +116,7 @@ export async function GET(request: Request) {
     const params: SwimmersQueryParams = {
       search: searchParams.get('search') || undefined,
       status: (searchParams.get('status') as 'enrolled' | 'waitlist' | 'pending' | 'inactive' | 'all') || 'all',
+      priority: (searchParams.get('priority') as 'all' | 'priority' | 'standard') || 'all',
       funding: (searchParams.get('funding') as 'private_pay' | 'funded' | 'scholarship' | 'other' | 'all') || 'all',
       level: searchParams.get('level') || 'all',
       sortBy: (searchParams.get('sortBy') as 'name' | 'age' | 'status' | 'lessons' | 'nextSession') || 'name',
@@ -146,6 +153,10 @@ export async function GET(request: Request) {
         photo_url,
         created_at,
         updated_at,
+        is_priority_booking,
+        priority_booking_reason,
+        priority_booking_notes,
+        priority_booking_expires_at,
         parent:profiles!swimmers_parent_id_fkey(
           id,
           full_name,
@@ -173,6 +184,15 @@ export async function GET(request: Request) {
     // Status filter
     if (params.status !== 'all') {
       query = query.eq('enrollment_status', params.status);
+    }
+
+    // Priority filter
+    if (params.priority !== 'all') {
+      if (params.priority === 'priority') {
+        query = query.eq('is_priority_booking', true);
+      } else if (params.priority === 'standard') {
+        query = query.or('is_priority_booking.is.null,is_priority_booking.eq.false');
+      }
     }
 
     // Funding source filter (payment_type in swimmers table)
@@ -296,7 +316,12 @@ export async function GET(request: Request) {
         nextSession: nextBooking?.session?.[0] ? {
           startTime: nextBooking.session[0].start_time,
           instructorName: nextBooking.session[0].instructor?.[0]?.full_name
-        } : null
+        } : null,
+        // Priority Booking
+        isPriorityBooking: swimmer.is_priority_booking,
+        priorityBookingReason: swimmer.priority_booking_reason,
+        priorityBookingNotes: swimmer.priority_booking_notes,
+        priorityBookingExpiresAt: swimmer.priority_booking_expires_at
       };
     });
 

@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { differenceInYears, parseISO } from 'date-fns';
 import { StatusBadge, getStatusOptions } from './StatusBadge';
 import { SwimmerDetailModal } from './SwimmerDetailModal';
+import { PriorityBadge } from '@/components/admin/PriorityBadge';
+import { PriorityBookingModal } from '@/components/admin/PriorityBookingModal';
 import {
   Table,
   TableBody,
@@ -33,6 +35,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Star,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -95,6 +98,11 @@ export interface Swimmer {
   flexibleSwimmer?: boolean;
   signedWaiver?: boolean;
   photoRelease?: boolean;
+  // Priority Booking
+  isPriorityBooking?: boolean;
+  priorityBookingReason?: string | null;
+  priorityBookingNotes?: string | null;
+  priorityBookingExpiresAt?: string | null;
 }
 
 interface SwimmersResponse {
@@ -129,6 +137,12 @@ const levelOptions = [
   { label: 'Blue - Streamlines', value: 'blue' },
 ];
 
+const priorityOptions = [
+  { label: 'All', value: 'all' },
+  { label: 'Priority Only', value: 'priority' },
+  { label: 'Standard Only', value: 'standard' },
+];
+
 const pageSizeOptions = [
   { label: '25 per page', value: '25' },
   { label: '50 per page', value: '50' },
@@ -149,6 +163,7 @@ const columns: Column[] = [
   { key: 'age', label: 'Age', sortable: true, width: 'w-[80px]' },
   { key: 'parent', label: 'Parent', sortable: false, width: 'w-[200px]' },
   { key: 'status', label: 'Status', sortable: true, width: 'w-[120px]' },
+  { key: 'priority', label: 'Priority', sortable: true, width: 'w-[100px]' },
   { key: 'funding', label: 'Funding', sortable: true, width: 'w-[120px]' },
   { key: 'level', label: 'Level', sortable: true, width: 'w-[120px]' },
   { key: 'lessons', label: 'Lessons', sortable: true, width: 'w-[100px]' },
@@ -166,10 +181,13 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedSwimmer, setSelectedSwimmer] = useState<Swimmer | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [priorityModalOpen, setPriorityModalOpen] = useState(false);
+  const [selectedSwimmerForPriority, setSelectedSwimmerForPriority] = useState<Swimmer | null>(null);
 
   // Get filter values from URL or defaults
   const search = searchParams.get('search') || '';
   const status = searchParams.get('status') || 'all';
+  const priority = searchParams.get('priority') || 'all';
   const funding = searchParams.get('funding') || 'all';
   const level = searchParams.get('level') || 'all';
   const sortBy = searchParams.get('sortBy') || 'name';
@@ -235,6 +253,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
 
       if (search) params.set('search', search);
       if (status !== 'all') params.set('status', status);
+      if (priority !== 'all') params.set('priority', priority);
       if (funding !== 'all') params.set('funding', funding);
       if (level !== 'all') params.set('level', level);
 
@@ -441,6 +460,20 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
               </SelectContent>
             </Select>
 
+            <Select value={priority} onValueChange={(value) => updateFilter('priority', value)}>
+              <SelectTrigger className="w-[150px]">
+                <Star className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                {priorityOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Select value={funding} onValueChange={(value) => updateFilter('funding', value)}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Funding" />
@@ -593,6 +626,37 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
                     </div>
                   </TableCell>
 
+                  {/* Priority */}
+                  <TableCell>
+                    <button
+                      className="text-left w-full"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedSwimmerForPriority({
+                          ...swimmer,
+                          // Map to the expected format for PriorityBookingModal
+                          id: swimmer.id,
+                          first_name: swimmer.firstName,
+                          last_name: swimmer.lastName,
+                          is_priority_booking: swimmer.isPriorityBooking,
+                          priority_booking_reason: swimmer.priorityBookingReason as any,
+                          priority_booking_notes: swimmer.priorityBookingNotes,
+                          priority_booking_expires_at: swimmer.priorityBookingExpiresAt
+                        })
+                        setPriorityModalOpen(true)
+                      }}
+                    >
+                      {swimmer.isPriorityBooking ? (
+                        <PriorityBadge
+                          reason={swimmer.priorityBookingReason}
+                          expiresAt={swimmer.priorityBookingExpiresAt}
+                        />
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Set priority</span>
+                      )}
+                    </button>
+                  </TableCell>
+
                   {/* Funding */}
                   <TableCell>
                     <div className="flex flex-col gap-1">
@@ -701,6 +765,14 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
       onApprove={handleApprove}
       onDecline={handleDecline}
       onRefresh={fetchSwimmers}
+    />
+
+    {/* Priority Booking Modal */}
+    <PriorityBookingModal
+      open={priorityModalOpen}
+      onOpenChange={setPriorityModalOpen}
+      swimmer={selectedSwimmerForPriority}
+      onSave={fetchSwimmers}
     />
   </>
   );
