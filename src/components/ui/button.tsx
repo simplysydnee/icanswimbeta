@@ -10,7 +10,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         // PRIMARY - Bold brand color for main actions (Submit, Book, Enroll, Confirm, Save, Sign In)
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98]",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] shadow-md border border-black/10",
 
         // SECONDARY - Outline style for secondary actions (Cancel, Back, Skip)
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-[0.98]",

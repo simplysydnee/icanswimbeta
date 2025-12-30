@@ -24,17 +24,17 @@ function BookPageContent() {
 
 export default function BookPage() {
   return (
-    <RequireAuthRedirect>
-      <Suspense fallback={
-        <div className="container max-w-6xl py-8 px-4">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold">Book a Session</h1>
-            <p className="text-muted-foreground mt-2">Loading...</p>
-          </div>
+    <Suspense fallback={
+      <div className="container max-w-6xl py-8 px-4">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">Book a Session</h1>
+          <p className="text-muted-foreground mt-2">Loading...</p>
         </div>
-      }>
+      </div>
+    }>
+      <RequireAuthRedirect>
         <BookPageContent />
-      </Suspense>
-    </RequireAuthRedirect>
+      </RequireAuthRedirect>
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RequireAuthRedirect } from '@/components/auth/RequireAuthRedirect';
@@ -96,8 +96,10 @@ function ParentScheduleContent() {
 
 export default function ParentSchedulePage() {
   return (
-    <RequireAuthRedirect>
-      <ParentScheduleContent />
-    </RequireAuthRedirect>
+    <Suspense fallback={<div className="text-center py-8">Loading...</div>}>
+      <RequireAuthRedirect>
+        <ParentScheduleContent />
+      </RequireAuthRedirect>
+    </Suspense>
   );
 }
