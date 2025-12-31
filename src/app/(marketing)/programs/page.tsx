@@ -1,220 +1,204 @@
-import { createClient } from '@/lib/supabase/server';
-import Image from 'next/image';
-
-interface RegionalCenter {
-  id: string;
-  name: string;
-  short_name: string | null;
-  logo_url: string | null;
-}
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { CheckCircle } from 'lucide-react'
 
 export default async function ProgramsPage() {
-  const supabase = await createClient();
-
-  let regionalCenters: RegionalCenter[] = [];
-  try {
-    const { data, error } = await supabase
-      .from('funding_sources')
-      .select('id, name, short_name, logo_url')
-      .eq('source_type', 'regional_center')
-      .eq('is_active', true)
-      .order('display_order', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching regional centers:', error);
-    } else {
-      regionalCenters = data || [];
-    }
-  } catch (error) {
-    console.error('Error in regional centers query:', error);
-    regionalCenters = [];
-  }
-
   return (
-    <div className="container mx-auto px-4 py-12">
-      {/* Hero Section */}
-      <div className="max-w-4xl mx-auto text-center mb-12">
-        <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-[#2a5e84] to-[#23a1c0] bg-clip-text text-transparent font-playfair-display tracking-tight mb-4">
-          Our Programs
-        </h1>
-        <p className="text-xl text-gray-600 font-inter max-w-3xl mx-auto">
-          Tailored swim programs designed for children with special needs
-        </p>
-      </div>
+    <div>
+      {/* Section 1: Hero */}
+      <section className="py-16 bg-gradient-to-b from-cyan-50 to-white">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold text-cyan-600 mb-4">
+            Our Programs
+          </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            A personalized approach to water safety and confidence for swimmers of all abilities
+          </p>
+        </div>
+      </section>
 
-      {/* Programs Overview */}
-      <div className="max-w-6xl mx-auto mb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Private Pay Program */}
-          <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl p-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-cyan-100 rounded-full mb-6">
-              <svg className="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Private Pay Lessons</h2>
-            <p className="text-gray-700 mb-6">
-              One-on-one instruction with certified adaptive aquatics instructors. Perfect for families looking for personalized attention and flexible scheduling.
-            </p>
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-cyan-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">One-on-one instruction</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-cyan-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Flexible scheduling</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-cyan-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Personalized lesson plans</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-cyan-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Progress tracking and reports</span>
-              </li>
-            </ul>
-            <a href="/pricing" className="text-cyan-600 font-semibold hover:text-cyan-700">
-              View pricing details →
-            </a>
-          </div>
+      {/* Section 2: The Journey (3 Steps) */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">Your Swim Journey</h2>
 
-          {/* VMRC Program */}
-          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-6">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Regional Center Funded Lessons</h2>
-            <p className="text-gray-700 mb-6">
-              We are a proud vendor for multiple Regional Centers across California. Eligible families can receive fully funded swim lessons at no out-of-pocket cost.
-            </p>
-
-            {/* Regional Center Logos */}
-            {regionalCenters && regionalCenters.length > 0 && (
-              <div className="mb-6">
-                <p className="text-sm font-medium text-gray-700 mb-3">Proud vendor for:</p>
-                <div className="flex flex-wrap gap-4 items-center">
-                  {regionalCenters.map((center) => (
-                    <div key={center.id} className="flex flex-col items-center">
-                      {center.logo_url ? (
-                        <div className="relative w-16 h-16 bg-white rounded-lg p-2 border border-gray-200">
-                          <Image
-                            src={center.logo_url}
-                            alt={center.name}
-                            fill
-                            className="object-contain p-1"
-                            sizes="64px"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-16 h-16 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100">
-                          <span className="text-blue-700 font-semibold text-sm text-center px-1">
-                            {center.short_name || center.name}
-                          </span>
-                        </div>
-                      )}
-                      <span className="text-xs text-gray-600 mt-1 text-center">
-                        {center.short_name || center.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Step 1 */}
+            <div className="text-center">
+              <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-cyan-600">1</span>
               </div>
-            )}
+              <h3 className="text-xl font-semibold mb-3">Initial Assessment</h3>
+              <p className="text-gray-600">
+                A 30-minute evaluation where we assess water comfort, communication style,
+                physical abilities, and individual needs to understand each swimmer&apos;s starting point.
+              </p>
+            </div>
 
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Fully funded for eligible families</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Same quality instruction</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Purchase Order (PO) system</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Coordinator communication</span>
-              </li>
-            </ul>
-            <a href="/regional-centers" className="text-blue-600 font-semibold hover:text-blue-700">
-              Learn about regional centers →
-            </a>
-          </div>
-        </div>
-      </div>
+            {/* Step 2 */}
+            <div className="text-center">
+              <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-cyan-600">2</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Personalized Program</h3>
+              <p className="text-gray-600">
+                Based on the assessment, we design a customized lesson plan tailored
+                to each swimmer&apos;s unique needs, learning style, and goals.
+              </p>
+            </div>
 
-      {/* Program Structure */}
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">How Our Programs Work</h2>
-        <div className="space-y-8">
-          <div className="flex items-start">
-            <div className="flex-shrink-0 w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center mr-4">
-              <span className="text-cyan-700 font-bold">1</span>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Initial Assessment</h3>
-              <p className="text-gray-700">
-                We start with a 30-minute assessment to understand your swimmer&apos;s comfort level, abilities, and goals. This helps us create a personalized learning plan.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start">
-            <div className="flex-shrink-0 w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center mr-4">
-              <span className="text-cyan-700 font-bold">2</span>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Personalized Plan</h3>
-              <p className="text-gray-700">
-                Based on the assessment, we create a customized lesson plan targeting specific skills and goals for your swimmer.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start">
-            <div className="flex-shrink-0 w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center mr-4">
-              <span className="text-cyan-700 font-bold">3</span>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Regular Lessons</h3>
-              <p className="text-gray-700">
-                Weekly one-on-one lessons with consistent instructors who build rapport and understand your swimmer&apos;s unique needs.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start">
-            <div className="flex-shrink-0 w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center mr-4">
-              <span className="text-cyan-700 font-bold">4</span>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Progress Updates</h3>
-              <p className="text-gray-700">
-                Regular progress reports and communication with parents to track achievements and adjust goals as needed.
+            {/* Step 3 */}
+            <div className="text-center">
+              <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-cyan-600">3</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Progressive Skill Building</h3>
+              <p className="text-gray-600">
+                Swimmers advance through our level system at their own pace,
+                building confidence and celebrating milestones along the way.
               </p>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Section 3: Swim Levels (Color-Coded Cards) */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-4">Our Swim Levels</h2>
+          <p className="text-gray-600 text-center mb-12 max-w-2xl mx-auto">
+            Our progressive level system guides swimmers from water introduction to advanced skills
+          </p>
+
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {/* White Level */}
+            <div className="bg-white border-2 border-gray-200 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-gray-100 border-2 border-gray-300 rounded-full mx-auto mb-3"></div>
+              <h3 className="font-bold text-gray-800 mb-2">White</h3>
+              <p className="text-sm text-gray-600">Water Introduction & Comfort</p>
+            </div>
+
+            {/* Yellow Level */}
+            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-yellow-400 rounded-full mx-auto mb-3"></div>
+              <h3 className="font-bold text-yellow-800 mb-2">Yellow</h3>
+              <p className="text-sm text-yellow-700">Basic Water Safety & Floating</p>
+            </div>
+
+            {/* Orange Level */}
+            <div className="bg-orange-50 border-2 border-orange-300 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-orange-400 rounded-full mx-auto mb-3"></div>
+              <h3 className="font-bold text-orange-800 mb-2">Orange</h3>
+              <p className="text-sm text-orange-700">Foundational Swim Skills</p>
+            </div>
+
+            {/* Green Level */}
+            <div className="bg-green-50 border-2 border-green-300 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-green-500 rounded-full mx-auto mb-3"></div>
+              <h3 className="font-bold text-green-800 mb-2">Green</h3>
+              <p className="text-sm text-green-700">Stroke Development</p>
+            </div>
+
+            {/* Blue Level */}
+            <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow col-span-2 md:col-span-1">
+              <div className="w-12 h-12 bg-blue-500 rounded-full mx-auto mb-3"></div>
+              <h3 className="font-bold text-blue-800 mb-2">Blue</h3>
+              <p className="text-sm text-blue-700">Advanced Skills & Endurance</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 4: What Makes Us Different */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">What Makes Us Different</h2>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-cyan-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold mb-1">Individualized Attention</h3>
+                <p className="text-gray-600 text-sm">Personalized instruction tailored to each swimmer&apos;s unique needs and pace</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-cyan-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold mb-1">Adaptive Techniques</h3>
+                <p className="text-gray-600 text-sm">Specialized methods for swimmers of all abilities and learning styles</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-cyan-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold mb-1">Consistent Instructors</h3>
+                <p className="text-gray-600 text-sm">Build trust and rapport with the same instructor each lesson</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-cyan-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold mb-1">Progress Tracking</h3>
+                <p className="text-gray-600 text-sm">Regular updates and milestone celebrations to keep you informed</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-cyan-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold mb-1">Certified Instructors</h3>
+                <p className="text-gray-600 text-sm">CPR/First Aid certified with adaptive swim training</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-cyan-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold mb-1">Family Communication</h3>
+                <p className="text-gray-600 text-sm">Clear updates after each lesson so you&apos;re always in the loop</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 5: CTA */}
+      <section className="py-16 bg-cyan-600">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">Ready to Start?</h2>
+          <p className="text-cyan-100 mb-8 max-w-xl mx-auto">
+            Every swimmer begins with an assessment. Let&apos;s find the right program for you.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/pricing">
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                View Pricing
+              </Button>
+            </Link>
+            <Link href="/regional-centers">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent text-white border-white hover:bg-white hover:text-cyan-600">
+                Learn About Funding
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

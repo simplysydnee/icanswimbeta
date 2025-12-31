@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
-import Image from 'next/image';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Check, ClipboardCheck, Zap, Shield } from 'lucide-react';
 
 interface RegionalCenter {
   id: string;
@@ -30,6 +33,8 @@ export default async function PricingPage() {
     regionalCenters = [];
   }
 
+  const regionalCenterNames = regionalCenters?.map(fs => fs.name) || ['VMRC', 'CVRC'];
+
   return (
     <div className="container mx-auto px-4 py-12">
       {/* Hero Section */}
@@ -42,166 +47,111 @@ export default async function PricingPage() {
         </p>
       </div>
 
-      {/* Pricing Cards */}
+      {/* Pricing Cards - 3 columns */}
       <div className="max-w-6xl mx-auto mb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Assessment */}
-          <div className="bg-white rounded-2xl p-8 shadow-sm border">
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-cyan-100 rounded-full mb-4">
-                <svg className="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Initial Assessment</h2>
-              <div className="flex items-baseline justify-center">
-                <span className="text-4xl font-bold text-gray-900">$175</span>
-                <span className="text-gray-600 ml-2">one-time</span>
-              </div>
-              <p className="text-gray-600 mt-2">30-minute session</p>
+        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          {/* Card 1: Initial Assessment */}
+          <Card className="p-6 text-center">
+            <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ClipboardCheck className="w-6 h-6 text-cyan-600" />
             </div>
-            <ul className="space-y-3 mb-8">
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-cyan-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Comprehensive skill evaluation</span>
+            <h3 className="text-xl font-bold mb-2">Initial Assessment</h3>
+            <div className="mb-4">
+              <span className="text-4xl font-bold">$175</span>
+              <span className="text-gray-500 ml-1">one-time</span>
+            </div>
+            <p className="text-gray-600 text-sm mb-6">30-minute session</p>
+            <ul className="text-left space-y-2 mb-6">
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-cyan-600" />
+                Comprehensive skill evaluation
               </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-cyan-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Personalized lesson plan</span>
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-cyan-600" />
+                Personalized lesson plan
               </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-cyan-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Goal setting with instructor</span>
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-cyan-600" />
+                Goal setting with instructor
               </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-cyan-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Required for all new swimmers</span>
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-cyan-600" />
+                Required for all new swimmers
               </li>
             </ul>
-            <a
-              href="/enroll"
-              className="block w-full text-center bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
-            >
-              Book Assessment
-            </a>
-          </div>
+            <Button className="w-full">Book Assessment</Button>
+          </Card>
 
-          {/* Private Lessons */}
-          <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl p-8 border border-cyan-100">
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-cyan-100 rounded-full mb-4">
-                <svg className="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Private Lessons</h2>
-              <div className="flex items-baseline justify-center">
-                <span className="text-4xl font-bold text-gray-900">$90</span>
-                <span className="text-gray-600 ml-2">per session</span>
-              </div>
-              <p className="text-gray-600 mt-2">30-minute one-on-one instruction</p>
+          {/* Card 2: Private Lessons */}
+          <Card className="p-6 text-center border-2 border-cyan-500 relative">
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-cyan-500 text-white text-xs px-3 py-1 rounded-full">
+              Most Popular
             </div>
-            <ul className="space-y-3 mb-8">
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-cyan-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">One-on-one instruction</span>
+            <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Zap className="w-6 h-6 text-cyan-600" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">Private Lessons</h3>
+            <div className="mb-4">
+              <span className="text-4xl font-bold">$90</span>
+              <span className="text-gray-500 ml-1">per session</span>
+            </div>
+            <p className="text-gray-600 text-sm mb-6">30-minute one-on-one instruction</p>
+            <ul className="text-left space-y-2 mb-6">
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-cyan-600" />
+                One-on-one instruction
               </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-cyan-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Weekly scheduling</span>
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-cyan-600" />
+                Flexible scheduling
               </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-cyan-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Consistent instructor</span>
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-cyan-600" />
+                Consistent instructor
               </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-cyan-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Progress tracking & reports</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="w-5 h-5 text-cyan-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700">Flexible cancellation (24-hour notice)</span>
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-cyan-600" />
+                Progress tracking & reports
               </li>
             </ul>
-            <a
-              href="/enroll"
-              className="block w-full text-center bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200"
-            >
-              Enroll Now
-            </a>
-          </div>
-        </div>
-      </div>
+            <Button className="w-full bg-cyan-600 hover:bg-cyan-700">Enroll Now</Button>
+          </Card>
 
-      {/* Regional Center Funding Section */}
-      <div className="max-w-4xl mx-auto bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-8 lg:p-12">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Client of a Regional Center?</h2>
-          <p className="text-xl text-gray-700 max-w-2xl mx-auto">
-            We are proud vendors for these Regional Centers. If you're a client, swim lessons may be fully funded at no cost to you.
-          </p>
-        </div>
-
-        {/* Regional Center Logos */}
-        {regionalCenters && regionalCenters.length > 0 && (
-          <div className="mb-8">
-            <div className="flex flex-wrap justify-center gap-6 items-center">
-              {regionalCenters.map((center) => (
-                <div key={center.id} className="flex flex-col items-center">
-                  {center.logo_url ? (
-                    <div className="relative w-20 h-20 bg-white rounded-lg p-2 border border-gray-200">
-                      <Image
-                        src={center.logo_url}
-                        alt={center.name}
-                        fill
-                        className="object-contain p-1"
-                        sizes="80px"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-20 h-20 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100">
-                      <span className="text-blue-700 font-semibold text-sm text-center px-1">
-                        {center.short_name || center.name}
-                      </span>
-                    </div>
-                  )}
-                  <span className="text-xs text-gray-600 mt-2 text-center max-w-[80px]">
-                    {center.short_name || center.name}
-                  </span>
-                </div>
-              ))}
+          {/* Card 3: Regional Center Funded */}
+          <Card className="p-6 text-center bg-gradient-to-br from-green-50 to-cyan-50">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-6 h-6 text-green-600" />
             </div>
-          </div>
-        )}
-
-        <div className="text-center">
-          <p className="text-gray-700 mb-6 max-w-2xl mx-auto">
-            Contact your Regional Center coordinator to request swim lessons as a service, then reach out to us!
-          </p>
-          <a
-            href="/regional-centers"
-            className="inline-flex items-center text-blue-600 font-semibold hover:text-blue-700"
-          >
-            Learn more about Regional Center funding →
-          </a>
+            <h3 className="text-xl font-bold mb-2">Regional Center Funded</h3>
+            <div className="mb-4">
+              <span className="text-4xl font-bold text-green-600">$0</span>
+              <span className="text-gray-500 ml-1">for eligible families</span>
+            </div>
+            <p className="text-gray-600 text-sm mb-6">Fully funded through your Regional Center</p>
+            <ul className="text-left space-y-2 mb-6">
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-green-600" />
+                Same quality instruction
+              </li>
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-green-600" />
+                No out-of-pocket cost
+              </li>
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-green-600" />
+                We handle all paperwork
+              </li>
+              <li className="flex items-center gap-2 text-sm">
+                <Check className="w-4 h-4 text-green-600" />
+                Vendor for: {regionalCenterNames.join(', ')}
+              </li>
+            </ul>
+            <Link href="/regional-centers">
+              <Button variant="outline" className="w-full border-green-600 text-green-600 hover:bg-green-50">
+                Check Eligibility
+              </Button>
+            </Link>
+          </Card>
         </div>
       </div>
 
