@@ -93,7 +93,7 @@ export function Footer() {
             © 2024 I Can Swim, LLC. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground mt-2 sm:mt-0">
-            Adaptive Swim Lessons for Every Child
+            Adaptive Swim Lessons for Every Swimmer
           </p>
         </div>
       </div>

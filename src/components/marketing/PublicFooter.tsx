@@ -17,35 +17,36 @@ export function PublicFooter() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gray-50 border-t border-gray-200">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Logo & Description */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="relative h-10 w-32">
-                <Image
-                  src="/images/logo.svg"
-                  alt="I Can Swim Logo"
-                  fill
-                  className="object-contain"
-                />
-              </div>
+    <footer className="bg-slate-800 text-white">
+      <div className="container mx-auto px-4 py-12">
+        {/* Main footer content - centered grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+
+          {/* Column 1: Logo & Description */}
+          <div className="text-center md:text-left">
+            <div className="relative h-10 w-32 mx-auto md:mx-0 mb-4">
+              <Image
+                src="/images/logo.svg"
+                alt="I Can Swim Logo"
+                fill
+                className="object-contain invert"
+              />
             </div>
-            <p className="text-sm text-gray-600 mb-6">
-              Adaptive swim lessons for individuals of all abilities. Building confidence, safety, and joy in the water.
+            <p className="text-slate-300 text-sm">
+              Adaptive swim lessons for individuals of all abilities.
+              Building confidence, safety, and joy in the water.
             </p>
           </div>
 
-          {/* Quick Links */}
-          <div className="lg:col-span-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Links</h3>
+          {/* Column 2: Quick Links */}
+          <div className="text-center md:text-left">
+            <h3 className="font-semibold text-lg mb-4">Quick Links</h3>
             <ul className="space-y-2">
               {footerLinks.map((link) => (
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-sm text-gray-600 hover:text-cyan-600 transition-colors"
+                    className="text-slate-300 hover:text-white text-sm"
                   >
                     {link.name}
                   </Link>
@@ -54,48 +55,43 @@ export function PublicFooter() {
             </ul>
           </div>
 
-          {/* Contact Info */}
-          <div className="lg:col-span-2">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Us</h3>
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <Mail className="h-5 w-5 text-gray-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Email</p>
-                  <p className="text-sm text-gray-600">info@icanswim209.com</p>
+          {/* Column 3: Contact */}
+          <div className="text-center md:text-left">
+            <h3 className="font-semibold text-lg mb-4">Contact Us</h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-center md:justify-start gap-2">
+                <Mail className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                <a href="mailto:info@icanswim209.com" className="text-slate-300 hover:text-white text-sm">
+                  info@icanswim209.com
+                </a>
+              </div>
+              <div className="flex items-center justify-center md:justify-start gap-2">
+                <Phone className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                <div className="text-slate-300 text-sm">
+                  <p>(209) 778-7877</p>
+                  <p className="text-slate-400">Text: 209-643-7969</p>
                 </div>
               </div>
-              <div className="flex items-start space-x-3">
-                <Phone className="h-5 w-5 text-gray-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Phone</p>
-                  <p className="text-sm text-gray-600">(209) 778-7877</p>
-                  <p className="text-xs text-gray-500 mt-1">Text: 209-643-7969</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <MapPin className="h-5 w-5 text-gray-500 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Location</p>
-                  <p className="text-sm text-gray-600">Modesto, CA</p>
-                  <p className="text-xs text-gray-500 mt-1">Serving the Central Valley</p>
+              <div className="flex items-center justify-center md:justify-start gap-2">
+                <MapPin className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                <div className="text-slate-300 text-sm">
+                  <p>Modesto, CA</p>
+                  <p className="text-slate-400">Serving the Central Valley</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-8 pt-8 border-t border-gray-200">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-gray-600">
+        {/* Bottom bar - centered */}
+        <div className="border-t border-slate-700 mt-8 pt-6 max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-2 text-center">
+            <p className="text-slate-400 text-sm">
               © {currentYear} I Can Swim, LLC. All rights reserved.
             </p>
-            <div className="mt-4 md:mt-0">
-              <p className="text-sm text-gray-600">
-                Simply Better Swim Software
-              </p>
-            </div>
+            <p className="text-slate-400 text-sm">
+              Simply Better Swim Software
+            </p>
           </div>
         </div>
       </div>

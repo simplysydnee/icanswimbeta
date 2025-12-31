@@ -186,9 +186,9 @@ export default async function ProgramsPage() {
             Every swimmer begins with an assessment. Let&apos;s find the right program for you.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/pricing">
+            <Link href="/login">
               <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-                View Pricing
+                Get Started
               </Button>
             </Link>
             <Link href="/regional-centers">
