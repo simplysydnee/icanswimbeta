@@ -15,11 +15,19 @@ export default async function RegionalCentersPage() {
     .select('*')
     .eq('type', 'regional_center')
     .eq('is_active', true)
-    .order('name')
 
   if (error) {
     console.error('Error fetching regional centers:', error)
   }
+
+  // Sort with VMRC first, then alphabetically
+  const sortedRegionalCenters = regionalCenters?.sort((a, b) => {
+    // VMRC always first
+    if (a.short_name === 'VMRC' || a.name?.includes('Valley Mountain')) return -1
+    if (b.short_name === 'VMRC' || b.name?.includes('Valley Mountain')) return 1
+    // Then alphabetically
+    return (a.name || '').localeCompare(b.name || '')
+  }) || []
 
   return (
     <div className="min-h-screen">
@@ -39,8 +47,8 @@ export default async function RegionalCentersPage() {
       {/* Regional Centers - Dynamic Cards */}
       <section className="py-12">
         <div className="container mx-auto px-4 space-y-16">
-          {regionalCenters && regionalCenters.length > 0 ? (
-            regionalCenters.map((rc, index) => (
+          {sortedRegionalCenters && sortedRegionalCenters.length > 0 ? (
+            sortedRegionalCenters.map((rc, index) => (
               <div
                 key={rc.id}
                 className={`rounded-2xl p-8 md:p-12 ${
@@ -178,22 +186,30 @@ export default async function RegionalCentersPage() {
       <section className="py-16 bg-cyan-600">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
-            Have a Purchase Order?
+            Client of a Regional Center?
           </h2>
           <p className="text-cyan-100 mb-8 max-w-xl mx-auto">
-            Contact us to schedule your assessment and get started with swim lessons.
+            If you're a client of VMRC, CVRC, or another Regional Center, you may qualify for fully funded swim lessons. Request a referral to get started!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {/* Primary Button - WHITE with dark text - HIGH CONTRAST */}
             <Link href="/contact">
-              <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-                <Phone className="w-4 h-4 mr-2" />
-                Contact Us
+              <Button
+                size="lg"
+                className="w-full sm:w-auto bg-white text-cyan-700 font-semibold hover:bg-cyan-50 shadow-lg px-8"
+              >
+                Request a Referral
               </Button>
             </Link>
+
+            {/* Secondary Button - White outline with thicker border */}
             <Link href="mailto:info@icanswim209.com">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent text-white border-white hover:bg-white hover:text-cyan-600">
-                <Mail className="w-4 h-4 mr-2" />
-                Email Us
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto border-2 border-white text-white font-semibold hover:bg-white hover:text-cyan-700 px-8"
+              >
+                Questions? Email Us
               </Button>
             </Link>
           </div>
