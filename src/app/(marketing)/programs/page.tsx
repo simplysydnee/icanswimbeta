@@ -160,8 +160,10 @@ export default async function ProgramsPage() {
                 <CheckCircle className="w-5 h-5 text-cyan-600" />
               </div>
               <div>
-                <h3 className="font-semibold mb-1">Certified Instructors</h3>
-                <p className="text-gray-600 text-sm">CPR/First Aid certified with adaptive swim training</p>
+                <h3 className="font-semibold mb-1">Swim Angelfish Certified</h3>
+                <p className="text-gray-600 text-sm">
+                  Trained through the leading adaptive aquatics program, plus CPR/First Aid certified
+                </p>
               </div>
             </div>
 
@@ -186,13 +188,23 @@ export default async function ProgramsPage() {
             Every swimmer begins with an assessment. Let&apos;s find the right program for you.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {/* Primary Button - WHITE background for contrast */}
             <Link href="/login">
-              <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+              <Button
+                size="lg"
+                className="w-full sm:w-auto bg-white text-cyan-700 font-semibold hover:bg-gray-100 shadow-lg px-8"
+              >
                 Get Started
               </Button>
             </Link>
+
+            {/* Secondary Button - White outline with thick border */}
             <Link href="/regional-centers">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent text-white border-white hover:bg-white hover:text-cyan-600">
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto border-2 border-white text-white font-semibold hover:bg-white hover:text-cyan-700 px-8"
+              >
                 Learn About Funding
               </Button>
             </Link>
