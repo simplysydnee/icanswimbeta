@@ -123,38 +123,20 @@ export async function GET(request: Request) {
     const offset = (page - 1) * limit;
 
     // ========== STEP 4: Get Swimmer IDs for This Instructor ==========
-    // Get swimmer IDs from bookings where instructor has past or upcoming sessions
-    const { data: instructorSessions, error: sessionsError } = await supabase
-      .from('sessions')
-      .select(`
-        id,
-        bookings!inner(
-          swimmer_id
-        )
-      `)
-      .eq('instructor_id', user.id)
-      .or('status.eq.booked,status.eq.completed');
+    // Use the new database function to get swimmers instructor has access to
+    const { data: instructorSwimmers, error: swimmersError } = await supabase
+      .rpc('get_instructor_swimmers', { p_instructor_id: user.id });
 
-    if (sessionsError) {
-      console.error('Error fetching instructor sessions:', sessionsError);
+    if (swimmersError) {
+      console.error('Error fetching instructor swimmers via function:', swimmersError);
       return NextResponse.json(
-        { error: `Failed to fetch instructor sessions: ${sessionsError.message}` },
+        { error: `Failed to fetch instructor swimmers: ${swimmersError.message}` },
         { status: 500 }
       );
     }
 
-    // Extract unique swimmer IDs
-    const swimmerIds = new Set<string>();
-    instructorSessions?.forEach(session => {
-      session.bookings?.forEach((booking: { swimmer_id?: string }) => {
-        if (booking.swimmer_id) {
-          swimmerIds.add(booking.swimmer_id);
-        }
-      });
-    });
-
     // If no swimmers found for this instructor, return empty
-    if (swimmerIds.size === 0) {
+    if (!instructorSwimmers || instructorSwimmers.length === 0) {
       const response: SwimmersResponse = {
         swimmers: [],
         total: 0,
@@ -163,6 +145,9 @@ export async function GET(request: Request) {
       };
       return NextResponse.json(response);
     }
+
+    // Extract swimmer IDs
+    const swimmerIds = instructorSwimmers.map((swimmer: any) => swimmer.id);
 
     // ========== STEP 5: Build Base Query ==========
     let query = supabase

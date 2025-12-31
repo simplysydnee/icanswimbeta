@@ -25,10 +25,12 @@ import {
   XCircle,
   Stethoscope,
   Heart,
-  BookOpen
+  BookOpen,
+  ShieldX
 } from 'lucide-react'
 import { RoleGuard } from '@/components/auth/RoleGuard'
 import { format, parseISO, differenceInYears } from 'date-fns'
+import { useSwimmerAccess } from '@/hooks/useSwimmerAccess'
 
 interface Swimmer {
   id: string
@@ -94,6 +96,9 @@ export default function InstructorSwimmerDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Check if instructor has access to this swimmer
+  const { data: hasAccess, isLoading: checkingAccess } = useSwimmerAccess(swimmerId)
+
   useEffect(() => {
     fetchSwimmerData()
   }, [swimmerId])
@@ -135,15 +140,42 @@ export default function InstructorSwimmerDetailPage() {
     }
   }
 
-  if (loading) {
+  // Show loading while checking access or fetching data
+  if (checkingAccess || loading) {
     return (
       <RoleGuard allowedRoles={['instructor', 'admin']}>
         <div className="container mx-auto py-6">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-4 text-muted-foreground">Loading swimmer details...</p>
+              <p className="mt-4 text-muted-foreground">
+                {checkingAccess ? 'Checking access...' : 'Loading swimmer details...'}
+              </p>
             </div>
+          </div>
+        </div>
+      </RoleGuard>
+    )
+  }
+
+  // Check if instructor has access to this swimmer
+  if (hasAccess === false) {
+    return (
+      <RoleGuard allowedRoles={['instructor', 'admin']}>
+        <div className="container mx-auto py-6">
+          <div className="flex flex-col items-center justify-center h-64">
+            <ShieldX className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-700 mb-2">Access Restricted</h2>
+            <p className="text-gray-500">
+              You don't have access to this swimmer's information.
+            </p>
+            <p className="text-sm text-gray-400 mt-2">
+              Access is granted when you have upcoming or recent sessions with this swimmer.
+            </p>
+            <Button onClick={() => router.push('/instructor/swimmers')} className="mt-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to My Swimmers
+            </Button>
           </div>
         </div>
       </RoleGuard>
