@@ -203,7 +203,7 @@ export default async function ProgramsPage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full sm:w-auto border-2 border-white text-white font-semibold hover:bg-white hover:text-cyan-700 px-8"
+                className="w-full sm:w-auto bg-transparent border-2 border-white text-white font-semibold hover:bg-white hover:text-cyan-700 px-8"
               >
                 Learn About Funding
               </Button>
