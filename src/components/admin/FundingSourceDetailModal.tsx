@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Mail, ExternalLink } from 'lucide-react'
-import { format } from 'date-fns'
+import { useToast } from '@/hooks/use-toast'
 
 interface FundingSourceDetailModalProps {
   open: boolean
@@ -21,7 +21,6 @@ interface FundingSourceDetailModalProps {
     balance: number
   }
   purchaseOrders: any[]
-  onSendReminder: (po: any) => void
   onViewPO: (po: any) => void
 }
 
@@ -31,21 +30,118 @@ export function FundingSourceDetailModal({
   fundingSource,
   stats,
   purchaseOrders,
-  onSendReminder,
   onViewPO
 }: FundingSourceDetailModalProps) {
+  console.log('🎯 FundingSourceDetailModal rendered with props:', {
+    open,
+    fundingSource,
+    stats,
+    purchaseOrdersCount: purchaseOrders?.length,
+    onOpenChange: typeof onOpenChange,
+    onViewPO: typeof onViewPO
+  });
+
   const [activeTab, setActiveTab] = useState('all')
+  const { toast } = useToast()
 
-  const isOverdue = (po: any) =>
-    po.due_date && new Date(po.due_date) < new Date() && po.billing_status !== 'paid'
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  };
 
-  const filteredPOs = purchaseOrders.filter(po => {
-    if (activeTab === 'all') return true
-    if (activeTab === 'overdue') return isOverdue(po)
-    if (activeTab === 'pending') return po.status === 'pending'
-    if (activeTab === 'paid') return po.billing_status === 'paid'
-    return true
-  })
+  const getStatusLabel = (po: any): string => {
+    if (po.billing_status === 'paid') return 'Paid'
+    if (po.due_date && new Date(po.due_date) < new Date() && po.billing_status !== 'paid') return 'Overdue'
+    if (po.status === 'pending' || !po.authorization_number) return 'Pending'
+    return 'Active'
+  }
+
+  const getStatusVariant = (po: any): 'default' | 'secondary' | 'destructive' | 'outline' => {
+    const status = getStatusLabel(po)
+    switch (status) {
+      case 'Paid': return 'default'
+      case 'Overdue': return 'destructive'
+      case 'Pending': return 'secondary'
+      default: return 'outline'
+    }
+  }
+
+  const handleSendReminder = async (po: any) => {
+    // Get coordinator info from swimmer
+    const coordinatorEmail = po.swimmer?.vmrc_coordinator_email
+    const coordinatorName = po.swimmer?.vmrc_coordinator_name || 'Coordinator'
+    const swimmerName = `${po.swimmer?.first_name || ''} ${po.swimmer?.last_name || ''}`.trim()
+
+    if (!coordinatorEmail) {
+      toast({
+        title: 'Error',
+        description: 'No coordinator email found for this swimmer',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    // Calculate details
+    const status = getStatusLabel(po)
+    const amountDue = ((po.amount_billed || 0) - (po.amount_paid || 0)) / 100
+    const dueDate = po.due_date ? new Date(po.due_date).toLocaleDateString() : 'Not set'
+
+    // Create email content
+    const subject = encodeURIComponent(`Reminder: PO ${po.authorization_number || 'Pending'} - ${swimmerName}`)
+    const body = encodeURIComponent(`Hi ${coordinatorName},
+
+This is a friendly reminder regarding the Purchase Order for ${swimmerName}.
+
+PO Details:
+- Authorization #: ${po.authorization_number || 'Pending authorization'}
+- Status: ${status}
+- Amount Billed: $${(po.amount_billed || 0) / 100}
+- Amount Paid: $${(po.amount_paid || 0) / 100}
+- Balance Due: $${amountDue.toFixed(2)}
+- Due Date: ${dueDate}
+
+${status === 'Pending' ? 'Please provide the authorization number at your earliest convenience.' : ''}
+${status === 'Overdue' ? 'This payment is past due. Please process payment or contact us if there are any issues.' : ''}
+
+Thank you for your attention to this matter.
+
+Best regards,
+I Can Swim Team
+(209) 778-7877
+info@icanswim209.com
+`)
+
+    // Open email client
+    window.location.href = `mailto:${coordinatorEmail}?subject=${subject}&body=${body}`
+
+    toast({
+      title: 'Email Ready',
+      description: `Opening email to ${coordinatorName}`
+    })
+  }
+
+  const filteredPOs = useMemo(() => {
+    if (!purchaseOrders) return []
+
+    switch (activeTab) {
+      case 'overdue':
+        return purchaseOrders.filter(po =>
+          po.due_date && new Date(po.due_date) < new Date() && po.billing_status !== 'paid'
+        )
+      case 'pending':
+        return purchaseOrders.filter(po =>
+          po.status === 'pending' || !po.authorization_number
+        )
+      case 'paid':
+        return purchaseOrders.filter(po => po.billing_status === 'paid')
+      default: // 'all'
+        return purchaseOrders
+    }
+  }, [purchaseOrders, activeTab])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -69,15 +165,15 @@ export function FundingSourceDetailModal({
             <div className="text-xs text-muted-foreground">Overdue</div>
           </div>
           <div>
-            <div className="text-lg font-bold">${(stats.totalBilled || 0).toLocaleString()}</div>
+            <div className="text-lg font-bold">{formatCurrency(stats.totalBilled || 0)}</div>
             <div className="text-xs text-muted-foreground">Billed</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-green-600">${(stats.totalPaid || 0).toLocaleString()}</div>
+            <div className="text-lg font-bold text-green-600">{formatCurrency(stats.totalPaid || 0)}</div>
             <div className="text-xs text-muted-foreground">Paid</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-red-600">${(stats.balance || 0).toLocaleString()}</div>
+            <div className="text-lg font-bold text-red-600">{formatCurrency(stats.balance || 0)}</div>
             <div className="text-xs text-muted-foreground">Balance</div>
           </div>
         </div>
@@ -102,24 +198,25 @@ export function FundingSourceDetailModal({
                     className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer"
                     onClick={() => onViewPO(po)}
                   >
-                    <div>
-                      <div className="font-medium">
-                        {po.swimmer?.first_name} {po.swimmer?.last_name}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="font-medium">
+                          {po.swimmer?.first_name} {po.swimmer?.last_name}
+                        </div>
+                        <Badge variant={getStatusVariant(po)}>
+                          {getStatusLabel(po)}
+                        </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {po.authorization_number}
+                        {po.authorization_number || 'No auth #'}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {isOverdue(po) && <Badge variant="destructive">Overdue</Badge>}
-                      {po.status === 'pending' && <Badge variant="outline">Pending</Badge>}
-                      {po.billing_status === 'paid' && <Badge className="bg-green-100 text-green-800">Paid</Badge>}
-
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={(e) => { e.stopPropagation(); onSendReminder(po); }}
+                        onClick={(e) => { e.stopPropagation(); handleSendReminder(po); }}
                       >
                         <Mail className="h-4 w-4" />
                       </Button>

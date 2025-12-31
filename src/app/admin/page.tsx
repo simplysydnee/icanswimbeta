@@ -165,7 +165,7 @@ export default function AdminDashboard() {
       let fundedRevenue = 0;
 
       revenueBookings?.forEach(booking => {
-        const price = booking.session?.price_cents || 7500; // Default $75
+        const price = booking.session?.price_cents || 9000; // Default $90
         if (booking.swimmer?.payment_type === 'private_pay') {
           privatePayRevenue += price;
         } else {

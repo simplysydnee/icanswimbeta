@@ -25,8 +25,8 @@ export const APP_CONFIG = {
 
 // Pricing configuration (in cents)
 export const PRICING = {
-  ASSESSMENT: 6500, // $65.00
-  LESSON_PRIVATE_PAY: 7500, // $75.00
+  ASSESSMENT: 17500, // $175.00
+  LESSON_PRIVATE_PAY: 9000, // $90.00
   FUNDING_SOURCE_LESSON: 0, // Billed to funding source (state/agency)
 } as const;
 

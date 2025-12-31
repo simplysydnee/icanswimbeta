@@ -31,9 +31,9 @@ export default function RegionalCentersPage() {
               </div>
             </div>
             <div className="lg:w-2/3">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Valley Mountain Regional Center (VMRC)</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Central Valley Regional Center (CVRC)</h2>
               <p className="text-gray-700 mb-6">
-                We are proud to partner with Valley Mountain Regional Center to provide fully funded adaptive swim lessons for eligible children. VMRC serves individuals with developmental disabilities in Stanislaus, San Joaquin, Amador, Calaveras, and Tuolumne counties.
+                We are proud to partner with Central Valley Regional Center to provide fully funded adaptive swim lessons for eligible children. CVRC serves individuals with developmental disabilities in Fresno, Kings, Madera, Mariposa, Merced, and Tulare counties.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -106,9 +106,9 @@ export default function RegionalCentersPage() {
               </div>
             </div>
             <div className="lg:w-2/3">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Central Valley Regional Center (CVR)</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Central Valley Regional Center (CVRC)</h2>
               <p className="text-gray-700 mb-6">
-                We also work with Central Valley Regional Center to provide adaptive swim lessons for eligible children. CVR serves individuals with developmental disabilities in Fresno, Kings, Madera, Mariposa, Merced, and Tulare counties.
+                We also work with Central Valley Regional Center to provide adaptive swim lessons for eligible children. CVRC serves individuals with developmental disabilities in Fresno, Kings, Madera, Mariposa, Merced, and Tulare counties.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>

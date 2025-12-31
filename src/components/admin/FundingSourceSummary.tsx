@@ -62,9 +62,12 @@ export function FundingSourceSummary({ stats, onSelectSource, selectedSource, on
                 key={source.id}
                 className={`cursor-pointer hover:bg-muted/50 ${selectedSource === source.id ? 'bg-muted' : ''}`}
                 onClick={(e) => {
+                  console.log('🔍 Funding source clicked:', source.name, source.id);
                   if (onViewDetails) {
+                    console.log('📱 Calling onViewDetails with sourceId:', source.id);
                     onViewDetails(source.id);
                   } else {
+                    console.log('🎯 Calling onSelectSource with sourceId:', source.id);
                     onSelectSource(selectedSource === source.id ? null : source.id);
                   }
                 }}

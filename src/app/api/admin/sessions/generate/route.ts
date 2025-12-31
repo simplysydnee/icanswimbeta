@@ -271,7 +271,7 @@ export async function POST(request: Request) {
             session_type: mode === 'assessment' ? SESSION_TYPE.ASSESSMENT : SESSION_TYPE.LESSON,
             session_type_detail: null, // Added missing column
             status: SESSION_STATUS.DRAFT, // Always start as draft
-            price_cents: 7500, // Default price
+            price_cents: 9000, // Default price
             is_recurring: mode === 'repeating',
             recurrence_pattern: mode === 'repeating' ? 'weekly' : null,
             batch_id: batchId,

@@ -59,7 +59,7 @@ export default function AboutPage() {
               unique needs and creating personalized learning paths that celebrate every achievement, no matter how small.
             </p>
             <p>
-              Today, we&apos;re proud to partner with Valley Mountain Regional Center (VMRC) and other organizations
+              Today, we&apos;re proud to be a regional center vendor closely working with VMRC and CVRC (Central Valley Regional Center)
               to make adaptive swim lessons accessible to all families, regardless of their financial situation.
             </p>
           </div>

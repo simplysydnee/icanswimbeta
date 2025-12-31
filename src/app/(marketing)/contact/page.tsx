@@ -183,7 +183,7 @@ export default function ContactPage() {
                       <p className="font-medium text-gray-900">Hours</p>
                       <p className="text-gray-600">Monday - Friday: 9:00 AM - 7:00 PM</p>
                       <p className="text-gray-600">Saturday: 9:00 AM - 3:00 PM</p>
-                      <p className="text-gray-600">Sunday: Closed</p>
+                      <p className="text-gray-600">Sunday: 12:00 PM - 6:00 PM</p>
                     </div>
                   </div>
                 </div>
@@ -201,9 +201,9 @@ export default function ContactPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900 mb-1">Do you accept insurance or funding?</p>
+                    <p className="font-medium text-gray-900 mb-1">Do you accept funding?</p>
                     <p className="text-sm text-gray-600">
-                      Yes! We work with VMRC and other funding sources. Contact us for specific information about your situation.
+                      We accept regional center funding (VMRC, CVRC) and private pay. We do not accept insurance.
                     </p>
                   </div>
                   <div>

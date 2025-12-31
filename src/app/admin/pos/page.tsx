@@ -419,8 +419,12 @@ export default function POSPage() {
           onSelectSource={setSelectedFundingSource}
           selectedSource={selectedFundingSource}
           onViewDetails={(sourceId) => {
+            console.log('🚀 onViewDetails called with sourceId:', sourceId);
+            console.log('📊 fundingSourceStats:', fundingSourceStats);
+            console.log('🔍 Finding source in stats:', fundingSourceStats.find(fs => fs.id === sourceId));
             setSelectedFundingSourceForDetail(sourceId);
             setFundingSourceDetailOpen(true);
+            console.log('✅ Modal state updated - selectedFundingSourceForDetail:', sourceId, 'fundingSourceDetailOpen:', true);
           }}
         />
       </div>
@@ -827,10 +831,6 @@ I Can Swim Team`;
           purchaseOrders={purchaseOrders.filter(po =>
             po.funding_source?.id === selectedFundingSourceForDetail
           )}
-          onSendReminder={(po) => {
-            // TODO: Implement send reminder functionality
-            console.log('Send reminder for PO:', po.id);
-          }}
           onViewPO={(po) => {
             setSelectedPO(po);
             setFundingSourceDetailOpen(false);

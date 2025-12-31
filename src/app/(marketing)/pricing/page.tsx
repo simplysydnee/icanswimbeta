@@ -55,7 +55,7 @@ export default async function PricingPage() {
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Initial Assessment</h2>
               <div className="flex items-baseline justify-center">
-                <span className="text-4xl font-bold text-gray-900">$75</span>
+                <span className="text-4xl font-bold text-gray-900">$175</span>
                 <span className="text-gray-600 ml-2">one-time</span>
               </div>
               <p className="text-gray-600 mt-2">30-minute session</p>
@@ -104,7 +104,7 @@ export default async function PricingPage() {
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Private Lessons</h2>
               <div className="flex items-baseline justify-center">
-                <span className="text-4xl font-bold text-gray-900">$75</span>
+                <span className="text-4xl font-bold text-gray-900">$90</span>
                 <span className="text-gray-600 ml-2">per session</span>
               </div>
               <p className="text-gray-600 mt-2">30-minute one-on-one instruction</p>

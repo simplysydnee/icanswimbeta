@@ -32,7 +32,7 @@ export function generatePrivatePayWelcomeEmail(data: WelcomeEmailData): EmailCon
 
     <div style="background: #e8f4f8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${BRAND_MAIN};">
       <h3 style="margin-top: 0; color: ${BRAND_MAIN};">First Step: Assessment Session</h3>
-      <p><strong>Assessment is REQUIRED</strong> before starting regular lessons. This 30-minute session ($75) allows our instructors to:</p>
+      <p><strong>Assessment is REQUIRED</strong> before starting regular lessons. This 30-minute session ($175) allows our instructors to:</p>
       <ul>
         <li>Evaluate ${data.swimmerName}'s current swimming abilities</li>
         <li>Create a customized swimming plan tailored to their needs</li>
@@ -55,7 +55,7 @@ export function generatePrivatePayWelcomeEmail(data: WelcomeEmailData): EmailCon
         <p>Book individual sessions as needed. Perfect for flexible schedules.</p>
       </div>
 
-      <p><strong>Pricing:</strong> $75 per session, billed after each lesson.</p>
+      <p><strong>Pricing:</strong> $90 per session, billed after each lesson.</p>
     </div>
 
     <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">

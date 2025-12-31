@@ -23,7 +23,7 @@ export function isRegionalCenter(fundingSource: FundingSource | null): boolean {
 }
 
 export function getSessionPrice(fundingSource: FundingSource | null): number {
-  return fundingSource?.price_cents ?? 7500; // Default to $75 private pay
+  return fundingSource?.price_cents ?? 9000; // Default to $90 private pay
 }
 
 export function getAuthorizationLabel(fundingSource: FundingSource | null): string {

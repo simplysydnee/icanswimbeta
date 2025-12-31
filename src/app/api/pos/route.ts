@@ -60,18 +60,30 @@ export async function GET(request: NextRequest) {
       query = query.eq('coordinator_id', coordinatorId);
     }
 
-    const { data, error } = await query;
+    const { data: poData, error } = await query;
 
     if (error) {
       console.error('Error fetching POs:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Fetch all active funding sources
+    const { data: fundingSources, error: fsError } = await supabase
+      .from('funding_sources')
+      .select('id, name, short_name, type, is_active')
+      .eq('is_active', true)
+      .order('display_order, name');
+
+    if (fsError) {
+      console.error('Error fetching funding sources:', fsError);
+      // Continue with just PO data
+    }
+
     // Filter by search (swimmer name) if provided
-    let filteredData = data;
+    let filteredData = poData;
     if (search) {
       const searchLower = search.toLowerCase();
-      filteredData = data?.filter(po =>
+      filteredData = poData?.filter(po =>
         po.swimmer?.first_name?.toLowerCase().includes(searchLower) ||
         po.swimmer?.last_name?.toLowerCase().includes(searchLower)
       );
@@ -89,6 +101,39 @@ export async function GET(request: NextRequest) {
 
     // Calculate stats by funding source
     const fundingSourceStats: Record<string, FundingSourceStats> = {};
+
+    // Initialize stats for all active funding sources
+    if (fundingSources) {
+      fundingSources.forEach(fs => {
+        fundingSourceStats[fs.id] = {
+          id: fs.id,
+          name: fs.name,
+          code: fs.short_name || fs.name.substring(0, 4).toUpperCase(),
+          activePOs: 0,
+          pendingPOs: 0,
+          billedAmount: 0,
+          paidAmount: 0,
+          outstandingBalance: 0,
+          overdueCount: 0
+        };
+      });
+    }
+
+    // Always initialize private_pay stats for POs without funding source
+    if (!fundingSourceStats['private_pay']) {
+      fundingSourceStats['private_pay'] = {
+        id: 'private_pay',
+        name: 'Private Pay',
+        code: 'PP',
+        activePOs: 0,
+        pendingPOs: 0,
+        billedAmount: 0,
+        paidAmount: 0,
+        outstandingBalance: 0,
+        overdueCount: 0
+      };
+    }
+
     let overallStats = {
       total: 0,
       pending: 0,
@@ -117,7 +162,7 @@ export async function GET(request: NextRequest) {
       monthEnd = endOfMonth(new Date(year, monthNum - 1));
     }
 
-    data?.forEach(po => {
+    poData?.forEach(po => {
       // Overall stats
       overallStats.total++;
       if (po.status === 'pending') overallStats.pending++;
@@ -139,6 +184,7 @@ export async function GET(request: NextRequest) {
       const fsName = po.funding_source?.name || 'Private Pay';
       const fsCode = po.funding_source?.short_name || 'PP';
 
+      // Initialize funding source stats if not already done (e.g., if funding sources query failed)
       if (!fundingSourceStats[fsId]) {
         fundingSourceStats[fsId] = {
           id: fsId,

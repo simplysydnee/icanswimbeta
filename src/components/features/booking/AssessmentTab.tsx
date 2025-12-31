@@ -447,7 +447,7 @@ export function AssessmentTab({ selectedSwimmerId, onBookingComplete }: Assessme
                   {selectedSwimmerData && isRegionalCenterClient(selectedSwimmerData.funding_source_id) ? (
                     <span className="text-green-600">$0 (Regional Center)</span>
                   ) : (
-                    '$65'
+                    '$175'
                   )}
                 </span>
               </div>

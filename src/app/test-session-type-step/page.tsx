@@ -96,7 +96,7 @@ export default function TestSessionTypeStepPage() {
                 <label className="text-sm font-medium">Price Display</label>
                 <div className="p-3 rounded-md bg-muted">
                   <code className="text-sm">
-                    {hasFundingSource ? `$0 - ${fundingSourceName} Funded` : '$75.00 per session'}
+                    {hasFundingSource ? `$0 - ${fundingSourceName} Funded` : '$90.00 per session'}
                   </code>
                 </div>
               </div>

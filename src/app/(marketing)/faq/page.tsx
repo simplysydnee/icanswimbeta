@@ -9,8 +9,8 @@ export default function FAQPage() {
       answer: "Please bring a swimsuit, towel, and any necessary swim aids (goggles, swim cap, etc.). We provide all equipment including floatation devices and teaching aids. We also have private changing areas available."
     },
     {
-      question: "Do you accept insurance or regional center funding?",
-      answer: "Yes! We work with Valley Mountain Regional Center (VMRC) and Central Valley Regional Center (CVR) to provide fully funded swim lessons for eligible children. We also accept private pay. Contact us for specific information about your situation."
+      question: "Do you accept regional center funding?",
+      answer: "Yes! We work with Valley Mountain Regional Center (VMRC) and Central Valley Regional Center (CVRC) to provide fully funded swim lessons for eligible children. We also accept private pay. We do not accept insurance."
     },
     {
       question: "What is your cancellation policy?",
