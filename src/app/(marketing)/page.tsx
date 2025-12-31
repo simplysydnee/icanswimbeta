@@ -41,7 +41,7 @@ export default function Home() {
               </svg>
             </div>
             <p className="text-xl lg:text-2xl text-gray-600 font-inter mb-12 max-w-2xl mx-auto leading-relaxed">
-              Adaptive Swim Lessons for Children with Special Needs
+              Adaptive Swim Lessons
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <a href="/enroll" className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold px-8 py-4 rounded-lg transition-colors duration-200 font-inter text-lg">
@@ -60,7 +60,7 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-8 text-center">
             <div className="space-y-2">
-              <div className="text-3xl font-bold text-[#1E3A5F] font-playfair-display">500+</div>
+              <div className="text-3xl font-bold text-[#1E3A5F] font-playfair-display">300+</div>
               <div className="text-gray-600 font-inter">Swimmers Served</div>
             </div>
             <div className="space-y-2">
@@ -83,7 +83,7 @@ export default function Home() {
               How It Works
             </h2>
             <p className="text-xl text-gray-600 font-inter max-w-2xl mx-auto">
-              Simple, safe, and effective swim lessons designed specifically for children with special needs
+              Simple, safe, and effective swim lessons designed specifically for individuals with special needs
             </p>
           </div>
 
@@ -94,7 +94,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-[#1E3A5F] font-inter">Initial Assessment</h3>
               <p className="text-gray-600 font-inter leading-relaxed">
-                We evaluate your child&apos;s comfort level and swimming abilities to create a personalized lesson plan
+                We evaluate each swimmer&apos;s comfort level and swimming abilities to create a personalized lesson plan
               </p>
             </div>
             <div className="text-center space-y-4">
@@ -103,7 +103,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-[#1E3A5F] font-inter">Personalized Lessons</h3>
               <p className="text-gray-600 font-inter leading-relaxed">
-                One-on-one instruction tailored to your child&apos;s unique needs and learning style
+                One-on-one instruction tailored to each individual&apos;s unique needs and learning style
               </p>
             </div>
             <div className="text-center space-y-4">
@@ -112,7 +112,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-[#1E3A5F] font-inter">Progress Tracking</h3>
               <p className="text-gray-600 font-inter leading-relaxed">
-                Regular updates on your child&apos;s achievements and skill development
+                Regular updates on each swimmer&apos;s achievements and skill development
               </p>
             </div>
           </div>
@@ -127,7 +127,7 @@ export default function Home() {
               Why Choose I Can Swim
             </h2>
             <p className="text-xl text-gray-600 font-inter max-w-2xl mx-auto">
-              The experts you can trust with your child&apos;s swimming journey
+              The experts you can trust with each swimmer&apos;s swimming journey
             </p>
           </div>
 
@@ -138,7 +138,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-[#1E3A5F] font-inter">Specialized Expertise</h3>
               <p className="text-gray-600 font-inter leading-relaxed">
-                Our instructors are trained in adaptive swim techniques for children with autism, Down syndrome, and other special needs
+                Our instructors are trained in adaptive swim techniques for individuals with autism, Down syndrome, and other special needs
               </p>
             </div>
             <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100 space-y-4">
@@ -147,7 +147,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-[#1E3A5F] font-inter">Funding Approved</h3>
               <p className="text-gray-600 font-inter leading-relaxed">
-                We work directly with regional centers and funding sources to provide state-funded swim lessons for eligible families
+                We work directly with regional centers and funding sources to provide swim lessons for eligible individuals
               </p>
             </div>
             <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100 space-y-4">
@@ -156,7 +156,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-[#1E3A5F] font-inter">Safety First Approach</h3>
               <p className="text-gray-600 font-inter leading-relaxed">
-                Certified lifeguards and specialized safety protocols ensure your child&apos;s wellbeing in and around the water
+                Certified lifeguards with specialized safety protocols and certifications ensure each swimmer&apos;s wellbeing in and around the water
               </p>
             </div>
             <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100 space-y-4">
@@ -165,7 +165,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-[#1E3A5F] font-inter">Individualized Attention</h3>
               <p className="text-gray-600 font-inter leading-relaxed">
-                One-on-one instruction allows us to focus on your child&apos;s specific goals and comfort level
+                One-on-one instruction allows us to focus on each swimmer&apos;s specific goals and comfort level
               </p>
             </div>
             <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100 space-y-4">
@@ -174,7 +174,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-[#1E3A5F] font-inter">Proven Results</h3>
               <p className="text-gray-600 font-inter leading-relaxed">
-                Track record of helping children build confidence, improve coordination, and develop essential water safety skills
+                Track record of helping swimmers build confidence, improve coordination, and develop essential water safety skills
               </p>
             </div>
             <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100 space-y-4">
@@ -195,14 +195,14 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl font-bold text-white font-playfair-display mb-6">
-              Ready to Start Your Child&apos;s Swimming Journey?
+              Ready to Start Your Swimming Journey?
             </h2>
             <p className="text-xl text-gray-200 font-inter mb-8 max-w-2xl mx-auto">
-              Join hundreds of families who trust I Can Swim with their child&apos;s water safety and swimming development
+              Join hundreds of families who trust I Can Swim with their swimmer&apos;s water safety and swimming development
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <a href="/enroll" className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold px-8 py-4 rounded-lg transition-colors duration-200 font-inter text-lg">
-                Book Your Assessment
+                Get Started
               </a>
               <a href="/contact" className="border-2 border-white text-white hover:bg-white hover:text-gray-800 font-semibold px-8 py-4 rounded-lg transition-colors duration-200 font-inter text-lg">
                 Contact Us
