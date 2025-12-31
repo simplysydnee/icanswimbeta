@@ -33,7 +33,7 @@ export function PublicFooter() {
               </div>
             </div>
             <p className="text-sm text-gray-600 mb-6">
-              Adaptive swim lessons for children with special needs. Building confidence, safety, and joy in the water.
+              Adaptive swim lessons for individuals of all abilities. Building confidence, safety, and joy in the water.
             </p>
           </div>
 
