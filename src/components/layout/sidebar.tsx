@@ -40,6 +40,7 @@ const adminNavItems: NavItem[] = [
   { title: 'Bookings', href: '/admin/bookings', icon: <ClipboardList className="h-5 w-5" /> },
   { title: 'Tasks', href: '/admin/tasks', icon: <CheckSquare className="h-5 w-5" /> },
   { title: 'Reports', href: '/admin/reports', icon: <BarChart3 className="h-5 w-5" /> },
+  { title: 'Staff Management', href: '/admin/staff', icon: <Users className="h-5 w-5" /> },
   { title: 'Team', href: '/admin/team', icon: <Users className="h-5 w-5" /> },
   { title: 'Referrals', href: '/admin/referrals', icon: <FileText className="h-5 w-5" /> },
   { title: 'Purchase Orders', href: '/admin/pos', icon: <CreditCard className="h-5 w-5" /> },

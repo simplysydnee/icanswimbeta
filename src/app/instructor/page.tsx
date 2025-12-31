@@ -46,7 +46,7 @@ interface Session {
 }
 
 export default function InstructorDashboard() {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, role, loading: authLoading, isLoadingProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('');
   const [userId, setUserId] = useState('');
@@ -222,7 +222,44 @@ export default function InstructorDashboard() {
     }
   }, [fetchDashboardData, fetchWeeklyHours, fetchTimeOffSummary, user]);
 
-  if (authLoading || loading) {
+  // Check auth loading states
+  const isLoadingAuth = authLoading || isLoadingProfile
+  if (isLoadingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Check if user exists
+  if (!user) {
+    // This should redirect via middleware, but show a fallback
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-muted-foreground">Please log in to access the instructor dashboard.</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Optional: Check if role matches (good practice)
+  if (role && role !== 'instructor') {
+    // This should redirect via dashboard page, but show a fallback
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-muted-foreground">You don't have access to the instructor dashboard.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading) {
     return (
       <div className="p-6 space-y-6">
         {/* Header skeleton */}

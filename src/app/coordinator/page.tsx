@@ -42,7 +42,7 @@ interface PurchaseOrder {
 }
 
 export default function CoordinatorDashboard() {
-  const { user, profile } = useAuth();
+  const { user, profile, role, loading: authLoading, isLoadingProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('');
   const [clients, setClients] = useState<Client[]>([]);
@@ -115,8 +115,47 @@ export default function CoordinatorDashboard() {
   }, []);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [fetchDashboardData, user]);
+
+  // Check auth loading states
+  const isLoadingAuth = authLoading || isLoadingProfile
+  if (isLoadingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600 mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Check if user exists
+  if (!user) {
+    // This should redirect via middleware, but show a fallback
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-muted-foreground">Please log in to access the coordinator dashboard.</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Optional: Check if role matches (good practice)
+  if (role && role !== 'coordinator') {
+    // This should redirect via dashboard page, but show a fallback
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-muted-foreground">You don't have access to the coordinator dashboard.</p>
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (

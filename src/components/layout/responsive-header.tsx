@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { MobileNav } from './mobile-nav'
 import { useAuth } from '@/contexts/AuthContext'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserMenu } from './UserMenu'
 import { Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -57,10 +57,7 @@ export function ResponsiveHeader() {
               </div>
             </PopoverContent>
           </Popover>
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={user?.avatarUrl} />
-            <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
-          </Avatar>
+          <UserMenu />
         </div>
       </div>
     </header>
