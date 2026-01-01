@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
@@ -15,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertCircle, Loader2, Calendar, FilterX, Plus, MoreHorizontal, Eye, Edit, UserPlus, Users, XCircle, CheckCircle, Trash2, Download, X, User, Users as UsersIcon, CalendarCheck } from 'lucide-react';
+import { AlertCircle, Loader2, Calendar, FilterX, Plus, MoreHorizontal, Eye, Edit, UserPlus, Users, XCircle, CheckCircle, Trash2, Download, X, CalendarCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAllSessions, useOpenSessions, useDeleteSessions, useInstructors } from '@/hooks';
 import { format, parseISO, startOfDay, endOfDay } from 'date-fns';
@@ -773,23 +772,24 @@ function AdminSessionsContent() {
               </div>
             ) : (
               <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
+                <Table className="text-sm">
+                  <TableHeader className="hidden sm:table-header-group">
                     <TableRow>
-                      <TableHead className="w-12">
+                      <TableHead className="w-10 px-2">
                         <Checkbox
                           checked={selectedSessionIds.size === filteredSessions.length && filteredSessions.length > 0}
                           onCheckedChange={handleSelectAll}
                           aria-label="Select all sessions"
+                          className="h-4 w-4"
                         />
                       </TableHead>
-                      <TableHead>Date & Time</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Instructor</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Capacity</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="px-2 whitespace-nowrap">Date & Time</TableHead>
+                      <TableHead className="px-2 whitespace-nowrap hidden md:table-cell">Location</TableHead>
+                      <TableHead className="px-2 whitespace-nowrap">Instructor</TableHead>
+                      <TableHead className="px-2 whitespace-nowrap hidden lg:table-cell">Client</TableHead>
+                      <TableHead className="px-2 whitespace-nowrap">Status</TableHead>
+                      <TableHead className="px-2 whitespace-nowrap hidden sm:table-cell">Capacity</TableHead>
+                      <TableHead className="px-2 text-right whitespace-nowrap">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -804,67 +804,68 @@ function AdminSessionsContent() {
                           className={selectedSessionIds.has(session.id) ? 'bg-muted/50' : ''}
                         >
                           {/* Checkbox */}
-                          <TableCell>
+                          <TableCell className="px-2 py-2">
                             <Checkbox
                               checked={selectedSessionIds.has(session.id)}
                               onCheckedChange={(checked) => handleSelectSession(session.id, !!checked)}
                               aria-label={`Select session ${session.id}`}
+                              className="h-4 w-4"
                             />
                           </TableCell>
 
                           {/* Date & Time */}
-                          <TableCell>
-                            <div className="font-medium">
-                              {format(new Date(session.start_time), 'EEE, MMM d, yyyy')}
+                          <TableCell className="px-2 py-2">
+                            <div className="font-medium whitespace-nowrap">
+                              {format(new Date(session.start_time), 'MMM d')}
                             </div>
-                            <div className="text-sm text-muted-foreground">
+                            <div className="text-xs text-muted-foreground whitespace-nowrap">
                               {format(new Date(session.start_time), 'h:mm a')} - {format(new Date(session.end_time), 'h:mm a')}
                             </div>
                           </TableCell>
 
                           {/* Location */}
-                          <TableCell>
-                            <span className="text-sm">{session.location || '-'}</span>
+                          <TableCell className="px-2 py-2 hidden md:table-cell">
+                            <span className="text-xs whitespace-nowrap">{session.location || '-'}</span>
                           </TableCell>
 
                           {/* Instructor */}
-                          <TableCell>
-                            <span className="font-medium">
+                          <TableCell className="px-2 py-2">
+                            <span className="text-xs font-medium whitespace-nowrap">
                               {session.instructor_name || 'Unassigned'}
                             </span>
                           </TableCell>
 
                           {/* Client */}
-                          <TableCell>
+                          <TableCell className="px-2 py-2 hidden lg:table-cell">
                             {isBooked && swimmer ? (
-                              <span className="font-medium text-cyan-700">
+                              <span className="text-xs font-medium text-cyan-700 whitespace-nowrap">
                                 {swimmer.first_name} {swimmer.last_name}
                               </span>
                             ) : (
-                              <span className="text-muted-foreground">-</span>
+                              <span className="text-xs text-muted-foreground">-</span>
                             )}
                           </TableCell>
 
                           {/* Status */}
-                          <TableCell>
-                            <Badge className={getStatusColor(session.status)}>
+                          <TableCell className="px-2 py-2">
+                            <Badge className={getStatusColor(session.status) + ' text-xs px-1.5 py-0.5'}>
                               {session.status.charAt(0).toUpperCase() + session.status.slice(1).replace('_', '-')}
                             </Badge>
                           </TableCell>
 
                           {/* Capacity */}
-                          <TableCell>
-                            <span className="text-sm">
+                          <TableCell className="px-2 py-2 hidden sm:table-cell">
+                            <span className="text-xs whitespace-nowrap">
                               {session.booking_count || 0}/{session.max_capacity || 1}
                             </span>
                           </TableCell>
 
                           {/* Actions */}
-                          <TableCell className="text-right">
+                          <TableCell className="px-2 py-2 text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="h-4 w-4" />
+                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                  <MoreHorizontal className="h-3.5 w-3.5" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-48">
@@ -908,7 +909,7 @@ function AdminSessionsContent() {
                                   </DropdownMenuItem>
                                 )}
 
-                                {session.bookings?.length > 0 && (
+                                {session.bookings && session.bookings.length > 0 && (
                                   <DropdownMenuItem onClick={() => {
                                     // TODO: Implement mark completed
                                     toast({
