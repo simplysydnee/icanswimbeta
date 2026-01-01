@@ -433,6 +433,16 @@ function AdminSessionsContent() {
           </div>
 
           <div className="flex gap-2">
+            {/* Quick Open All Drafts - Only show if there are drafts */}
+            {stats.draft > 0 && (
+              <Button
+                onClick={handleOpenAllDrafts}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <CalendarCheck className="h-4 w-4 mr-2" />
+                Open All Drafts ({stats.draft})
+              </Button>
+            )}
             <Button variant="outline" onClick={exportToCSV}>
               <Download className="h-4 w-4 mr-2" /> Export CSV
             </Button>
@@ -680,10 +690,11 @@ function AdminSessionsContent() {
                     <Button
                       onClick={handleOpenSelected}
                       disabled={selectedSessionIds.size === 0 || isOpening}
-                      className="gap-2"
+                      className="gap-2 bg-green-600 hover:bg-green-700 text-white"
                     >
                       {isOpening && <Loader2 className="h-4 w-4 animate-spin" />}
-                      Open Selected ({selectedSessionIds.size})
+                      <CalendarCheck className="h-4 w-4 mr-2" />
+                      Open for Booking ({selectedSessionIds.size})
                     </Button>
                   )}
 
@@ -718,13 +729,14 @@ function AdminSessionsContent() {
                   </Button>
 
                   <Button
-                    variant="destructive"
+                    variant="outline"
                     onClick={handleDeleteSelected}
                     disabled={selectedSessionIds.size === 0 || isDeleting}
-                    className="gap-2"
+                    className="gap-2 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400"
                   >
                     {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Delete Selected ({selectedSessionIds.size})
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete ({selectedSessionIds.size})
                   </Button>
 
                   {selectedSessionIds.size > 0 && (
@@ -961,7 +973,12 @@ function AdminSessionsContent() {
             <span className="font-medium">{selectedSessionIds.size} selected</span>
 
             {statusFilter === 'draft' && (
-              <Button size="sm" onClick={handleOpenSelected}>
+              <Button
+                size="sm"
+                onClick={handleOpenSelected}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <CalendarCheck className="h-4 w-4 mr-2" />
                 Open for Booking
               </Button>
             )}
@@ -974,7 +991,13 @@ function AdminSessionsContent() {
             <Button size="sm" variant="outline" onClick={handleBulkCancel}>
               Cancel
             </Button>
-            <Button size="sm" variant="destructive" onClick={handleDeleteSelected}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDeleteSelected}
+              className="text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </Button>
 
