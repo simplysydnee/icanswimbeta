@@ -65,6 +65,7 @@ function AdminSessionsContent() {
   const [cancellingSession, setCancellingSession] = useState<any>(null);
   const [bookingSession, setBookingSession] = useState<any>(null);
   const [bulkChangingInstructor, setBulkChangingInstructor] = useState(false);
+  const [openDraftsModal, setOpenDraftsModal] = useState(false);
 
   // Get all sessions
   const allSessions = useMemo(() => data?.sessions || [], [data]);
@@ -436,7 +437,7 @@ function AdminSessionsContent() {
             {/* Quick Open All Drafts - Only show if there are drafts */}
             {stats.draft > 0 && (
               <Button
-                onClick={handleOpenAllDrafts}
+                onClick={() => setOpenDraftsModal(true)}
                 className="bg-green-600 hover:bg-green-700 text-white"
               >
                 <CalendarCheck className="h-4 w-4 mr-2" />
@@ -1327,6 +1328,57 @@ function AdminSessionsContent() {
                   setBulkChangingInstructor(false);
                 }}>
                   Change Instructor
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Open Drafts Modal */}
+        {openDraftsModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Open Draft Sessions</h2>
+                <Button variant="ghost" size="sm" onClick={() => setOpenDraftsModal(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-muted-foreground mb-6">
+                You have {stats.draft} draft session{stats.draft !== 1 ? 's' : ''}. How would you like to open them?
+              </p>
+
+              <div className="space-y-4">
+                <Button
+                  onClick={() => {
+                    handleOpenAllDrafts();
+                    setOpenDraftsModal(false);
+                  }}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <CalendarCheck className="h-4 w-4 mr-2" />
+                  Open Now
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    toast({
+                      title: 'Feature coming soon',
+                      description: 'Scheduled opening will be implemented in a future update.',
+                    });
+                    setOpenDraftsModal(false);
+                  }}
+                  className="w-full"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Schedule to Open
+                </Button>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" onClick={() => setOpenDraftsModal(false)}>
+                  Cancel
                 </Button>
               </div>
             </div>
