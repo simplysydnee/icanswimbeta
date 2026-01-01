@@ -14,11 +14,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { AlertCircle, Loader2, Calendar, FilterX, Plus, MoreHorizontal, Eye, Edit, UserPlus, Users, XCircle, CheckCircle, Trash2, Download, X } from 'lucide-react';
+import { AlertCircle, Loader2, Calendar, FilterX, Plus, MoreHorizontal, Eye, Edit, UserPlus, Users, XCircle, CheckCircle, Trash2, Download, X, User, Users as UsersIcon, CalendarCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAllSessions, useOpenSessions, useDeleteSessions, useInstructors } from '@/hooks';
 import { format, parseISO, startOfDay, endOfDay } from 'date-fns';
 
+
+// Status color helper
+function getStatusColor(status: string) {
+  switch (status) {
+    case 'draft': return 'bg-yellow-100 text-yellow-700 border-yellow-300'
+    case 'open': return 'bg-green-100 text-green-700 border-green-300'
+    case 'booked': return 'bg-blue-100 text-blue-700 border-blue-300'
+    case 'completed': return 'bg-gray-100 text-gray-700 border-gray-300'
+    case 'cancelled': return 'bg-orange-100 text-orange-700 border-orange-300'
+    case 'no_show': return 'bg-red-100 text-red-700 border-red-300'
+    default: return 'bg-gray-100 text-gray-700 border-gray-300'
+  }
+}
 
 function AdminSessionsContent() {
   const router = useRouter();
@@ -216,6 +229,47 @@ function AdminSessionsContent() {
         onError: (error) => {
           toast({
             title: 'Failed to open sessions',
+            description: error.message,
+            variant: 'destructive',
+          });
+        },
+      }
+    );
+  };
+
+  const handleOpenAllDrafts = () => {
+    const draftSessions = allSessions.filter(s => s.status === 'draft');
+
+    if (draftSessions.length === 0) {
+      toast({
+        title: 'No draft sessions',
+        description: 'There are no draft sessions to open.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Confirm action
+    const confirmed = window.confirm(
+      `Are you sure you want to open ${draftSessions.length} draft sessions for booking?`
+    );
+
+    if (!confirmed) return;
+
+    openSessions(
+      { sessionIds: draftSessions.map(s => s.id) },
+      {
+        onSuccess: (result) => {
+          toast({
+            title: 'All drafts opened successfully',
+            description: `${result.count} draft session${result.count !== 1 ? 's' : ''} are now available for booking.`,
+          });
+          setSelectedSessionIds(new Set());
+          refetch();
+        },
+        onError: (error) => {
+          toast({
+            title: 'Failed to open draft sessions',
             description: error.message,
             variant: 'destructive',
           });
@@ -705,175 +759,184 @@ function AdminSessionsContent() {
                 )}
               </div>
             ) : (
-              <div className="space-y-4">
-                {filteredSessions.map((session) => (
-                  <div key={session.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                    <Checkbox
-                      checked={selectedSessionIds.has(session.id)}
-                      onCheckedChange={(checked) => handleSelectSession(session.id, !!checked)}
-                      aria-label={`Select session ${session.id}`}
-                    />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredSessions.map((session) => {
+                  const booking = session.bookings?.[0] // Get first booking if exists
+                  const isBooked = booking && booking.status !== 'cancelled'
 
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-2 mb-2">
-                        <span className="font-medium">
-                          {format(parseISO(session.start_time), 'EEEE, MMMM d, yyyy')}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {format(parseISO(session.start_time), 'h:mm a')} - {format(parseISO(session.end_time), 'h:mm a')}
-                        </span>
-                        <Badge variant="outline">{session.location}</Badge>
+                  return (
+                    <Card key={session.id} className="p-4 hover:shadow-md transition-shadow relative">
+                      {/* Checkbox for selection */}
+                      <div className="absolute top-2 left-2">
+                        <Checkbox
+                          checked={selectedSessionIds.has(session.id)}
+                          onCheckedChange={(checked) => handleSelectSession(session.id, !!checked)}
+                          aria-label={`Select session ${session.id}`}
+                        />
+                      </div>
 
-                        {/* Status Badge */}
-                        {session.status === 'draft' && (
-                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
-                            Draft
-                          </Badge>
-                        )}
-                        {session.status === 'open' && (
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
-                            Open
-                          </Badge>
-                        )}
-                        {session.status === 'booked' && (
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                      {/* Status Badges */}
+                      <div className="flex items-center justify-between mb-3">
+                        <Badge className={getStatusColor(session.status)}>
+                          {session.status.charAt(0).toUpperCase() + session.status.slice(1).replace('_', '-')}
+                        </Badge>
+                        {isBooked && (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                             Booked
                           </Badge>
                         )}
-                        {session.status === 'completed' && (
-                          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-300">
-                            Completed
-                          </Badge>
-                        )}
-                        {session.status === 'cancelled' && (
-                          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300">
-                            Cancelled
-                          </Badge>
-                        )}
-                        {session.status === 'no_show' && (
-                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300">
-                            No-Show
-                          </Badge>
-                        )}
                       </div>
 
-                      <div className="text-sm text-muted-foreground mb-2">
-                        <span>Instructor: {session.instructor_name || 'Unknown'}</span>
-                        <span className="mx-2">•</span>
-                        <span>Capacity: {session.booking_count || 0}/{session.max_capacity}</span>
-                        <span className="mx-2">•</span>
-                        <span>Type: {session.session_type}</span>
+                      {/* Date & Time */}
+                      <p className="font-medium text-lg">
+                        {format(new Date(session.start_time), 'MMM d, yyyy')}
+                      </p>
+                      <p className="text-sm text-gray-600 mb-3">
+                        {format(new Date(session.start_time), 'h:mm a')} - {format(new Date(session.end_time), 'h:mm a')}
+                      </p>
+
+                      {/* Location */}
+                      <div className="mb-3">
+                        <Badge variant="outline" className="text-gray-600">
+                          {session.location}
+                        </Badge>
                       </div>
 
-                      {/* Booking Info */}
-                      {session.bookings && session.bookings.length > 0 && (
-                        <div className="mt-2 text-sm">
-                          <span className="text-muted-foreground">Booked: </span>
-                          {session.bookings.map((b, i) => (
-                            <span key={b.id}>
-                              {i > 0 && ', '}
-                              <span className={b.status === 'cancelled' ? 'line-through text-muted-foreground' : ''}>
-                                {b.swimmer?.first_name} {b.swimmer?.last_name}
-                              </span>
-                            </span>
-                          ))}
+                      {/* Instructor */}
+                      <div className="mt-3 pt-3 border-t">
+                        <div className="flex items-center gap-2 text-sm">
+                          <User className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-600">Instructor:</span>
+                          <span className="font-medium">
+                            {session.instructor_name || 'Unassigned'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Client (if booked) */}
+                      {isBooked && booking.swimmer && (
+                        <div className="flex items-center gap-2 text-sm mt-2">
+                          <UsersIcon className="w-4 h-4 text-cyan-500" />
+                          <span className="text-gray-600">Client:</span>
+                          <span className="font-medium text-cyan-700">
+                            {booking.swimmer.first_name} {booking.swimmer.last_name}
+                          </span>
                         </div>
                       )}
-                    </div>
 
-                    {/* Action Dropdown */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setViewingSession(session)}>
-                          <Eye className="h-4 w-4 mr-2" /> View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setEditingSession(session)}>
-                          <Edit className="h-4 w-4 mr-2" /> Edit Session
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setChangingInstructor(session)}>
-                          <Users className="h-4 w-4 mr-2" /> Change Instructor
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setReschedulingSession(session)}>
-                          <Calendar className="h-4 w-4 mr-2" /> Reschedule
-                        </DropdownMenuItem>
+                      {/* Empty State */}
+                      {!isBooked && session.status === 'open' && (
+                        <div className="flex items-center gap-2 text-sm mt-2 text-gray-400">
+                          <UsersIcon className="w-4 h-4" />
+                          <span>Available for booking</span>
+                        </div>
+                      )}
 
-                        <DropdownMenuSeparator />
+                      {/* Capacity & Type */}
+                      <div className="mt-3 pt-3 border-t text-sm text-gray-500">
+                        <div className="flex justify-between">
+                          <span>Capacity: {session.booking_count || 0}/{session.max_capacity}</span>
+                          <span>Type: {session.session_type}</span>
+                        </div>
+                      </div>
 
-                        {session.status === 'draft' && (
-                          <DropdownMenuItem onClick={() => {
-                            openSessions(
-                              { sessionIds: [session.id] },
-                              {
-                                onSuccess: () => {
-                                  toast({
-                                    title: 'Session opened',
-                                    description: 'Session is now available for booking.',
-                                  });
-                                  refetch();
-                                },
-                              }
-                            );
-                          }}>
-                            <CheckCircle className="h-4 w-4 mr-2" /> Open for Booking
-                          </DropdownMenuItem>
-                        )}
+                      {/* Action Dropdown */}
+                      <div className="mt-3 pt-3 border-t">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="w-full">
+                              <MoreHorizontal className="h-4 w-4 mr-2" />
+                              Actions
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem onClick={() => setViewingSession(session)}>
+                              <Eye className="h-4 w-4 mr-2" /> View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setEditingSession(session)}>
+                              <Edit className="h-4 w-4 mr-2" /> Edit Session
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setChangingInstructor(session)}>
+                              <Users className="h-4 w-4 mr-2" /> Change Instructor
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setReschedulingSession(session)}>
+                              <Calendar className="h-4 w-4 mr-2" /> Reschedule
+                            </DropdownMenuItem>
 
-                        {session.status === 'open' && (
-                          <DropdownMenuItem onClick={() => setBookingSession(session)}>
-                            <UserPlus className="h-4 w-4 mr-2" /> Book Client
-                          </DropdownMenuItem>
-                        )}
+                            <DropdownMenuSeparator />
 
-                        {session.bookings?.length > 0 && (
-                          <DropdownMenuItem onClick={() => {
-                            // TODO: Implement mark completed
-                            toast({
-                              title: 'Feature coming soon',
-                              description: 'Mark as completed will be implemented soon.',
-                            });
-                          }}>
-                            <CheckCircle className="h-4 w-4 mr-2" /> Mark Completed
-                          </DropdownMenuItem>
-                        )}
+                            {session.status === 'draft' && (
+                              <DropdownMenuItem onClick={() => {
+                                openSessions(
+                                  { sessionIds: [session.id] },
+                                  {
+                                    onSuccess: () => {
+                                      toast({
+                                        title: 'Session opened',
+                                        description: 'Session is now available for booking.',
+                                      });
+                                      refetch();
+                                    },
+                                  }
+                                );
+                              }}>
+                                <CheckCircle className="h-4 w-4 mr-2" /> Open for Booking
+                              </DropdownMenuItem>
+                            )}
 
-                        <DropdownMenuSeparator />
+                            {session.status === 'open' && (
+                              <DropdownMenuItem onClick={() => setBookingSession(session)}>
+                                <UserPlus className="h-4 w-4 mr-2" /> Book Client
+                              </DropdownMenuItem>
+                            )}
 
-                        <DropdownMenuItem
-                          onClick={() => setCancellingSession(session)}
-                          className="text-orange-600"
-                        >
-                          <XCircle className="h-4 w-4 mr-2" /> Cancel
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            if (confirm('Are you sure you want to delete this session?')) {
-                              deleteSessions(
-                                { sessionIds: [session.id] },
-                                {
-                                  onSuccess: () => {
-                                    toast({
-                                      title: 'Session deleted',
-                                      description: 'Session has been deleted.',
-                                    });
-                                    refetch();
-                                  },
+                            {session.bookings?.length > 0 && (
+                              <DropdownMenuItem onClick={() => {
+                                // TODO: Implement mark completed
+                                toast({
+                                  title: 'Feature coming soon',
+                                  description: 'Mark as completed will be implemented soon.',
+                                });
+                              }}>
+                                <CheckCircle className="h-4 w-4 mr-2" /> Mark Completed
+                              </DropdownMenuItem>
+                            )}
+
+                            <DropdownMenuSeparator />
+
+                            <DropdownMenuItem
+                              onClick={() => setCancellingSession(session)}
+                              className="text-orange-600"
+                            >
+                              <XCircle className="h-4 w-4 mr-2" /> Cancel
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                if (confirm('Are you sure you want to delete this session?')) {
+                                  deleteSessions(
+                                    { sessionIds: [session.id] },
+                                    {
+                                      onSuccess: () => {
+                                        toast({
+                                          title: 'Session deleted',
+                                          description: 'Session has been deleted.',
+                                        });
+                                        refetch();
+                                      },
+                                    }
+                                  );
                                 }
-                              );
-                            }
-                          }}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                ))}
+                              }}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </Card>
+                  )
+                })}
               </div>
             )}
 

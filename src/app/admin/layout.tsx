@@ -21,7 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <ResponsiveHeader />
 
           {/* Page content with responsive padding */}
-          <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-full overflow-x-hidden">
+          <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-full overflow-x-auto">
             <ErrorBoundary>
               {children}
             </ErrorBoundary>
@@ -35,7 +35,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <ResponsiveHeader />
 
         {/* Page content with responsive padding */}
-        <main className="p-4 md:p-6 lg:p-8 max-w-full overflow-x-hidden">
+        <main className="p-4 md:p-6 lg:p-8 max-w-full overflow-x-auto">
           <ErrorBoundary>
             {children}
           </ErrorBoundary>

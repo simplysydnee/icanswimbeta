@@ -448,7 +448,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
   const handlePrint = () => window.print()
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-full mx-auto overflow-x-hidden" id="schedule-content">
+    <div className="p-4 md:p-6 lg:p-8 max-w-full mx-auto overflow-x-auto" id="schedule-content">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 print:hidden">
         <div>

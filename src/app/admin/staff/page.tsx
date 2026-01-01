@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -40,8 +40,6 @@ import {
   Eye,
   EyeOff,
   Users,
-  Briefcase,
-  Award,
   Loader2
 } from 'lucide-react'
 import Image from 'next/image'
@@ -89,6 +87,24 @@ export default function StaffManagementPage() {
   const [activeTab, setActiveTab] = useState('profile')
   const [filterActive, setFilterActive] = useState<'all' | 'active' | 'inactive'>('active')
   const [saving, setSaving] = useState(false)
+
+  // Add dialog state
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [newMember, setNewMember] = useState({
+    full_name: '',
+    email: '',
+    title: '',
+    bio: '',
+    phone: '',
+    pay_rate_cents: 2500, // Default $25/hr
+    employment_type: 'hourly',
+    staff_type: 'instructor',
+    display_on_team: true,
+    display_order: 100,
+    credentials: [] as string[]
+  })
+  const [isCreating, setIsCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
 
   // Fetch all staff members with instructor or admin role
   const fetchStaffMembers = async () => {
@@ -169,6 +185,73 @@ export default function StaffManagementPage() {
     }
   }
 
+  // Create new instructor
+  const createInstructor = async () => {
+    setIsCreating(true)
+    setCreateError(null)
+
+    try {
+      // Call the existing API endpoint
+      const response = await fetch('/api/admin/instructors/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newMember.email,
+          full_name: newMember.full_name,
+          title: newMember.title,
+          bio: newMember.bio,
+          phone: newMember.phone,
+          pay_rate_cents: newMember.pay_rate_cents,
+          employment_type: newMember.employment_type,
+          staff_type: newMember.staff_type,
+          display_on_team: newMember.display_on_team,
+          display_order: newMember.display_order,
+          credentials: newMember.credentials
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create instructor')
+      }
+
+      // Success!
+      toast({
+        title: 'Success',
+        description: `${newMember.full_name} added! Password setup email sent.`
+      })
+      fetchStaffMembers()
+      setIsAddDialogOpen(false)
+
+      // Reset form
+      setNewMember({
+        full_name: '',
+        email: '',
+        title: '',
+        bio: '',
+        phone: '',
+        pay_rate_cents: 2500,
+        employment_type: 'hourly',
+        staff_type: 'instructor',
+        display_on_team: true,
+        display_order: 100,
+        credentials: []
+      })
+
+    } catch (error) {
+      console.error('Error creating instructor:', error)
+      setCreateError(error instanceof Error ? error.message : 'Failed to create instructor')
+      toast({
+        title: 'Error',
+        description: 'Failed to add instructor',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
   // Filter staff
   const filteredStaff = staffMembers.filter(member => {
     if (filterActive === 'all') return true
@@ -207,11 +290,11 @@ export default function StaffManagementPage() {
           </p>
         </div>
         <Button
-          onClick={() => window.location.href = '/admin/instructors'}
-          className="bg-[#2a5e84] hover:bg-[#1e4a6d]"
+          onClick={() => setIsAddDialogOpen(true)}
+          className="bg-[#2a5e84] hover:bg-[#1e4a6d] text-white font-medium"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Add Instructor
+          Add Staff Member
         </Button>
       </div>
 
@@ -221,7 +304,7 @@ export default function StaffManagementPage() {
           variant={filterActive === 'active' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setFilterActive('active')}
-          className={filterActive === 'active' ? 'bg-[#2a5e84] hover:bg-[#1e4a6d]' : ''}
+          className={filterActive === 'active' ? 'bg-[#2a5e84] hover:bg-[#1e4a6d] text-white' : ''}
         >
           Active ({staffMembers.filter(m => m.is_active !== false).length})
         </Button>
@@ -229,7 +312,7 @@ export default function StaffManagementPage() {
           variant={filterActive === 'inactive' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setFilterActive('inactive')}
-          className={filterActive === 'inactive' ? 'bg-[#2a5e84] hover:bg-[#1e4a6d]' : ''}
+          className={filterActive === 'inactive' ? 'bg-[#2a5e84] hover:bg-[#1e4a6d] text-white' : ''}
         >
           Inactive ({staffMembers.filter(m => m.is_active === false).length})
         </Button>
@@ -237,7 +320,7 @@ export default function StaffManagementPage() {
           variant={filterActive === 'all' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setFilterActive('all')}
-          className={filterActive === 'all' ? 'bg-[#2a5e84] hover:bg-[#1e4a6d]' : ''}
+          className={filterActive === 'all' ? 'bg-[#2a5e84] hover:bg-[#1e4a6d] text-white' : ''}
         >
           All ({staffMembers.length})
         </Button>
@@ -251,11 +334,11 @@ export default function StaffManagementPage() {
               <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p>No staff members found</p>
               <Button
-                onClick={() => window.location.href = '/admin/instructors'}
+                onClick={() => setIsAddDialogOpen(true)}
                 variant="outline"
                 className="mt-4"
               >
-                Add Your First Instructor
+                Add Your First Staff Member
               </Button>
             </div>
           ) : (
@@ -459,7 +542,7 @@ export default function StaffManagementPage() {
                 </div>
 
                 <Button
-                  className="w-full bg-[#2a5e84] hover:bg-[#1e4a6d]"
+                  className="w-full bg-[#2a5e84] hover:bg-[#1e4a6d] text-white"
                   onClick={() => updateStaffMember({
                     id: editingMember.id,
                     full_name: editingMember.full_name,
@@ -524,7 +607,7 @@ export default function StaffManagementPage() {
                 </div>
 
                 <Button
-                  className="w-full bg-[#2a5e84] hover:bg-[#1e4a6d]"
+                  className="w-full bg-[#2a5e84] hover:bg-[#1e4a6d] text-white"
                   onClick={() => updateStaffMember({
                     id: editingMember.id,
                     pay_rate_cents: editingMember.pay_rate_cents,
@@ -613,7 +696,7 @@ export default function StaffManagementPage() {
                 </div>
 
                 <Button
-                  className="w-full bg-[#2a5e84] hover:bg-[#1e4a6d]"
+                  className="w-full bg-[#2a5e84] hover:bg-[#1e4a6d] text-white"
                   onClick={() => updateStaffMember({
                     id: editingMember.id,
                     display_on_team: editingMember.display_on_team,
@@ -629,6 +712,218 @@ export default function StaffManagementPage() {
               </TabsContent>
             </Tabs>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Staff Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Staff Member</DialogTitle>
+          </DialogHeader>
+
+          <Tabs defaultValue="profile">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="profile" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Profile
+              </TabsTrigger>
+              <TabsTrigger value="payroll" className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4" />
+                Payroll
+              </TabsTrigger>
+              <TabsTrigger value="display" className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Team Display
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Profile Tab */}
+            <TabsContent value="profile" className="space-y-4 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="new_full_name">Full Name *</Label>
+                  <Input
+                    id="new_full_name"
+                    value={newMember.full_name}
+                    onChange={(e) => setNewMember({ ...newMember, full_name: e.target.value })}
+                    placeholder="John Smith"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="new_email">Email *</Label>
+                  <Input
+                    id="new_email"
+                    type="email"
+                    value={newMember.email}
+                    onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
+                    placeholder="john@example.com"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="new_title">Title</Label>
+                  <Input
+                    id="new_title"
+                    value={newMember.title}
+                    onChange={(e) => setNewMember({ ...newMember, title: e.target.value })}
+                    placeholder="e.g., Lead Instructor"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="new_phone">Phone</Label>
+                  <Input
+                    id="new_phone"
+                    value={newMember.phone}
+                    onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
+                    placeholder="(209) 555-1234"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="new_bio">Bio</Label>
+                <Textarea
+                  id="new_bio"
+                  value={newMember.bio}
+                  onChange={(e) => setNewMember({ ...newMember, bio: e.target.value })}
+                  rows={3}
+                  placeholder="Write a short bio..."
+                />
+              </div>
+
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> A password setup email will be sent to the instructor's email address.
+                </p>
+              </div>
+            </TabsContent>
+
+            {/* Payroll Tab */}
+            <TabsContent value="payroll" className="space-y-4 mt-4">
+              <div>
+                <Label htmlFor="new_pay_rate">Hourly Rate ($)</Label>
+                <Input
+                  id="new_pay_rate"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={newMember.pay_rate_cents / 100}
+                  onChange={(e) => setNewMember({
+                    ...newMember,
+                    pay_rate_cents: Math.round(parseFloat(e.target.value || '0') * 100)
+                  })}
+                />
+                <p className="text-xs text-gray-500 mt-1">Default: $25.00/hr</p>
+              </div>
+
+              <div>
+                <Label htmlFor="new_employment_type">Employment Type</Label>
+                <Select
+                  value={newMember.employment_type}
+                  onValueChange={(value) => setNewMember({ ...newMember, employment_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hourly">Hourly</SelectItem>
+                    <SelectItem value="salary">Salary</SelectItem>
+                    <SelectItem value="contractor">Contractor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </TabsContent>
+
+            {/* Team Display Tab */}
+            <TabsContent value="display" className="space-y-4 mt-4">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <Label>Show on Public Team Page</Label>
+                  <p className="text-sm text-gray-500">Display on /team page</p>
+                </div>
+                <Switch
+                  checked={newMember.display_on_team}
+                  onCheckedChange={(checked) => setNewMember({ ...newMember, display_on_team: checked })}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="new_display_order">Display Order</Label>
+                <Input
+                  id="new_display_order"
+                  type="number"
+                  min="1"
+                  value={newMember.display_order}
+                  onChange={(e) => setNewMember({
+                    ...newMember,
+                    display_order: parseInt(e.target.value) || 100
+                  })}
+                />
+                <p className="text-xs text-gray-500 mt-1">Lower numbers appear first</p>
+              </div>
+
+              <div>
+                <Label htmlFor="new_staff_type">Staff Type</Label>
+                <Select
+                  value={newMember.staff_type}
+                  onValueChange={(value) => setNewMember({ ...newMember, staff_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="owner">Owner</SelectItem>
+                    <SelectItem value="instructor">Instructor</SelectItem>
+                    <SelectItem value="support">Support Staff</SelectItem>
+                    <SelectItem value="admin">Administrator</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="new_credentials">Certifications</Label>
+                <Input
+                  id="new_credentials"
+                  value={newMember.credentials.join(', ')}
+                  onChange={(e) => setNewMember({
+                    ...newMember,
+                    credentials: e.target.value ? e.target.value.split(',').map(c => c.trim()).filter(Boolean) : []
+                  })}
+                  placeholder="Swim Angelfish, CPR/First Aid, WSI"
+                />
+                <p className="text-xs text-gray-500 mt-1">Separate with commas</p>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          {createError && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800">{createError}</p>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={createInstructor}
+              disabled={isCreating || !newMember.full_name || !newMember.email}
+              className="bg-[#2a5e84] hover:bg-[#1e4a6d] text-white"
+            >
+              {isCreating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : 'Add Staff Member'}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -35,7 +35,20 @@ export async function POST(request: NextRequest) {
 
     // 2. Get request body
     const body = await request.json()
-    const { email, full_name, title, bio, phone, avatar_url } = body
+    const {
+      email,
+      full_name,
+      title,
+      bio,
+      phone,
+      pay_rate_cents = 2500,
+      employment_type = 'hourly',
+      staff_type = 'instructor',
+      display_on_team = true,
+      display_order = 100,
+      credentials = [],
+      avatar_url
+    } = body
 
     if (!email || !full_name) {
       return NextResponse.json({ error: 'Email and full name are required' }, { status: 400 })
@@ -70,6 +83,12 @@ export async function POST(request: NextRequest) {
         title: title || null,
         bio: bio || null,
         phone: phone || null,
+        pay_rate_cents,
+        employment_type,
+        staff_type,
+        display_on_team,
+        display_order,
+        credentials,
         avatar_url: avatar_url || null,
         is_active: true
       })
@@ -83,12 +102,13 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    // 6. Assign instructor role
+    // 6. Assign role based on staff_type
+    const role = staff_type === 'admin' ? 'admin' : 'instructor'
     const { error: roleError } = await supabaseAdmin
       .from('user_roles')
       .insert({
         user_id: newUser.user.id,
-        role: 'instructor'
+        role
       })
 
     if (roleError) {
