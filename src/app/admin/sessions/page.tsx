@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertCircle, Loader2, Calendar, FilterX, Plus, MoreHorizontal, Eye, Edit, UserPlus, Users, XCircle, CheckCircle, Trash2, Download, X, User, Users as UsersIcon, CalendarCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAllSessions, useOpenSessions, useDeleteSessions, useInstructors } from '@/hooks';
@@ -771,184 +772,198 @@ function AdminSessionsContent() {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredSessions.map((session) => {
-                  const booking = session.bookings?.[0] // Get first booking if exists
-                  const isBooked = booking && booking.status !== 'cancelled'
-
-                  return (
-                    <Card key={session.id} className="p-4 hover:shadow-md transition-shadow relative">
-                      {/* Checkbox for selection */}
-                      <div className="absolute top-2 left-2">
+              <div className="rounded-md border overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">
                         <Checkbox
-                          checked={selectedSessionIds.has(session.id)}
-                          onCheckedChange={(checked) => handleSelectSession(session.id, !!checked)}
-                          aria-label={`Select session ${session.id}`}
+                          checked={selectedSessionIds.size === filteredSessions.length && filteredSessions.length > 0}
+                          onCheckedChange={handleSelectAll}
+                          aria-label="Select all sessions"
                         />
-                      </div>
+                      </TableHead>
+                      <TableHead>Date & Time</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Instructor</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Capacity</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredSessions.map((session) => {
+                      const booking = session.bookings?.[0] // Get first booking if exists
+                      const isBooked = booking && booking.status !== 'cancelled'
+                      const swimmer = booking?.swimmer
 
-                      {/* Status Badges */}
-                      <div className="flex items-center justify-between mb-3">
-                        <Badge className={getStatusColor(session.status)}>
-                          {session.status.charAt(0).toUpperCase() + session.status.slice(1).replace('_', '-')}
-                        </Badge>
-                        {isBooked && (
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                            Booked
-                          </Badge>
-                        )}
-                      </div>
+                      return (
+                        <TableRow
+                          key={session.id}
+                          className={selectedSessionIds.has(session.id) ? 'bg-muted/50' : ''}
+                        >
+                          {/* Checkbox */}
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedSessionIds.has(session.id)}
+                              onCheckedChange={(checked) => handleSelectSession(session.id, !!checked)}
+                              aria-label={`Select session ${session.id}`}
+                            />
+                          </TableCell>
 
-                      {/* Date & Time */}
-                      <p className="font-medium text-lg">
-                        {format(new Date(session.start_time), 'MMM d, yyyy')}
-                      </p>
-                      <p className="text-sm text-gray-600 mb-3">
-                        {format(new Date(session.start_time), 'h:mm a')} - {format(new Date(session.end_time), 'h:mm a')}
-                      </p>
+                          {/* Date & Time */}
+                          <TableCell>
+                            <div className="font-medium">
+                              {format(new Date(session.start_time), 'EEE, MMM d, yyyy')}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {format(new Date(session.start_time), 'h:mm a')} - {format(new Date(session.end_time), 'h:mm a')}
+                            </div>
+                          </TableCell>
 
-                      {/* Location */}
-                      <div className="mb-3">
-                        <Badge variant="outline" className="text-gray-600">
-                          {session.location}
-                        </Badge>
-                      </div>
+                          {/* Location */}
+                          <TableCell>
+                            <span className="text-sm">{session.location || '-'}</span>
+                          </TableCell>
 
-                      {/* Instructor */}
-                      <div className="mt-3 pt-3 border-t">
-                        <div className="flex items-center gap-2 text-sm">
-                          <User className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-600">Instructor:</span>
-                          <span className="font-medium">
-                            {session.instructor_name || 'Unassigned'}
-                          </span>
-                        </div>
-                      </div>
+                          {/* Instructor */}
+                          <TableCell>
+                            <span className="font-medium">
+                              {session.instructor_name || 'Unassigned'}
+                            </span>
+                          </TableCell>
 
-                      {/* Client (if booked) */}
-                      {isBooked && booking.swimmer && (
-                        <div className="flex items-center gap-2 text-sm mt-2">
-                          <UsersIcon className="w-4 h-4 text-cyan-500" />
-                          <span className="text-gray-600">Client:</span>
-                          <span className="font-medium text-cyan-700">
-                            {booking.swimmer.first_name} {booking.swimmer.last_name}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Empty State */}
-                      {!isBooked && session.status === 'open' && (
-                        <div className="flex items-center gap-2 text-sm mt-2 text-gray-400">
-                          <UsersIcon className="w-4 h-4" />
-                          <span>Available for booking</span>
-                        </div>
-                      )}
-
-                      {/* Capacity & Type */}
-                      <div className="mt-3 pt-3 border-t text-sm text-gray-500">
-                        <div className="flex justify-between">
-                          <span>Capacity: {session.booking_count || 0}/{session.max_capacity}</span>
-                          <span>Type: {session.session_type}</span>
-                        </div>
-                      </div>
-
-                      {/* Action Dropdown */}
-                      <div className="mt-3 pt-3 border-t">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="w-full">
-                              <MoreHorizontal className="h-4 w-4 mr-2" />
-                              Actions
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem onClick={() => setViewingSession(session)}>
-                              <Eye className="h-4 w-4 mr-2" /> View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setEditingSession(session)}>
-                              <Edit className="h-4 w-4 mr-2" /> Edit Session
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setChangingInstructor(session)}>
-                              <Users className="h-4 w-4 mr-2" /> Change Instructor
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setReschedulingSession(session)}>
-                              <Calendar className="h-4 w-4 mr-2" /> Reschedule
-                            </DropdownMenuItem>
-
-                            <DropdownMenuSeparator />
-
-                            {session.status === 'draft' && (
-                              <DropdownMenuItem onClick={() => {
-                                openSessions(
-                                  { sessionIds: [session.id] },
-                                  {
-                                    onSuccess: () => {
-                                      toast({
-                                        title: 'Session opened',
-                                        description: 'Session is now available for booking.',
-                                      });
-                                      refetch();
-                                    },
-                                  }
-                                );
-                              }}>
-                                <CheckCircle className="h-4 w-4 mr-2" /> Open for Booking
-                              </DropdownMenuItem>
+                          {/* Client */}
+                          <TableCell>
+                            {isBooked && swimmer ? (
+                              <span className="font-medium text-cyan-700">
+                                {swimmer.first_name} {swimmer.last_name}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
                             )}
+                          </TableCell>
 
-                            {session.status === 'open' && (
-                              <DropdownMenuItem onClick={() => setBookingSession(session)}>
-                                <UserPlus className="h-4 w-4 mr-2" /> Book Client
-                              </DropdownMenuItem>
-                            )}
+                          {/* Status */}
+                          <TableCell>
+                            <Badge className={getStatusColor(session.status)}>
+                              {session.status.charAt(0).toUpperCase() + session.status.slice(1).replace('_', '-')}
+                            </Badge>
+                          </TableCell>
 
-                            {session.bookings?.length > 0 && (
-                              <DropdownMenuItem onClick={() => {
-                                // TODO: Implement mark completed
-                                toast({
-                                  title: 'Feature coming soon',
-                                  description: 'Mark as completed will be implemented soon.',
-                                });
-                              }}>
-                                <CheckCircle className="h-4 w-4 mr-2" /> Mark Completed
-                              </DropdownMenuItem>
-                            )}
+                          {/* Capacity */}
+                          <TableCell>
+                            <span className="text-sm">
+                              {session.booking_count || 0}/{session.max_capacity || 1}
+                            </span>
+                          </TableCell>
 
-                            <DropdownMenuSeparator />
+                          {/* Actions */}
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => setViewingSession(session)}>
+                                  <Eye className="h-4 w-4 mr-2" /> View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setEditingSession(session)}>
+                                  <Edit className="h-4 w-4 mr-2" /> Edit Session
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setChangingInstructor(session)}>
+                                  <Users className="h-4 w-4 mr-2" /> Change Instructor
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setReschedulingSession(session)}>
+                                  <Calendar className="h-4 w-4 mr-2" /> Reschedule
+                                </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => setCancellingSession(session)}
-                              className="text-orange-600"
-                            >
-                              <XCircle className="h-4 w-4 mr-2" /> Cancel
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                if (confirm('Are you sure you want to delete this session?')) {
-                                  deleteSessions(
-                                    { sessionIds: [session.id] },
-                                    {
-                                      onSuccess: () => {
-                                        toast({
-                                          title: 'Session deleted',
-                                          description: 'Session has been deleted.',
-                                        });
-                                        refetch();
-                                      },
+                                <DropdownMenuSeparator />
+
+                                {session.status === 'draft' && (
+                                  <DropdownMenuItem onClick={() => {
+                                    openSessions(
+                                      { sessionIds: [session.id] },
+                                      {
+                                        onSuccess: () => {
+                                          toast({
+                                            title: 'Session opened',
+                                            description: 'Session is now available for booking.',
+                                          });
+                                          refetch();
+                                        },
+                                      }
+                                    );
+                                  }}>
+                                    <CheckCircle className="h-4 w-4 mr-2" /> Open for Booking
+                                  </DropdownMenuItem>
+                                )}
+
+                                {session.status === 'open' && (
+                                  <DropdownMenuItem onClick={() => setBookingSession(session)}>
+                                    <UserPlus className="h-4 w-4 mr-2" /> Book Client
+                                  </DropdownMenuItem>
+                                )}
+
+                                {session.bookings?.length > 0 && (
+                                  <DropdownMenuItem onClick={() => {
+                                    // TODO: Implement mark completed
+                                    toast({
+                                      title: 'Feature coming soon',
+                                      description: 'Mark as completed will be implemented soon.',
+                                    });
+                                  }}>
+                                    <CheckCircle className="h-4 w-4 mr-2" /> Mark Completed
+                                  </DropdownMenuItem>
+                                )}
+
+                                <DropdownMenuSeparator />
+
+                                <DropdownMenuItem
+                                  onClick={() => setCancellingSession(session)}
+                                  className="text-orange-600"
+                                >
+                                  <XCircle className="h-4 w-4 mr-2" /> Cancel
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    if (confirm('Are you sure you want to delete this session?')) {
+                                      deleteSessions(
+                                        { sessionIds: [session.id] },
+                                        {
+                                          onSuccess: () => {
+                                            toast({
+                                              title: 'Session deleted',
+                                              description: 'Session has been deleted.',
+                                            });
+                                            refetch();
+                                          },
+                                        }
+                                      );
                                     }
-                                  );
-                                }
-                              }}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </Card>
-                  )
-                })}
+                                  }}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" /> Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                    {filteredSessions.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                          No sessions found
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             )}
 
