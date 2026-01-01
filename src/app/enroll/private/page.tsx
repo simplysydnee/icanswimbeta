@@ -138,7 +138,7 @@ export default function PrivatePayEnrollmentPage() {
   const [currentSection, setCurrentSection] = useState(1);
   const [privatePayFundingSourceId, setPrivatePayFundingSourceId] = useState<string | null>(null);
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, profile } = useAuth();
   const [queryParams, setQueryParams] = useState<{ firstName?: string; lastName?: string; dob?: string }>({});
 
   // Read query parameters on component mount

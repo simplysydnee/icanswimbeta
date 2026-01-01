@@ -72,7 +72,7 @@ export function SwimmerAnalyticsModal({ open, onOpenChange }: SwimmerAnalyticsMo
             Swimmer Analytics
           </DialogTitle>
           <DialogDescription>
-            View analytics and performance metrics for {swimmerName}.
+            View analytics and performance metrics for all swimmers.
           </DialogDescription>
         </DialogHeader>
 

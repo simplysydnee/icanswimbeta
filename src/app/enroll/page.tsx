@@ -49,6 +49,7 @@ export default function EnrollmentPage() {
           .from('funding_sources')
           .select('id, name, short_name')
           .eq('is_active', true)
+          .eq('type', 'regional_center')  // Only show regional centers
           .order('name');
 
         if (error) throw error;
@@ -291,6 +292,9 @@ export default function EnrollmentPage() {
                     // Clear dependent fields when payment type changes
                     if (value !== 'regional_center') {
                       handleInputChange('selectedFundingSourceId', '');
+                      handleInputChange('coordinatorName', '');
+                      handleInputChange('coordinatorEmail', '');
+                      handleInputChange('coordinatorPhone', '');
                     }
                   }}
                   className="space-y-3"
@@ -298,7 +302,6 @@ export default function EnrollmentPage() {
                   {/* Option 1: Private Pay */}
                   <div
                     className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.paymentType === 'private_pay' ? 'border-[#2a5e84] bg-[#f0f7ff]' : 'border-gray-200 hover:border-[#2a5e84]/50 hover:bg-[#f0f7ff]/50'}`}
-                    onClick={() => handleInputChange('paymentType', 'private_pay')}
                   >
                     <RadioGroupItem value="private_pay" id="private_pay" />
                     <Label htmlFor="private_pay" className="cursor-pointer flex-1">
@@ -312,7 +315,6 @@ export default function EnrollmentPage() {
                   {/* Option 2: Regional Center */}
                   <div
                     className={`flex items-start space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.paymentType === 'regional_center' ? 'border-[#2a5e84] bg-[#f0f7ff]' : 'border-gray-200 hover:border-[#2a5e84]/50 hover:bg-[#f0f7ff]/50'}`}
-                    onClick={() => handleInputChange('paymentType', 'regional_center')}
                   >
                     <RadioGroupItem value="regional_center" id="regional_center" className="mt-0.5" />
                     <div className="flex-1">
@@ -325,35 +327,81 @@ export default function EnrollmentPage() {
 
                       {/* Funding Source Dropdown - Only shown when Regional Center selected */}
                       {formData.paymentType === 'regional_center' && (
-                        <div className="mt-4" onClick={(e) => e.stopPropagation()}>
-                          <Label htmlFor="funding_source_select" className="text-sm font-medium">
-                            Select your Regional Center <span className="text-red-500">*</span>
-                          </Label>
-                          {fundingSourcesLoading ? (
-                            <div className="mt-1.5 p-3 border rounded-md bg-gray-50">
-                              <p className="text-sm text-gray-600">Loading Regional Centers...</p>
+                        <div className="mt-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+                          <div>
+                            <Label htmlFor="funding_source_select" className="text-sm font-medium">
+                              Select your Regional Center <span className="text-red-500">*</span>
+                            </Label>
+                            {fundingSourcesLoading ? (
+                              <div className="mt-1.5 p-3 border rounded-md bg-gray-50">
+                                <p className="text-sm text-gray-600">Loading Regional Centers...</p>
+                              </div>
+                            ) : fundingSources.length === 0 ? (
+                              <div className="mt-1.5 p-3 border rounded-md bg-gray-50">
+                                <p className="text-sm text-gray-600">No Regional Centers available</p>
+                              </div>
+                            ) : (
+                              <Select
+                                value={formData.selectedFundingSourceId || ''}
+                                onValueChange={(value) => handleInputChange('selectedFundingSourceId', value)}
+                              >
+                                <SelectTrigger className="mt-1.5">
+                                  <SelectValue placeholder="Choose your Regional Center..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {fundingSources.map((source) => (
+                                    <SelectItem key={source.id} value={source.id}>
+                                      {source.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </div>
+
+                          {/* Coordinator Information */}
+                          <div className="space-y-3">
+                            <div>
+                              <Label htmlFor="coordinatorName" className="text-sm font-medium">
+                                Coordinator Name <span className="text-red-500">*</span>
+                              </Label>
+                              <Input
+                                id="coordinatorName"
+                                placeholder="Coordinator's full name"
+                                value={formData.coordinatorName}
+                                onChange={(e) => handleInputChange('coordinatorName', e.target.value)}
+                                className="mt-1.5"
+                              />
                             </div>
-                          ) : fundingSources.length === 0 ? (
-                            <div className="mt-1.5 p-3 border rounded-md bg-gray-50">
-                              <p className="text-sm text-gray-600">No Regional Centers available</p>
+
+                            <div>
+                              <Label htmlFor="coordinatorEmail" className="text-sm font-medium">
+                                Coordinator Email <span className="text-red-500">*</span>
+                              </Label>
+                              <Input
+                                id="coordinatorEmail"
+                                type="email"
+                                placeholder="coordinator@regionalcenter.org"
+                                value={formData.coordinatorEmail}
+                                onChange={(e) => handleInputChange('coordinatorEmail', e.target.value)}
+                                className="mt-1.5"
+                              />
                             </div>
-                          ) : (
-                            <Select
-                              value={formData.selectedFundingSourceId || ''}
-                              onValueChange={(value) => handleInputChange('selectedFundingSourceId', value)}
-                            >
-                              <SelectTrigger className="mt-1.5">
-                                <SelectValue placeholder="Choose your Regional Center..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {fundingSources.map((source) => (
-                                  <SelectItem key={source.id} value={source.id}>
-                                    {source.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
+
+                            <div>
+                              <Label htmlFor="coordinatorPhone" className="text-sm font-medium">
+                                Coordinator Phone (Optional)
+                              </Label>
+                              <Input
+                                id="coordinatorPhone"
+                                type="tel"
+                                placeholder="(555) 123-4567"
+                                value={formData.coordinatorPhone}
+                                onChange={(e) => handleInputChange('coordinatorPhone', e.target.value)}
+                                className="mt-1.5"
+                              />
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
