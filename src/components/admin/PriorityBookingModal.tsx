@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -141,6 +141,9 @@ export function PriorityBookingModal({ open, onOpenChange, swimmer, onSave }: Pr
             <Star className="h-5 w-5 text-yellow-500" />
             Priority Booking: {swimmer.first_name} {swimmer.last_name}
           </DialogTitle>
+          <DialogDescription>
+            Configure priority booking settings for this swimmer.
+          </DialogDescription>
         </DialogHeader>
 
         {loading ? (

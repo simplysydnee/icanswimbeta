@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Filter, X, CheckSquare, AlertCircle, Clock, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -301,6 +301,9 @@ export default function TasksPage() {
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Create New Task</DialogTitle>
+                <DialogDescription>
+                  Create a new task and assign it to a user or swimmer.
+                </DialogDescription>
               </DialogHeader>
               <CreateTaskModal
                 users={users}
@@ -576,6 +579,9 @@ export default function TasksPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Task</DialogTitle>
+            <DialogDescription>
+              Edit task details and assignment.
+            </DialogDescription>
           </DialogHeader>
           {selectedTask && (
             <EditTaskModal

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -71,6 +71,9 @@ export function SwimmerAnalyticsModal({ open, onOpenChange }: SwimmerAnalyticsMo
             <TrendingUp className="h-5 w-5" />
             Swimmer Analytics
           </DialogTitle>
+          <DialogDescription>
+            View analytics and performance metrics for {swimmerName}.
+          </DialogDescription>
         </DialogHeader>
 
         {loading && (
