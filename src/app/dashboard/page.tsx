@@ -51,7 +51,7 @@ export default function DashboardRedirect() {
       } else if (role === 'instructor') {
         console.log('Dashboard: Redirecting instructor to /instructor');
         router.replace('/instructor');
-      } else if (role === 'coordinator' || role === 'vmrc_coordinator') {
+      } else if (role === 'coordinator') {
         console.log('Dashboard: Redirecting coordinator to /coordinator/pos');
         router.replace('/coordinator/pos');
       } else if (role === 'parent') {

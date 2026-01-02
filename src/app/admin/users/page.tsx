@@ -518,7 +518,7 @@ export default function UsersPage() {
                             {allSwimmers.filter(s => s.parent_id === user.id).length} swimmers
                           </Badge>
                         )}
-                        {(user.role === 'coordinator' || user.role === 'vmrc_coordinator') && (
+                        {user.role === 'coordinator' && (
                           <Badge variant="secondary" className="text-xs">
                             {allSwimmers.filter(s => s.coordinator_id === user.id).length} clients
                           </Badge>
@@ -557,8 +557,8 @@ export default function UsersPage() {
                             </DropdownMenuItem>
                           )}
                           {(() => {
-                            console.log('Checking role for Transfer Client:', user.email, 'role:', user.role, 'is coordinator?', user.role === 'coordinator' || user.role === 'vmrc_coordinator');
-                            return (user.role === 'coordinator' || user.role === 'vmrc_coordinator') && (
+                            console.log('Checking role for Transfer Client:', user.email, 'role:', user.role, 'is coordinator?', user.role === 'coordinator');
+                            return user.role === 'coordinator' && (
                               <DropdownMenuItem onClick={() => {
                                 console.log('Transfer Client clicked for coordinator:', user.email, 'role:', user.role);
                                 setSelectedUser(user);
@@ -875,7 +875,7 @@ export default function UsersPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {(() => {
-                        const coordinators = users.filter(u => (u.role === 'coordinator' || u.role === 'vmrc_coordinator') && u.id !== selectedUser?.id);
+                        const coordinators = users.filter(u => u.role === 'coordinator' && u.id !== selectedUser?.id);
                         console.log('Available coordinators for transfer:', coordinators.length, 'selectedUser:', selectedUser?.email);
                         return coordinators.map(coord => (
                           <SelectItem key={coord.id} value={coord.email}>
