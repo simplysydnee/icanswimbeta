@@ -16,10 +16,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User email not found' }, { status: 400 });
     }
 
-    // Note: Swimmers table doesn't have parent_email column
-    // Parent linking happens through parent_invitations table
-    const swimmers: any[] = [];
-
     // Find pending invitations for this email with swimmer details
     const { data: invitations, error: invitationsError } = await supabase
       .from('parent_invitations')
@@ -35,29 +31,6 @@ export async function POST(request: NextRequest) {
       swimmers: [] as Array<{id: string, name: string}>,
       errors: [] as Array<string>,
     };
-
-    // Link swimmers from pending invitations
-    // Note: Direct email matching on swimmers table is not possible since swimmers don't have parent_email column
-    for (const swimmer of swimmers || []) {
-      try {
-        const { error: updateError } = await supabase
-          .from('swimmers')
-          .update({ parent_id: user.id })
-          .eq('id', swimmer.id);
-
-        if (updateError) {
-          results.errors.push(`Failed to link swimmer ${swimmer.first_name} ${swimmer.last_name}: ${updateError.message}`);
-        } else {
-          results.swimmers_linked++;
-          results.swimmers.push({
-            id: swimmer.id,
-            name: `${swimmer.first_name} ${swimmer.last_name}`
-          });
-        }
-      } catch (error) {
-        results.errors.push(`Error linking swimmer ${swimmer.first_name} ${swimmer.last_name}: ${error}`);
-      }
-    }
 
     // Claim pending invitations and link swimmers
     for (const invitation of invitations || []) {

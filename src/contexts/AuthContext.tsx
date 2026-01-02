@@ -443,15 +443,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Auto-link swimmers for this email
       if (data.user) {
         try {
+          // Wait a bit longer to ensure session is fully established
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
           const response = await fetch('/api/auth/link-swimmers', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
+            credentials: 'include', // Ensure cookies are sent
           });
 
           if (!response.ok) {
-            console.error('Failed to auto-link swimmers:', await response.text());
+            const errorText = await response.text();
+            console.error('Failed to auto-link swimmers:', errorText);
+            // Check if it's a 404 error
+            if (response.status === 404) {
+              console.warn('API route /api/auth/link-swimmers returned 404. The route might not exist or there might be a routing issue.');
+            }
             // Continue anyway - signup succeeded, just auto-link failed
           } else {
             const result = await response.json();

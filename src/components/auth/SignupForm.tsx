@@ -37,12 +37,17 @@ export default function SignupForm() {
     const redirectParam = searchParams.get('redirect')
 
     if (emailParamValue) {
-      setEmailParam(decodeURIComponent(emailParamValue))
-      setFormData(prev => ({ ...prev, email: decodeURIComponent(emailParamValue) }))
-      setIsFromReferral(true)
+      const decodedEmail = decodeURIComponent(emailParamValue)
+      setEmailParam(decodedEmail)
+      setFormData(prev => ({ ...prev, email: decodedEmail }))
+      // Only set as referral if there's also a child parameter
+      // This allows email pre-fill without locking the field
+      setIsFromReferral(!!childParam)
     }
     if (childParam) {
       setChildName(decodeURIComponent(childParam))
+      // If there's a child parameter, it's definitely a referral
+      setIsFromReferral(true)
     }
     if (redirectParam) {
       setRedirectUrl(decodeURIComponent(redirectParam))
