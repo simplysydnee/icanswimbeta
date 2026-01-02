@@ -25,6 +25,19 @@ html, body {
     min-height: 44px;
   }
 
+  /* Ensure radio buttons and checkboxes maintain their circular/square shape */
+  input[type="radio"],
+  input[type="checkbox"] {
+    min-height: auto;
+    min-width: auto;
+  }
+
+  /* Make date inputs more mobile-friendly */
+  input[type="date"] {
+    min-height: 44px;
+    max-width: 100%;
+  }
+
   /* Larger text for readability */
   body {
     font-size: 16px;

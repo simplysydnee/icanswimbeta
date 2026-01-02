@@ -195,7 +195,7 @@ function ParentFundingReferralContent() {
 
   if (submitResult?.success) {
     return (
-      <div className="container max-w-2xl py-8">
+      <div className="container max-w-2xl py-8 px-4 sm:px-6 overflow-x-hidden">
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl text-green-600">Request Submitted!</CardTitle>
@@ -227,7 +227,7 @@ function ParentFundingReferralContent() {
   // Show loading while checking auth
   if (authLoading) {
     return (
-      <div className="container max-w-2xl py-8 flex justify-center">
+      <div className="container max-w-2xl py-8 px-4 sm:px-6 overflow-x-hidden flex justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
@@ -238,7 +238,7 @@ function ParentFundingReferralContent() {
     : '';
 
   return (
-    <div className="container max-w-2xl py-8">
+    <div className="container max-w-2xl py-8 px-4 sm:px-6 overflow-x-hidden">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl text-[#2a5e84]">Funding Source Referral Request</CardTitle>
@@ -293,7 +293,7 @@ function ParentFundingReferralContent() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="parent_name">Your Full Name *</Label>
                   <Input
@@ -353,7 +353,7 @@ function ParentFundingReferralContent() {
                 <h3 className="text-lg font-semibold">Coordinator Information</h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="coordinator_name">Coordinator Name *</Label>
                   <Input
@@ -425,7 +425,7 @@ function ParentFundingReferralContent() {
 export default function ParentFundingReferralPage() {
   return (
     <Suspense fallback={
-      <div className="container max-w-2xl py-8 flex justify-center">
+      <div className="container max-w-2xl py-8 px-4 sm:px-6 overflow-x-hidden flex justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     }>

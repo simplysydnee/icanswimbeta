@@ -39,30 +39,30 @@ const privateEnrollmentSchema = z.object({
   child_gender: z.string().min(1, 'Gender is required'),
 
   // Section 3: Medical & Safety Information
-  has_allergies: z.enum(['yes', 'no']),
+  has_allergies: z.enum(['yes', 'no']).optional(),
   allergies_description: z.string().optional(),
-  has_medical_conditions: z.enum(['yes', 'no']),
+  has_medical_conditions: z.enum(['yes', 'no']).optional(),
   medical_conditions_description: z.string().optional(),
   diagnosis: z.array(z.string()).optional(),
-  history_of_seizures: z.enum(['yes', 'no']),
-  toilet_trained: z.enum(['yes', 'no', 'sometimes']),
-  non_ambulatory: z.enum(['yes', 'no']),
+  history_of_seizures: z.enum(['yes', 'no']).optional(),
+  toilet_trained: z.enum(['yes', 'no', 'sometimes']).optional(),
+  non_ambulatory: z.enum(['yes', 'no']).optional(),
 
   // Section 4: Behavioral Information
-  self_injurious_behavior: z.enum(['yes', 'no']),
+  self_injurious_behavior: z.enum(['yes', 'no']).optional(),
   self_injurious_description: z.string().optional(),
-  aggressive_behavior: z.enum(['yes', 'no']),
+  aggressive_behavior: z.enum(['yes', 'no']).optional(),
   aggressive_behavior_description: z.string().optional(),
-  elopement_history: z.enum(['yes', 'no']),
+  elopement_history: z.enum(['yes', 'no']).optional(),
   elopement_description: z.string().optional(),
-  has_behavior_plan: z.enum(['yes', 'no']),
+  has_behavior_plan: z.enum(['yes', 'no']).optional(),
   // Note: behavior_plan_description field doesn't exist in database
   // behavior_plan_description: z.string().optional(),
 
   // Section 5: Swimming Background
-  previous_swim_lessons: z.enum(['yes', 'no']),
+  previous_swim_lessons: z.enum(['yes', 'no']).optional(),
   previous_swim_experience: z.string().optional(),
-  comfortable_in_water: z.enum(['very', 'somewhat', 'not_at_all']),
+  comfortable_in_water: z.enum(['very', 'somewhat', 'not_at_all']).optional(),
   swim_goals: z.array(z.string()).min(1, 'At least one swim goal is required'),
 
   // Section 6: Scheduling & Availability
@@ -225,17 +225,17 @@ export default function PrivatePayEnrollmentPage() {
       child_last_name: queryParams.lastName || '',
       child_date_of_birth: queryParams.dob || '',
       child_gender: '',
-      has_allergies: 'no',
-      has_medical_conditions: 'no',
-      history_of_seizures: 'no',
-      toilet_trained: 'yes',
-      non_ambulatory: 'no',
-      self_injurious_behavior: 'no',
-      aggressive_behavior: 'no',
-      elopement_history: 'no',
-      has_behavior_plan: 'no',
-      previous_swim_lessons: 'no',
-      comfortable_in_water: 'somewhat',
+      has_allergies: undefined,
+      has_medical_conditions: undefined,
+      history_of_seizures: undefined,
+      toilet_trained: undefined,
+      non_ambulatory: undefined,
+      self_injurious_behavior: undefined,
+      aggressive_behavior: undefined,
+      elopement_history: undefined,
+      has_behavior_plan: undefined,
+      previous_swim_lessons: undefined,
+      comfortable_in_water: undefined,
       flexible_swimmer: false,
       electronic_consent: false,
       signature_timestamp: '',
@@ -395,29 +395,29 @@ export default function PrivatePayEnrollmentPage() {
         client_number: clientNumber,
 
         // Medical/Safety
-        has_allergies: data.has_allergies === 'yes',
+        has_allergies: data.has_allergies ? data.has_allergies === 'yes' : null,
         allergies_description: data.allergies_description,
-        has_medical_conditions: data.has_medical_conditions === 'yes',
+        has_medical_conditions: data.has_medical_conditions ? data.has_medical_conditions === 'yes' : null,
         medical_conditions_description: data.medical_conditions_description,
         diagnosis: data.diagnosis || [],
-        history_of_seizures: data.history_of_seizures === 'yes',
-        toilet_trained: data.toilet_trained === 'sometimes' ? 'in_progress' : data.toilet_trained,
-        non_ambulatory: data.non_ambulatory === 'yes',
+        history_of_seizures: data.history_of_seizures ? data.history_of_seizures === 'yes' : null,
+        toilet_trained: data.toilet_trained === 'sometimes' ? 'in_progress' : data.toilet_trained || null,
+        non_ambulatory: data.non_ambulatory ? data.non_ambulatory === 'yes' : null,
 
         // Behavioral
-        self_injurious_behavior: data.self_injurious_behavior === 'yes',
+        self_injurious_behavior: data.self_injurious_behavior ? data.self_injurious_behavior === 'yes' : null,
         self_injurious_description: data.self_injurious_description,
-        aggressive_behavior: data.aggressive_behavior === 'yes',
+        aggressive_behavior: data.aggressive_behavior ? data.aggressive_behavior === 'yes' : null,
         aggressive_behavior_description: data.aggressive_behavior_description,
-        elopement_history: data.elopement_history === 'yes',
+        elopement_history: data.elopement_history ? data.elopement_history === 'yes' : null,
         elopement_description: data.elopement_description,
-        has_behavior_plan: data.has_behavior_plan === 'yes',
+        has_behavior_plan: data.has_behavior_plan ? data.has_behavior_plan === 'yes' : null,
         // Note: behavior_plan_description field doesn't exist in database
 
         // Swimming
-        previous_swim_lessons: data.previous_swim_lessons === 'yes',
+        previous_swim_lessons: data.previous_swim_lessons ? data.previous_swim_lessons === 'yes' : null,
         // Note: previous_swim_experience field doesn't exist in database
-        comfortable_in_water: data.comfortable_in_water,
+        comfortable_in_water: data.comfortable_in_water || null,
         swim_goals: data.swim_goals,
 
         // Scheduling
@@ -501,7 +501,183 @@ export default function PrivatePayEnrollmentPage() {
     }
   };
 
+  const validateCurrentStep = () => {
+    console.log('Validating current step:', currentSection);
+
+    // Get all form values
+    const formValues = watch();
+
+    switch (currentSection) {
+      case 1: // Parent Information
+        if (!formValues.parent_name?.trim()) {
+          console.log('Validation failed: parent_name required');
+          return false;
+        }
+        if (!formValues.parent_email?.trim()) {
+          console.log('Validation failed: parent_email required');
+          return false;
+        }
+        if (!formValues.parent_phone?.trim()) {
+          console.log('Validation failed: parent_phone required');
+          return false;
+        }
+        if (!formValues.parent_address?.trim()) {
+          console.log('Validation failed: parent_address required');
+          return false;
+        }
+        if (!formValues.parent_city?.trim()) {
+          console.log('Validation failed: parent_city required');
+          return false;
+        }
+        if (!formValues.parent_state?.trim()) {
+          console.log('Validation failed: parent_state required');
+          return false;
+        }
+        if (!formValues.parent_zip?.trim()) {
+          console.log('Validation failed: parent_zip required');
+          return false;
+        }
+        break;
+
+      case 2: // Child Information
+        if (!formValues.child_first_name?.trim()) {
+          console.log('Validation failed: child_first_name required');
+          return false;
+        }
+        if (!formValues.child_last_name?.trim()) {
+          console.log('Validation failed: child_last_name required');
+          return false;
+        }
+        if (!formValues.child_date_of_birth) {
+          console.log('Validation failed: child_date_of_birth required');
+          return false;
+        }
+        if (!formValues.child_gender?.trim()) {
+          console.log('Validation failed: child_gender required');
+          return false;
+        }
+        break;
+
+      case 3: // Medical & Safety
+        if (formValues.has_allergies === undefined) {
+          console.log('Validation failed: has_allergies required');
+          return false;
+        }
+        if (formValues.has_medical_conditions === undefined) {
+          console.log('Validation failed: has_medical_conditions required');
+          return false;
+        }
+        if (formValues.history_of_seizures === undefined) {
+          console.log('Validation failed: history_of_seizures required');
+          return false;
+        }
+        if (formValues.toilet_trained === undefined) {
+          console.log('Validation failed: toilet_trained required');
+          return false;
+        }
+        if (formValues.non_ambulatory === undefined) {
+          console.log('Validation failed: non_ambulatory required');
+          return false;
+        }
+        break;
+
+      case 4: // Behavioral
+        if (formValues.self_injurious_behavior === undefined) {
+          console.log('Validation failed: self_injurious_behavior required');
+          return false;
+        }
+        if (formValues.aggressive_behavior === undefined) {
+          console.log('Validation failed: aggressive_behavior required');
+          return false;
+        }
+        if (formValues.elopement_history === undefined) {
+          console.log('Validation failed: elopement_history required');
+          return false;
+        }
+        if (formValues.has_behavior_plan === undefined) {
+          console.log('Validation failed: has_behavior_plan required');
+          return false;
+        }
+        break;
+
+      case 5: // Swimming Background
+        if (formValues.previous_swim_lessons === undefined) {
+          console.log('Validation failed: previous_swim_lessons required');
+          return false;
+        }
+        if (formValues.comfortable_in_water === undefined) {
+          console.log('Validation failed: comfortable_in_water required');
+          return false;
+        }
+        if (!formValues.swim_goals || formValues.swim_goals.length === 0) {
+          console.log('Validation failed: swim_goals required');
+          return false;
+        }
+        break;
+
+      case 6: // Scheduling
+        if (!formValues.availability_slots || formValues.availability_slots.length === 0) {
+          console.log('Validation failed: availability_slots required');
+          return false;
+        }
+        break;
+
+      case 7: // Consent
+        if (!formValues.electronic_consent) {
+          console.log('Validation failed: electronic_consent required');
+          return false;
+        }
+        if (!formValues.signed_waiver) {
+          console.log('Validation failed: signed_waiver required');
+          return false;
+        }
+        if (formValues.signed_waiver && !formValues.liability_waiver_signature?.trim()) {
+          console.log('Validation failed: liability_waiver_signature required when waiver signed');
+          return false;
+        }
+        if (formValues.photo_release && !formValues.photo_release_signature?.trim()) {
+          console.log('Validation failed: photo_release_signature required when photo release granted');
+          return false;
+        }
+        if (!formValues.cancellation_policy_agreement) {
+          console.log('Validation failed: cancellation_policy_agreement required');
+          return false;
+        }
+        if (formValues.cancellation_policy_agreement && !formValues.cancellation_policy_signature?.trim()) {
+          console.log('Validation failed: cancellation_policy_signature required when policy agreed');
+          return false;
+        }
+        if (!formValues.emergency_contact_name?.trim()) {
+          console.log('Validation failed: emergency_contact_name required');
+          return false;
+        }
+        if (!formValues.emergency_contact_phone?.trim()) {
+          console.log('Validation failed: emergency_contact_phone required');
+          return false;
+        }
+        if (!formValues.emergency_contact_relationship?.trim()) {
+          console.log('Validation failed: emergency_contact_relationship required');
+          return false;
+        }
+        break;
+    }
+
+    console.log('Validation passed for step:', currentSection);
+    return true;
+  };
+
   const nextSection = () => {
+    console.log('Continue clicked for section:', currentSection);
+
+    // Validate FIRST
+    if (!validateCurrentStep()) {
+      console.log('BLOCKED - not advancing');
+      // Scroll to first error
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    console.log('ADVANCING to section:', currentSection + 1);
     if (currentSection < 7) {
       setCurrentSection(currentSection + 1);
       // Scroll to top on step change

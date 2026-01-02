@@ -51,7 +51,7 @@ export default function EnrollmentPage() {
           .from('funding_sources')
           .select('id, name, short_name, funding_type, requires_coordinator, is_self_determination')
           .eq('is_active', true)
-          .or('funding_type.eq.regional_center,funding_type.eq.self_determination')  // Show regional centers and self determination
+          // Show all active funding sources (regional_center, self_determination, scholarship, private_pay)
           .order('name');
 
         if (error) throw error;
@@ -255,7 +255,7 @@ export default function EnrollmentPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-8 px-4">
-      <div className="container max-w-md md:max-w-lg mx-auto px-4 overflow-x-hidden">
+      <div className="container max-w-md md:max-w-lg mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-[#2a5e84] mb-2">
