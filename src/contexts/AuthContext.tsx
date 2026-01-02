@@ -185,10 +185,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (rolesData && Array.isArray(rolesData)) {
         // Check for roles in priority order
-        const rolePriority: UserRole[] = ['admin', 'coordinator', 'instructor', 'parent']
+        const rolePriority: UserRole[] = ['admin', 'coordinator', 'vmrc_coordinator', 'instructor', 'parent']
 
         for (const role of rolePriority) {
-          const hasRole = rolesData.some(r => r.role === role || r.role === 'vmrc_coordinator' && role === 'coordinator')
+          const hasRole = rolesData.some(r => r.role === role)
           if (hasRole) {
             primaryRole = role
             break

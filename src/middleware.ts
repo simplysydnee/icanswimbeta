@@ -154,7 +154,7 @@ export async function middleware(request: NextRequest) {
       role === 'instructor' ||
       role === 'admin' ||
       role === 'coordinator' ||
-      role === 'coordinator'
+      role === 'vmrc_coordinator'
     )
     if (!hasValidRole) {
       if (process.env.NODE_ENV === 'development') {
