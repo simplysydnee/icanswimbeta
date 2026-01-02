@@ -346,7 +346,8 @@ export default function POSPage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="w-full overflow-x-hidden">
+      <div className="px-4 py-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-start mb-6">
         <div>
@@ -439,13 +440,13 @@ export default function POSPage() {
                 placeholder="Search by swimmer, auth#, or coordinator..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 w-full"
               />
             </div>
 
             <div className="flex flex-wrap gap-2">
               {selectedFundingSource && (
-                <div className="flex items-center gap-2 bg-cyan-50 border border-cyan-200 rounded-md px-3 py-2">
+                <div className="flex items-center gap-2 bg-cyan-50 border border-cyan-200 rounded-md px-3 py-2 w-full sm:w-auto">
                   <span className="text-sm text-cyan-700">
                     Filtered by: {fundingSourceStats.find(fs => fs.id === selectedFundingSource)?.name}
                   </span>
@@ -453,19 +454,19 @@ export default function POSPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setSelectedFundingSource(null)}
-                    className="h-6 w-6 p-0 hover:bg-cyan-100"
+                    className="h-6 w-6 p-0 hover:bg-cyan-100 shrink-0"
                   >
                     <XCircle className="h-3 w-3 text-cyan-600" />
                   </Button>
                 </div>
               )}
 
-              <div className="flex items-center gap-1">
-                <Filter className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center gap-1 w-full sm:w-auto">
+                <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="border rounded-md px-3 py-2 bg-white text-sm"
+                  className="border rounded-md px-3 py-2 bg-white text-sm w-full"
                 >
                   <option value="all">All Status</option>
                   <option value="pending">Pending</option>
@@ -480,7 +481,7 @@ export default function POSPage() {
               <select
                 value={billingStatusFilter}
                 onChange={(e) => setBillingStatusFilter(e.target.value)}
-                className="border rounded-md px-3 py-2 bg-white text-sm"
+                className="border rounded-md px-3 py-2 bg-white text-sm w-full sm:w-auto"
               >
                 <option value="all">All Billing</option>
                 <option value="unbilled">Unbilled</option>
@@ -494,7 +495,7 @@ export default function POSPage() {
               <select
                 value={poTypeFilter}
                 onChange={(e) => setPoTypeFilter(e.target.value)}
-                className="border rounded-md px-3 py-2 bg-white text-sm"
+                className="border rounded-md px-3 py-2 bg-white text-sm w-full sm:w-auto"
               >
                 <option value="all">All Types</option>
                 <option value="assessment">Assessment</option>
@@ -504,7 +505,7 @@ export default function POSPage() {
               <select
                 value={fundingSourceFilter}
                 onChange={(e) => setFundingSourceFilter(e.target.value)}
-                className="border rounded-md px-3 py-2 bg-white text-sm"
+                className="border rounded-md px-3 py-2 bg-white text-sm w-full sm:w-auto"
               >
                 <option value="all">All Funding</option>
                 {getFundingSources().map(source => (
@@ -555,34 +556,34 @@ export default function POSPage() {
             return (
               <Card key={po.id} className={`hover:shadow-md transition-shadow ${isExpired ? 'border-red-200' : isNearExpiry ? 'border-yellow-200' : ''}`}>
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${statusConfig.color.split(' ')[0]}`}>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${statusConfig.color.split(' ')[0]} shrink-0`}>
                         <StatusIcon className={`h-5 w-5 ${statusConfig.color.split(' ')[1]}`} />
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="font-semibold truncate">
                             {po.swimmer?.first_name} {po.swimmer?.last_name}
                           </span>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs shrink-0">
                             {po.po_type === 'assessment' ? 'Assessment' : 'Lessons'}
                           </Badge>
-                          <Badge className={`${statusConfig.color} border text-xs`}>
+                          <Badge className={`${statusConfig.color} border text-xs shrink-0`}>
                             {statusConfig.label}
                           </Badge>
                           {isNearExpiry && po.status === 'active' && (
-                            <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">
+                            <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs shrink-0">
                               Expires Soon
                             </Badge>
                           )}
                           {isExpired && po.status === 'active' && (
-                            <Badge className="bg-red-100 text-red-800 border-red-300 text-xs">
+                            <Badge className="bg-red-100 text-red-800 border-red-300 text-xs shrink-0">
                               Expired
                             </Badge>
                           )}
                         </div>
-                        <div className="text-sm text-muted-foreground mt-1">
+                        <div className="text-sm text-muted-foreground break-words">
                           {po.funding_source?.short_name || 'Unknown'} •
                           {po.authorization_number ? ` Auth: ${po.authorization_number}` : ' No auth#'} •
                           {' '}{format(new Date(po.start_date), 'MMM d')} - {format(new Date(po.end_date), 'MMM d, yyyy')}
@@ -591,8 +592,8 @@ export default function POSPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+                      <div className="text-right sm:text-left">
                         <div className="text-sm font-medium">
                           {po.sessions_used}/{po.sessions_authorized} used
                         </div>
@@ -602,13 +603,13 @@ export default function POSPage() {
                       </div>
 
                       {/* Billing Info */}
-                      <div className="text-right">
-                        <div className="flex items-center gap-2 justify-end mb-1">
+                      <div className="text-right sm:text-left">
+                        <div className="flex flex-wrap items-center gap-2 justify-end sm:justify-start mb-1">
                           {(() => {
                             const billingConfig = BILLING_STATUS_CONFIG[po.billing_status] || BILLING_STATUS_CONFIG.unbilled;
                             const BillingIcon = billingConfig.icon;
                             return (
-                              <Badge className={`${billingConfig.color} text-xs`}>
+                              <Badge className={`${billingConfig.color} text-xs shrink-0`}>
                                 <BillingIcon className="h-3 w-3 mr-1" />
                                 {billingConfig.label}
                               </Badge>
@@ -616,13 +617,13 @@ export default function POSPage() {
                           })()}
                           {po.due_date && new Date(po.due_date) < new Date() && po.billing_status !== 'paid' && (
                             <div className="flex items-center gap-1">
-                              <Badge className="bg-red-100 text-red-800 border-red-300 text-xs">
+                              <Badge className="bg-red-100 text-red-800 border-red-300 text-xs shrink-0">
                                 Past Due
                               </Badge>
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-6 w-6 p-0 text-xs"
+                                className="h-6 w-6 p-0 text-xs shrink-0"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   // Use coordinator email if available
@@ -670,21 +671,21 @@ I Can Swim Team`;
                         </div>
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         {(po.status === 'pending' || po.status === 'approved_pending_auth') && (
-                          <Button size="sm" onClick={() => openApprovalDialog(po)}>
+                          <Button size="sm" onClick={() => openApprovalDialog(po)} className="shrink-0">
                             {po.status === 'pending' ? 'Review' : 'Add Auth#'}
                           </Button>
                         )}
 
                         {po.status === 'active' && (
                           <>
-                            <Button size="sm" variant="outline" onClick={() => openApprovalDialog(po)}>
+                            <Button size="sm" variant="outline" onClick={() => openApprovalDialog(po)} className="shrink-0">
                               <Eye className="h-4 w-4 mr-1" />
                               View
                             </Button>
                             {po.sessions_used >= po.sessions_authorized && (
-                              <Button size="sm" variant="outline" onClick={() => handleMarkComplete(po)}>
+                              <Button size="sm" variant="outline" onClick={() => handleMarkComplete(po)} className="shrink-0">
                                 Mark Complete
                               </Button>
                             )}
@@ -692,7 +693,7 @@ I Can Swim Team`;
                         )}
 
                         {po.status === 'completed' && (
-                          <Button size="sm" variant="outline" onClick={() => openApprovalDialog(po)}>
+                          <Button size="sm" variant="outline" onClick={() => openApprovalDialog(po)} className="shrink-0">
                             <Eye className="h-4 w-4 mr-1" />
                             View
                           </Button>
@@ -703,7 +704,7 @@ I Can Swim Team`;
                           size="sm"
                           variant="outline"
                           onClick={() => openBillingModal(po)}
-                          className="border-cyan-200 text-cyan-700 hover:bg-cyan-50"
+                          className="border-cyan-200 text-cyan-700 hover:bg-cyan-50 shrink-0"
                         >
                           <DollarSign className="h-4 w-4 mr-1" />
                           Billing
@@ -838,6 +839,7 @@ I Can Swim Team`;
           }}
         />
       )}
+      </div>
     </div>
   );
 }

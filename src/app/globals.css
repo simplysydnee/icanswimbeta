@@ -21,7 +21,7 @@ html, body {
 
 /* Mobile-first touch targets (44px minimum) */
 @media (max-width: 768px) {
-  button, a, input, select, textarea {
+  button, a, input:not([type="radio"]):not([type="checkbox"]), select, textarea {
     min-height: 44px;
   }
 

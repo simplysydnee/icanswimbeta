@@ -33,7 +33,7 @@ export default function EnrollmentPage() {
     firstName: '',
     lastName: '',
     dob: '',
-    paymentType: 'private_pay' as 'private_pay' | 'regional_center',
+    paymentType: '' as '' | 'private_pay' | 'regional_center',
     selectedFundingSourceId: null as string | null,
     coordinatorName: '',
     coordinatorEmail: '',
@@ -141,6 +141,16 @@ export default function EnrollmentPage() {
       return;
     }
 
+    // Check if payment type is selected
+    if (!formData.paymentType) {
+      toast({
+        title: 'Payment Method Required',
+        description: 'Please select how lessons will be paid.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     if (!validatePaymentInfo()) {
       return;
     }
@@ -220,8 +230,9 @@ export default function EnrollmentPage() {
 
   const isFormValid = () => {
     const hasBasicInfo = formData.firstName.trim() && formData.lastName.trim() && formData.dob;
+    const hasPaymentType = formData.paymentType === 'private_pay' || formData.paymentType === 'regional_center';
 
-    if (!hasBasicInfo) {
+    if (!hasBasicInfo || !hasPaymentType) {
       return false;
     }
 
@@ -244,7 +255,7 @@ export default function EnrollmentPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-8 px-4">
-      <div className="container max-w-md md:max-w-lg mx-auto">
+      <div className="container max-w-md md:max-w-lg mx-auto px-4 overflow-x-hidden">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-[#2a5e84] mb-2">
@@ -269,7 +280,7 @@ export default function EnrollmentPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Child Information */}
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName" className="text-gray-700">
                       Child&apos;s First Name *
@@ -332,7 +343,7 @@ export default function EnrollmentPage() {
                 <RadioGroup
                   value={formData.paymentType}
                   onValueChange={(value) => {
-                    handleInputChange('paymentType', value as 'private_pay' | 'regional_center');
+                    handleInputChange('paymentType', value as '' | 'private_pay' | 'regional_center');
                     // Clear dependent fields when payment type changes
                     if (value !== 'regional_center') {
                       handleInputChange('selectedFundingSourceId', '');

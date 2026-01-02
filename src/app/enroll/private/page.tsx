@@ -533,7 +533,7 @@ export default function PrivatePayEnrollmentPage() {
 
   if (authLoading) {
     return (
-      <div className="container max-w-4xl py-8">
+      <div className="container max-w-4xl py-8 px-4 sm:px-6 overflow-x-hidden">
         <div className="flex flex-col items-center justify-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin" />
           <p className="text-gray-600">Checking authentication...</p>
@@ -558,7 +558,7 @@ export default function PrivatePayEnrollmentPage() {
   // Success message
   if (submitResult?.success) {
     return (
-      <div className="container max-w-4xl py-8">
+      <div className="container max-w-4xl py-8 px-4 sm:px-6 overflow-x-hidden">
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl text-green-600">Enrollment Submitted!</CardTitle>
@@ -594,7 +594,7 @@ export default function PrivatePayEnrollmentPage() {
   }
 
   return (
-    <div className="container max-w-4xl py-8">
+    <div className="container max-w-4xl py-8 px-4 sm:px-6 overflow-x-hidden">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Private Pay Enrollment</CardTitle>
@@ -643,7 +643,7 @@ export default function PrivatePayEnrollmentPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
                     <Label htmlFor="parent_name">Full Name *</Label>
                     <Input
@@ -753,7 +753,7 @@ export default function PrivatePayEnrollmentPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="child_first_name">First Name *</Label>
                     <Input
@@ -866,7 +866,7 @@ export default function PrivatePayEnrollmentPage() {
                     <div className="text-sm text-gray-500 mb-2">
                       Select all that apply from the list below
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {DIAGNOSIS_OPTIONS.map((diagnosis) => (
                         <label key={diagnosis} className="flex items-center space-x-2">
                           <input
@@ -1373,7 +1373,7 @@ export default function PrivatePayEnrollmentPage() {
                 {/* Emergency Contact */}
                 <div className="space-y-4">
                   <h4 className="font-semibold">Emergency Contact Information</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="emergency_contact_name">Emergency Contact Name *</Label>
                       <Input
