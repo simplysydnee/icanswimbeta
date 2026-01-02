@@ -200,13 +200,13 @@ export default function EnrollmentPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-8 px-4">
-      <div className="container max-w-md mx-auto">
+      <div className="container max-w-md md:max-w-lg mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-[#2a5e84] mb-2">
             Start Your Swim Journey
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-700">
             Tell us about your child to get started
           </p>
         </div>
@@ -264,7 +264,7 @@ export default function EnrollmentPage() {
                     Date of Birth *
                   </Label>
                   <div className="relative">
-                    <CalendarIcon className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <CalendarIcon className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                     <Input
                       id="dob"
                       type="date"
@@ -301,7 +301,7 @@ export default function EnrollmentPage() {
                 >
                   {/* Option 1: Private Pay */}
                   <div
-                    className={`flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.paymentType === 'private_pay' ? 'border-[#2a5e84] bg-[#f0f7ff]' : 'border-gray-200 hover:border-[#2a5e84]/50 hover:bg-[#f0f7ff]/50'}`}
+                    className={`flex items-center space-x-3 p-3 md:p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.paymentType === 'private_pay' ? 'border-[#2a5e84] bg-[#f0f7ff]' : 'border-gray-200 hover:border-[#2a5e84]/50 hover:bg-[#f0f7ff]/50'}`}
                   >
                     <RadioGroupItem value="private_pay" id="private_pay" />
                     <Label htmlFor="private_pay" className="cursor-pointer flex-1">
@@ -314,7 +314,7 @@ export default function EnrollmentPage() {
 
                   {/* Option 2: Regional Center */}
                   <div
-                    className={`flex items-start space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.paymentType === 'regional_center' ? 'border-[#2a5e84] bg-[#f0f7ff]' : 'border-gray-200 hover:border-[#2a5e84]/50 hover:bg-[#f0f7ff]/50'}`}
+                    className={`flex items-start space-x-3 p-3 md:p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.paymentType === 'regional_center' ? 'border-[#2a5e84] bg-[#f0f7ff]' : 'border-gray-200 hover:border-[#2a5e84]/50 hover:bg-[#f0f7ff]/50'}`}
                   >
                     <RadioGroupItem value="regional_center" id="regional_center" className="mt-0.5" />
                     <div className="flex-1">
@@ -334,11 +334,11 @@ export default function EnrollmentPage() {
                             </Label>
                             {fundingSourcesLoading ? (
                               <div className="mt-1.5 p-3 border rounded-md bg-gray-50">
-                                <p className="text-sm text-gray-600">Loading Regional Centers...</p>
+                                <p className="text-sm text-gray-700">Loading Regional Centers...</p>
                               </div>
                             ) : fundingSources.length === 0 ? (
                               <div className="mt-1.5 p-3 border rounded-md bg-gray-50">
-                                <p className="text-sm text-gray-600">No Regional Centers available</p>
+                                <p className="text-sm text-gray-700">No Regional Centers available</p>
                               </div>
                             ) : (
                               <Select
@@ -429,7 +429,7 @@ export default function EnrollmentPage() {
             {/* Bottom Links */}
             <div className="mt-8 pt-6 border-t border-gray-200 space-y-4">
               <div className="text-center">
-                <p className="text-gray-600 text-sm">
+                <p className="text-gray-700 text-sm">
                   Already have an account?{' '}
                   <a
                     href="/login"
@@ -455,7 +455,7 @@ export default function EnrollmentPage() {
                 </AlertDescription>
               </Alert>
 
-              <div className="text-center text-xs text-gray-500">
+              <div className="text-center text-xs text-gray-600">
                 <p>
                   I Can Swim provides adaptive swim lessons for swimmers with special needs
                 </p>

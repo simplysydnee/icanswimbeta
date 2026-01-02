@@ -136,6 +136,11 @@ function ParentFundingReferralContent() {
         success: true,
         message: 'Referral request submitted successfully! Your coordinator will be in touch soon.',
       });
+
+      // Redirect to parent home after a brief delay
+      setTimeout(() => {
+        router.push('/parent-home');
+      }, 3000);
     } catch (error) {
       console.error('Error submitting referral request:', error);
       console.error('Error message:', error?.message);

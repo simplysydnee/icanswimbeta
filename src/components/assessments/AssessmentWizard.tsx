@@ -118,12 +118,16 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
   const handleNext = () => {
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(prev => prev + 1);
+      // Scroll to top on step change
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(prev => prev - 1);
+      // Scroll to top on step change
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 

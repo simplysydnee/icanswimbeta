@@ -186,9 +186,9 @@ export default function LoginForm() {
             Don&apos;t have an account?{' '}
             <Link
               href={`/signup${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}${formData.email ? `${redirectTo ? '&' : '?'}email=${encodeURIComponent(formData.email)}` : ''}`}
-              className="text-primary hover:underline"
+              className="text-primary font-semibold hover:underline"
             >
-              Sign up
+              Sign up here
             </Link>
           </div>
         </form>

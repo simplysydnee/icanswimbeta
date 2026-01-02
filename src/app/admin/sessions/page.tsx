@@ -784,13 +784,13 @@ function AdminSessionsContent() {
                           className="h-4 w-4"
                         />
                       </TableHead>
-                      <TableHead className="px-2 whitespace-nowrap">Date & Time</TableHead>
-                      <TableHead className="px-2 whitespace-nowrap hidden md:table-cell">Location</TableHead>
-                      <TableHead className="px-2 whitespace-nowrap">Instructor</TableHead>
-                      <TableHead className="px-2 whitespace-nowrap hidden lg:table-cell">Client</TableHead>
-                      <TableHead className="px-2 whitespace-nowrap">Status</TableHead>
-                      <TableHead className="px-2 whitespace-nowrap hidden sm:table-cell">Capacity</TableHead>
-                      <TableHead className="px-2 text-right whitespace-nowrap">Actions</TableHead>
+                      <TableHead className="px-2">Date & Time</TableHead>
+                      <TableHead className="px-2 hidden md:table-cell">Location</TableHead>
+                      <TableHead className="px-2">Instructor</TableHead>
+                      <TableHead className="px-2 hidden lg:table-cell">Client</TableHead>
+                      <TableHead className="px-2">Status</TableHead>
+                      <TableHead className="px-2 hidden sm:table-cell">Capacity</TableHead>
+                      <TableHead className="px-2 text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -816,22 +816,22 @@ function AdminSessionsContent() {
 
                           {/* Date & Time */}
                           <TableCell className="px-2 py-2">
-                            <div className="font-medium whitespace-nowrap">
+                            <div className="font-medium">
                               {format(new Date(session.start_time), 'MMM d')}
                             </div>
-                            <div className="text-xs text-muted-foreground whitespace-nowrap">
+                            <div className="text-xs text-muted-foreground">
                               {format(new Date(session.start_time), 'h:mm a')} - {format(new Date(session.end_time), 'h:mm a')}
                             </div>
                           </TableCell>
 
                           {/* Location */}
                           <TableCell className="px-2 py-2 hidden md:table-cell">
-                            <span className="text-xs whitespace-nowrap">{session.location || '-'}</span>
+                            <span className="text-xs">{session.location || '-'}</span>
                           </TableCell>
 
                           {/* Instructor */}
                           <TableCell className="px-2 py-2">
-                            <span className="text-xs font-medium whitespace-nowrap">
+                            <span className="text-xs font-medium">
                               {session.instructor_name || 'Unassigned'}
                             </span>
                           </TableCell>
@@ -839,7 +839,7 @@ function AdminSessionsContent() {
                           {/* Client */}
                           <TableCell className="px-2 py-2 hidden lg:table-cell">
                             {isBooked && swimmer ? (
-                              <span className="text-xs font-medium text-cyan-700 whitespace-nowrap">
+                              <span className="text-xs font-medium text-cyan-700">
                                 {swimmer.first_name} {swimmer.last_name}
                               </span>
                             ) : (
@@ -856,7 +856,7 @@ function AdminSessionsContent() {
 
                           {/* Capacity */}
                           <TableCell className="px-2 py-2 hidden sm:table-cell">
-                            <span className="text-xs whitespace-nowrap">
+                            <span className="text-xs">
                               {session.booking_count || 0}/{session.max_capacity || 1}
                             </span>
                           </TableCell>
@@ -1026,8 +1026,8 @@ function AdminSessionsContent() {
 
         {/* Modals */}
         {viewingSession && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-full md:max-w-2xl w-full">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Session Details</h2>
                 <Button variant="ghost" size="sm" onClick={() => setViewingSession(null)}>
@@ -1065,8 +1065,8 @@ function AdminSessionsContent() {
         )}
 
         {editingSession && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-full md:max-w-md w-full">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Edit Session</h2>
                 <Button variant="ghost" size="sm" onClick={() => setEditingSession(null)}>
@@ -1101,8 +1101,8 @@ function AdminSessionsContent() {
         )}
 
         {changingInstructor && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-full md:max-w-md w-full">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Change Instructor</h2>
                 <Button variant="ghost" size="sm" onClick={() => setChangingInstructor(null)}>
@@ -1150,8 +1150,8 @@ function AdminSessionsContent() {
         )}
 
         {reschedulingSession && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-full md:max-w-md w-full">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Reschedule Session</h2>
                 <Button variant="ghost" size="sm" onClick={() => setReschedulingSession(null)}>
@@ -1203,8 +1203,8 @@ function AdminSessionsContent() {
         )}
 
         {cancellingSession && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-full md:max-w-md w-full">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Cancel Session</h2>
                 <Button variant="ghost" size="sm" onClick={() => setCancellingSession(null)}>
@@ -1254,8 +1254,8 @@ function AdminSessionsContent() {
         )}
 
         {bookingSession && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-full md:max-w-md w-full">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Book Client</h2>
                 <Button variant="ghost" size="sm" onClick={() => setBookingSession(null)}>
@@ -1290,8 +1290,8 @@ function AdminSessionsContent() {
         )}
 
         {bulkChangingInstructor && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-full md:max-w-md w-full">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Change Instructor (Bulk)</h2>
                 <Button variant="ghost" size="sm" onClick={() => setBulkChangingInstructor(false)}>
@@ -1336,8 +1336,8 @@ function AdminSessionsContent() {
 
         {/* Open Drafts Modal */}
         {openDraftsModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-full md:max-w-md w-full">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Open Draft Sessions</h2>
                 <Button variant="ghost" size="sm" onClick={() => setOpenDraftsModal(false)}>

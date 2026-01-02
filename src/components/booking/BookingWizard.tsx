@@ -54,6 +54,8 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
         } else if (swimmer.enrollmentStatus === 'pending_enrollment') {
           setCurrentStep('confirm');
         }
+        // Scroll to top when step changes on initial load
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
   }, [preselectedSwimmerId, swimmers]);
@@ -129,6 +131,8 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
         setCurrentStep('confirm');
         break;
     }
+    // Scroll to top on step change
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleBack = () => {
@@ -151,6 +155,8 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
         setCurrentStep(isWaitlist ? 'assessment' : 'select-date');
         break;
     }
+    // Scroll to top on step change
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Can proceed logic

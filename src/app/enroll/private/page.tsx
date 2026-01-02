@@ -456,6 +456,11 @@ export default function PrivatePayEnrollmentPage() {
         success: true,
         message: 'Enrollment submitted successfully! Our team will review your application and contact you within 2-3 business days.',
       });
+
+      // Redirect to parent home after a brief delay
+      setTimeout(() => {
+        router.push('/parent-home');
+      }, 3000);
     } catch (error) {
       console.error('Error submitting enrollment:', {
         error,

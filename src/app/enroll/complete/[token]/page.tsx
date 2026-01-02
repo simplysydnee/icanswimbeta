@@ -251,6 +251,11 @@ export default function ParentCompletionPage() {
                 This usually takes 2-3 business days.
               </p>
             </div>
+            <div className="mt-6">
+              <Button onClick={() => window.location.href = '/parent-home'}>
+                Go to Parent Dashboard
+              </Button>
+            </div>
             <p className="text-sm text-gray-500 mt-4">
               Questions? Call (209) 778-7877
             </p>
