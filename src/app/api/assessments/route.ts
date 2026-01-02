@@ -62,7 +62,8 @@ export async function GET(request: NextRequest) {
           diagnosis,
           previous_swim_lessons,
           swim_goals,
-          funding_coordinator_name
+          funding_coordinator_name,
+          parent_id
         )
       `)
       .eq('sessions.session_type', 'assessment');
