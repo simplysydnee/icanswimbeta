@@ -313,9 +313,11 @@ export default function SwimmerDetailPage() {
               Book Lesson
             </Link>
           </Button>
-          <Button variant="outline">
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
+          <Button variant="outline" asChild>
+            <Link href={`/parent/swimmers/${swimmer.id}/edit`}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Info
+            </Link>
           </Button>
         </div>
       </div>
