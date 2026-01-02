@@ -247,7 +247,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats cards skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
               <CardContent className="p-6">
@@ -266,7 +266,7 @@ export default function AdminDashboard() {
         {/* Quick actions skeleton */}
         <div className="space-y-4">
           <Skeleton className="h-6 w-40" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-64 rounded-lg" />
             ))}
@@ -293,7 +293,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Clickable KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {/* Active Swimmers - Links to Swimmer Management */}
         <Link href="/admin/swimmers" className="block">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-cyan-300">
@@ -374,7 +374,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Revenue Breakdown Row */}
-      <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -425,7 +425,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Main Content - Three Columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
         {/* To Do Widget */}
         <ToDoWidget />
@@ -441,7 +441,7 @@ export default function AdminDashboard() {
               Admin Dashboard
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-3">
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Link href="/admin/swimmers" className="block">
               <Button variant="outline" className="w-full h-auto min-h-[70px] py-3 px-2 flex flex-col items-center justify-center gap-1.5">
                 <Users className="h-5 w-5 shrink-0" />
@@ -619,7 +619,7 @@ export default function AdminDashboard() {
           <CardTitle className="text-lg">Swimmer Breakdown</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link href="/admin/swimmers?filter=private_pay" className="block">
               <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200 hover:bg-emerald-100 cursor-pointer transition-colors">
                 <div className="flex items-center gap-2 mb-1">
