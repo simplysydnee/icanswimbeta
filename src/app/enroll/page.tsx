@@ -19,7 +19,8 @@ interface FundingSource {
   name: string;
   short_name: string;
   description: string;
-  funding_type: string;
+  type: string;
+  // Derived fields based on type and name
   requires_coordinator: boolean;
   is_self_determination: boolean;
 }
@@ -49,7 +50,7 @@ export default function EnrollmentPage() {
       try {
         const { data, error } = await supabase
           .from('funding_sources')
-          .select('id, name, short_name, funding_type, requires_coordinator, is_self_determination')
+          .select('id, name, short_name, type, description')
           .eq('is_active', true)
           // Show all active funding sources (regional_center, self_determination, scholarship, private_pay)
           .order('name');
@@ -58,8 +59,22 @@ export default function EnrollmentPage() {
           console.error('Error fetching funding sources:', error);
           throw error;
         }
-        console.log('Fetched funding sources:', data?.length, 'sources:', data);
-        setFundingSources(data || []);
+
+        // Transform data to include derived fields
+        const transformedData = (data || []).map(source => {
+          const isSelfDetermination = source.name.toLowerCase().includes('self determination');
+          // Self Determination doesn't require coordinator, regular regional centers do
+          const requiresCoordinator = source.type === 'regional_center' && !isSelfDetermination;
+
+          return {
+            ...source,
+            requires_coordinator: requiresCoordinator,
+            is_self_determination: isSelfDetermination
+          };
+        });
+
+        console.log('Fetched funding sources:', transformedData?.length, 'sources:', transformedData);
+        setFundingSources(transformedData);
       } catch (error) {
         console.error('Error fetching funding sources:', error);
       } finally {

@@ -610,24 +610,55 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
           ) : view === 'day' ? (
             <>
               {/* Mobile Card View for Day View */}
-              <div className="md:hidden p-4 space-y-4">
-                {timeSlots.map((slot) => {
-                  const slotSessions = sessions.filter(session => {
-                    const sessionStart = parseISO(session.start_time)
+              <div className="md:hidden p-4">
+                {(() => {
+                  // Check if any time slots have sessions after filtering
+                  const hasAnySessions = timeSlots.some(slot => {
                     const [slotHour, slotMinute] = slot.split(':').map(Number)
-                    return sessionStart.getHours() === slotHour &&
-                           Math.floor(sessionStart.getMinutes() / 30) === Math.floor(slotMinute / 30)
+                    return sessions.some(session => {
+                      // Apply instructor filter
+                      if (selectedInstructorFilter !== 'all' && session.instructor_id !== selectedInstructorFilter) return false
+                      // Apply location filter
+                      if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
+
+                      const sessionStart = parseISO(session.start_time)
+                      return sessionStart.getHours() === slotHour &&
+                             Math.floor(sessionStart.getMinutes() / 30) === Math.floor(slotMinute / 30)
+                    })
                   })
 
-                  if (slotSessions.length === 0) return null
+                  if (!hasAnySessions) {
+                    return (
+                      <div className="text-center py-12 text-gray-500">
+                        <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <p className="font-medium">No sessions found for selected filters</p>
+                        <p className="text-sm mt-1">Try changing instructor or location filters</p>
+                      </div>
+                    )
+                  }
 
-                  return (
-                    <div key={slot} className="border rounded-lg p-4">
-                      <h3 className="font-semibold text-lg mb-3">
-                        {format(new Date(`2000-01-01T${slot}:00`), 'h:mm a')}
-                      </h3>
-                      <div className="space-y-3">
-                        {slotSessions.map((session) => {
+                  return timeSlots.map((slot) => {
+                    const [slotHour, slotMinute] = slot.split(':').map(Number)
+                    const slotSessions = sessions.filter(session => {
+                      // Apply instructor filter
+                      if (selectedInstructorFilter !== 'all' && session.instructor_id !== selectedInstructorFilter) return false
+                      // Apply location filter
+                      if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
+
+                      const sessionStart = parseISO(session.start_time)
+                      return sessionStart.getHours() === slotHour &&
+                             Math.floor(sessionStart.getMinutes() / 30) === Math.floor(slotMinute / 30)
+                    })
+
+                    if (slotSessions.length === 0) return null
+
+                    return (
+                      <div key={slot} className="border rounded-lg p-4 mb-4">
+                        <h3 className="font-semibold text-lg mb-3">
+                          {format(new Date(`2000-01-01T${slot}:00`), 'h:mm a')}
+                        </h3>
+                        <div className="space-y-3">
+                          {slotSessions.map((session) => {
                           const instructor = instructors.find(i => i.id === session.instructor_id)
                           const color = instructor ? INSTRUCTOR_COLORS[instructor.colorIndex] : INSTRUCTOR_COLORS[0]
 
@@ -682,6 +713,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                     </div>
                   )
                 })}
+                )}
               </div>
 
               {/* Desktop Table for Day View */}
@@ -774,9 +806,14 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                   const dayDate = format(day, 'MMM d')
                   const isToday = isSameDay(day, new Date())
 
-                  const daySessions = sessions.filter(s =>
-                    isSameDay(parseISO(s.start_time), day)
-                  )
+                  const daySessions = sessions.filter(s => {
+                    // Apply instructor filter
+                    if (selectedInstructorFilter !== 'all' && s.instructor_id !== selectedInstructorFilter) return false
+                    // Apply location filter
+                    if (selectedLocationFilter !== 'all' && s.location !== selectedLocationFilter) return false
+                    // Check if session is on this day
+                    return isSameDay(parseISO(s.start_time), day)
+                  })
 
                   if (daySessions.length === 0) return null
 
