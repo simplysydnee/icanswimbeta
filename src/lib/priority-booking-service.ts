@@ -165,11 +165,24 @@ export const priorityBookingService = {
       }
     }
 
-    // Not priority - return all active instructors
+    // Not priority - return all active instructors with instructor role
+    // First get user IDs with instructor role
+    const { data: instructorRoles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', 'instructor')
+
+    if (rolesError) throw rolesError
+
+    const instructorIds = instructorRoles?.map(role => role.user_id) || []
+
+    // Then get profiles for those IDs
     const { data: instructors, error: instructorError } = await supabase
       .from('profiles')
       .select('id, full_name, email')
-      .eq('role', 'instructor')
+      .eq('display_on_team', true)
+      .eq('is_active', true)
+      .in('id', instructorIds)
 
     if (instructorError) throw instructorError
 
