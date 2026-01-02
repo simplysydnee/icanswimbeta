@@ -56,6 +56,22 @@ html, body {
     width: 100%;
     box-sizing: border-box;
     min-width: 0 !important; /* Override browser default min-width */
+    /* Prevent date picker from overflowing on mobile */
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Additional mobile-specific date input fixes */
+  @media (max-width: 640px) {
+    input[type="date"] {
+      font-size: 16px; /* Prevent iOS zoom on focus */
+      padding-right: 40px; /* Make room for calendar icon */
+    }
+
+    /* Container for date inputs with icons */
+    .relative > input[type="date"] {
+      padding-left: 2.5rem; /* Space for left icon */
+    }
   }
 
   /* Larger text for readability */
@@ -234,4 +250,38 @@ a:not([class]) {
 a:not([class]):hover {
   color: #6abedc;
   text-decoration: underline;
+}
+
+/* Prevent calendar/date picker popups from overflowing on mobile */
+@media (max-width: 640px) {
+  /* For native date pickers */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.5;
+    cursor: pointer;
+  }
+
+  /* For custom calendar popups (react-day-picker) */
+  .rdp {
+    --rdp-cell-size: 36px;
+    margin: 0;
+  }
+
+  .rdp-months {
+    min-width: 280px;
+    max-width: 100vw;
+  }
+
+  .rdp-month {
+    width: 100%;
+  }
+
+  /* Ensure popover content doesn't overflow viewport */
+  [data-radix-popper-content-wrapper] {
+    max-width: calc(100vw - 32px) !important;
+    transform: none !important;
+  }
 }

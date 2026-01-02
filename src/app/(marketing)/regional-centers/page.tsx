@@ -10,11 +10,22 @@ export default async function RegionalCentersPage() {
   const supabase = await createClient()
 
   // Fetch ALL active regional centers and self-determination funding sources
-  const { data: regionalCenters, error } = await supabase
+  const { data: fundingSources, error } = await supabase
     .from('funding_sources')
     .select('*')
-    .in('funding_type', ['regional_center', 'self_determination'])
     .eq('is_active', true)
+
+  // Filter to show only regional centers and self-determination funding sources
+  const regionalCenters = fundingSources?.filter(fs => {
+    // Include regional centers
+    if (fs.type === 'regional_center') {
+      return true;
+    }
+    // Also include any funding sources that should be shown on regional centers page
+    // (e.g., based on name containing specific keywords)
+    const name = fs.name?.toLowerCase() || '';
+    return name.includes('self determination') || name.includes('regional center');
+  }) || []
 
   if (error) {
     console.error('Error fetching regional centers:', error)
@@ -55,7 +66,7 @@ export default async function RegionalCentersPage() {
                   index % 2 === 0 ? 'bg-cyan-50' : 'bg-slate-50'
                 }`}
               >
-                <div className="grid md:grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div className="grid md:grid-cols-2 gap-8 items-center">
                   {/* Logo */}
                   <div className={`flex justify-center ${index % 2 === 1 ? 'md:order-2' : ''}`}>
                     <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -148,7 +159,7 @@ export default async function RegionalCentersPage() {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">How to Get Started</h2>
 
-          <div className="grid md:grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <div className="text-center">
               <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-xl font-bold text-cyan-600">1</span>
