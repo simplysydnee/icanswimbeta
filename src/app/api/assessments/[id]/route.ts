@@ -146,7 +146,7 @@ export async function GET(
       payment_type: swimmer.payment_type,
       is_funded_client: swimmer.payment_type === 'funded' || !!swimmer.funding_source_id,
       funding_source_name: fundingSource?.name,
-      coordinator_name: swimmer.coordinator_name,
+      coordinator_name: swimmer.funding_coordinator_name,
       has_allergies: swimmer.has_allergies,
       allergies_description: swimmer.allergies_description,
       has_medical_conditions: swimmer.has_medical_conditions,

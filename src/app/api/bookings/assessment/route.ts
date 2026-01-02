@@ -277,7 +277,7 @@ async function sendCoordinatorNotification(
     // Get swimmer details
     const { data: swimmer } = await supabase
       .from('swimmers')
-      .select('first_name, last_name, coordinator_name, coordinator_email')
+      .select('first_name, last_name, funding_coordinator_name, funding_coordinator_email')
       .eq('id', swimmerId)
       .single()
 
@@ -300,7 +300,7 @@ async function sendCoordinatorNotification(
     }
 
     // Determine coordinator name
-    const coordinatorName = swimmer.coordinator_name || fundingSource.contact_name || 'Coordinator'
+    const coordinatorName = swimmer.funding_coordinator_name || fundingSource.contact_name || 'Coordinator'
 
     // Send email notification
     // Note: We need to add a coordinator notification template to the email service
