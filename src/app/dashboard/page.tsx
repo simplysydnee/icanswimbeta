@@ -27,22 +27,38 @@ export default function DashboardRedirect() {
   useEffect(() => {
     const isLoading = loading || isLoadingProfile;
 
+    console.log('Dashboard redirect effect:', {
+      isLoading,
+      user: !!user,
+      role,
+      loading,
+      isLoadingProfile
+    });
+
     // Early redirect for non-authenticated users
     if (!isLoading && !user) {
+      console.log('Dashboard: No user, redirecting to login');
       router.replace('/login');
       return;
     }
 
     if (!isLoading && user) {
       // Only redirect if we have a definite role
+      console.log('Dashboard: User exists, role:', role);
       if (role === 'admin') {
+        console.log('Dashboard: Redirecting admin to /admin');
         router.replace('/admin');
       } else if (role === 'instructor') {
+        console.log('Dashboard: Redirecting instructor to /instructor');
         router.replace('/instructor');
       } else if (role === 'coordinator') {
+        console.log('Dashboard: Redirecting coordinator to /coordinator/pos');
         router.replace('/coordinator/pos');
       } else if (role === 'parent') {
+        console.log('Dashboard: Redirecting parent to /parent');
         router.replace('/parent');
+      } else {
+        console.log('Dashboard: Role is null/undefined, waiting...');
       }
       // If role is null/undefined, don't redirect - wait for role to be determined
       // or show appropriate UI

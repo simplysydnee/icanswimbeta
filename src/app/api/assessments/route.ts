@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
     const instructorId = searchParams.get('instructor_id');
 
     // Build query for assessments (bookings for assessment sessions)
+    // Start with a simpler query to debug
     let query = supabase
       .from('bookings')
       .select(`
@@ -34,20 +35,16 @@ export async function GET(request: NextRequest) {
         parent_id,
         status as booking_status,
         created_at,
-        sessions (
+        sessions!inner (
           id,
           start_time,
           end_time,
           instructor_id,
           location,
           session_type,
-          status as session_status,
-          profiles!sessions_instructor_id_fkey (
-            id,
-            full_name
-          )
+          status as session_status
         ),
-        swimmers (
+        swimmers!inner (
           id,
           first_name,
           last_name,
@@ -57,16 +54,7 @@ export async function GET(request: NextRequest) {
           payment_type,
           funding_source_id,
           assessment_status,
-          enrollment_status,
-          profiles!swimmers_parent_id_fkey (
-            id,
-            full_name,
-            email
-          ),
-          funding_sources (
-            id,
-            name
-          )
+          enrollment_status
         )
       `)
       .eq('sessions.session_type', 'assessment');
@@ -103,9 +91,6 @@ export async function GET(request: NextRequest) {
       .map(booking => {
         const swimmer = booking.swimmers;
         const session = booking.sessions;
-        const parent = swimmer.profiles;
-        const instructor = session.profiles;
-        const fundingSource = swimmer.funding_sources;
 
         // Calculate age
         let age = 0;
@@ -125,21 +110,21 @@ export async function GET(request: NextRequest) {
           swimmer_id: swimmer.id,
           swimmer_name: `${swimmer.first_name} ${swimmer.last_name}`,
           swimmer_age: age,
-          parent_name: parent?.full_name || 'Unknown',
-          parent_email: parent?.email || '',
+          parent_name: 'Unknown', // Simplified for now
+          parent_email: '',
           start_time: session.start_time,
           end_time: session.end_time,
           instructor_id: session.instructor_id,
-          instructor_name: instructor?.full_name || 'Unknown',
+          instructor_name: 'Unknown', // Simplified for now
           location: session.location,
           status: booking.booking_status as 'scheduled' | 'completed' | 'cancelled',
           assessment_status: swimmer.assessment_status,
           comfortable_in_water: swimmer.comfortable_in_water,
           current_level_id: swimmer.current_level_id,
-          current_level_name: null, // Can't get swim_levels through current query structure
+          current_level_name: null,
           payment_type: swimmer.payment_type,
           is_funded_client: swimmer.payment_type === 'funded' || !!swimmer.funding_source_id,
-          funding_source_name: fundingSource?.name,
+          funding_source_name: null, // Simplified for now
           coordinator_name: swimmer.coordinator_name,
           has_allergies: swimmer.has_allergies,
           allergies_description: swimmer.allergies_description,

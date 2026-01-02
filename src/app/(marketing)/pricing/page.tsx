@@ -19,7 +19,7 @@ export default async function PricingPage() {
     const { data, error } = await supabase
       .from('funding_sources')
       .select('id, name, short_name, logo_url')
-      .eq('source_type', 'regional_center')
+      .in('funding_type', ['regional_center', 'self_determination'])
       .eq('is_active', true)
       .order('display_order', { ascending: true });
 
@@ -177,13 +177,13 @@ export default async function PricingPage() {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-2xl font-bold mb-4">Not Sure Which Option?</h2>
           <p className="text-gray-600 mb-6 max-w-xl mx-auto">
-            If you're a client of a Regional Center, you may qualify for fully funded lessons.
+            If you're a client of a Regional Center or Self Determination program, you may qualify for fully funded lessons.
             Contact your coordinator to find out!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/regional-centers">
               <Button variant="outline">
-                Check Regional Center Eligibility
+                Check Funding Eligibility
               </Button>
             </Link>
             <Link href="/contact">
@@ -215,8 +215,8 @@ export default async function PricingPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Regional Center Funding</h3>
-              <p className="text-gray-600 text-sm">No cost for eligible families</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Funding Programs</h3>
+              <p className="text-gray-600 text-sm">No cost for eligible families (Regional Centers & Self Determination)</p>
             </div>
           </div>
           <p className="text-center text-gray-500 text-sm mt-6 max-w-xl mx-auto">

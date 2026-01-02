@@ -138,10 +138,10 @@ export async function middleware(request: NextRequest) {
 
   // Check role-based access for coordinator routes
   if (pathname.startsWith('/coordinator')) {
-    const hasCoordinatorRole = userRoles.includes('coordinator') || userRoles.includes('coordinator') || userRoles.includes('admin')
+    const hasCoordinatorRole = userRoles.includes('coordinator') || userRoles.includes('admin')
     if (!hasCoordinatorRole) {
       if (process.env.NODE_ENV === 'development') {
-        console.log('Middleware: user does not have coordinator, coordinator or admin role, redirecting to unauthorized')
+        console.log('Middleware: user does not have coordinator or admin role, redirecting to unauthorized')
       }
       return NextResponse.redirect(new URL('/unauthorized', request.url))
     }

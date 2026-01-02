@@ -21,21 +21,39 @@ html, body {
 
 /* Mobile-first touch targets (44px minimum) */
 @media (max-width: 768px) {
-  button, a, input:not([type="radio"]):not([type="checkbox"]), select, textarea {
+  /* Exclude radio buttons and checkboxes from touch target sizing */
+  button:not([role="radio"]):not([role="checkbox"]):not([data-slot*="radio"]):not([data-slot*="checkbox"]),
+  a,
+  input:not([type="radio"]):not([type="checkbox"]),
+  select,
+  textarea {
     min-height: 44px;
   }
 
   /* Ensure radio buttons and checkboxes maintain their circular/square shape */
   input[type="radio"],
-  input[type="checkbox"] {
+  input[type="checkbox"],
+  [role="radio"],
+  [role="checkbox"],
+  [data-slot*="radio"],
+  [data-slot*="checkbox"] {
     min-height: auto;
     min-width: auto;
+  }
+
+  /* Specifically target Radix UI radio group items */
+  [data-slot="radio-group-item"] {
+    min-height: auto !important;
+    height: 1rem !important;
+    width: 1rem !important;
+    flex-shrink: 0 !important;
   }
 
   /* Make date inputs more mobile-friendly */
   input[type="date"] {
     min-height: 44px;
     max-width: 100%;
+    width: 100%;
   }
 
   /* Larger text for readability */

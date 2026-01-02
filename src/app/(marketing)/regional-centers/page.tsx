@@ -9,11 +9,11 @@ export const revalidate = 3600 // Revalidate every hour
 export default async function RegionalCentersPage() {
   const supabase = await createClient()
 
-  // Fetch ALL active regional centers dynamically
+  // Fetch ALL active regional centers and self-determination funding sources
   const { data: regionalCenters, error } = await supabase
     .from('funding_sources')
     .select('*')
-    .eq('type', 'regional_center')
+    .in('funding_type', ['regional_center', 'self_determination'])
     .eq('is_active', true)
 
   if (error) {
@@ -35,16 +35,16 @@ export default async function RegionalCentersPage() {
       <section className="py-16 bg-gradient-to-b from-cyan-50 to-white">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-cyan-600 mb-4">
-            Regional Center Funding
+            Funding Sources
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            We are proud vendors for multiple Regional Centers across California.
+            We partner with Regional Centers and Self Determination programs across California.
             Eligible individuals can receive fully funded swim lessons at no out-of-pocket cost.
           </p>
         </div>
       </section>
 
-      {/* Regional Centers - Dynamic Cards */}
+      {/* Funding Sources - Dynamic Cards */}
       <section className="py-12">
         <div className="container mx-auto px-4 space-y-16">
           {sortedRegionalCenters && sortedRegionalCenters.length > 0 ? (
@@ -186,10 +186,10 @@ export default async function RegionalCentersPage() {
       <section className="py-16 bg-cyan-600">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
-            Client of a Regional Center?
+            Client of a Regional Center or Self Determination Program?
           </h2>
           <p className="text-cyan-100 mb-8 max-w-xl mx-auto">
-            If you're a client of VMRC, CVRC, or another Regional Center, you may qualify for fully funded swim lessons. Request a referral to get started!
+            If you're a client of VMRC, CVRC, or another Regional Center or Self Determination program, you may qualify for fully funded swim lessons. Request a referral to get started!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {/* Primary Button - WHITE with dark text - HIGH CONTRAST */}

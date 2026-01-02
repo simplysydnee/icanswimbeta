@@ -24,11 +24,22 @@ export function RoleGuard({
   const router = useRouter()
 
   useEffect(() => {
+    console.log('RoleGuard effect:', {
+      user: !!user,
+      role,
+      loading,
+      isLoadingProfile,
+      allowedRoles,
+      noRedirect
+    });
+
     // Set a timeout to prevent infinite loading
     const timeoutId = setTimeout(() => {
       if (loading || isLoadingProfile) {
+        console.log('RoleGuard: 10s timeout reached, still loading');
         // Force check even if still loading
         if (!user) {
+          console.log('RoleGuard: No user after timeout, redirecting to login');
           router.push('/login')
         }
       }
@@ -37,17 +48,21 @@ export function RoleGuard({
     if (!loading && !isLoadingProfile) {
       // If user is not authenticated
       if (!user) {
+        console.log('RoleGuard: No user, redirecting to login');
         router.push('/login')
         return
       }
 
       // If roles are specified and user doesn't have required role
       if (allowedRoles.length > 0 && role && !allowedRoles.includes(role)) {
+        console.log('RoleGuard: User role', role, 'not in allowed roles', allowedRoles, 'redirecting to', redirectTo);
         // Only redirect if noRedirect is false
         if (!noRedirect) {
           router.push(redirectTo)
           return
         }
+      } else if (allowedRoles.length > 0 && !role) {
+        console.log('RoleGuard: Allowed roles specified but role is null/undefined');
       }
     }
 

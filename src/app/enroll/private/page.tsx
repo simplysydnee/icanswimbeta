@@ -993,11 +993,21 @@ export default function PrivatePayEnrollmentPage() {
                     <Label>Does your child have any allergies? *</Label>
                     <div className="flex space-x-4 mt-2">
                       <label className="flex items-center space-x-2">
-                        <input type="radio" value="yes" {...register('has_allergies')} />
+                        <input
+                          type="radio"
+                          value="yes"
+                          {...register('has_allergies')}
+                          className="shrink-0 aspect-square size-4 rounded-full"
+                        />
                         <span>Yes</span>
                       </label>
                       <label className="flex items-center space-x-2">
-                        <input type="radio" value="no" {...register('has_allergies')} />
+                        <input
+                          type="radio"
+                          value="no"
+                          {...register('has_allergies')}
+                          className="shrink-0 aspect-square size-4 rounded-full"
+                        />
                         <span>No</span>
                       </label>
                     </div>

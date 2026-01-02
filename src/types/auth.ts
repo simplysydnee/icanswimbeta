@@ -1,6 +1,6 @@
 // Authentication-related types for Supabase auth implementation
 
-export type UserRole = 'parent' | 'instructor' | 'admin' | 'coordinator' | 'coordinator';
+export type UserRole = 'parent' | 'instructor' | 'admin' | 'coordinator';
 
 export interface Profile {
   id: string;
