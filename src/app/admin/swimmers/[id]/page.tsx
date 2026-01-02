@@ -27,11 +27,24 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Stethoscope
+  Stethoscope,
+  Circle
 } from 'lucide-react'
 import { RoleGuard } from '@/components/auth/RoleGuard'
 import { format, parseISO, differenceInYears } from 'date-fns'
 import { useToast } from '@/hooks/use-toast'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar
+} from 'recharts'
 
 interface Swimmer {
   id: string
@@ -90,6 +103,38 @@ interface Swimmer {
     email?: string
     phone?: string
   }
+  // Progress data
+  skills?: Array<{
+    id: string
+    name: string
+    description?: string
+    sequence: number
+    level: {
+      id: string
+      name: string
+      display_name: string
+      color?: string
+      sequence: number
+    }
+    status: 'not_started' | 'in_progress' | 'mastered'
+    date_mastered?: string
+    instructor_notes?: string
+  }>
+  progress_notes?: Array<{
+    id: string
+    lesson_summary: string
+    instructor_notes?: string
+    skills_working_on: string[]
+    skills_mastered: string[]
+    created_at: string
+    instructor: {
+      full_name?: string
+    }
+    session?: {
+      start_time: string
+      location: string
+    }
+  }>
   // Timestamps
   created_at: string
   updated_at: string
@@ -153,7 +198,8 @@ function AdminSwimmerDetailContent() {
 
       const supabase = createClient()
 
-      const { data, error: fetchError } = await supabase
+      // Fetch swimmer basic info
+      const { data: swimmerData, error: swimmerError } = await supabase
         .from('swimmers')
         .select(`
           *,
@@ -163,9 +209,68 @@ function AdminSwimmerDetailContent() {
         .eq('id', swimmerId)
         .single()
 
-      if (fetchError) throw fetchError
+      if (swimmerError) throw swimmerError
 
-      setSwimmer(data)
+      // Fetch swimmer skills
+      const { data: skillsData, error: skillsError } = await supabase
+        .from('swimmer_skills')
+        .select(`
+          id,
+          status,
+          date_mastered,
+          instructor_notes,
+          skill:skills(
+            id,
+            name,
+            description,
+            sequence,
+            level:swim_levels(id, name, display_name, color, sequence)
+          )
+        `)
+        .eq('swimmer_id', swimmerId)
+
+      if (skillsError) throw skillsError
+
+      // Transform skills data
+      const transformedSkills = (skillsData || []).map((item: any) => ({
+        id: item.skill.id,
+        name: item.skill.name,
+        description: item.skill.description,
+        sequence: item.skill.sequence,
+        level: item.skill.level,
+        status: item.status,
+        date_mastered: item.date_mastered,
+        instructor_notes: item.instructor_notes
+      })).sort((a, b) => {
+        const levelSeqA = a.level?.sequence || 0;
+        const levelSeqB = b.level?.sequence || 0;
+        if (levelSeqA !== levelSeqB) return levelSeqA - levelSeqB;
+        return (a.sequence || 0) - (b.sequence || 0);
+      })
+
+      // Fetch progress notes (admin sees all notes including instructor_notes)
+      const { data: notesData, error: notesError } = await supabase
+        .from('progress_notes')
+        .select(`
+          id,
+          lesson_summary,
+          instructor_notes,
+          skills_working_on,
+          skills_mastered,
+          created_at,
+          instructor:profiles(full_name),
+          session:sessions(start_time, location)
+        `)
+        .eq('swimmer_id', swimmerId)
+        .order('created_at', { ascending: false })
+
+      if (notesError) throw notesError
+
+      setSwimmer({
+        ...swimmerData,
+        skills: transformedSkills,
+        progress_notes: notesData || []
+      })
     } catch (err) {
       console.error('Error fetching swimmer:', err)
       setError('Failed to load swimmer details')
@@ -248,6 +353,110 @@ function AdminSwimmerDetailContent() {
     }
   }
 
+  // Progress calculation helpers
+  const getProgressStats = () => {
+    if (!swimmer?.skills) return { mastered: 0, inProgress: 0, total: 0, percentage: 0 }
+
+    const mastered = swimmer.skills.filter(skill => skill.status === 'mastered').length
+    const inProgress = swimmer.skills.filter(skill => skill.status === 'in_progress').length
+    const total = swimmer.skills.length
+    const percentage = total > 0 ? Math.round((mastered / total) * 100) : 0
+
+    return { mastered, inProgress, total, percentage }
+  }
+
+  const getSkillsByLevel = () => {
+    if (!swimmer?.skills) return {}
+
+    return swimmer.skills.reduce((acc, skill) => {
+      const levelId = skill.level.id
+      if (!acc[levelId]) {
+        acc[levelId] = {
+          level: skill.level,
+          skills: []
+        }
+      }
+      acc[levelId].skills.push(skill)
+      return acc
+    }, {} as Record<string, { level: any; skills: any[] }>)
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'mastered':
+        return <CheckCircle className="h-4 w-4 text-green-600" />
+      case 'in_progress':
+        return <Clock className="h-4 w-4 text-yellow-600" />
+      default:
+        return <Circle className="h-4 w-4 text-gray-300" />
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'mastered':
+        return 'Mastered'
+      case 'in_progress':
+        return 'In Progress'
+      default:
+        return 'Not Started'
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'mastered':
+        return 'bg-green-100 text-green-800 border-green-200'
+      case 'in_progress':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200'
+    }
+  }
+
+  // Generate chart data for skills mastered over time
+  const getSkillsOverTimeData = () => {
+    if (!swimmer?.skills) return []
+
+    const masteredSkills = swimmer.skills.filter(skill => skill.status === 'mastered' && skill.date_mastered)
+
+    // Group by month
+    const monthlyData: Record<string, number> = {}
+
+    masteredSkills.forEach(skill => {
+      if (skill.date_mastered) {
+        const date = new Date(skill.date_mastered)
+        const monthYear = format(date, 'MMM yyyy')
+        monthlyData[monthYear] = (monthlyData[monthYear] || 0) + 1
+      }
+    })
+
+    // Convert to array and sort by date
+    return Object.entries(monthlyData)
+      .map(([month, count]) => ({ month, skillsMastered: count }))
+      .sort((a, b) => {
+        const dateA = new Date(a.month)
+        const dateB = new Date(b.month)
+        return dateA.getTime() - dateB.getTime()
+      })
+  }
+
+  // Generate data for skill status distribution
+  const getSkillStatusData = () => {
+    if (!swimmer?.skills) return []
+
+    const statusCounts = swimmer.skills.reduce((acc, skill) => {
+      acc[skill.status] = (acc[skill.status] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+
+    return [
+      { status: 'Mastered', count: statusCounts.mastered || 0, color: '#10b981' },
+      { status: 'In Progress', count: statusCounts.in_progress || 0, color: '#f59e0b' },
+      { status: 'Not Started', count: statusCounts.not_started || 0, color: '#9ca3af' }
+    ]
+  }
+
   if (loading) {
     return (
       <RoleGuard allowedRoles={['admin']}>
@@ -323,15 +532,15 @@ function AdminSwimmerDetailContent() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleUpdateInformation}>
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => router.push(`/admin/swimmers/${swimmerId}/documents`)}>
               <FileText className="h-4 w-4 mr-2" />
               Documents
             </Button>
-            <Button>
+            <Button onClick={() => router.push(`/admin/swimmers/${swimmerId}/progress`)}>
               <Activity className="h-4 w-4 mr-2" />
               View Progress
             </Button>
@@ -381,7 +590,19 @@ function AdminSwimmerDetailContent() {
                               )}
                             </div>
                           </div>
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" onClick={() => {
+                            if (swimmer.parent?.email) {
+                              const subject = `I Can Swim - Regarding ${swimmer.first_name} ${swimmer.last_name}`
+                              const body = `Dear ${swimmer.parent.full_name || 'Parent/Guardian'},\n\nI'm reaching out regarding ${swimmer.first_name} ${swimmer.last_name}.\n\nBest regards,\nThe I Can Swim Team`
+                              window.location.href = `mailto:${swimmer.parent.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+                            } else {
+                              toast({
+                                title: "No Contact Information",
+                                description: "This parent doesn't have an email address on file.",
+                                variant: "destructive",
+                              })
+                            }
+                          }}>
                             Contact
                           </Button>
                         </div>
@@ -735,6 +956,170 @@ function AdminSwimmerDetailContent() {
 
           {/* Progress & Skills Tab */}
           <TabsContent value="progress" className="space-y-6">
+            {/* Progress Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Progress Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-green-600">{getProgressStats().mastered}</div>
+                    <div className="text-sm text-muted-foreground">Skills Mastered</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-yellow-600">{getProgressStats().inProgress}</div>
+                    <div className="text-sm text-muted-foreground">Skills In Progress</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl font-bold">{getProgressStats().total}</div>
+                    <div className="text-sm text-muted-foreground">Total Skills</div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Overall Mastery</span>
+                    <span className="font-medium">{getProgressStats().percentage}%</span>
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all duration-300"
+                      style={{ width: `${getProgressStats().percentage}%` }}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Progress Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Skills Mastered Over Time */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Skills Mastered Over Time
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {getSkillsOverTimeData().length > 0 ? (
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                          data={getSkillsOverTimeData()}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis
+                            dataKey="month"
+                            stroke="#888888"
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                          />
+                          <YAxis
+                            stroke="#888888"
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                            tickFormatter={(value) => `${value}`}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: 'white',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '6px',
+                              fontSize: '12px'
+                            }}
+                            formatter={(value) => [`${value} skills`, 'Mastered']}
+                            labelFormatter={(label) => `Month: ${label}`}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="skillsMastered"
+                            stroke="#3b82f6"
+                            strokeWidth={2}
+                            dot={{ r: 4 }}
+                            activeDot={{ r: 6 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-64 flex items-center justify-center text-muted-foreground">
+                      <div className="text-center">
+                        <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No skills mastered yet</p>
+                        <p className="text-sm">Skills mastery data will appear here</p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Skill Status Distribution */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Skill Status Distribution
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {getSkillStatusData().some(item => item.count > 0) ? (
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={getSkillStatusData()}
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis
+                            dataKey="status"
+                            stroke="#888888"
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                          />
+                          <YAxis
+                            stroke="#888888"
+                            fontSize={12}
+                            tickLine={false}
+                            axisLine={false}
+                            tickFormatter={(value) => `${value}`}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: 'white',
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '6px',
+                              fontSize: '12px'
+                            }}
+                            formatter={(value) => [`${value} skills`, 'Count']}
+                          />
+                          <Bar
+                            dataKey="count"
+                            fill="#8884d8"
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-64 flex items-center justify-center text-muted-foreground">
+                      <div className="text-center">
+                        <Award className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No skills data available</p>
+                        <p className="text-sm">Skill tracking will begin after first lesson</p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
             {/* Current Level & Skills */}
             <Card>
               <CardHeader>
@@ -762,33 +1147,60 @@ function AdminSwimmerDetailContent() {
                       </Badge>
                     </div>
 
-                    {/* Skills Checklist */}
-                    <div>
-                      <h4 className="font-medium mb-3">Skills in this Level</h4>
-                      <div className="space-y-2">
-                        {/* These would come from the database - using placeholder for now */}
+                    {/* Skills by Level */}
+                    {Object.entries(getSkillsByLevel()).map(([levelId, { level, skills: levelSkills }]) => (
+                      <div key={levelId} className="space-y-4">
                         <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 rounded-full bg-green-500"></div>
-                          <span>Water entry and exit</span>
+                          <div
+                            className="h-4 w-4 rounded-full"
+                            style={{ backgroundColor: level.color || '#3b82f6' }}
+                          />
+                          <h4 className="font-medium">{level.display_name} Level</h4>
+                          <Badge variant="outline" className="ml-auto">
+                            {levelSkills.filter(s => s.status === 'mastered').length} of {levelSkills.length} mastered
+                          </Badge>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 rounded-full bg-green-500"></div>
-                          <span>Blowing bubbles</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 rounded-full bg-yellow-500"></div>
-                          <span>Front float with support</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 rounded-full bg-gray-300"></div>
-                          <span>Back float with support</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 rounded-full bg-gray-300"></div>
-                          <span>Kicking with board</span>
+
+                        <div className="space-y-3">
+                          {levelSkills.map((skill) => (
+                            <div key={skill.id} className="flex items-center justify-between p-3 border rounded-lg">
+                              <div className="flex items-center space-x-3">
+                                {getStatusIcon(skill.status)}
+                                <div>
+                                  <div className="font-medium">{skill.name}</div>
+                                  {skill.description && (
+                                    <div className="text-sm text-muted-foreground">{skill.description}</div>
+                                  )}
+                                  {skill.date_mastered && (
+                                    <div className="text-xs text-green-600 mt-1">
+                                      Mastered on {format(new Date(skill.date_mastered), 'MMM d, yyyy')}
+                                    </div>
+                                  )}
+                                  {skill.instructor_notes && (
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      Instructor notes: {skill.instructor_notes}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <Badge variant="outline" className={getStatusColor(skill.status)}>
+                                {getStatusText(skill.status)}
+                              </Badge>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    </div>
+                    ))}
+
+                    {swimmer.skills?.length === 0 && (
+                      <div className="text-center py-8">
+                        <Award className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">No Skills Tracked Yet</h3>
+                        <p className="text-muted-foreground mb-4">
+                          Skills tracking will begin after the first lesson. Check back soon!
+                        </p>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="text-center py-8">
@@ -816,47 +1228,71 @@ function AdminSwimmerDetailContent() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Progress note would come from database - using placeholder */}
-                  <div className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <span className="font-medium">Session on Dec 15, 2024</span>
-                        <span className="text-sm text-muted-foreground ml-2">with Instructor Sarah</span>
-                      </div>
-                      <Badge variant="outline">Completed</Badge>
-                    </div>
-                    <p className="text-sm mb-3">
-                      Made great progress with blowing bubbles today. Still working on front float but showing improvement.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="secondary" className="text-xs">Bubbles</Badge>
-                      <Badge variant="secondary" className="text-xs">Water Comfort</Badge>
-                    </div>
-                  </div>
+                  {swimmer.progress_notes && swimmer.progress_notes.length > 0 ? (
+                    <>
+                      {swimmer.progress_notes.slice(0, 5).map((note) => (
+                        <div key={note.id} className="border rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <span className="font-medium">
+                                {note.session?.start_time
+                                  ? format(new Date(note.session.start_time), 'MMM d, yyyy')
+                                  : format(new Date(note.created_at), 'MMM d, yyyy')
+                                }
+                              </span>
+                              <span className="text-sm text-muted-foreground ml-2">
+                                {note.instructor?.full_name && `with ${note.instructor.full_name}`}
+                                {note.session?.location && ` • ${note.session.location}`}
+                              </span>
+                            </div>
+                            {note.skills_mastered.length > 0 && (
+                              <Badge className="bg-green-100 text-green-800 border-green-200">
+                                {note.skills_mastered.length} skill{note.skills_mastered.length !== 1 ? 's' : ''} mastered
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm mb-3">{note.lesson_summary}</p>
+                          {note.instructor_notes && (
+                            <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-3">
+                              <p className="text-xs font-medium text-blue-800 mb-1">Instructor Notes (Internal):</p>
+                              <p className="text-sm text-blue-700">{note.instructor_notes}</p>
+                            </div>
+                          )}
+                          {(note.skills_working_on.length > 0 || note.skills_mastered.length > 0) && (
+                            <div className="flex flex-wrap gap-2">
+                              {note.skills_working_on.map((skillId, index) => (
+                                <Badge key={index} variant="secondary" className="text-xs">
+                                  Working on: {skillId.substring(0, 8)}...
+                                </Badge>
+                              ))}
+                              {note.skills_mastered.map((skillId, index) => (
+                                <Badge key={index} variant="secondary" className="text-xs bg-green-100 text-green-800 border-green-200">
+                                  Mastered: {skillId.substring(0, 8)}...
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
 
-                  <div className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <span className="font-medium">Session on Dec 8, 2024</span>
-                        <span className="text-sm text-muted-foreground ml-2">with Instructor Mike</span>
-                      </div>
-                      <Badge variant="outline">Completed</Badge>
+                      {swimmer.progress_notes.length > 5 && (
+                        <div className="text-center pt-4">
+                          <Button variant="outline" onClick={() => router.push(`/admin/swimmers/${swimmerId}/progress-notes`)}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            View All Progress Notes ({swimmer.progress_notes.length})
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center py-8">
+                      <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">No Progress Notes Yet</h3>
+                      <p className="text-muted-foreground">
+                        Progress notes will appear here after each lesson. Check back soon!
+                      </p>
                     </div>
-                    <p className="text-sm mb-3">
-                      First assessment completed. Swimmer is comfortable entering water but needs work on floating.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="secondary" className="text-xs">Assessment</Badge>
-                      <Badge variant="secondary" className="text-xs">Water Entry</Badge>
-                    </div>
-                  </div>
-
-                  <div className="text-center pt-4">
-                    <Button variant="outline">
-                      <FileText className="h-4 w-4 mr-2" />
-                      View All Progress Notes
-                    </Button>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
