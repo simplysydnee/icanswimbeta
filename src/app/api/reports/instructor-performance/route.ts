@@ -89,6 +89,20 @@ export async function GET(request: Request) {
 
 async function getInstructorPerformanceFallback(supabase: any, start: string, end: string) {
   try {
+    // First get user IDs with instructor role from user_roles table
+    const { data: instructorRoles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', 'instructor');
+
+    if (rolesError) throw rolesError;
+
+    const instructorIds = instructorRoles?.map(role => role.user_id) || [];
+
+    if (instructorIds.length === 0) {
+      return NextResponse.json([]);
+    }
+
     // Fallback query if the database function doesn't exist
     const { data: instructors, error: instructorsError } = await supabase
       .from('profiles')
@@ -111,7 +125,7 @@ async function getInstructorPerformanceFallback(supabase: any, start: string, en
           )
         )
       `)
-      .eq('role', 'instructor');
+      .in('id', instructorIds);
 
     if (instructorsError) throw instructorsError;
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format, addMonths, startOfWeek, endOfWeek, parseISO, isBefore, startOfDay } from 'date-fns';
+import { format, addMonths, startOfWeek, endOfWeek, parseISO, isBefore, startOfDay, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, addDays } from 'date-fns';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, User } from 'lucide-react';
 import type { AvailableSession } from '@/types/booking';
 import { Button } from '@/components/ui/button';
@@ -199,25 +199,6 @@ export function DateSelectStep({
       )).sort()
     : [];
 
-  // Get matched sessions for recurring mode
-  const matchedSessions = useMemo(() => {
-    return recurringDay !== null && recurringTime
-      ? rangeSessions.filter(s =>
-          s.dayOfWeek === recurringDay &&
-          getTimeFromISO(s.startTime) === recurringTime
-        )
-      : [];
-  }, [recurringDay, recurringTime, rangeSessions]);
-
-  // Update matched session IDs when matches change
-  useEffect(() => {
-    if (sessionType === 'recurring' && matchedSessions.length > 0) {
-      const matchedIds = matchedSessions.map(s => s.id);
-      if (JSON.stringify(matchedIds) !== JSON.stringify(selectedRecurringSessions)) {
-        onSetRecurring({ sessionIds: matchedIds, sessions: matchedSessions });
-      }
-    }
-  }, [matchedSessions, selectedRecurringSessions, sessionType, onSetRecurring]);
 
   // Week navigation for single mode
   const goToPreviousWeek = () => {
@@ -456,150 +437,165 @@ export function DateSelectStep({
     );
   }
 
-  // Recurring session mode
+  // Recurring session mode - NEW FLOW: Month → Day → Time → Auto-book all instances
+  const [selectedMonth, setSelectedMonth] = useState<Date>(startOfMonth(new Date()));
+
+  // Calculate month start and end
+  const monthStart = startOfMonth(selectedMonth);
+  const monthEnd = endOfMonth(selectedMonth);
+
+  // Get all days in the month
+  const allDaysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+  // Filter to only the selected day of week
+  const selectedDaysInMonth = useMemo(() => {
+    if (recurringDay === null) return [];
+    return allDaysInMonth.filter(date => date.getDay() === recurringDay);
+  }, [allDaysInMonth, recurringDay]);
+
+  // Calculate matched sessions for the selected day/time in the month
+  const matchedSessionsInMonth = useMemo(() => {
+    if (recurringDay === null || recurringTime === null || !rangeSessions.length) return [];
+
+    return rangeSessions.filter(session => {
+      const sessionDate = parseISO(session.startTime);
+      return (
+        sessionDate.getDay() === recurringDay &&
+        getTimeFromISO(session.startTime) === recurringTime &&
+        isSameMonth(sessionDate, monthStart)
+      );
+    });
+  }, [rangeSessions, recurringDay, recurringTime, monthStart]);
+
+  // Update selected sessions when matches change
+  useEffect(() => {
+    if (sessionType === 'recurring' && matchedSessionsInMonth.length > 0) {
+      const matchedIds = matchedSessionsInMonth.map(s => s.id);
+      if (JSON.stringify(matchedIds) !== JSON.stringify(selectedRecurringSessions)) {
+        onSetRecurring({
+          sessionIds: matchedIds,
+          sessions: matchedSessionsInMonth,
+          startDate: monthStart,
+          endDate: monthEnd
+        });
+      }
+    }
+  }, [matchedSessionsInMonth, selectedRecurringSessions, sessionType, onSetRecurring, monthStart, monthEnd]);
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
         <h3 className="font-semibold">Recurring Weekly Schedule</h3>
         <p className="text-sm text-muted-foreground">
-          Select a date range, then choose available day and time
+          Book all {DAYS_OF_WEEK[recurringDay || 0]}s in {format(monthStart, 'MMMM yyyy')} at your preferred time
         </p>
       </div>
 
-      {/* Step 1: Date range selection */}
+      {/* Step 1: Month selection */}
       <div className="space-y-4">
-        <h4 className="font-medium">1. Select Date Range</h4>
-        <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Start date */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Start Date</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !localStartDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {localStartDate ? format(localStartDate, 'PPP') : 'Pick a start date'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={localStartDate || undefined}
-                  onSelect={handleStartDateChange}
-                  disabled={date => isBefore(date, startOfDay(new Date()))}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+        <h4 className="font-medium">1. Select Month</h4>
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSelectedMonth(addMonths(selectedMonth, -1))}
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Previous
+          </Button>
+
+          <div className="text-center font-medium">
+            {format(monthStart, 'MMMM yyyy')}
           </div>
 
-          {/* End date */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">End Date</label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !localEndDate && "text-muted-foreground"
-                  )}
-                  disabled={!localStartDate}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {localEndDate ? format(localEndDate, 'PPP') : 'Pick an end date'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={localEndDate || undefined}
-                  onSelect={handleEndDateChange}
-                  disabled={date => !localStartDate || isBefore(date, localStartDate)}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSelectedMonth(addMonths(selectedMonth, 1))}
+          >
+            Next
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
         </div>
       </div>
 
-      {/* Step 2: Day selection (only shows when date range selected) */}
-      {localStartDate && localEndDate && (
-        <div className="space-y-4">
-          <h4 className="font-medium">2. Select Day of Week</h4>
+      {/* Step 2: Day of week selection */}
+      <div className="space-y-4">
+        <h4 className="font-medium">2. Select Day of Week</h4>
+        <div className="grid grid-cols-7 gap-2">
+          {[0, 1, 2, 3, 4, 5, 6].map(day => {
+            const isSelected = recurringDay === day;
+            const hasSessions = uniqueDays.includes(day);
 
+            return (
+              <Button
+                key={day}
+                variant={isSelected ? "default" : "outline"}
+                className={cn(
+                  "h-12 flex flex-col items-center justify-center",
+                  !hasSessions && "opacity-50 cursor-not-allowed"
+                )}
+                onClick={() => {
+                  if (hasSessions) {
+                    onSetRecurring({ day });
+                    onSetRecurring({ time: undefined, sessionIds: [] });
+                  }
+                }}
+                disabled={!hasSessions}
+              >
+                <div className="text-xs font-medium">{DAYS_OF_WEEK[day].slice(0, 3)}</div>
+                {!hasSessions && (
+                  <div className="text-xs text-muted-foreground mt-1">No sessions</div>
+                )}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Step 3: Time selection (only shows when day selected) */}
+      {recurringDay !== null && (
+        <div className="space-y-4">
+          <h4 className="font-medium">3. Select Time</h4>
           {isLoadingRange ? (
             <Skeleton className="h-10 w-full" />
-          ) : rangeSessions.length === 0 ? (
+          ) : uniqueTimes.length === 0 ? (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                No sessions available in this date range. Try a different range or contact the office.
+                No sessions available on {DAYS_OF_WEEK[recurringDay]}. Try a different day or contact the office.
               </AlertDescription>
             </Alert>
           ) : (
-            <Select
-              value={recurringDay?.toString() || ''}
-              onValueChange={value => {
-                const day = parseInt(value);
-                onSetRecurring({ day });
-                // Clear time when day changes
-                onSetRecurring({ time: undefined, sessionIds: [] });
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select available day" />
-              </SelectTrigger>
-              <SelectContent>
-                {uniqueDays.map(day => (
-                  <SelectItem key={day} value={day.toString()}>
-                    {DAYS_OF_WEEK[day]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {uniqueTimes.map(time => {
+                const isSelected = recurringTime === time;
+                return (
+                  <Button
+                    key={time}
+                    variant={isSelected ? "default" : "outline"}
+                    className="h-12 flex flex-col items-center justify-center"
+                    onClick={() => onSetRecurring({ time })}
+                  >
+                    <div className="font-medium">{formatTime12Hour(time)}</div>
+                  </Button>
+                );
+              })}
+            </div>
           )}
         </div>
       )}
 
-      {/* Step 3: Time selection (only shows when day selected) */}
-      {recurringDay !== null && uniqueTimes.length > 0 && (
+      {/* Step 4: Sessions preview */}
+      {matchedSessionsInMonth.length > 0 && (
         <div className="space-y-4">
-          <h4 className="font-medium">3. Select Time</h4>
-          <Select
-            value={recurringTime || ''}
-            onValueChange={value => onSetRecurring({ time: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select available time" />
-            </SelectTrigger>
-            <SelectContent>
-              {uniqueTimes.map(time => (
-                <SelectItem key={time} value={time}>
-                  {formatTime12Hour(time)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* Step 4: Matched sessions preview */}
-      {matchedSessions.length > 0 && (
-        <div className="space-y-4">
-          <h4 className="font-medium">4. Available Sessions</h4>
+          <h4 className="font-medium">4. Sessions to Book</h4>
           <div className="rounded-lg border p-4">
             <p className="font-medium mb-3">
-              Found {matchedSessions.length} session{matchedSessions.length !== 1 ? 's' : ''}
+              {matchedSessionsInMonth.length} {DAYS_OF_WEEK[recurringDay!]} session{matchedSessionsInMonth.length !== 1 ? 's' : ''} in {format(monthStart, 'MMMM')}
             </p>
             <div className="space-y-1 max-h-60 overflow-y-auto">
-              {matchedSessions.map(session => (
+              {matchedSessionsInMonth.map(session => (
                 <div
                   key={session.id}
                   className="flex items-center gap-2 text-sm py-1"
@@ -609,6 +605,11 @@ export function DateSelectStep({
                     {format(parseISO(session.startTime), 'EEE, MMM d')} at{' '}
                     {format(parseISO(session.startTime), 'h:mm a')}
                   </span>
+                  {session.instructorName && (
+                    <span className="text-xs text-muted-foreground ml-auto">
+                      {session.instructorName}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
@@ -617,24 +618,23 @@ export function DateSelectStep({
       )}
 
       {/* Summary box */}
-      {matchedSessions.length > 0 && localStartDate && localEndDate && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+      {matchedSessionsInMonth.length > 0 && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-4">
           <div className="flex items-start gap-3">
-            <CalendarIcon className="h-5 w-5 text-blue-600 mt-0.5" />
+            <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
             <div className="space-y-1">
-              <h4 className="font-medium text-blue-800">Schedule Summary</h4>
-              <p className="text-sm text-blue-700">
-                {matchedSessions.length} session{matchedSessions.length !== 1 ? 's' : ''} on{' '}
-                {DAYS_OF_WEEK[recurringDay!]}s at {formatTime12Hour(recurringTime!)}
+              <h4 className="font-medium text-green-800">Ready to Book</h4>
+              <p className="text-sm text-green-700">
+                {matchedSessionsInMonth.length} {DAYS_OF_WEEK[recurringDay!]} session{matchedSessionsInMonth.length !== 1 ? 's' : ''} in {format(monthStart, 'MMMM yyyy')}
               </p>
-              <p className="text-sm text-blue-700">
-                {format(localStartDate, 'MMM d, yyyy')} - {format(localEndDate, 'MMM d, yyyy')}
+              <p className="text-sm text-green-700">
+                Every {DAYS_OF_WEEK[recurringDay!]} at {formatTime12Hour(recurringTime!)}
               </p>
 
-              {/* Check for gaps in schedule */}
-              {matchedSessions.length < 4 && (
+              {/* Check for blackout dates */}
+              {selectedDaysInMonth.length > matchedSessionsInMonth.length && (
                 <p className="text-xs text-amber-700 mt-2">
-                  Note: Some weeks don&apos;t have available sessions for this time
+                  Note: {selectedDaysInMonth.length - matchedSessionsInMonth.length} {DAYS_OF_WEEK[recurringDay!]}{selectedDaysInMonth.length - matchedSessionsInMonth.length !== 1 ? 's' : ''} not available (blackout dates)
                 </p>
               )}
             </div>
@@ -643,4 +643,3 @@ export function DateSelectStep({
       )}
     </div>
   );
-}
