@@ -474,16 +474,27 @@ export default function PrivatePayEnrollmentPage() {
         router.push('/parent-home');
       }, 3000);
     } catch (error) {
-      console.error('Error submitting enrollment:', {
-        error,
-        errorString: String(error),
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorStack: error instanceof Error ? error.stack : undefined,
-        user: user?.id
-      });
+      console.error('=== ENROLLMENT SUBMISSION ERROR ===');
+      console.error('Error object:', error);
+      console.error('Error string:', String(error));
+      console.error('Error message:', error instanceof Error ? error.message : String(error));
+      console.error('Error stack:', error instanceof Error ? error.stack : undefined);
+      console.error('User ID:', user?.id);
+      console.error('Form data at time of error:', data);
+
+      // Try to get more details from Supabase error
+      if (error && typeof error === 'object' && 'message' in error) {
+        console.error('Supabase error details:', {
+          message: error.message,
+          details: (error as any).details,
+          hint: (error as any).hint,
+          code: (error as any).code
+        });
+      }
+
       setSubmitResult({
         success: false,
-        message: 'Failed to submit enrollment. Please try again or contact support.',
+        message: 'Failed to submit enrollment. Please try again or contact support. Error: ' + (error instanceof Error ? error.message : String(error)),
       });
     } finally {
       setIsSubmitting(false);

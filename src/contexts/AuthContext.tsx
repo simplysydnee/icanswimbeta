@@ -444,7 +444,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.user) {
         try {
           // Wait a bit longer to ensure session is fully established
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 1500));
+
+          console.log('Attempting to auto-link swimmers for new user:', data.user.email);
 
           const response = await fetch('/api/auth/link-swimmers', {
             method: 'POST',
@@ -456,7 +458,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           if (!response.ok) {
             const errorText = await response.text();
-            console.error('Failed to auto-link swimmers:', errorText);
+            console.error('Failed to auto-link swimmers:', {
+              status: response.status,
+              statusText: response.statusText,
+              error: errorText,
+              url: '/api/auth/link-swimmers'
+            });
             // Check if it's a 404 error
             if (response.status === 404) {
               console.warn('API route /api/auth/link-swimmers returned 404. The route might not exist or there might be a routing issue.');
