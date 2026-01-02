@@ -15,7 +15,7 @@ export interface SwimmerInstructorAssignment {
     id: string;
     full_name: string;
     email: string;
-    avatar_url?: string;
+    avatar_url: string | null;
   };
   swimmer?: {
     id: string;

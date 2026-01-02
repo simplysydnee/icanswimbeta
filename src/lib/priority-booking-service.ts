@@ -138,7 +138,7 @@ export const priorityBookingService = {
    * Returns all instructors if swimmer has no priority, or only assigned instructors if priority
    */
   async getAvailableInstructorsForSwimmer(swimmerId: string): Promise<{
-    instructors: Array<{ id: string; full_name: string; email: string }>;
+    instructors: Array<{ id: string; full_name: string; email: string; avatar_url: string | null }>;
     isPriority: boolean;
     reason: string | null;
   }> {
@@ -179,7 +179,7 @@ export const priorityBookingService = {
     // Then get profiles for those IDs
     const { data: instructors, error: instructorError } = await supabase
       .from('profiles')
-      .select('id, full_name, email')
+      .select('id, full_name, email, avatar_url')
       .eq('display_on_team', true)
       .eq('is_active', true)
       .in('id', instructorIds)

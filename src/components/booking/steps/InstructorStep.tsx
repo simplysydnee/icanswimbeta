@@ -38,8 +38,7 @@ export default function InstructorStep({
             id: instructor.id,
             fullName: instructor.full_name,
             email: instructor.email,
-            // Add other required fields if needed
-            avatarUrl: null
+            avatarUrl: instructor.avatar_url
           })),
           isPriority: result.isPriority,
           reason: result.reason
