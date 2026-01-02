@@ -3,98 +3,116 @@ import Image from 'next/image';
 import { Phone, Mail, MapPin, Facebook, Instagram } from 'lucide-react';
 
 export function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="border-t bg-background">
+    <footer className="bg-slate-900 text-white">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-          {/* Brand Section */}
-          <div className="lg:col-span-2">
-            <div className="flex items-center space-x-2 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-center md:text-left">
+
+          {/* Brand Column */}
+          <div className="space-y-4">
+            <div className="flex justify-center md:justify-start">
               <Image
-                src="/images/logo-header.svg"
-                alt="I Can Swim"
-                width={48}
-                height={48}
-                className="h-12 w-auto"
+                src="/images/logo.svg"
+                alt="I Can Swim - Adaptive Swim Lessons"
+                width={180}
+                height={60}
+                className="brightness-0 invert"
               />
             </div>
-            <p className="text-muted-foreground text-sm mb-4 max-w-md">
-              Building confidence, safety, and joy in the water through personalized, adaptive instruction
-              tailored to each swimmer&apos;s unique needs. Serving Central Valley families since 2015.
+            <p className="text-slate-300 text-sm leading-relaxed">
+              Adaptive swim lessons for individuals of all abilities.
+              Building confidence, safety, and joy in the water.
             </p>
-            <div className="flex flex-col space-y-2 text-sm text-muted-foreground">
-              <div className="flex items-center space-x-2">
-                <Phone className="h-4 w-4" />
-                <span>(209) 778-7877</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Mail className="h-4 w-4" />
-                <span>info@icanswim209.com</span>
-              </div>
-              <div className="flex items-center space-x-3 pt-2">
-                <a href="https://facebook.com/icanswim209" className="text-muted-foreground hover:text-primary transition-colors">
-                  <Facebook className="h-5 w-5" />
-                </a>
-                <a href="https://instagram.com/icanswim209" className="text-muted-foreground hover:text-primary transition-colors">
-                  <Instagram className="h-5 w-5" />
-                </a>
-              </div>
+            <div className="flex gap-4 justify-center md:justify-start">
+              <a
+                href="https://facebook.com/icanswim209"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-400 hover:text-white transition-colors"
+                aria-label="Follow us on Facebook"
+              >
+                <Facebook className="h-5 w-5" />
+              </a>
+              <a
+                href="https://instagram.com/icanswim209"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-400 hover:text-white transition-colors"
+                aria-label="Follow us on Instagram"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
             </div>
           </div>
 
-          {/* Locations */}
-          <div>
-            <h3 className="font-semibold mb-3">Our Location</h3>
-            <ul className="space-y-3 text-sm text-muted-foreground">
+          {/* Quick Links Column */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-lg">Quick Links</h3>
+            <ul className="space-y-2 text-slate-300 text-sm">
               <li>
-                <div className="flex items-start space-x-2">
-                  <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <strong>Modesto</strong><br />
-                    1212 Kansas Ave<br />
-                    Modesto, CA 95351
-                  </div>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h3 className="font-semibold mb-3">Quick Links</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <Link href="/signup" className="hover:text-primary transition-colors">
+                <Link href="/signup" className="hover:text-white transition-colors">
                   Book Assessment
                 </Link>
               </li>
               <li>
-                <Link href="/login" className="hover:text-primary transition-colors">
+                <Link href="/login" className="hover:text-white transition-colors">
                   Parent Dashboard
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="hover:text-primary transition-colors">
+                <Link href="/about" className="hover:text-white transition-colors">
                   About Our Program
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-primary transition-colors">
+                <Link href="/contact" className="hover:text-white transition-colors">
                   Contact Us
                 </Link>
               </li>
             </ul>
           </div>
+
+          {/* Contact Column */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-lg">Contact Us</h3>
+            <ul className="space-y-3 text-slate-300 text-sm">
+              <li className="flex items-center gap-3 justify-center md:justify-start">
+                <Mail className="h-4 w-4 shrink-0" />
+                <a href="mailto:info@icanswim209.com" className="hover:text-white transition-colors">
+                  info@icanswim209.com
+                </a>
+              </li>
+              <li className="flex items-center gap-3 justify-center md:justify-start">
+                <Phone className="h-4 w-4 shrink-0" />
+                <div>
+                  <a href="tel:209-778-7877" className="hover:text-white transition-colors">(209) 778-7877</a>
+                  <p className="text-xs text-slate-400">Text: 209-643-7969</p>
+                </div>
+              </li>
+              <li className="flex items-center gap-3 justify-center md:justify-start">
+                <MapPin className="h-4 w-4 shrink-0" />
+                <div>
+                  <p>Modesto, CA</p>
+                  <p className="text-xs text-slate-400">Serving the Central Valley</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+
         </div>
 
-        {/* Bottom Section */}
-        <div className="border-t mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center">
-          <p className="text-sm text-muted-foreground">
-            © 2024 I Can Swim, LLC. All rights reserved.
-          </p>
-          <p className="text-sm text-muted-foreground mt-2 sm:mt-0">
-            Adaptive Swim Lessons for Every Swimmer
-          </p>
+        {/* Bottom Bar */}
+        <div className="mt-12 pt-6 border-t border-slate-800 text-center">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-2">
+            <p className="text-sm text-slate-400">
+              © {currentYear} I Can Swim, LLC. All rights reserved.
+            </p>
+            <p className="text-sm text-slate-400">
+              Adaptive Swim Lessons for Every Swimmer
+            </p>
+          </div>
         </div>
       </div>
     </footer>
