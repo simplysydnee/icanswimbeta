@@ -423,11 +423,17 @@ export default function EnrollmentPage() {
                                   <SelectValue placeholder="Choose your funding source..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {fundingSources.map((source) => (
-                                    <SelectItem key={source.id} value={source.id}>
-                                      {source.name}
-                                    </SelectItem>
-                                  ))}
+                                  {fundingSources
+                                    .filter(source => {
+                                      const type = source.type?.toLowerCase();
+                                      // Exclude private_pay and scholarship from the dropdown
+                                      return type !== 'private_pay' && type !== 'scholarship';
+                                    })
+                                    .map((source) => (
+                                      <SelectItem key={source.id} value={source.id}>
+                                        {source.name}
+                                      </SelectItem>
+                                    ))}
                                 </SelectContent>
                               </Select>
                             )}
