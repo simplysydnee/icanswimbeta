@@ -179,9 +179,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return fetchUserProfile(userId, userEmail, 1)
       }
 
-      // Get primary role (first role in the array)
+      // Get primary role with priority
       // Handle case where rolesData might be null or undefined
-      const primaryRole = rolesData && Array.isArray(rolesData) && rolesData[0]?.role || 'parent'
+      let primaryRole: UserRole = 'parent' // default
+
+      if (rolesData && Array.isArray(rolesData)) {
+        // Check for roles in priority order
+        const rolePriority: UserRole[] = ['admin', 'coordinator', 'instructor', 'parent']
+
+        for (const role of rolePriority) {
+          const hasRole = rolesData.some(r => r.role === role || r.role === 'vmrc_coordinator' && role === 'coordinator')
+          if (hasRole) {
+            primaryRole = role
+            break
+          }
+        }
+      }
 
       // Make sure finalProfileData is not null or undefined
       if (!finalProfileData) {

@@ -27,6 +27,7 @@ export default function SignupForm() {
   })
   const [formError, setFormError] = useState<string | null>(null)
   const [isFromReferral, setIsFromReferral] = useState(false)
+  const [isFromEnrollment, setIsFromEnrollment] = useState(false)
   const [childName, setChildName] = useState('')
   const [redirectUrl, setRedirectUrl] = useState('')
   const [emailParam, setEmailParam] = useState('')
@@ -40,14 +41,15 @@ export default function SignupForm() {
       const decodedEmail = decodeURIComponent(emailParamValue)
       setEmailParam(decodedEmail)
       setFormData(prev => ({ ...prev, email: decodedEmail }))
-      // Only set as referral if there's also a child parameter
-      // This allows email pre-fill without locking the field
-      setIsFromReferral(!!childParam)
+      // Pre-fill email but don't lock it unless it's an actual referral
+      // Check for referral token or other referral indicator
+      const isActualReferral = searchParams.get('referral_token') || searchParams.get('ref')
+      setIsFromReferral(!!isActualReferral)
     }
     if (childParam) {
       setChildName(decodeURIComponent(childParam))
-      // If there's a child parameter, it's definitely a referral
-      setIsFromReferral(true)
+      // Child parameter indicates enrollment flow (not necessarily referral)
+      setIsFromEnrollment(true)
     }
     if (redirectParam) {
       setRedirectUrl(decodeURIComponent(redirectParam))
@@ -115,14 +117,14 @@ export default function SignupForm() {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl text-center">Create Account</CardTitle>
         <CardDescription className="text-center">
-          {isFromReferral
+          {isFromEnrollment && childName
             ? `Sign up to complete enrollment for ${childName}`
             : 'Enter your information to create your account'
           }
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {isFromReferral && (
+        {isFromEnrollment && childName && (
           <div className="mb-6 p-4 bg-[#2a5e84]/10 border border-[#2a5e84]/20 rounded-lg">
             <p className="text-[#2a5e84] font-medium text-sm">
               🏊 Welcome! You're signing up to complete enrollment for {childName}.
@@ -278,11 +280,11 @@ export default function SignupForm() {
               className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               I agree to the{' '}
-              <Link href="/terms" className="text-primary hover:underline">
+              <Link href="/terms" className="text-primary hover:underline inline">
                 Terms of Service
               </Link>{' '}
               and{' '}
-              <Link href="/privacy" className="text-primary hover:underline">
+              <Link href="/privacy" className="text-primary hover:underline inline">
                 Privacy Policy
               </Link>
             </Label>

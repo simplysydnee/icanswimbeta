@@ -282,7 +282,7 @@ export default function StaffManagementPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold">Staff Management</h1>
           <p className="text-gray-600 mt-1">
@@ -299,7 +299,7 @@ export default function StaffManagementPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-6">
         <Button
           variant={filterActive === 'active' ? 'default' : 'outline'}
           size="sm"
@@ -328,7 +328,7 @@ export default function StaffManagementPage() {
 
       {/* Staff Table */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 overflow-x-auto">
           {filteredStaff.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />

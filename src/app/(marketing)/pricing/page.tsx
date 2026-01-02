@@ -114,7 +114,7 @@ export default async function PricingPage() {
               </Link>
             </Card>
 
-            {/* Regional Center Card - Most Popular */}
+            {/* Funding Programs Card - Most Popular */}
             <Card className="p-8 flex flex-col bg-gradient-to-br from-green-50 to-cyan-50 border-2 border-green-500 relative">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-500 text-white text-xs font-medium px-4 py-1 rounded-full">
                 Most Popular
@@ -124,7 +124,7 @@ export default async function PricingPage() {
                 <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Shield className="w-7 h-7 text-green-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-center mb-6">Regional Center Funded</h3>
+                <h3 className="text-2xl font-bold text-center mb-6">Program Funded</h3>
 
                 {/* Price display */}
                 <div className="text-center mb-6">
@@ -133,7 +133,7 @@ export default async function PricingPage() {
                     <span className="text-gray-500 ml-2">for eligible families</span>
                   </div>
                   <p className="text-sm text-gray-600 mt-3">
-                    Fully funded through your Regional Center
+                    Fully funded through Regional Centers or Self Determination programs
                   </p>
                 </div>
 
@@ -163,7 +163,7 @@ export default async function PricingPage() {
 
               <Link href="/regional-centers" className="w-full">
                 <Button variant="outline" className="w-full border-green-600 text-green-600 hover:bg-green-600 hover:text-white">
-                  Learn About Funding
+                  View Funding Programs
                 </Button>
               </Link>
             </Card>

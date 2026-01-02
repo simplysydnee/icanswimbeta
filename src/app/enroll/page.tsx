@@ -54,7 +54,11 @@ export default function EnrollmentPage() {
           // Show all active funding sources (regional_center, self_determination, scholarship, private_pay)
           .order('name');
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching funding sources:', error);
+          throw error;
+        }
+        console.log('Fetched funding sources:', data?.length, 'sources:', data);
         setFundingSources(data || []);
       } catch (error) {
         console.error('Error fetching funding sources:', error);

@@ -49,11 +49,13 @@ html, body {
     flex-shrink: 0 !important;
   }
 
-  /* Make date inputs more mobile-friendly */
+  /* Make date inputs more mobile-friendly - override browser defaults */
   input[type="date"] {
     min-height: 44px;
     max-width: 100%;
     width: 100%;
+    box-sizing: border-box;
+    min-width: 0 !important; /* Override browser default min-width */
   }
 
   /* Larger text for readability */
