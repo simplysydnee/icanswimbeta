@@ -112,7 +112,7 @@ export function OutstandingPOsList({ problemPOs }: OutstandingPOsListProps) {
         </CardHeader>
         <CardContent>
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center">
@@ -288,7 +288,7 @@ export function OutstandingPOsList({ problemPOs }: OutstandingPOsListProps) {
           {sortedPOs.length > 0 && (
             <div className="mt-6">
               <h4 className="font-medium mb-3">Recommended Actions</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                 <Card className="bg-blue-50 border-blue-200">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center">
@@ -371,7 +371,7 @@ export function OutstandingPOsList({ problemPOs }: OutstandingPOsListProps) {
               </div>
 
               {/* Contact Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center">

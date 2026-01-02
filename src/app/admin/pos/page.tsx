@@ -383,7 +383,7 @@ export default function POSPage() {
       </div>
 
       {/* Overall Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="p-4">
             <div className="text-xs text-muted-foreground">Total</div>
@@ -733,7 +733,7 @@ I Can Swim Team`;
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground">Funding Source:</span>
                 <p className="font-medium">{selectedPO?.funding_source?.name || 'Unknown'}</p>

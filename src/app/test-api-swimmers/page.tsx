@@ -91,7 +91,7 @@ export default function TestApiSwimmersPage() {
             <p className="text-sm text-muted-foreground">
               Found {swimmers.length} swimmer{swimmers.length !== 1 ? 's' : ''}:
             </p>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-1 md:grid-cols-2">
               {swimmers.map(swimmer => (
                 <div key={swimmer.id} className="rounded-lg border p-4">
                   <h3 className="font-semibold">

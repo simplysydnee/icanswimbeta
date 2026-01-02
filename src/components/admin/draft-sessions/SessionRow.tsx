@@ -71,7 +71,7 @@ export function SessionRow({ session, selected, onSelect }: SessionRowProps) {
           aria-label={`Select session on ${formatDate(session.start_time)} at ${formatTime(session.start_time)}`}
         />
 
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-5 gap-2">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2">
           <div className="space-y-1">
             <div className="font-medium">{formatDate(session.start_time)}</div>
             <div className="text-sm text-muted-foreground">

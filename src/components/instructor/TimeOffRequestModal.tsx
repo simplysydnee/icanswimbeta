@@ -115,7 +115,7 @@ export function TimeOffRequestModal({ open, onClose, onSubmitted }: TimeOffReque
 
         <div className="space-y-4 pt-4">
           {/* Date Range */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="start-date">Start Date *</Label>
               <Input
@@ -158,7 +158,7 @@ export function TimeOffRequestModal({ open, onClose, onSubmitted }: TimeOffReque
 
           {/* Time Range (if not all day) */}
           {!isAllDay && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="start-time">Start Time *</Label>
                 <Input

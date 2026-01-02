@@ -127,7 +127,7 @@ const [selectedId, setSelectedId] = useState<string | null>(null);
   }}
 />`}
         </pre>
-        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-1 md:grid-cols-2">
           <div className="rounded-lg bg-blue-50 p-4">
             <h3 className="mb-2 font-semibold text-blue-800">Props</h3>
             <ul className="space-y-1 text-sm text-blue-700">

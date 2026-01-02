@@ -97,7 +97,7 @@ export function DateSection({
       )}
 
       {/* Date pickers */}
-      <div className={cn("grid gap-4", isRepeating ? "sm:grid-cols-2" : "")}>
+      <div className={cn("grid gap-4", isRepeating ? "sm:grid-cols-1 md:grid-cols-2" : "")}>
         {/* Start Date */}
         <div className="space-y-2">
           <Label className="text-sm">{isRepeating ? 'Start Date' : 'Session Date'}</Label>

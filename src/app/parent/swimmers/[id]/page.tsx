@@ -204,7 +204,7 @@ export default function SwimmerDetailPage() {
       <div className="container mx-auto p-6">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
               <div className="h-64 bg-gray-200 rounded"></div>
               <div className="h-48 bg-gray-200 rounded"></div>
@@ -352,7 +352,7 @@ export default function SwimmerDetailPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Basic Information */}
@@ -361,7 +361,7 @@ export default function SwimmerDetailPage() {
               <CardTitle>Basic Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
                     Date of Birth
@@ -392,7 +392,7 @@ export default function SwimmerDetailPage() {
               <CardTitle>Medical & Safety Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
                     Allergies
@@ -441,7 +441,7 @@ export default function SwimmerDetailPage() {
               <CardTitle>Swimming Background</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
                     Previous Swim Lessons

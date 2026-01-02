@@ -111,7 +111,7 @@ export function TimeSection({
       <Label className="text-base font-semibold">Time Window</Label>
 
       {/* Start time, end time, duration in a row */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-3">
         {/* Start Time */}
         <div className="space-y-2">
           <Label className="text-sm">Start Time</Label>

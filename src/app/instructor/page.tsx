@@ -269,7 +269,7 @@ export default function InstructorDashboard() {
         </div>
 
         {/* Stats cards skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i}>
               <CardContent className="p-6">
@@ -322,7 +322,7 @@ export default function InstructorDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
@@ -577,7 +577,7 @@ export default function InstructorDashboard() {
           <CardTitle className="text-lg">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             <Link href="/instructor/schedule">
               <Button variant="outline" className="w-full h-auto py-4 flex flex-col gap-2">
                 <Calendar className="h-6 w-6" />

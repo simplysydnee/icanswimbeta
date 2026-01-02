@@ -113,7 +113,7 @@ export function BookingCalendarView({ bookings }: BookingCalendarViewProps) {
         {view === 'week' && (
           <div className="border rounded-lg overflow-hidden">
             {/* Day Headers */}
-            <div className="grid grid-cols-7 border-b">
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 border-b">
               {weekDays.map((day) => (
                 <div
                   key={day.toISOString()}
@@ -132,7 +132,7 @@ export function BookingCalendarView({ bookings }: BookingCalendarViewProps) {
             </div>
 
             {/* Day Content */}
-            <div className="grid grid-cols-7 min-h-[400px]">
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 min-h-[400px]">
               {weekDays.map((day) => {
                 const dateKey = day.toISOString().split('T')[0]
                 const dayBookings = bookingsByDate[dateKey] || []

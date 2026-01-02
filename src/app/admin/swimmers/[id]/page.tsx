@@ -349,7 +349,7 @@ function AdminSwimmerDetailContent() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-6">
               {/* Left Column - Basic Info */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Parent Info Card */}
@@ -446,7 +446,7 @@ function AdminSwimmerDetailContent() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Previous Lessons</p>
                         <p className="font-medium">
@@ -605,7 +605,7 @@ function AdminSwimmerDetailContent() {
 
           {/* Medical & Safety Tab */}
           <TabsContent value="medical" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-2 gap-6">
               {/* Medical Information */}
               <Card>
                 <CardHeader>
@@ -959,7 +959,7 @@ function AdminSwimmerDetailContent() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 border rounded-lg">
                     <div className="text-2xl font-bold text-cyan-600">12</div>
                     <div className="text-sm text-muted-foreground">Total Sessions</div>
@@ -1054,7 +1054,7 @@ function AdminSwimmerDetailContent() {
                   {/* Coordinator Info */}
                   <div className="space-y-4">
                     <h3 className="font-semibold">Regional Center Coordinator</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Name</p>
                         <p className="font-medium">{swimmer.funding_coordinator_name || 'Not specified'}</p>
@@ -1073,7 +1073,7 @@ function AdminSwimmerDetailContent() {
                   {/* PO Information */}
                   <div className="space-y-4">
                     <h3 className="font-semibold">Current Purchase Order</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">PO Number</p>
                         <p className="font-medium">{swimmer.current_authorization_number || 'Not assigned'}</p>
@@ -1093,7 +1093,7 @@ function AdminSwimmerDetailContent() {
                   {/* Session Usage */}
                   <div className="space-y-4">
                     <h3 className="font-semibold">Session Usage</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Sessions Used</p>
                         <div className="flex items-center gap-2">

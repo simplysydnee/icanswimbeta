@@ -56,7 +56,7 @@ export function DetailsSection({
       <Label className="text-base font-semibold">Session Details</Label>
 
       {/* Location and Max Capacity in a row */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2">
         {/* Location */}
         <div className="space-y-2">
           <Label className="text-sm">Location</Label>

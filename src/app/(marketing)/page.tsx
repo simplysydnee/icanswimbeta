@@ -58,7 +58,7 @@ export default function Home() {
       {/* Trust Badges Section */}
       <section className="bg-gray-50 py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-8 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div className="space-y-2">
               <div className="text-3xl font-bold text-[#1E3A5F] font-playfair-display">300+</div>
               <div className="text-gray-600 font-inter">Swimmers Served</div>
@@ -87,7 +87,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             <div className="text-center space-y-4">
               <div className="w-16 h-16 bg-[#1E3A5F] text-white rounded-full flex items-center justify-center text-2xl font-bold font-playfair-display mx-auto">
                 1
@@ -131,7 +131,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100 space-y-4">
               <div className="w-12 h-12 bg-[#23a1c0] rounded-full flex items-center justify-center">
                 <span className="text-white font-bold">✓</span>

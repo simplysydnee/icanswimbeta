@@ -74,7 +74,7 @@ export function PricingPreview() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {pricingTiers.map((tier) => (
             <Card key={tier.name} className={`relative ${tier.popular ? 'border-primary shadow-glow scale-105' : ''}`}>
               {tier.popular && (
@@ -136,7 +136,7 @@ export function PricingPreview() {
         {/* FAQ section */}
         <div className="mt-20 text-center">
           <h3 className="text-xl font-semibold mb-4">Frequently Asked Questions</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto text-left">
+          <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto text-left">
             <div>
               <h4 className="font-medium mb-2">Can I change plans anytime?</h4>
               <p className="text-sm text-muted-foreground">

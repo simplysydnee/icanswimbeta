@@ -158,7 +158,7 @@ export function BasicInfoStep({ data, onChange }: BasicInfoStepProps) {
         <RadioGroup
           value={data.instructor}
           onValueChange={handleInstructorChange}
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2"
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2"
         >
           {INSTRUCTORS.map((instructor) => (
             <div key={instructor.id} className="flex items-center space-x-2">

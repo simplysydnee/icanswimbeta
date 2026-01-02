@@ -114,7 +114,7 @@ export function EditTaskModal({ task, users, swimmers, onSubmit, onCancel }: Edi
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="status">Status</Label>
           <Select
@@ -152,7 +152,7 @@ export function EditTaskModal({ task, users, swimmers, onSubmit, onCancel }: Edi
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
           <Select

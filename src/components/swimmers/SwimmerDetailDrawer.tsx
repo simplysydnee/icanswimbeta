@@ -338,7 +338,7 @@ export default function SwimmerDetailDrawer({
 
                   {showMedicalDetails && (
                     <div className="pt-3 space-y-3 border-t mt-3">
-                      <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                         <div>
                           <span className="text-muted-foreground">Toilet Trained:</span>{" "}
                           {swimmer.toiletTrained === true
@@ -430,7 +430,7 @@ export default function SwimmerDetailDrawer({
                 <User className="h-4 w-4" />
                 Swimmer Information
               </h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm text-muted-foreground">Gender</div>
                   <div className="font-medium">{swimmer.gender || "Not specified"}</div>
@@ -476,7 +476,7 @@ export default function SwimmerDetailDrawer({
           </Card>
 
           {/* Progress & Sessions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-6">
             {/* Progress */}
             <Card>
               <CardContent className="pt-6">
@@ -573,7 +573,7 @@ export default function SwimmerDetailDrawer({
           <Card>
             <CardContent className="pt-6">
               <h3 className="font-medium mb-3">Legal & Consent</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm text-muted-foreground">Liability Waiver</div>
                   <div className="font-medium">

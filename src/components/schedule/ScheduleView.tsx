@@ -595,7 +595,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
 
       {/* Schedule Grid */}
       <Card>
-        <CardContent className="p-0 overflow-x-auto">
+        <CardContent className="p-0">
           {loading ? (
             <div className="flex justify-center items-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-[#2a5e84]" />
@@ -608,60 +608,59 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
               </p>
             </div>
           ) : view === 'day' ? (
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="border p-2 text-left w-24 text-sm font-semibold sticky left-0 bg-gray-50">Time</th>
-                  {filteredInstructors.map((instructor) => {
-                    const color = INSTRUCTOR_COLORS[instructor.colorIndex]
-                    return (
-                      <th key={instructor.id} className="border p-2 text-center min-w-[150px] md:min-w-[180px]">
-                        <div className="flex flex-col items-center gap-1">
-                          <Avatar className="h-8 w-8 print:hidden">
-                            <AvatarImage src={instructor.avatar_url || undefined} />
-                            <AvatarFallback className={`${color.bg} ${color.text} text-xs`}>
-                              {getInitials(instructor.full_name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm font-semibold">{instructor.full_name}</span>
-                        </div>
-                      </th>
-                    )
-                  })}
-                </tr>
-              </thead>
-              <tbody>
-                {timeSlots.map((slot) => (
-                  <tr key={slot} className="hover:bg-gray-50">
-                    <td className="border p-2 text-sm font-medium text-gray-600 sticky left-0 bg-white">
-                      {format(new Date(`2000-01-01T${slot}:00`), 'h:mm a')}
-                    </td>
-                    {filteredInstructors.map((instructor) => {
-                      const slotSessions = getSessionsForSlot(instructor.id, slot)
-                      const color = INSTRUCTOR_COLORS[instructor.colorIndex]
+            <>
+              {/* Mobile Card View for Day View */}
+              <div className="md:hidden p-4 space-y-4">
+                {timeSlots.map((slot) => {
+                  const slotSessions = sessions.filter(session => {
+                    const sessionStart = parseISO(session.start_time)
+                    const [slotHour, slotMinute] = slot.split(':').map(Number)
+                    return sessionStart.getHours() === slotHour &&
+                           Math.floor(sessionStart.getMinutes() / 30) === Math.floor(slotMinute / 30)
+                  })
 
-                      return (
-                        <td key={`${instructor.id}-${slot}`} className="border p-1 align-top">
-                          {slotSessions.map((session) => (
-                            <div
-                              key={session.id}
-                              className={`${color.bg} ${color.border} border-l-4 rounded p-2 mb-1 group relative`}
-                            >
-                              <p className={`text-sm font-semibold ${color.text}`}>
-                                {session.swimmer_name || 'Open Slot'}
-                              </p>
-                              <p className="text-xs text-gray-600">
-                                {format(parseISO(session.start_time), 'h:mm')} - {format(parseISO(session.end_time), 'h:mm a')}
-                              </p>
-                              <div className="flex gap-1 mt-1 flex-wrap">
-                                <Badge variant="outline" className="text-xs">
-                                  {session.session_type === 'assessment' ? 'Assessment' : 'Lesson'}
-                                </Badge>
-                                {session.location && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {session.location}
+                  if (slotSessions.length === 0) return null
+
+                  return (
+                    <div key={slot} className="border rounded-lg p-4">
+                      <h3 className="font-semibold text-lg mb-3">
+                        {format(new Date(`2000-01-01T${slot}:00`), 'h:mm a')}
+                      </h3>
+                      <div className="space-y-3">
+                        {slotSessions.map((session) => {
+                          const instructor = instructors.find(i => i.id === session.instructor_id)
+                          const color = instructor ? INSTRUCTOR_COLORS[instructor.colorIndex] : INSTRUCTOR_COLORS[0]
+
+                          return (
+                            <div key={session.id} className={`${color.bg} ${color.border} border-l-4 rounded p-3`}>
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className={`font-semibold ${color.text}`}>
+                                    {session.swimmer_name || 'Open Slot'}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    {format(parseISO(session.start_time), 'h:mm')} - {format(parseISO(session.end_time), 'h:mm a')}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <Avatar className="h-6 w-6">
+                                      <AvatarImage src={session.instructor_avatar || undefined} />
+                                      <AvatarFallback className={`${color.bg} ${color.text} text-xs`}>
+                                        {getInitials(session.instructor_name)}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm font-medium">{session.instructor_name}</span>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col items-end gap-1">
+                                  <Badge variant="outline" className="text-xs">
+                                    {session.session_type === 'assessment' ? 'Assessment' : 'Lesson'}
                                   </Badge>
-                                )}
+                                  {session.location && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      {session.location}
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
 
                               {/* Admin: Reassign button */}
@@ -669,123 +668,295 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity print:hidden"
+                                  className="mt-2 w-full"
                                   onClick={() => handleReassignSession(session)}
                                 >
-                                  <RefreshCw className="h-3 w-3" />
+                                  <RefreshCw className="h-3 w-3 mr-2" />
+                                  Reassign
                                 </Button>
                               )}
                             </div>
-                          ))}
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Desktop Table for Day View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border p-2 text-left w-24 text-sm font-semibold sticky left-0 bg-gray-50">Time</th>
+                      {filteredInstructors.map((instructor) => {
+                        const color = INSTRUCTOR_COLORS[instructor.colorIndex]
+                        return (
+                          <th key={instructor.id} className="border p-2 text-center min-w-[150px] md:min-w-[180px]">
+                            <div className="flex flex-col items-center gap-1">
+                              <Avatar className="h-8 w-8 print:hidden">
+                                <AvatarImage src={instructor.avatar_url || undefined} />
+                                <AvatarFallback className={`${color.bg} ${color.text} text-xs`}>
+                                  {getInitials(instructor.full_name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm font-semibold">{instructor.full_name}</span>
+                            </div>
+                          </th>
+                        )
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {timeSlots.map((slot) => (
+                      <tr key={slot} className="hover:bg-gray-50">
+                        <td className="border p-2 text-sm font-medium text-gray-600 sticky left-0 bg-white">
+                          {format(new Date(`2000-01-01T${slot}:00`), 'h:mm a')}
                         </td>
-                      )
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse min-w-[600px] md:min-w-[800px]">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="border p-2 text-left w-24 md:w-28 text-sm font-semibold sticky left-0 bg-gray-50">Day</th>
-                    {filteredInstructors.map((instructor) => {
-                      const color = INSTRUCTOR_COLORS[instructor.colorIndex]
-                      return (
-                        <th key={instructor.id} className="border p-2 text-center min-w-[120px] md:min-w-[150px]">
-                          <div className="flex flex-col items-center gap-1">
-                            <Avatar className="h-5 w-5 md:h-6 md:w-6 print:hidden">
-                              <AvatarImage src={instructor.avatar_url || undefined} />
-                              <AvatarFallback className={`${color.bg} ${color.text} text-xs`}>
-                                {getInitials(instructor.full_name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs font-semibold truncate max-w-[100px]">{instructor.full_name}</span>
-                          </div>
-                        </th>
-                      )
-                    })}
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.from({ length: 7 }, (_, i) => {
-                    const day = addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), i)
-                    const dayName = format(day, 'EEE')
-                    const dayDate = format(day, 'MMM d')
-                    const isToday = isSameDay(day, new Date())
-
-                    const daySessions = sessions.filter(s =>
-                      isSameDay(parseISO(s.start_time), day)
-                    )
-
-                    return (
-                      <tr key={i} className={isToday ? 'bg-blue-50' : 'hover:bg-gray-50'}>
-                        <td className={`border p-2 sticky left-0 ${isToday ? 'bg-blue-50' : 'bg-white'}`}>
-                          <div className={`text-sm font-medium ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
-                            {dayName}
-                          </div>
-                          <div className="text-xs text-gray-500">{dayDate}</div>
-                        </td>
-
                         {filteredInstructors.map((instructor) => {
-                          const instructorDaySessions = daySessions
-                            .filter(s => s.instructor_id === instructor.id)
-                            .sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime())
+                          const slotSessions = getSessionsForSlot(instructor.id, slot)
                           const color = INSTRUCTOR_COLORS[instructor.colorIndex]
 
                           return (
-                            <td key={instructor.id} className="border p-1 align-top">
-                              {instructorDaySessions.length === 0 ? (
-                                <div className="text-xs text-gray-300 text-center py-4">—</div>
-                              ) : (
-                                <div className="space-y-1">
-                                  {instructorDaySessions.map((session) => (
-                                    <div
-                                      key={session.id}
-                                      className={`${color.bg} ${color.border} border-l-2 rounded p-1.5 text-xs group relative cursor-pointer hover:shadow-sm`}
+                            <td key={`${instructor.id}-${slot}`} className="border p-1 align-top">
+                              {slotSessions.map((session) => (
+                                <div
+                                  key={session.id}
+                                  className={`${color.bg} ${color.border} border-l-4 rounded p-2 mb-1 group relative`}
+                                >
+                                  <p className={`text-sm font-semibold ${color.text}`}>
+                                    {session.swimmer_name || 'Open Slot'}
+                                  </p>
+                                  <p className="text-xs text-gray-600">
+                                    {format(parseISO(session.start_time), 'h:mm')} - {format(parseISO(session.end_time), 'h:mm a')}
+                                  </p>
+                                  <div className="flex gap-1 mt-1 flex-wrap">
+                                    <Badge variant="outline" className="text-xs">
+                                      {session.session_type === 'assessment' ? 'Assessment' : 'Lesson'}
+                                    </Badge>
+                                    {session.location && (
+                                      <Badge variant="secondary" className="text-xs">
+                                        {session.location}
+                                      </Badge>
+                                    )}
+                                  </div>
+
+                                  {/* Admin: Reassign button */}
+                                  {role === 'admin' && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity print:hidden"
+                                      onClick={() => handleReassignSession(session)}
                                     >
-                                      <div className="flex justify-between items-start">
-                                        <span className={`font-semibold ${color.text}`}>
-                                          {format(parseISO(session.start_time), 'h:mm a')}
-                                        </span>
-                                        {role === 'admin' && (
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 print:hidden"
-                                            onClick={() => handleReassignSession(session)}
-                                          >
-                                            <RefreshCw className="h-3 w-3" />
-                                          </Button>
-                                        )}
-                                      </div>
-                                      <p className="text-gray-700 truncate font-medium">
-                                        {session.swimmer_name || 'Open'}
-                                      </p>
-                                      <div className="flex gap-1 mt-1">
-                                        <Badge variant="outline" className="text-[10px] px-1 py-0">
-                                          {session.session_type === 'assessment' ? 'Assess' : 'Lesson'}
-                                        </Badge>
-                                        {session.location && (
-                                          <Badge variant="secondary" className="text-[10px] px-1 py-0">
-                                            {session.location}
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))}
+                                      <RefreshCw className="h-3 w-3" />
+                                    </Button>
+                                  )}
                                 </div>
-                              )}
+                              ))}
                             </td>
                           )
                         })}
                       </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Mobile Card View for Week View */}
+              <div className="md:hidden p-4 space-y-6">
+                {Array.from({ length: 7 }, (_, i) => {
+                  const day = addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), i)
+                  const dayName = format(day, 'EEE')
+                  const dayDate = format(day, 'MMM d')
+                  const isToday = isSameDay(day, new Date())
+
+                  const daySessions = sessions.filter(s =>
+                    isSameDay(parseISO(s.start_time), day)
+                  )
+
+                  if (daySessions.length === 0) return null
+
+                  return (
+                    <div key={i} className={`border rounded-lg p-4 ${isToday ? 'bg-blue-50 border-blue-200' : ''}`}>
+                      <div className="flex justify-between items-center mb-3">
+                        <div>
+                          <h3 className={`font-semibold text-lg ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
+                            {dayName}
+                          </h3>
+                          <p className="text-sm text-gray-500">{dayDate}</p>
+                        </div>
+                        {isToday && (
+                          <Badge variant="default" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                            Today
+                          </Badge>
+                        )}
+                      </div>
+
+                      <div className="space-y-3">
+                        {daySessions.map((session) => {
+                          const instructor = instructors.find(i => i.id === session.instructor_id)
+                          const color = instructor ? INSTRUCTOR_COLORS[instructor.colorIndex] : INSTRUCTOR_COLORS[0]
+
+                          return (
+                            <div key={session.id} className={`${color.bg} ${color.border} border-l-4 rounded p-3`}>
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className={`font-semibold ${color.text}`}>
+                                    {format(parseISO(session.start_time), 'h:mm a')}
+                                  </p>
+                                  <p className="text-gray-700 font-medium mt-1">
+                                    {session.swimmer_name || 'Open'}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <Avatar className="h-6 w-6">
+                                      <AvatarImage src={session.instructor_avatar || undefined} />
+                                      <AvatarFallback className={`${color.bg} ${color.text} text-xs`}>
+                                        {getInitials(session.instructor_name)}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm font-medium">{session.instructor_name}</span>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col items-end gap-1">
+                                  <Badge variant="outline" className="text-xs">
+                                    {session.session_type === 'assessment' ? 'Assessment' : 'Lesson'}
+                                  </Badge>
+                                  {session.location && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      {session.location}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Admin: Reassign button */}
+                              {role === 'admin' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="mt-2 w-full"
+                                  onClick={() => handleReassignSession(session)}
+                                >
+                                  <RefreshCw className="h-3 w-3 mr-2" />
+                                  Reassign
+                                </Button>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Desktop Table for Week View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full border-collapse min-w-[600px] md:min-w-[800px]">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border p-2 text-left w-24 md:w-28 text-sm font-semibold sticky left-0 bg-gray-50">Day</th>
+                      {filteredInstructors.map((instructor) => {
+                        const color = INSTRUCTOR_COLORS[instructor.colorIndex]
+                        return (
+                          <th key={instructor.id} className="border p-2 text-center min-w-[120px] md:min-w-[150px]">
+                            <div className="flex flex-col items-center gap-1">
+                              <Avatar className="h-5 w-5 md:h-6 md:w-6 print:hidden">
+                                <AvatarImage src={instructor.avatar_url || undefined} />
+                                <AvatarFallback className={`${color.bg} ${color.text} text-xs`}>
+                                  {getInitials(instructor.full_name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-xs font-semibold truncate max-w-[100px]">{instructor.full_name}</span>
+                            </div>
+                          </th>
+                        )
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 7 }, (_, i) => {
+                      const day = addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), i)
+                      const dayName = format(day, 'EEE')
+                      const dayDate = format(day, 'MMM d')
+                      const isToday = isSameDay(day, new Date())
+
+                      const daySessions = sessions.filter(s =>
+                        isSameDay(parseISO(s.start_time), day)
+                      )
+
+                      return (
+                        <tr key={i} className={isToday ? 'bg-blue-50' : 'hover:bg-gray-50'}>
+                          <td className={`border p-2 sticky left-0 ${isToday ? 'bg-blue-50' : 'bg-white'}`}>
+                            <div className={`text-sm font-medium ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
+                              {dayName}
+                            </div>
+                            <div className="text-xs text-gray-500">{dayDate}</div>
+                          </td>
+
+                          {filteredInstructors.map((instructor) => {
+                            const instructorDaySessions = daySessions
+                              .filter(s => s.instructor_id === instructor.id)
+                              .sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime())
+                            const color = INSTRUCTOR_COLORS[instructor.colorIndex]
+
+                            return (
+                              <td key={instructor.id} className="border p-1 align-top">
+                                {instructorDaySessions.length === 0 ? (
+                                  <div className="text-xs text-gray-300 text-center py-4">—</div>
+                                ) : (
+                                  <div className="space-y-1">
+                                    {instructorDaySessions.map((session) => (
+                                      <div
+                                        key={session.id}
+                                        className={`${color.bg} ${color.border} border-l-2 rounded p-1.5 text-xs group relative cursor-pointer hover:shadow-sm`}
+                                      >
+                                        <div className="flex justify-between items-start">
+                                          <span className={`font-semibold ${color.text}`}>
+                                            {format(parseISO(session.start_time), 'h:mm a')}
+                                          </span>
+                                          {role === 'admin' && (
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 print:hidden"
+                                              onClick={() => handleReassignSession(session)}
+                                            >
+                                              <RefreshCw className="h-3 w-3" />
+                                            </Button>
+                                          )}
+                                        </div>
+                                        <p className="text-gray-700 truncate font-medium">
+                                          {session.swimmer_name || 'Open'}
+                                        </p>
+                                        <div className="flex gap-1 mt-1">
+                                          <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                            {session.session_type === 'assessment' ? 'Assess' : 'Lesson'}
+                                          </Badge>
+                                          {session.location && (
+                                            <Badge variant="secondary" className="text-[10px] px-1 py-0">
+                                              {session.location}
+                                            </Badge>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

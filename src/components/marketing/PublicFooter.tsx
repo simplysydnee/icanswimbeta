@@ -8,7 +8,7 @@ export function PublicFooter() {
     <footer className="bg-slate-800 text-white">
       <div className="container mx-auto px-4 py-12">
         {/* Main footer content - 2 columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
 
           {/* Left: Logo & Description */}
           <div className="text-center md:text-left">

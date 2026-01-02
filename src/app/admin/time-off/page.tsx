@@ -340,7 +340,7 @@ export default function AdminTimeOffPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-2">
@@ -390,7 +390,7 @@ export default function AdminTimeOffPage() {
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="search">Search</Label>
               <div className="relative">
@@ -672,7 +672,7 @@ export default function AdminTimeOffPage() {
                     {REASON_LABELS[selectedRequest.reason_type] || selectedRequest.reason_type}
                   </Badge>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm font-medium">Date Range</p>
                     <p className="text-sm">{formatDateRange(selectedRequest)}</p>
@@ -822,7 +822,7 @@ export default function AdminTimeOffPage() {
 
               {/* Review Actions */}
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Button
                     variant={reviewStatus === 'approved' ? 'default' : 'outline'}
                     className="w-full"

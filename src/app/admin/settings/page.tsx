@@ -10,7 +10,7 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">Manage system settings and automated features</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-2 gap-6">
         <AttendancePriorityCard />
 
         {/* Additional settings cards can be added here */}

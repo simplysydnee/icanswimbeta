@@ -15,7 +15,7 @@ export function EnrollmentSection() {
           Choose the enrollment option that's right for you
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-6">
           {/* Private Pay Card */}
           <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-lg">
             <CardHeader>

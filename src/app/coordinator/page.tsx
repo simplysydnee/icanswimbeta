@@ -164,7 +164,7 @@ export default function CoordinatorDashboard() {
           <Skeleton className="h-9 w-64" />
           <Skeleton className="h-5 w-48" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}><CardContent className="p-6"><Skeleton className="h-20 w-full" /></CardContent></Card>
           ))}
@@ -190,7 +190,7 @@ export default function CoordinatorDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <Link href="/coordinator/clients">
           <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardContent className="p-6">
@@ -257,7 +257,7 @@ export default function CoordinatorDashboard() {
       </div>
 
       {/* Two Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-6">
         {/* Pending POs */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -376,7 +376,7 @@ export default function CoordinatorDashboard() {
           <CardTitle className="text-lg">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             <Link href="/coordinator/referrals/new">
               <Button variant="outline" className="w-full h-auto py-4 flex flex-col gap-2">
                 <PlusCircle className="h-6 w-6" />

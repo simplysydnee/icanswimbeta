@@ -22,7 +22,7 @@ export default function AboutPage() {
               Our mission is to provide adaptive swim lessons that are tailored to each swimmer&apos;s unique needs,
               building not just swimming skills but also confidence, safety awareness, and a lifelong love for the water.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-6 mt-8">
               <div className="bg-white p-6 rounded-xl shadow-sm">
                 <h3 className="text-xl font-semibold text-cyan-700 mb-2">Personalized Approach</h3>
                 <p className="text-gray-600">

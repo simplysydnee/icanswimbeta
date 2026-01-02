@@ -258,7 +258,7 @@ function SubscriptionsContent() {
         )}
 
         {/* Plans Grid */}
-        <div className="grid gap-6 md:grid-cols-3 max-w-6xl mx-auto">
+        <div className="grid gap-6 md:grid-cols-1 md:grid-cols-3 max-w-6xl mx-auto">
           {plans.map((plan) => (
             <Card key={plan.id} className={isCurrentPlan(plan.id) ? 'border-blue-500 shadow-md' : ''}>
               <CardHeader>

@@ -19,7 +19,9 @@ interface FundingSource {
   name: string;
   short_name: string;
   description: string;
-  type: string;
+  funding_type: string;
+  requires_coordinator: boolean;
+  is_self_determination: boolean;
 }
 
 export default function EnrollmentPage() {
@@ -47,9 +49,9 @@ export default function EnrollmentPage() {
       try {
         const { data, error } = await supabase
           .from('funding_sources')
-          .select('id, name, short_name')
+          .select('id, name, short_name, funding_type, requires_coordinator, is_self_determination')
           .eq('is_active', true)
-          .eq('type', 'regional_center')  // Only show regional centers
+          .or('funding_type.eq.regional_center,funding_type.eq.self_determination')  // Show regional centers and self determination
           .order('name');
 
         if (error) throw error;
@@ -76,27 +78,32 @@ export default function EnrollmentPage() {
     if (formData.paymentType === 'regional_center') {
       if (!formData.selectedFundingSourceId) {
         toast({
-          title: 'Regional Center Required',
-          description: 'Please select your Regional Center from the dropdown.',
+          title: 'Funding Source Required',
+          description: 'Please select your funding source from the dropdown.',
           variant: 'destructive'
         });
         return false;
       }
-      if (!formData.coordinatorName?.trim()) {
-        toast({
-          title: 'Coordinator Name Required',
-          description: 'Please enter your Regional Center coordinator\'s name.',
-          variant: 'destructive'
-        });
-        return false;
-      }
-      if (!formData.coordinatorEmail?.trim()) {
-        toast({
-          title: 'Coordinator Email Required',
-          description: 'Please enter your Regional Center coordinator\'s email.',
-          variant: 'destructive'
-        });
-        return false;
+
+      // Check if selected funding source requires coordinator
+      const selectedSource = fundingSources.find(s => s.id === formData.selectedFundingSourceId);
+      if (selectedSource?.requires_coordinator) {
+        if (!formData.coordinatorName?.trim()) {
+          toast({
+            title: 'Coordinator Name Required',
+            description: 'Please enter your funding source coordinator\'s name.',
+            variant: 'destructive'
+          });
+          return false;
+        }
+        if (!formData.coordinatorEmail?.trim()) {
+          toast({
+            title: 'Coordinator Email Required',
+            description: 'Please enter your funding source coordinator\'s email.',
+            variant: 'destructive'
+          });
+          return false;
+        }
       }
     }
     return true;
@@ -153,31 +160,60 @@ export default function EnrollmentPage() {
       const targetPath = `/enroll/private?${queryParams.toString()}`;
 
       if (!user) {
-        // Redirect to login first, then back to enrollment
-        router.push(`/login?redirect=${encodeURIComponent(targetPath)}`);
+        // Redirect to signup first (default for new users), then back to enrollment
+        // Include child name in query params for personalized signup message
+        const signupParams = new URLSearchParams({
+          redirect: targetPath,
+          child: `${formData.firstName.trim()} ${formData.lastName.trim()}`
+        });
+        router.push(`/signup?${signupParams.toString()}`);
       } else {
         router.push(targetPath);
       }
     } else if (formData.paymentType === 'regional_center') {
-      // For regional center, we need to pass all data
-      queryParams.append('paymentType', 'funding_source');
-      queryParams.append('selectedFundingSourceId', formData.selectedFundingSourceId || '');
       const selectedSource = fundingSources.find(s => s.id === formData.selectedFundingSourceId);
-      if (selectedSource) {
-        queryParams.append('fundingSourceName', selectedSource.name);
-      }
-      queryParams.append('coordinatorName', formData.coordinatorName);
-      queryParams.append('coordinatorEmail', formData.coordinatorEmail);
-      if (formData.coordinatorPhone) {
-        queryParams.append('coordinatorPhone', formData.coordinatorPhone);
-      }
-      const targetPath = `/enroll/vmrc?${queryParams.toString()}`;
 
-      if (!user) {
-        // Redirect to login first, then back to enrollment
-        router.push(`/login?redirect=${encodeURIComponent(targetPath)}`);
+      if (selectedSource?.requires_coordinator) {
+        // For funding sources that require coordinator (regular regional centers)
+        queryParams.append('paymentType', 'funding_source');
+        queryParams.append('selectedFundingSourceId', formData.selectedFundingSourceId || '');
+        if (selectedSource) {
+          queryParams.append('fundingSourceName', selectedSource.name);
+        }
+        queryParams.append('coordinatorName', formData.coordinatorName);
+        queryParams.append('coordinatorEmail', formData.coordinatorEmail);
+        if (formData.coordinatorPhone) {
+          queryParams.append('coordinatorPhone', formData.coordinatorPhone);
+        }
+        const targetPath = `/enroll/vmrc?${queryParams.toString()}`;
+
+        if (!user) {
+          const signupParams = new URLSearchParams({
+            redirect: targetPath,
+            child: `${formData.firstName.trim()} ${formData.lastName.trim()}`
+          });
+          router.push(`/signup?${signupParams.toString()}`);
+        } else {
+          router.push(targetPath);
+        }
       } else {
-        router.push(targetPath);
+        // For funding sources that don't require coordinator (Self Determination, etc.)
+        queryParams.append('paymentType', 'funding_source_no_coordinator');
+        queryParams.append('selectedFundingSourceId', formData.selectedFundingSourceId || '');
+        if (selectedSource) {
+          queryParams.append('fundingSourceName', selectedSource.name);
+        }
+        const targetPath = `/enroll/private?${queryParams.toString()}`;
+
+        if (!user) {
+          const signupParams = new URLSearchParams({
+            redirect: targetPath,
+            child: `${formData.firstName.trim()} ${formData.lastName.trim()}`
+          });
+          router.push(`/signup?${signupParams.toString()}`);
+        } else {
+          router.push(targetPath);
+        }
       }
     }
   };
@@ -190,8 +226,16 @@ export default function EnrollmentPage() {
     }
 
     if (formData.paymentType === 'regional_center') {
-      if (!formData.selectedFundingSourceId || !formData.coordinatorName.trim() || !formData.coordinatorEmail.trim()) {
+      if (!formData.selectedFundingSourceId) {
         return false;
+      }
+
+      // Check if selected funding source requires coordinator
+      const selectedSource = fundingSources.find(s => s.id === formData.selectedFundingSourceId);
+      if (selectedSource?.requires_coordinator) {
+        if (!formData.coordinatorName.trim() || !formData.coordinatorEmail.trim()) {
+          return false;
+        }
       }
     }
 
@@ -225,7 +269,7 @@ export default function EnrollmentPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Child Information */}
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName" className="text-gray-700">
                       Child&apos;s First Name *
@@ -312,33 +356,33 @@ export default function EnrollmentPage() {
                     </Label>
                   </div>
 
-                  {/* Option 2: Regional Center */}
+                  {/* Option 2: Funding Source (Regional Center or Self Determination) */}
                   <div
                     className={`flex items-start space-x-3 p-3 md:p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.paymentType === 'regional_center' ? 'border-[#2a5e84] bg-[#f0f7ff]' : 'border-gray-200 hover:border-[#2a5e84]/50 hover:bg-[#f0f7ff]/50'}`}
                   >
                     <RadioGroupItem value="regional_center" id="regional_center" className="mt-0.5" />
                     <div className="flex-1">
                       <Label htmlFor="regional_center" className="cursor-pointer">
-                        <span className="font-medium text-base">I am a client of a Regional Center</span>
+                        <span className="font-medium text-base">Funding Source (Regional Center or Self Determination)</span>
                         <p className="text-sm text-muted-foreground mt-0.5">
-                          Lessons will be funded through my Regional Center
+                          Lessons will be funded through a Regional Center or Self Determination program
                         </p>
                       </Label>
 
-                      {/* Funding Source Dropdown - Only shown when Regional Center selected */}
+                      {/* Funding Source Dropdown - Only shown when Funding Source selected */}
                       {formData.paymentType === 'regional_center' && (
                         <div className="mt-4 space-y-4" onClick={(e) => e.stopPropagation()}>
                           <div>
                             <Label htmlFor="funding_source_select" className="text-sm font-medium">
-                              Select your Regional Center <span className="text-red-500">*</span>
+                              Select your funding source <span className="text-red-500">*</span>
                             </Label>
                             {fundingSourcesLoading ? (
                               <div className="mt-1.5 p-3 border rounded-md bg-gray-50">
-                                <p className="text-sm text-gray-700">Loading Regional Centers...</p>
+                                <p className="text-sm text-gray-700">Loading funding sources...</p>
                               </div>
                             ) : fundingSources.length === 0 ? (
                               <div className="mt-1.5 p-3 border rounded-md bg-gray-50">
-                                <p className="text-sm text-gray-700">No Regional Centers available</p>
+                                <p className="text-sm text-gray-700">No funding sources available</p>
                               </div>
                             ) : (
                               <Select
@@ -346,7 +390,7 @@ export default function EnrollmentPage() {
                                 onValueChange={(value) => handleInputChange('selectedFundingSourceId', value)}
                               >
                                 <SelectTrigger className="mt-1.5">
-                                  <SelectValue placeholder="Choose your Regional Center..." />
+                                  <SelectValue placeholder="Choose your funding source..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {fundingSources.map((source) => (
@@ -359,49 +403,57 @@ export default function EnrollmentPage() {
                             )}
                           </div>
 
-                          {/* Coordinator Information */}
-                          <div className="space-y-3">
-                            <div>
-                              <Label htmlFor="coordinatorName" className="text-sm font-medium">
-                                Coordinator Name <span className="text-red-500">*</span>
-                              </Label>
-                              <Input
-                                id="coordinatorName"
-                                placeholder="Coordinator's full name"
-                                value={formData.coordinatorName}
-                                onChange={(e) => handleInputChange('coordinatorName', e.target.value)}
-                                className="mt-1.5"
-                              />
-                            </div>
+                          {/* Coordinator Information - Only show if funding source requires coordinator */}
+                          {(() => {
+                            const selectedSource = fundingSources.find(s => s.id === formData.selectedFundingSourceId);
+                            if (selectedSource?.requires_coordinator) {
+                              return (
+                                <div className="space-y-3">
+                                  <div>
+                                    <Label htmlFor="coordinatorName" className="text-sm font-medium">
+                                      Coordinator Name <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Input
+                                      id="coordinatorName"
+                                      placeholder="Coordinator's full name"
+                                      value={formData.coordinatorName}
+                                      onChange={(e) => handleInputChange('coordinatorName', e.target.value)}
+                                      className="mt-1.5"
+                                    />
+                                  </div>
 
-                            <div>
-                              <Label htmlFor="coordinatorEmail" className="text-sm font-medium">
-                                Coordinator Email <span className="text-red-500">*</span>
-                              </Label>
-                              <Input
-                                id="coordinatorEmail"
-                                type="email"
-                                placeholder="coordinator@regionalcenter.org"
-                                value={formData.coordinatorEmail}
-                                onChange={(e) => handleInputChange('coordinatorEmail', e.target.value)}
-                                className="mt-1.5"
-                              />
-                            </div>
+                                  <div>
+                                    <Label htmlFor="coordinatorEmail" className="text-sm font-medium">
+                                      Coordinator Email <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Input
+                                      id="coordinatorEmail"
+                                      type="email"
+                                      placeholder="coordinator@fundingsource.org"
+                                      value={formData.coordinatorEmail}
+                                      onChange={(e) => handleInputChange('coordinatorEmail', e.target.value)}
+                                      className="mt-1.5"
+                                    />
+                                  </div>
 
-                            <div>
-                              <Label htmlFor="coordinatorPhone" className="text-sm font-medium">
-                                Coordinator Phone (Optional)
-                              </Label>
-                              <Input
-                                id="coordinatorPhone"
-                                type="tel"
-                                placeholder="(555) 123-4567"
-                                value={formData.coordinatorPhone}
-                                onChange={(e) => handleInputChange('coordinatorPhone', e.target.value)}
-                                className="mt-1.5"
-                              />
-                            </div>
-                          </div>
+                                  <div>
+                                    <Label htmlFor="coordinatorPhone" className="text-sm font-medium">
+                                      Coordinator Phone (Optional)
+                                    </Label>
+                                    <Input
+                                      id="coordinatorPhone"
+                                      type="tel"
+                                      placeholder="(555) 123-4567"
+                                      value={formData.coordinatorPhone}
+                                      onChange={(e) => handleInputChange('coordinatorPhone', e.target.value)}
+                                      className="mt-1.5"
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
                         </div>
                       )}
                     </div>

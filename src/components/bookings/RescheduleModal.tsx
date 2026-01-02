@@ -118,7 +118,7 @@ export function RescheduleModal({
               <AlertCircle className="h-4 w-4" />
               Current Booking
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-gray-400" />
@@ -281,7 +281,7 @@ export function RescheduleModal({
           {selectedSession && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h4 className="font-medium text-blue-800 mb-2">Selected Session</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-blue-500" />

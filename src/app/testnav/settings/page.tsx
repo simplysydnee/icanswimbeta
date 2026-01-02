@@ -33,7 +33,7 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1 md:grid-cols-3">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -106,7 +106,7 @@ export default function SettingsPage() {
           </Card>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-1 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>

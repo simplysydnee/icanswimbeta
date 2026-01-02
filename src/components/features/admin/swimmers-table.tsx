@@ -308,7 +308,7 @@ export function SwimmersTable({
           </div>
 
           {/* Filter Row */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
             {/* Status Filter */}
             <div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -379,12 +379,12 @@ export function SwimmersTable({
           </div>
         </div>
 
-        {/* Table */}
-        <div className="rounded-md border">
+        {/* Desktop Table - hidden on mobile */}
+        <div className="rounded-md border hidden md:block">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[250px]">
+                <TableHead>
                   <Button
                     variant="ghost"
                     className="p-0 h-auto font-medium"
@@ -595,6 +595,119 @@ export function SwimmersTable({
               )}
             </TableBody>
           </Table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden space-y-4">
+          {swimmers.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No swimmers found matching your filters.
+            </div>
+          ) : (
+            swimmers.map((swimmer) => (
+              <Card key={swimmer.id} className="overflow-hidden">
+                <CardContent className="p-4">
+                  {/* Swimmer header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={swimmer.photoUrl} alt={swimmer.fullName} />
+                        <AvatarFallback className="bg-blue-100 text-blue-600">
+                          {getInitials(swimmer.firstName, swimmer.lastName)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">{swimmer.fullName}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {swimmer.age ? `${swimmer.age} yrs` : 'N/A'} • ID: {swimmer.id.slice(0, 8)}...
+                        </div>
+                      </div>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        statusColors[swimmer.enrollmentStatus] ||
+                          'bg-gray-100 text-gray-800 border-gray-200'
+                      )}
+                    >
+                      {statusDisplay[swimmer.enrollmentStatus] || swimmer.enrollmentStatus}
+                    </Badge>
+                  </div>
+
+                  {/* Details grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <div className="text-muted-foreground">Level</div>
+                      <div className="font-medium">
+                        {swimmer.currentLevel ? swimmer.currentLevel.displayName : 'No level'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Funding</div>
+                      <div className="font-medium">
+                        {paymentDisplay[swimmer.paymentType] || swimmer.paymentType}
+                        {swimmer.hasFundingAuthorization && ' (Funded)'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Lessons</div>
+                      <div className="font-medium flex items-center gap-1">
+                        <Award className="h-3 w-3 text-blue-600" />
+                        {swimmer.lessonsCompleted}
+                        {swimmer.hasFundingAuthorization && swimmer.authorizedSessionsTotal && (
+                          <span className="text-xs text-muted-foreground ml-1">
+                            ({swimmer.authorizedSessionsUsed || 0}/{swimmer.authorizedSessionsTotal})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Next Session</div>
+                      <div className="font-medium">
+                        {swimmer.nextSession ? (
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3 text-green-600" />
+                            {formatNextSession(swimmer.nextSession)}
+                          </div>
+                        ) : (
+                          'No upcoming'
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Parent info if shown */}
+                  {showParentInfo && swimmer.parent && (
+                    <div className="mt-4 pt-4 border-t">
+                      <div className="text-sm text-muted-foreground mb-1">Parent</div>
+                      <div className="font-medium">{swimmer.parent.fullName}</div>
+                      {swimmer.parent.email && (
+                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Mail className="h-3 w-3" />
+                          {swimmer.parent.email}
+                        </div>
+                      )}
+                      {swimmer.parent.phone && (
+                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Phone className="h-3 w-3" />
+                          {swimmer.parent.phone}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Actions if shown */}
+                  {showActions && (
+                    <div className="mt-4 pt-4 border-t">
+                      <Button variant="outline" size="sm" className="w-full">
+                        View Details
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
 
         {/* Pagination */}

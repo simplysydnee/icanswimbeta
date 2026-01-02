@@ -157,7 +157,7 @@ export function PODetailDrawer({ poId, open, onClose }: PODetailDrawerProps) {
                     />
                   </div>
 
-                  <div className="grid grid-cols-3 text-center text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-3 text-center text-sm">
                     <div>
                       <div className="font-bold text-lg">{po.sessions_booked}</div>
                       <div className="text-muted-foreground">Booked</div>

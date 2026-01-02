@@ -175,7 +175,19 @@ export default function PrivatePayEnrollmentPage() {
   // Redirect if not logged in
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login?redirect=/enroll/private');
+      // Get child name from query params for personalized signup
+      const searchParams = new URLSearchParams(window.location.search);
+      const childFirstName = searchParams.get('firstName') || '';
+      const childLastName = searchParams.get('lastName') || '';
+      const childName = childFirstName && childLastName ? `${childFirstName} ${childLastName}` : '';
+
+      const signupParams = new URLSearchParams({
+        redirect: '/enroll/private'
+      });
+      if (childName) {
+        signupParams.append('child', childName);
+      }
+      router.push(`/signup?${signupParams.toString()}`);
     }
   }, [user, authLoading, router]);
 
@@ -481,12 +493,16 @@ export default function PrivatePayEnrollmentPage() {
   const nextSection = () => {
     if (currentSection < 7) {
       setCurrentSection(currentSection + 1);
+      // Scroll to top on step change
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const prevSection = () => {
     if (currentSection > 1) {
       setCurrentSection(currentSection - 1);
+      // Scroll to top on step change
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -616,7 +632,7 @@ export default function PrivatePayEnrollmentPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
                     <Label htmlFor="parent_name">Full Name *</Label>
                     <Input
@@ -726,7 +742,7 @@ export default function PrivatePayEnrollmentPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="child_first_name">First Name *</Label>
                     <Input
@@ -839,7 +855,7 @@ export default function PrivatePayEnrollmentPage() {
                     <div className="text-sm text-gray-500 mb-2">
                       Select all that apply from the list below
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-2">
                       {DIAGNOSIS_OPTIONS.map((diagnosis) => (
                         <label key={diagnosis} className="flex items-center space-x-2">
                           <input
@@ -1346,7 +1362,7 @@ export default function PrivatePayEnrollmentPage() {
                 {/* Emergency Contact */}
                 <div className="space-y-4">
                   <h4 className="font-semibold">Emergency Contact Information</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="emergency_contact_name">Emergency Contact Name *</Label>
                       <Input

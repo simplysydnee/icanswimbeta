@@ -131,7 +131,7 @@ export default function InstructorProgressPage() {
       )}
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
@@ -160,7 +160,7 @@ export default function InstructorProgressPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-        <TabsList className="grid grid-cols-3 w-full md:w-auto">
+        <TabsList className="grid grid-cols-1 md:grid-cols-3 w-full md:w-auto">
           <TabsTrigger value="today">Today&apos;s Sessions</TabsTrigger>
           <TabsTrigger value="week">This Week</TabsTrigger>
           <TabsTrigger value="pending">Pending Notes</TabsTrigger>
@@ -218,7 +218,7 @@ export default function InstructorProgressPage() {
               </div>
 
               {/* Week Days */}
-              <div className="grid grid-cols-7 gap-1 mt-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-1 mt-6">
                 {weekDays.map((day, index) => {
                   const daySessions = sessions.filter(s =>
                     format(new Date(s.startTime), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')

@@ -92,7 +92,7 @@ export default function InstructorStep({
         </div>
 
         {/* Instructor grid skeletons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="border rounded-lg p-4">
               <div className="flex items-center gap-3">
@@ -189,7 +189,7 @@ export default function InstructorStep({
       </div>
 
       {/* Instructor grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-3">
         {instructors.map(instructor => {
           const isSelected =
             instructorPreference === 'specific' &&

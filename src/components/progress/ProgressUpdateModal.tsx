@@ -271,7 +271,7 @@ export default function ProgressUpdateModal({
 
         {/* Tabs for Progress Update and Swimmer Info */}
         <Tabs defaultValue="progress" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-1 md:grid-cols-2">
             <TabsTrigger value="progress" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Update Progress
@@ -285,7 +285,7 @@ export default function ProgressUpdateModal({
           {/* Progress Update Tab */}
           <TabsContent value="progress" className="space-y-6 mt-4">
             {/* Attendance & Mood */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Attendance</Label>
                 <Select value={attendanceStatus} onValueChange={setAttendanceStatus}>
@@ -412,7 +412,7 @@ export default function ProgressUpdateModal({
             {/* Focus Level */}
             <div className="space-y-2">
               <Label>Focus Level</Label>
-              <RadioGroup value={focusLevel} onValueChange={setFocusLevel} className="grid grid-cols-3 gap-2">
+              <RadioGroup value={focusLevel} onValueChange={setFocusLevel} className="grid grid-cols-1 md:grid-cols-3 gap-2">
                 <div>
                   <RadioGroupItem value="high" id="focus-high" className="peer sr-only" />
                   <Label

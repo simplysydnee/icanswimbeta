@@ -71,7 +71,7 @@ export default function SwimmerAssessmentInfo({ swimmerData, assessmentData }: S
         <CardContent className="space-y-4">
           {hasAssessment ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Assessment Date</p>
                   <p className="font-medium">
@@ -208,7 +208,7 @@ export default function SwimmerAssessmentInfo({ swimmerData, assessmentData }: S
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
               {swimmerData.communication_type && (
                 <div>
                   <p className="text-sm text-muted-foreground flex items-center gap-1">
@@ -245,7 +245,7 @@ export default function SwimmerAssessmentInfo({ swimmerData, assessmentData }: S
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-muted-foreground">Previous Lessons</p>
               <p className="font-medium">

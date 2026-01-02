@@ -370,7 +370,7 @@ export function CreateBookingModal({
         {/* Step 3: Confirm */}
         {step === 'confirm' && selectedSwimmer && selectedSession && (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-6">
               {/* Swimmer Info */}
               <div className="space-y-3">
                 <h4 className="font-medium">Swimmer Details</h4>

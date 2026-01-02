@@ -55,7 +55,7 @@ export default async function RegionalCentersPage() {
                   index % 2 === 0 ? 'bg-cyan-50' : 'bg-slate-50'
                 }`}
               >
-                <div className="grid md:grid-cols-2 gap-8 items-center">
+                <div className="grid md:grid-cols-1 md:grid-cols-2 gap-8 items-center">
                   {/* Logo */}
                   <div className={`flex justify-center ${index % 2 === 1 ? 'md:order-2' : ''}`}>
                     <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -92,7 +92,7 @@ export default async function RegionalCentersPage() {
                       )}
                     </p>
 
-                    <div className="grid sm:grid-cols-2 gap-6">
+                    <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Services Covered */}
                       <div>
                         <h3 className="font-semibold text-slate-800 mb-3">Services Covered</h3>
@@ -148,7 +148,7 @@ export default async function RegionalCentersPage() {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">How to Get Started</h2>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <div className="text-center">
               <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-xl font-bold text-cyan-600">1</span>

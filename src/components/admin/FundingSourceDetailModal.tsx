@@ -154,7 +154,7 @@ info@icanswim209.com
         </DialogHeader>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-2 py-3 border-b text-center">
+        <div className="grid grid-cols-3 md:grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 py-3 border-b text-center">
           <div>
             <div className="text-lg font-bold text-green-600">{stats.activeCount}</div>
             <div className="text-xs text-muted-foreground">Active</div>
@@ -183,7 +183,7 @@ info@icanswim209.com
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
-          <TabsList className="grid grid-cols-4 w-full">
+          <TabsList className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 w-full">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="overdue" className="text-red-600">Overdue</TabsTrigger>
             <TabsTrigger value="pending">Pending</TabsTrigger>

@@ -338,7 +338,7 @@ export function SkillChecklist({
           <Skeleton className="h-4 w-48" />
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
@@ -412,7 +412,7 @@ export function SkillChecklist({
       <CardContent>
         <div className="space-y-6">
           {/* Summary stats */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <div className="text-center p-3 bg-gray-50 rounded-lg">
               <div className="text-2xl font-bold">{skills.length}</div>
               <div className="text-xs text-muted-foreground">Total Skills</div>

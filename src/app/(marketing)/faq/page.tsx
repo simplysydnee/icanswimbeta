@@ -117,7 +117,7 @@ export default function FAQPage() {
       {/* Quick Links */}
       <div className="max-w-4xl mx-auto mt-16">
         <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">Quick Links</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-6">
           <a
             href="/programs"
             className="bg-white rounded-xl p-6 text-center border hover:border-cyan-300 hover:shadow-md transition-all"

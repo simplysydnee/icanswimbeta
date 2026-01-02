@@ -455,7 +455,7 @@ function AdminSessionsContent() {
         </div>
 
         {/* Summary Statistics Cards - Clickable */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3 mb-6">
           <Card
             className={`cursor-pointer hover:shadow-md transition-all ${
               statusFilter === 'all' ? 'ring-2 ring-primary' : ''
@@ -554,7 +554,7 @@ function AdminSessionsContent() {
             <p className="text-sm text-muted-foreground">Filter sessions by date, time, instructor, location, or search</p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
               {/* Date Range */}
               <div className="sm:col-span-2">
                 <Label className="text-sm text-muted-foreground mb-2 block">Date Range</Label>

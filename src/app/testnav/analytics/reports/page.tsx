@@ -40,7 +40,7 @@ export default function ReportsPage() {
           </Button>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1 md:grid-cols-3">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -96,7 +96,7 @@ export default function ReportsPage() {
           </Card>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-1 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle>Recent Reports</CardTitle>

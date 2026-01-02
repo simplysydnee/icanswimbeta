@@ -69,7 +69,7 @@ export function InstructorSection({ selectedIds, onChange }: InstructorSectionPr
       )}
 
       {instructors && instructors.length > 0 && (
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid gap-2 sm:grid-cols-1 md:grid-cols-2">
           {instructors.map((instructor) => (
             <label
               key={instructor.id}

@@ -368,7 +368,7 @@ export default function ReferralPage() {
             {currentSection === 1 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Client Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="child_first_name">Child&apos;s First Name *</Label>
                     <Input
@@ -393,7 +393,7 @@ export default function ReferralPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="child_date_of_birth">Date of Birth *</Label>
                     <Input
@@ -426,7 +426,7 @@ export default function ReferralPage() {
 
                 <div className="space-y-2">
                   <Label>Diagnosis (select all that apply) *</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-2">
                     {[
                       'ADD/ADHD',
                       'Autism',
@@ -465,7 +465,7 @@ export default function ReferralPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="parent_name">Parent/Guardian Name *</Label>
                     <Input
@@ -509,7 +509,7 @@ export default function ReferralPage() {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Medical & Safety Information</h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>Non-Ambulatory? *</Label>
                     <div className="flex space-x-4 mt-2">
@@ -539,7 +539,7 @@ export default function ReferralPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="height">Height (optional)</Label>
                     <Input
@@ -778,7 +778,7 @@ export default function ReferralPage() {
 
                 <div className="space-y-2">
                   <Label>Swim Goals (select all that apply) *</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-2">
                     {[
                       'Water safety skills',
                       'Basic swimming strokes',
@@ -854,7 +854,7 @@ export default function ReferralPage() {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Coordinator Information</h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="coordinator_name">Coordinator Name *</Label>
                     <Input

@@ -637,7 +637,7 @@ function AdminReferralsContent() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {/* Ready for Review - Clickable */}
           <Card
             className={`cursor-pointer transition-all hover:shadow-md ${
@@ -870,7 +870,7 @@ function AdminReferralsContent() {
                   <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                     <User className="h-4 w-4" /> Child Information
                   </h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500">Name</p>
                       <p className="font-medium">{selectedReferral.child_name}</p>
@@ -904,7 +904,7 @@ function AdminReferralsContent() {
                   <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                     <User className="h-4 w-4" /> Parent/Guardian
                   </h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500">Name</p>
                       <p className="font-medium">{selectedReferral.parent_name}</p>
@@ -925,7 +925,7 @@ function AdminReferralsContent() {
                   <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                     <AlertCircle className="h-4 w-4" /> Medical & Safety
                   </h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500">Allergies</p>
                       <p className="font-medium">
@@ -964,7 +964,7 @@ function AdminReferralsContent() {
                 {/* Behavioral */}
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-3">Behavioral Considerations</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500">Elopement Risk</p>
                       <p className="font-medium">
@@ -1007,7 +1007,7 @@ function AdminReferralsContent() {
                       <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500" /> Parent Completed Section
                       </h3>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div className="col-span-2">
                           <p className="text-gray-500">Swim Goals</p>
                           <p className="font-medium">
@@ -1042,7 +1042,7 @@ function AdminReferralsContent() {
                     {/* Emergency Contact */}
                     <div>
                       <h3 className="font-semibold text-gray-900 mb-3">Emergency Contact</h3>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                         <div>
                           <p className="text-gray-500">Name</p>
                           <p className="font-medium">{selectedReferral.emergency_contact_name}</p>
@@ -1082,7 +1082,7 @@ function AdminReferralsContent() {
                 {/* Coordinator Info */}
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-3">Coordinator</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-gray-500">Name</p>
                       <p className="font-medium">{selectedReferral.coordinator_name}</p>

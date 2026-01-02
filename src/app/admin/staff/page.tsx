@@ -456,7 +456,7 @@ export default function StaffManagementPage() {
 
           {editingMember && (
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-1 md:grid-cols-3">
                 <TabsTrigger value="profile" className="flex items-center gap-2">
                   <User className="w-4 h-4" />
                   Profile
@@ -473,7 +473,7 @@ export default function StaffManagementPage() {
 
               {/* Profile Tab */}
               <TabsContent value="profile" className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="full_name">Full Name</Label>
                     <Input
@@ -723,7 +723,7 @@ export default function StaffManagementPage() {
           </DialogHeader>
 
           <Tabs defaultValue="profile">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-1 md:grid-cols-3">
               <TabsTrigger value="profile" className="flex items-center gap-2">
                 <User className="w-4 h-4" />
                 Profile
@@ -740,7 +740,7 @@ export default function StaffManagementPage() {
 
             {/* Profile Tab */}
             <TabsContent value="profile" className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="new_full_name">Full Name *</Label>
                   <Input
@@ -764,7 +764,7 @@ export default function StaffManagementPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="new_title">Title</Label>
                   <Input

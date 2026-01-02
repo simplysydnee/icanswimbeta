@@ -187,7 +187,7 @@ export function BookingFilters({
       <Card className="mb-6">
         <CardContent className="pt-6">
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />
               ))}
@@ -228,7 +228,7 @@ export function BookingFilters({
           </div>
 
           {/* Filter Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {/* Date Range */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Date Range</Label>

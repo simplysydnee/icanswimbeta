@@ -38,7 +38,7 @@ export default function TestDateSelectStepPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <div className="rounded-lg border p-6">
               <DateSelectStep

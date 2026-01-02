@@ -4,7 +4,7 @@ import { Heart, Shield, Award } from 'lucide-react';
 export function FeaturesSection() {
   return (
     <section className="container mx-auto px-4 py-16">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
         <Card className="border-2 hover:border-primary/50 transition-colors">
           <CardHeader>
             <Heart className="h-12 w-12 text-primary mb-2" />

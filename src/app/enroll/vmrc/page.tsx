@@ -91,9 +91,20 @@ function ParentFundingReferralContent() {
   useEffect(() => {
     if (!authLoading && !user) {
       const currentParams = new URLSearchParams(window.location.search);
-      router.push(`/login?redirect=/enroll/vmrc?${currentParams.toString()}`);
+      // Get child name from query params for personalized signup
+      const childFirstName = searchParams.get('firstName') || '';
+      const childLastName = searchParams.get('lastName') || '';
+      const childName = childFirstName && childLastName ? `${childFirstName} ${childLastName}` : '';
+
+      const signupParams = new URLSearchParams({
+        redirect: `/enroll/vmrc?${currentParams.toString()}`
+      });
+      if (childName) {
+        signupParams.append('child', childName);
+      }
+      router.push(`/signup?${signupParams.toString()}`);
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, searchParams]);
 
   // Auto-fill parent info if logged in
   useEffect(() => {
@@ -282,7 +293,7 @@ function ParentFundingReferralContent() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="parent_name">Your Full Name *</Label>
                   <Input
@@ -342,7 +353,7 @@ function ParentFundingReferralContent() {
                 <h3 className="text-lg font-semibold">Coordinator Information</h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="coordinator_name">Coordinator Name *</Label>
                   <Input

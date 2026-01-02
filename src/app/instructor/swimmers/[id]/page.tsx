@@ -262,7 +262,7 @@ export default function InstructorSwimmerDetailPage() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-3 gap-6">
               {/* Left Column - Basic Info */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Parent Info Card */}
@@ -359,7 +359,7 @@ export default function InstructorSwimmerDetailPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Previous Lessons</p>
                         <p className="font-medium">

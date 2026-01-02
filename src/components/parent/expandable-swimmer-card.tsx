@@ -319,7 +319,7 @@ export function ExpandableSwimmerCard({
                 <User className="h-5 w-5" />
                 Your Contact on File
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                 {swimmer.parent_phone && (
                   <div className="flex items-center gap-2 text-sm">
                     <Phone className="h-4 w-4 text-muted-foreground" />
@@ -461,7 +461,7 @@ export function ExpandableSwimmerCard({
                 )}
 
                 {/* Lessons Completed */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-blue-50 p-3 rounded-lg">
                     <div className="text-2xl font-bold text-blue-600">
                       {swimmer.lessons_completed || 0}
@@ -493,7 +493,7 @@ export function ExpandableSwimmerCard({
 
             {/* Action Buttons */}
             <section>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-3">
                 <Button asChild className="w-full">
                   <Link href={`/parent/book?swimmer=${swimmer.id}`}>
                     <Calendar className="h-4 w-4 mr-2" />

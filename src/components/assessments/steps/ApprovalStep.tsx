@@ -67,7 +67,7 @@ export function ApprovalStep({ data, onChange, onSubmit, isSubmitting }: Approva
         <h3 className="font-semibold text-lg">Assessment Summary</h3>
 
         {/* Basic Info Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-muted-foreground">
               <User className="h-4 w-4" />
@@ -115,7 +115,7 @@ export function ApprovalStep({ data, onChange, onSubmit, isSubmitting }: Approva
         </div>
 
         {/* Skills Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+        <div className="grid grid-cols-2 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           <div className="border rounded-lg p-3 text-center">
             <div className="flex items-center justify-center gap-2 mb-1">
               <Droplets className="h-4 w-4 text-green-600" />

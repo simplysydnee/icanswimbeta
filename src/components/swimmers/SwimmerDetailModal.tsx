@@ -391,7 +391,7 @@ export function SwimmerDetailModal({
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
               {/* Main Content */}
               <div className="md:col-span-3 space-y-6">
                 {/* Status Row */}
@@ -511,7 +511,7 @@ export function SwimmerDetailModal({
                     Swimming Background & Goals
                   </h3>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Previous Lessons</p>
                         <p className="font-medium">
@@ -803,7 +803,7 @@ export function SwimmerDetailModal({
                   Safety Information
                 </h4>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Seizures */}
                   {swimmer.historyOfSeizures !== undefined && (
                     <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
@@ -967,7 +967,7 @@ export function SwimmerDetailModal({
                 </div>
 
                 {/* Progress Stats */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-blue-50 p-3 rounded-lg">
                     <div className="text-2xl font-bold text-blue-600">
                       {swimmer.lessonsCompleted || 0}
@@ -1047,7 +1047,7 @@ export function SwimmerDetailModal({
                 </div>
 
                 {/* Session Statistics */}
-                <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
                   <div className="text-center">
                     <p className="text-2xl font-bold">{swimmer.fundedSessionsUsed || swimmer.lessonsCompleted || 0}</p>
                     <p className="text-xs text-muted-foreground">Completed</p>

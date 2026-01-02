@@ -161,7 +161,7 @@ export function BillingReport() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-12 w-full" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="h-32" />
           ))}
@@ -216,7 +216,7 @@ export function BillingReport() {
       />
 
       {/* Summary Cards - PO Status */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
         {Object.entries(stats.poStatus).map(([status, count]) => {
           const config = STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-800 border-gray-300', icon: FileText };
           const Icon = config.icon;
@@ -241,7 +241,7 @@ export function BillingReport() {
       </div>
 
       {/* Summary Cards - Billing Status */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
         {Object.entries(stats.billingStatus).map(([status, count]) => {
           const config = BILLING_STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-800 border-gray-300', icon: FileText };
           const Icon = config.icon;
@@ -266,7 +266,7 @@ export function BillingReport() {
       </div>
 
       {/* Financial Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center justify-between">

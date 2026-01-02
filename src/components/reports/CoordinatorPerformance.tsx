@@ -178,7 +178,7 @@ export function CoordinatorPerformance({ coordinators }: CoordinatorPerformanceP
             </Table>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">Top Performer</CardTitle>
@@ -311,7 +311,7 @@ export function CoordinatorPerformance({ coordinators }: CoordinatorPerformanceP
 
             <div className="mt-6">
               <h4 className="font-medium mb-2">Performance Summary</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <div className="text-sm text-muted-foreground">Total POs</div>
                   <div className="text-2xl font-bold">{selectedCoordinatorData?.totalPOs}</div>

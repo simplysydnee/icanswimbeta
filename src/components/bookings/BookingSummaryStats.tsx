@@ -71,7 +71,7 @@ export function BookingSummaryStats({ stats, loading = false }: BookingSummarySt
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 mb-6">
         {Array.from({ length: 6 }).map((_, i) => (
           <Card key={i} className="border">
             <CardContent className="pt-6">
@@ -90,7 +90,7 @@ export function BookingSummaryStats({ stats, loading = false }: BookingSummarySt
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 mb-6">
       {statCards.map((stat) => {
         const Icon = stat.icon
         return (

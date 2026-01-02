@@ -198,7 +198,7 @@ export function TimecardDetailModal({
         </DialogHeader>
 
         {/* Instructor Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card className="bg-muted/50">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">Pay Rate</CardTitle>

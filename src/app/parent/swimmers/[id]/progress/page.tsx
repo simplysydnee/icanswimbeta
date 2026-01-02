@@ -315,7 +315,7 @@ export default function SwimmerProgressPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div className="text-center">
               <div className="text-4xl font-bold text-green-600">{masteredSkills}</div>
               <div className="text-sm text-muted-foreground">Skills Mastered</div>
@@ -445,7 +445,7 @@ export default function SwimmerProgressPage() {
                 )}
 
                 {(note.skills_working_on.length > 0 || note.skills_mastered.length > 0) && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                     {note.skills_working_on.length > 0 && (
                       <div>
                         <h4 className="font-medium mb-2">Skills Working On</h4>

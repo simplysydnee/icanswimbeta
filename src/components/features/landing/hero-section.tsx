@@ -36,7 +36,7 @@ export function HeroSection() {
           </p>
 
           {/* Key Benefits */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
             {[
               { text: "Special Needs Expertise", color: "text-primary" },
               { text: "Funding Approved Provider", color: "text-accent" },
@@ -76,7 +76,7 @@ export function HeroSection() {
           </div>
 
           {/* Key Benefits */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 gap-6 max-w-2xl mx-auto pt-4">
             {[
               { text: "Individualized Approach", color: "text-primary" },
               { text: "Safety First", color: "text-accent" },

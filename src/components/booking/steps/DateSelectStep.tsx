@@ -336,7 +336,7 @@ export function DateSelectStep({
             </h4>
 
             {isLoadingWeek ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-1 md:grid-cols-3 gap-2">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <Skeleton key={i} className="h-12 rounded-lg" />
                 ))}
@@ -349,7 +349,7 @@ export function DateSelectStep({
                 </AlertDescription>
               </Alert>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-1 md:grid-cols-3 gap-2">
                 {Object.entries(timeSlots).map(([time, sessions]) => {
                   // For now, just show the first session at this time
                   // In a more advanced version, we could show multiple instructors at same time
@@ -469,7 +469,7 @@ export function DateSelectStep({
       {/* Step 1: Date range selection */}
       <div className="space-y-4">
         <h4 className="font-medium">1. Select Date Range</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
           {/* Start date */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Start Date</label>

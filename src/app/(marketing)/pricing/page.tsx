@@ -52,7 +52,7 @@ export default async function PricingPage() {
       {/* Pricing Cards - 2 columns */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
+          <div className="grid md:grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
 
             {/* Private Pay Card */}
             <Card className="p-8 flex flex-col">
@@ -199,7 +199,7 @@ export default async function PricingPage() {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">Payment Options</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
             <div className="bg-white rounded-xl p-6 text-center border">
               <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-4">
                 <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

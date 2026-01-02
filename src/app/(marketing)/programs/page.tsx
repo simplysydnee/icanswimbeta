@@ -22,7 +22,7 @@ export default async function ProgramsPage() {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Your Swim Journey</h2>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-1 md:grid-cols-3 gap-8">
             {/* Step 1 */}
             <div className="text-center">
               <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -70,7 +70,7 @@ export default async function ProgramsPage() {
             Our progressive level system guides swimmers from water introduction to advanced skills
           </p>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
             {/* White Level */}
             <div className="bg-white border-2 border-gray-200 rounded-xl p-6 text-center shadow-sm hover:shadow-md transition-shadow">
               <div className="w-12 h-12 bg-gray-100 border-2 border-gray-300 rounded-full mx-auto mb-3"></div>
@@ -114,7 +114,7 @@ export default async function ProgramsPage() {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">What Makes Us Different</h2>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <CheckCircle className="w-5 h-5 text-cyan-600" />

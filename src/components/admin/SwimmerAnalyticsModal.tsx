@@ -94,7 +94,7 @@ export function SwimmerAnalyticsModal({ open, onOpenChange }: SwimmerAnalyticsMo
 
         {data && (
           <Tabs defaultValue="enrollment" className="space-y-4">
-            <TabsList className="grid grid-cols-3 w-full">
+            <TabsList className="grid grid-cols-1 md:grid-cols-3 w-full">
               <TabsTrigger value="enrollment">Enrollment</TabsTrigger>
               <TabsTrigger value="engagement">Re-engagement</TabsTrigger>
               <TabsTrigger value="activity">Activity</TabsTrigger>
@@ -102,7 +102,7 @@ export function SwimmerAnalyticsModal({ open, onOpenChange }: SwimmerAnalyticsMo
 
             {/* Enrollment Tab */}
             <TabsContent value="enrollment" className="space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 <Card>
                   <CardContent className="pt-4">
                     <div className="text-2xl font-bold text-green-600">{data.enrollment.enrolled}</div>
@@ -129,7 +129,7 @@ export function SwimmerAnalyticsModal({ open, onOpenChange }: SwimmerAnalyticsMo
                 </Card>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Card className="border-red-200">
                   <CardContent className="pt-4 flex items-center justify-between">
                     <div>
@@ -153,7 +153,7 @@ export function SwimmerAnalyticsModal({ open, onOpenChange }: SwimmerAnalyticsMo
 
             {/* Engagement Tab */}
             <TabsContent value="engagement" className="space-y-4">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <Card className={data.engagement.inactive30 > 0 ? 'border-yellow-300' : ''}>
                   <CardContent className="pt-4">
                     <div className="text-2xl font-bold text-yellow-600">{data.engagement.inactive30}</div>

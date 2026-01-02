@@ -256,7 +256,7 @@ export default function TasksPage() {
             </div>
             <Skeleton className="h-10 w-32" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map(i => (
               <Skeleton key={i} className="h-32 rounded-lg" />
             ))}
@@ -320,7 +320,7 @@ export default function TasksPage() {
       {showFilters && (
         <Card className="mb-6">
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
               <div>
                 <Label htmlFor="created_by" className="text-xs sm:text-sm">Created By</Label>
                 <Select
@@ -426,7 +426,7 @@ export default function TasksPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
@@ -516,29 +516,27 @@ export default function TasksPage() {
         </Button>
 
         {showPastTasks && (
-          <Card>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Task</TableHead>
-                    <TableHead>Assigned To</TableHead>
-                    <TableHead>Completed</TableHead>
-                    <TableHead>Created By</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Category</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tasks
-                    .filter(t => t.status === 'completed')
-                    .map(task => (
-                      <TableRow key={task.id}>
-                        <TableCell className="font-medium">{task.title}</TableCell>
-                        <TableCell>
+          <>
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-3">
+              {tasks
+                .filter(t => t.status === 'completed')
+                .map(task => (
+                  <Card key={task.id} className="p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <h4 className="font-medium text-base">{task.title}</h4>
+                      <Badge className={getPriorityColor(task.priority)}>
+                        {task.priority}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Assigned:</span>
+                        <span className="font-medium">
                           {task.assigned_to_user ? (
                             <div className="flex items-center gap-2">
-                              <span className="inline-flex items-center justify-center rounded-full bg-gray-200 text-xs h-6 w-6">
+                              <span className="inline-flex items-center justify-center rounded-full bg-gray-200 text-xs h-5 w-5">
                                 {task.assigned_to_user.full_name?.charAt(0) || task.assigned_to_user.email.charAt(0)}
                               </span>
                               <span>{task.assigned_to_user.full_name || task.assigned_to_user.email}</span>
@@ -546,31 +544,95 @@ export default function TasksPage() {
                           ) : (
                             'Unassigned'
                           )}
-                        </TableCell>
-                        <TableCell>
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Completed:</span>
+                        <span className="font-medium">
                           {task.completed_at ? format(new Date(task.completed_at), 'MMM d, yyyy') : 'N/A'}
-                        </TableCell>
-                        <TableCell>
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Created by:</span>
+                        <span className="font-medium">
                           {task.created_by_user?.full_name || task.created_by_user?.email || 'Unknown'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getPriorityColor(task.priority)}>
-                            {task.priority}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {task.category === 'swimmer_related' ? 'Swimmer' :
-                             task.category === 'business_operations' ? 'Business' :
-                             task.category === 'follow_up' ? 'Follow-up' : 'Other'}
-                          </Badge>
-                        </TableCell>
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Category:</span>
+                        <Badge variant="outline" className="text-xs">
+                          {task.category === 'swimmer_related' ? 'Swimmer' :
+                           task.category === 'business_operations' ? 'Business' :
+                           task.category === 'follow_up' ? 'Follow-up' : 'Other'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Task</TableHead>
+                        <TableHead>Assigned To</TableHead>
+                        <TableHead>Completed</TableHead>
+                        <TableHead>Created By</TableHead>
+                        <TableHead>Priority</TableHead>
+                        <TableHead>Category</TableHead>
                       </TableRow>
-                    ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {tasks
+                        .filter(t => t.status === 'completed')
+                        .map(task => (
+                          <TableRow key={task.id}>
+                            <TableCell className="font-medium">{task.title}</TableCell>
+                            <TableCell>
+                              {task.assigned_to_user ? (
+                                <div className="flex items-center gap-2">
+                                  <span className="inline-flex items-center justify-center rounded-full bg-gray-200 text-xs h-6 w-6">
+                                    {task.assigned_to_user.full_name?.charAt(0) || task.assigned_to_user.email.charAt(0)}
+                                  </span>
+                                  <span>{task.assigned_to_user.full_name || task.assigned_to_user.email}</span>
+                                </div>
+                              ) : (
+                                'Unassigned'
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {task.completed_at ? format(new Date(task.completed_at), 'MMM d, yyyy') : 'N/A'}
+                            </TableCell>
+                            <TableCell>
+                              {task.created_by_user?.full_name || task.created_by_user?.email || 'Unknown'}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getPriorityColor(task.priority)}>
+                                {task.priority}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">
+                                {task.category === 'swimmer_related' ? 'Swimmer' :
+                                 task.category === 'business_operations' ? 'Business' :
+                                 task.category === 'follow_up' ? 'Follow-up' : 'Other'}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          </>
         )}
       </div>
 

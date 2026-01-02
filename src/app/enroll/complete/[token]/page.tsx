@@ -284,7 +284,7 @@ export default function ParentCompletionPage() {
             <CardDescription>Submitted by your funding source coordinator</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-gray-500">Child&apos;s Name</p>
                 <p className="font-medium">{referral?.child_name}</p>
@@ -316,7 +316,7 @@ export default function ParentCompletionPage() {
             <CardDescription>Select all goals that apply for your child</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-3">
               {SWIM_GOALS.map((goal) => (
                 <div
                   key={goal}
@@ -377,7 +377,7 @@ export default function ParentCompletionPage() {
             <CardDescription>When can your child attend lessons?</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-3">
               {AVAILABILITY_SLOTS.map((slot) => (
                 <div
                   key={slot}
@@ -556,7 +556,7 @@ export default function ParentCompletionPage() {
             <CardDescription>Someone we can reach if we can&apos;t reach you</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="ec_name">Contact Name *</Label>
                 <Input

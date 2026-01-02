@@ -95,7 +95,7 @@ export function ComprehensiveBillingReport() {
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground">Monthly Billed</CardTitle>
@@ -174,7 +174,7 @@ export function ComprehensiveBillingReport() {
       </Card>
 
       {/* Private Pay + Aging */}
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

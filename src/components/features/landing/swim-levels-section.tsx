@@ -9,7 +9,7 @@ export function SwimLevelsSection() {
           <Waves className="inline-block h-8 w-8 mr-2 text-primary" />
           Our Swim Levels
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-6">
           {[
             { name: "White", description: "Water Readiness - Asking permission to get in the water", bgColor: "bg-slate-100" },
             { name: "Red", description: "Body Position and Air Exchange - Wearing lifejacket and jump in", bgColor: "bg-red-100" },

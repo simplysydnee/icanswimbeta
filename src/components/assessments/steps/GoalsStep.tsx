@@ -140,7 +140,7 @@ export function GoalsStep({ data, onChange }: GoalsStepProps) {
       {/* Goal Setting Guidelines */}
       <div className="mt-8 border rounded-lg p-4">
         <h4 className="font-medium mb-3">Goal Setting Guidelines</h4>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
             <div className="font-medium text-sm">SMART Goals</div>
             <ul className="text-xs text-muted-foreground space-y-1">

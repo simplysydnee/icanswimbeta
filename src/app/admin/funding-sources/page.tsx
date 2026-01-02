@@ -49,7 +49,10 @@ import {
   Settings,
   Loader2,
   Search,
-  Filter
+  Filter,
+  Upload,
+  Image as ImageIcon,
+  X
 } from 'lucide-react'
 
 interface FundingSource {
@@ -75,6 +78,17 @@ interface FundingSource {
   is_active: boolean
   created_at: string
   updated_at: string
+  // New fields
+  logo_url: string | null
+  budget_amount_cents: number | null
+  is_self_determination: boolean
+  requires_coordinator: boolean
+  funding_type: string
+  price_cents: number | null
+  requires_authorization: boolean
+  authorization_label: string | null
+  address: string | null
+  notes: string | null
 }
 
 export default function FundingSourcesPage() {
@@ -105,10 +119,23 @@ export default function FundingSourcesPage() {
     billing_contact_phone: '',
     billing_address: '',
     billing_notes: '',
-    is_active: true
+    is_active: true,
+    // New fields
+    logo_url: '',
+    budget_amount_cents: null as number | null,
+    is_self_determination: false,
+    requires_coordinator: true,
+    funding_type: 'regional_center',
+    price_cents: null as number | null,
+    requires_authorization: false,
+    authorization_label: 'Purchase Order',
+    address: '',
+    notes: ''
   })
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [logoUploading, setLogoUploading] = useState(false)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
 
   const { toast } = useToast()
   const supabase = createClient()
@@ -134,6 +161,86 @@ export default function FundingSourcesPage() {
       setLoading(false)
     }
   }, [supabase, toast])
+
+  // Logo upload function
+  const handleLogoUpload = async (file: File) => {
+    if (!file) return
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please upload a JPEG, PNG, GIF, or WebP image',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Please upload an image smaller than 5MB',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    setLogoUploading(true)
+    try {
+      // Create preview
+      const previewUrl = URL.createObjectURL(file)
+      setLogoPreview(previewUrl)
+
+      // Generate unique filename
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+      const filePath = `funding-source-logos/${fileName}`
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('funding-source-logos')
+        .upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('funding-source-logos')
+        .getPublicUrl(filePath)
+
+      // Update form data with logo URL
+      setFormData(prev => ({
+        ...prev,
+        logo_url: publicUrl
+      }))
+
+      toast({
+        title: 'Logo uploaded',
+        description: 'Logo has been uploaded successfully',
+        variant: 'default'
+      })
+    } catch (error) {
+      console.error('Error uploading logo:', error)
+      toast({
+        title: 'Upload failed',
+        description: 'Failed to upload logo. Please try again.',
+        variant: 'destructive'
+      })
+      setLogoPreview(null)
+    } finally {
+      setLogoUploading(false)
+    }
+  }
+
+  const handleRemoveLogo = () => {
+    setLogoPreview(null)
+    setFormData(prev => ({
+      ...prev,
+      logo_url: ''
+    }))
+  }
 
   useEffect(() => {
     fetchFundingSources()
@@ -296,8 +403,20 @@ export default function FundingSourcesPage() {
       billing_contact_phone: '',
       billing_address: '',
       billing_notes: '',
-      is_active: true
+      is_active: true,
+      // New fields
+      logo_url: '',
+      budget_amount_cents: null,
+      is_self_determination: false,
+      requires_coordinator: true,
+      funding_type: 'regional_center',
+      price_cents: null,
+      requires_authorization: false,
+      authorization_label: 'Purchase Order',
+      address: '',
+      notes: ''
     })
+    setLogoPreview(null)
     setEditingSource(null)
     setFormErrors({})
   }
@@ -323,8 +442,25 @@ export default function FundingSourcesPage() {
       billing_contact_phone: source.billing_contact_phone || '',
       billing_address: source.billing_address || '',
       billing_notes: source.billing_notes || '',
-      is_active: source.is_active
+      is_active: source.is_active,
+      // New fields
+      logo_url: source.logo_url || '',
+      budget_amount_cents: source.budget_amount_cents,
+      is_self_determination: source.is_self_determination || false,
+      requires_coordinator: source.requires_coordinator !== undefined ? source.requires_coordinator : true,
+      funding_type: source.funding_type || 'regional_center',
+      price_cents: source.price_cents,
+      requires_authorization: source.requires_authorization || false,
+      authorization_label: source.authorization_label || 'Purchase Order',
+      address: source.address || '',
+      notes: source.notes || ''
     })
+    // Set logo preview if exists
+    if (source.logo_url) {
+      setLogoPreview(source.logo_url)
+    } else {
+      setLogoPreview(null)
+    }
     setIsDialogOpen(true)
   }
 
@@ -427,7 +563,7 @@ export default function FundingSourcesPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Name *</Label>
                       <Input
@@ -466,6 +602,88 @@ export default function FundingSourcesPage() {
                         placeholder="Brief description of the funding source"
                         rows={2}
                       />
+                    </div>
+
+                    {/* Logo Upload */}
+                    <div className="md:col-span-2 space-y-2">
+                      <Label htmlFor="logo">Logo</Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        {logoPreview ? (
+                          <div className="space-y-4">
+                            <div className="flex justify-center">
+                              <img
+                                src={logoPreview}
+                                alt="Logo preview"
+                                className="max-h-32 max-w-full object-contain rounded"
+                              />
+                            </div>
+                            <div className="flex justify-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => document.getElementById('logo-upload')?.click()}
+                                disabled={logoUploading}
+                              >
+                                {logoUploading ? (
+                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                ) : (
+                                  <Upload className="h-4 w-4 mr-2" />
+                                )}
+                                Change Logo
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleRemoveLogo}
+                                disabled={logoUploading}
+                              >
+                                <X className="h-4 w-4 mr-2" />
+                                Remove
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <div className="flex justify-center">
+                              <ImageIcon className="h-12 w-12 text-gray-400" />
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-600 mb-2">
+                                Upload a logo for this funding source
+                              </p>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => document.getElementById('logo-upload')?.click()}
+                                disabled={logoUploading}
+                              >
+                                {logoUploading ? (
+                                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                ) : (
+                                  <Upload className="h-4 w-4 mr-2" />
+                                )}
+                                Upload Logo
+                              </Button>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              JPEG, PNG, GIF, or WebP • Max 5MB
+                            </p>
+                          </div>
+                        )}
+                        <input
+                          id="logo-upload"
+                          type="file"
+                          accept="image/jpeg,image/png,image/gif,image/webp"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) handleLogoUpload(file)
+                            e.target.value = '' // Reset input
+                          }}
+                        />
+                      </div>
                     </div>
 
                     <div className="space-y-2">
@@ -592,6 +810,117 @@ export default function FundingSourcesPage() {
                       {formErrors.renewal_alert_threshold && (
                         <p className="text-sm text-destructive">{formErrors.renewal_alert_threshold}</p>
                       )}
+                    </div>
+
+                    {/* New Funding Source Configuration Fields */}
+                    <div className="space-y-2">
+                      <Label htmlFor="price_cents">Price per Session (cents)</Label>
+                      <Input
+                        id="price_cents"
+                        name="price_cents"
+                        type="number"
+                        min="0"
+                        value={formData.price_cents || ''}
+                        onChange={handleNumberChange}
+                        placeholder="e.g., 9644 for $96.44"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Price in cents (e.g., 9644 = $96.44)
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="budget_amount_cents">Budget Amount (cents)</Label>
+                      <Input
+                        id="budget_amount_cents"
+                        name="budget_amount_cents"
+                        type="number"
+                        min="0"
+                        value={formData.budget_amount_cents || ''}
+                        onChange={handleNumberChange}
+                        placeholder="Optional - e.g., 500000 for $5,000"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Optional fixed budget in cents (for Self Determination, Scholarship)
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="funding_type">Funding Type</Label>
+                      <select
+                        id="funding_type"
+                        name="funding_type"
+                        value={formData.funding_type}
+                        onChange={(e) => handleInputChange(e)}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="regional_center">Regional Center</option>
+                        <option value="private_pay">Private Pay</option>
+                        <option value="scholarship">Scholarship</option>
+                        <option value="self_determination">Self Determination</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="authorization_label">Authorization Label</Label>
+                      <Input
+                        id="authorization_label"
+                        name="authorization_label"
+                        value={formData.authorization_label}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Purchase Order, Budget Authorization"
+                      />
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="requires_authorization"
+                        checked={formData.requires_authorization}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, requires_authorization: checked }))}
+                      />
+                      <Label htmlFor="requires_authorization">Requires Authorization</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="requires_coordinator"
+                        checked={formData.requires_coordinator}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, requires_coordinator: checked }))}
+                      />
+                      <Label htmlFor="requires_coordinator">Requires Coordinator</Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="is_self_determination"
+                        checked={formData.is_self_determination}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_self_determination: checked }))}
+                      />
+                      <Label htmlFor="is_self_determination">Self Determination</Label>
+                    </div>
+
+                    <div className="md:col-span-2 space-y-2">
+                      <Label htmlFor="address">Address</Label>
+                      <Textarea
+                        id="address"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        placeholder="Physical address of funding source"
+                        rows={2}
+                      />
+                    </div>
+
+                    <div className="md:col-span-2 space-y-2">
+                      <Label htmlFor="notes">Notes</Label>
+                      <Textarea
+                        id="notes"
+                        name="notes"
+                        value={formData.notes}
+                        onChange={handleInputChange}
+                        placeholder="Internal notes about this funding source"
+                        rows={2}
+                      />
                     </div>
 
                     <div className="md:col-span-2 space-y-2">
@@ -727,36 +1056,29 @@ export default function FundingSourcesPage() {
                   </p>
                 </div>
               ) : (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Short Name</TableHead>
-                        <TableHead>Email Domains</TableHead>
-                        <TableHead>Configuration</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredSources.map((source) => (
-                        <TableRow key={source.id}>
-                          <TableCell className="font-medium">
+                <div className="rounded-md border overflow-hidden">
+                  {/* Mobile card view */}
+                  <div className="md:hidden divide-y">
+                    {filteredSources.map((source) => (
+                      <div key={source.id} className="p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
                             <div className="flex items-center gap-2">
                               <Building className="h-4 w-4 text-muted-foreground" />
-                              {source.name}
+                              <h3 className="font-medium">{source.name}</h3>
                             </div>
                             {source.description && (
                               <p className="text-sm text-muted-foreground mt-1">
                                 {source.description}
                               </p>
                             )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{source.short_name}</Badge>
-                          </TableCell>
-                          <TableCell>
+                          </div>
+                          <Badge variant="outline">{source.short_name}</Badge>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground mb-1">Email Domains</p>
                             <div className="flex flex-wrap gap-1">
                               {source.allowed_email_domains?.map((domain, index) => (
                                 <Badge key={index} variant="secondary" className="text-xs">
@@ -764,8 +1086,10 @@ export default function FundingSourcesPage() {
                                 </Badge>
                               )) || <span className="text-gray-400 text-sm">No domains</span>}
                             </div>
-                          </TableCell>
-                          <TableCell>
+                          </div>
+
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground mb-1">Configuration</p>
                             <div className="text-sm space-y-1">
                               <div className="flex items-center gap-1">
                                 <Settings className="h-3 w-3" />
@@ -781,22 +1105,23 @@ export default function FundingSourcesPage() {
                                 </span>
                               </div>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            {source.is_active ? (
-                              <Badge variant="default" className="gap-1">
-                                <CheckCircle className="h-3 w-3" />
-                                Active
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="gap-1">
-                                <XCircle className="h-3 w-3" />
-                                Inactive
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
+                          </div>
+
+                          <div className="flex justify-between items-center">
+                            <div>
+                              {source.is_active ? (
+                                <Badge variant="default" className="gap-1">
+                                  <CheckCircle className="h-3 w-3" />
+                                  Active
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="gap-1">
+                                  <XCircle className="h-3 w-3" />
+                                  Inactive
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -815,11 +1140,107 @@ export default function FundingSourcesPage() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                          </TableCell>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop table view */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Short Name</TableHead>
+                          <TableHead>Email Domains</TableHead>
+                          <TableHead>Configuration</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredSources.map((source) => (
+                          <TableRow key={source.id}>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                <Building className="h-4 w-4 text-muted-foreground" />
+                                {source.name}
+                              </div>
+                              {source.description && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {source.description}
+                                </p>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{source.short_name}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {source.allowed_email_domains?.map((domain, index) => (
+                                  <Badge key={index} variant="secondary" className="text-xs">
+                                    {domain}
+                                  </Badge>
+                                )) || <span className="text-gray-400 text-sm">No domains</span>}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm space-y-1">
+                                <div className="flex items-center gap-1">
+                                  <Settings className="h-3 w-3" />
+                                  <span>{source.assessment_sessions} assessment(s)</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <DollarSign className="h-3 w-3" />
+                                  <span>{source.lessons_per_po} lessons/PO</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-xs text-muted-foreground">
+                                    {source.po_duration_months} months duration
+                                  </span>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {source.is_active ? (
+                                <Badge variant="default" className="gap-1">
+                                  <CheckCircle className="h-3 w-3" />
+                                  Active
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="gap-1">
+                                  <XCircle className="h-3 w-3" />
+                                  Inactive
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEdit(source)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setDeleteSourceId(source.id)
+                                    setIsDeleteDialogOpen(true)
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               )}
             </CardContent>
