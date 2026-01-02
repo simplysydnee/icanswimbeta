@@ -274,7 +274,7 @@ export default function EnrollmentPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-8 px-4">
-      <div className="container max-w-md md:max-w-lg mx-auto px-4">
+      <div className="enrollment-form container max-w-md md:max-w-lg mx-auto px-4 overflow-hidden">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-[#2a5e84] mb-2">

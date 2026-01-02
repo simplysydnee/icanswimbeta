@@ -33,18 +33,18 @@ export async function GET(request: NextRequest) {
         session_id,
         swimmer_id,
         parent_id,
-        status as booking_status,
+        status,
         created_at,
-        sessions!inner (
+        sessions (
           id,
           start_time,
           end_time,
           instructor_id,
           location,
           session_type,
-          status as session_status
+          status
         ),
-        swimmers!inner (
+        swimmers (
           id,
           first_name,
           last_name,
@@ -54,7 +54,15 @@ export async function GET(request: NextRequest) {
           payment_type,
           funding_source_id,
           assessment_status,
-          enrollment_status
+          enrollment_status,
+          has_allergies,
+          allergies_description,
+          has_medical_conditions,
+          medical_conditions_description,
+          diagnosis,
+          previous_swim_lessons,
+          swim_goals,
+          funding_coordinator_name
         )
       `)
       .eq('sessions.session_type', 'assessment');
@@ -87,10 +95,10 @@ export async function GET(request: NextRequest) {
 
     // Transform the data
     const assessments = bookings
-      .filter(booking => booking.sessions && booking.swimmers)
+      .filter(booking => booking.sessions && booking.sessions.length > 0 && booking.swimmers && booking.swimmers.length > 0)
       .map(booking => {
-        const swimmer = booking.swimmers;
-        const session = booking.sessions;
+        const swimmer = booking.swimmers[0];
+        const session = booking.sessions[0];
 
         // Calculate age
         let age = 0;
@@ -117,7 +125,7 @@ export async function GET(request: NextRequest) {
           instructor_id: session.instructor_id,
           instructor_name: 'Unknown', // Simplified for now
           location: session.location,
-          status: booking.booking_status as 'scheduled' | 'completed' | 'cancelled',
+          status: booking.status as 'scheduled' | 'completed' | 'cancelled',
           assessment_status: swimmer.assessment_status,
           comfortable_in_water: swimmer.comfortable_in_water,
           current_level_id: swimmer.current_level_id,
@@ -125,7 +133,7 @@ export async function GET(request: NextRequest) {
           payment_type: swimmer.payment_type,
           is_funded_client: swimmer.payment_type === 'funded' || !!swimmer.funding_source_id,
           funding_source_name: null, // Simplified for now
-          coordinator_name: swimmer.coordinator_name,
+          coordinator_name: swimmer.funding_coordinator_name,
           has_allergies: swimmer.has_allergies,
           allergies_description: swimmer.allergies_description,
           has_medical_conditions: swimmer.has_medical_conditions,

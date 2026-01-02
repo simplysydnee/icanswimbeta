@@ -195,7 +195,7 @@ function ParentFundingReferralContent() {
 
   if (submitResult?.success) {
     return (
-      <div className="container max-w-2xl py-8 px-4 sm:px-6 overflow-x-hidden">
+      <div className="enrollment-form container max-w-2xl py-8 px-4 sm:px-6 overflow-x-hidden">
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl text-green-600">Request Submitted!</CardTitle>

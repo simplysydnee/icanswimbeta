@@ -19,17 +19,37 @@ export async function GET() {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    // Query profiles with display_on_team = true to get instructors
-    console.log('Fetching instructors from profiles where display_on_team = true...');
+    // First get user IDs with instructor role from user_roles table
+    console.log('Fetching instructor user IDs from user_roles table...');
+    const { data: instructorRoles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', 'instructor');
+
+    if (rolesError) {
+      console.error('Error fetching instructor roles:', rolesError);
+      return NextResponse.json({ error: 'Failed to fetch instructor roles' }, { status: 500 });
+    }
+
+    const instructorIds = instructorRoles?.map(role => role.user_id) || [];
+
+    if (instructorIds.length === 0) {
+      console.log('No instructors found in user_roles table');
+      return NextResponse.json([]);
+    }
+
+    // Then get profiles for those IDs with display_on_team = true
+    console.log('Fetching instructor profiles for IDs:', instructorIds);
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, full_name, avatar_url, email')
       .eq('display_on_team', true)
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .in('id', instructorIds);
 
     if (profilesError) {
-      console.error('Error fetching instructors from profiles:', profilesError);
-      return NextResponse.json({ error: 'Failed to fetch instructors' }, { status: 500 });
+      console.error('Error fetching instructor profiles:', profilesError);
+      return NextResponse.json({ error: 'Failed to fetch instructor profiles' }, { status: 500 });
     }
 
     const instructorList = profiles || [];

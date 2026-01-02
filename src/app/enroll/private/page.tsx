@@ -709,7 +709,7 @@ export default function PrivatePayEnrollmentPage() {
 
   if (authLoading) {
     return (
-      <div className="container max-w-4xl py-8 px-4 sm:px-6 overflow-x-hidden">
+      <div className="enrollment-form container max-w-4xl py-8 px-4 sm:px-6 overflow-x-hidden">
         <div className="flex flex-col items-center justify-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin" />
           <p className="text-gray-600">Checking authentication...</p>
@@ -734,7 +734,7 @@ export default function PrivatePayEnrollmentPage() {
   // Success message
   if (submitResult?.success) {
     return (
-      <div className="container max-w-4xl py-8 px-4 sm:px-6 overflow-x-hidden">
+      <div className="enrollment-form container max-w-4xl py-8 px-4 sm:px-6 overflow-x-hidden">
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl text-green-600">Enrollment Submitted!</CardTitle>
