@@ -138,21 +138,19 @@ export default function AdminSwimmersPage() {
           </Card>
         </div>
 
-        {/* Mobile Notice */}
-        {isMobile && (
+        {/* Mobile Notice - Removed to prevent horizontal scroll */}
+        {/* {isMobile && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
               <span className="font-semibold">Mobile View:</span> Swimmers are displayed as cards for better touch experience. Tap any card to view details.
             </p>
           </div>
-        )}
+        )} */}
 
         {/* Main Table - Desktop, Cards - Mobile */}
         {isMobile ? (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Showing swimmers as cards for mobile. Use filters above to search.
-            </p>
+            {/* Removed instructional text to reduce clutter */}
 
             {swimmersLoading ? (
               <div className="space-y-3">

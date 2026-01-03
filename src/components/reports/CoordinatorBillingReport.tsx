@@ -213,7 +213,7 @@ export function CoordinatorBillingReport() {
               {data?.summary.total_overdue_pos || 0}
             </div>
             <div className="text-sm text-muted-foreground">
-              > 14 days pending
+              &gt; 14 days pending
             </div>
           </CardContent>
         </Card>

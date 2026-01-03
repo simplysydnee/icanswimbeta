@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import {
   Search,
   Filter,
@@ -270,6 +271,16 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
       }
 
       const data: SwimmersResponse = await response.json();
+
+      // Debug logging to see what data we're getting
+      console.log('Fetched swimmers data:', data.swimmers);
+      if (data.swimmers.length > 0) {
+        console.log('First swimmer:', data.swimmers[0]);
+        console.log('First swimmer firstName:', data.swimmers[0].firstName);
+        console.log('First swimmer lastName:', data.swimmers[0].lastName);
+        console.log('First swimmer enrollmentStatus:', data.swimmers[0].enrollmentStatus);
+        console.log('First swimmer currentLevel:', data.swimmers[0].currentLevel);
+      }
 
       setSwimmers(data.swimmers);
       setTotal(data.total);
@@ -526,7 +537,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
         </div>
 
         {/* Mobile view - cards */}
-        <div className="md:hidden space-y-4">
+        <div className="md:hidden space-y-4 w-full overflow-x-hidden">
           {loading ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, index) => (
@@ -553,19 +564,29 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
             swimmers.map((swimmer) => (
               <Card key={swimmer.id} className="p-4 cursor-pointer active:scale-[0.98] transition-transform" onClick={() => handleRowClick(swimmer)}>
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
+                  <Avatar className="h-12 w-12 shrink-0">
                     <AvatarImage src={swimmer.photoUrl} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                      {getInitials(swimmer.firstName, swimmer.lastName)}
+                    <AvatarFallback className="bg-cyan-100 text-cyan-700 font-semibold">
+                      {getInitials(swimmer.firstName || '', swimmer.lastName || '')}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{swimmer.firstName} {swimmer.lastName}</p>
-                    <p className="text-sm text-muted-foreground">{swimmer.currentLevel?.name || 'No level'}</p>
+                    <p className="font-medium truncate text-base">
+                      {swimmer.firstName || ''} {swimmer.lastName || ''}
+                    </p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {swimmer.currentLevel?.name || swimmer.currentLevel?.displayName || 'No level assigned'}
+                    </p>
                   </div>
-                  <Badge variant={swimmer.enrollmentStatus === 'enrolled' ? 'default' : 'secondary'}>
-                    {swimmer.enrollmentStatus}
-                  </Badge>
+                  <div className="shrink-0">
+                    <Badge variant={
+                      swimmer.enrollmentStatus === 'enrolled' ? 'default' :
+                      swimmer.enrollmentStatus === 'waitlist' ? 'secondary' :
+                      'outline'
+                    }>
+                      {swimmer.enrollmentStatus || 'Unknown'}
+                    </Badge>
+                  </div>
                 </div>
               </Card>
             ))
@@ -686,9 +707,8 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
                       className="text-left w-full"
                       onClick={(e) => {
                         e.stopPropagation()
-                        setSelectedSwimmerForPriority({
-                          ...swimmer,
-                          // Map to the expected format for PriorityBookingModal
+                        // Create a properly typed object for PriorityBookingModal
+                        const prioritySwimmer = {
                           id: swimmer.id,
                           first_name: swimmer.firstName,
                           last_name: swimmer.lastName,
@@ -696,7 +716,8 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
                           priority_booking_reason: swimmer.priorityBookingReason as any,
                           priority_booking_notes: swimmer.priorityBookingNotes,
                           priority_booking_expires_at: swimmer.priorityBookingExpiresAt
-                        })
+                        };
+                        setSelectedSwimmerForPriority(prioritySwimmer as any)
                         setPriorityModalOpen(true)
                       }}
                     >
@@ -818,7 +839,6 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
       onClose={() => setIsModalOpen(false)}
       onApprove={handleApprove}
       onDecline={handleDecline}
-      onRefresh={fetchSwimmers}
     />
 
     {/* Priority Booking Modal */}
