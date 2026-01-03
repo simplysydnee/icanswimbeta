@@ -998,7 +998,10 @@ export default function PrivatePayEnrollmentPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <Label>Does your child have any allergies? *</Label>
+                    <Label className="flex items-center gap-1">
+                      Does your child have any allergies? *
+                      <HelpTooltip content="Includes food allergies, medication allergies, environmental allergies, or any other allergic reactions. Important for safety during lessons and snack times." />
+                    </Label>
                     <div className="flex space-x-4 mt-2">
                       <label className="flex items-center space-x-2">
                         <input
@@ -1032,7 +1035,10 @@ export default function PrivatePayEnrollmentPage() {
                   </div>
 
                   <div>
-                    <Label>Does your child have any medical conditions? *</Label>
+                    <Label className="flex items-center gap-1">
+                      Does your child have any medical conditions? *
+                      <HelpTooltip content="Includes asthma, heart conditions, diabetes, epilepsy, or any other chronic health conditions. Helps us provide appropriate care and emergency response." />
+                    </Label>
                     <div className="flex space-x-4 mt-2">
                       <label className="flex items-center space-x-2">
                         <input type="radio" value="yes" {...register('has_medical_conditions')} />
@@ -1092,7 +1098,10 @@ export default function PrivatePayEnrollmentPage() {
                   </div>
 
                   <div>
-                    <Label>Is your child toilet trained? *</Label>
+                    <Label className="flex items-center gap-1">
+                      Is your child toilet trained? *
+                      <HelpTooltip content="Toilet trained means your child can independently use the toilet or communicate their need to use the bathroom. Important for pool hygiene and scheduling bathroom breaks." />
+                    </Label>
                     <div className="flex space-x-4 mt-2">
                       <label className="flex items-center space-x-2">
                         <input type="radio" value="yes" {...register('toilet_trained')} />
@@ -1254,7 +1263,10 @@ export default function PrivatePayEnrollmentPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <Label>Has your child had previous swim lessons? *</Label>
+                    <Label className="flex items-center gap-1">
+                      Has your child had previous swim lessons? *
+                      <HelpTooltip content="Previous swim lessons help us understand your child's skill level and experience. This includes formal lessons, parent-child classes, or any structured water instruction." />
+                    </Label>
                     <div className="flex space-x-4 mt-2">
                       <label className="flex items-center space-x-2">
                         <input type="radio" value="yes" {...register('previous_swim_lessons')} />
@@ -1277,7 +1289,10 @@ export default function PrivatePayEnrollmentPage() {
                   </div>
 
                   <div>
-                    <Label>How comfortable is your child in the water? *</Label>
+                    <Label className="flex items-center gap-1">
+                      How comfortable is your child in the water? *
+                      <HelpTooltip content="Comfort level helps us determine the appropriate teaching approach. Consider how your child reacts to water on their face, being submerged, or floating independently." />
+                    </Label>
                     <div className="flex space-x-4 mt-2">
                       <label className="flex items-center space-x-2">
                         <input type="radio" value="very" {...register('comfortable_in_water')} />
