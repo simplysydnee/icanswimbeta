@@ -26,6 +26,8 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Search,
   Filter,
@@ -38,6 +40,7 @@ import {
   Star,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 // Types
 export interface Swimmer {
@@ -198,6 +201,9 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
   // Calculate total pages
   const [total, setTotal] = useState(0);
   const totalPages = Math.ceil(total / limit);
+
+  // Mobile detection
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   // Create query string from current filters
   const createQueryString = useCallback(
@@ -413,6 +419,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
     ));
   };
 
+
   // Render error state
   if (error && swimmers.length === 0) {
     return (
@@ -518,8 +525,55 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="rounded-md border">
+        {/* Mobile view - cards */}
+        <div className="md:hidden space-y-4">
+          {loading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="p-4 bg-white rounded-lg border shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <div className="flex gap-2">
+                        <Skeleton className="h-6 w-20" />
+                        <Skeleton className="h-6 w-24" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-5 w-5" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : swimmers.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              No swimmers found matching your filters.
+            </div>
+          ) : (
+            swimmers.map((swimmer) => (
+              <Card key={swimmer.id} className="p-4 cursor-pointer active:scale-[0.98] transition-transform" onClick={() => handleRowClick(swimmer)}>
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={swimmer.photoUrl} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                      {getInitials(swimmer.firstName, swimmer.lastName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{swimmer.firstName} {swimmer.lastName}</p>
+                    <p className="text-sm text-muted-foreground">{swimmer.currentLevel?.name || 'No level'}</p>
+                  </div>
+                  <Badge variant={swimmer.enrollmentStatus === 'enrolled' ? 'default' : 'secondary'}>
+                    {swimmer.enrollmentStatus}
+                  </Badge>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
+
+        {/* Desktop view - table */}
+        <div className="hidden md:block rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
