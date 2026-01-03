@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { SwimmerCard } from '@/components/parent/swimmer-card'
 import { UpcomingSessions } from '@/components/parent/upcoming-sessions'
 import { PendingEnrollmentAlert } from '@/components/dashboard/PendingEnrollmentAlert'
+import { PendingParentReferrals } from '@/components/dashboard/PendingParentReferrals'
 import { PendingInvitations } from '@/components/parent/PendingInvitations'
 import Link from 'next/link'
 import { Plus, Calendar, Users } from 'lucide-react'
@@ -191,7 +192,7 @@ export default function ParentDashboard() {
         </div>
         <div className="flex gap-2">
           <Button asChild>
-            <Link href="/enroll/private">
+            <Link href="/enroll">
               <Plus className="h-4 w-4 mr-2" />
               Add Swimmer
             </Link>
@@ -207,6 +208,9 @@ export default function ParentDashboard() {
 
       {/* Pending enrollment alert */}
       <PendingEnrollmentAlert />
+
+      {/* Pending parent referral requests */}
+      <PendingParentReferrals />
 
       {/* Pending invitations */}
       <PendingInvitations />
@@ -291,12 +295,17 @@ export default function ParentDashboard() {
                   <p className="text-muted-foreground mb-4">
                     Add your first swimmer to get started with lessons
                   </p>
-                  <Button asChild>
-                    <Link href="/enroll/private">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add First Swimmer
-                    </Link>
-                  </Button>
+                  <div className="space-y-2">
+                    <Button asChild className="w-full">
+                      <Link href="/enroll">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Enroll a Swimmer
+                      </Link>
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Choose private pay or funding source
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>

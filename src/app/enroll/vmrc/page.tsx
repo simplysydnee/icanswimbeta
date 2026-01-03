@@ -55,15 +55,6 @@ function ParentFundingReferralContent() {
     dob: '',
   });
 
-  // Read query params for child info
-  useEffect(() => {
-    const firstName = searchParams.get('firstName') || '';
-    const lastName = searchParams.get('lastName') || '';
-    const dob = searchParams.get('dob') || '';
-
-    setChildInfo({ firstName, lastName, dob });
-  }, [searchParams]);
-
   // Function to format name fields on blur
   const handleNameBlur = (fieldName: keyof ParentReferralFormData) => {
     return (event: React.FocusEvent<HTMLInputElement>) => {
@@ -86,6 +77,44 @@ function ParentFundingReferralContent() {
   } = useForm<ParentReferralFormData>({
     resolver: zodResolver(parentReferralSchema),
   });
+
+  // Read query params for child info and coordinator info
+  useEffect(() => {
+    const firstName = searchParams.get('firstName') || '';
+    const lastName = searchParams.get('lastName') || '';
+    const dob = searchParams.get('dob') || '';
+    const coordinatorName = searchParams.get('coordinatorName') || '';
+    const coordinatorEmail = searchParams.get('coordinatorEmail') || '';
+    const coordinatorPhone = searchParams.get('coordinatorPhone') || '';
+
+    setChildInfo({ firstName, lastName, dob });
+
+    // Auto-fill coordinator info from query params
+    if (coordinatorName) {
+      setValue('coordinator_name', coordinatorName);
+    }
+    if (coordinatorEmail) {
+      setValue('coordinator_email', coordinatorEmail);
+    }
+
+    // Also check localStorage for coordinator info (in case query params were lost during signup)
+    const savedCoordinatorInfo = localStorage.getItem('pendingCoordinatorInfo');
+    if (savedCoordinatorInfo) {
+      try {
+        const coordinatorInfo = JSON.parse(savedCoordinatorInfo);
+
+        // Only fill if query params didn't already provide the info
+        if (!coordinatorName && coordinatorInfo.coordinatorName) {
+          setValue('coordinator_name', coordinatorInfo.coordinatorName);
+        }
+        if (!coordinatorEmail && coordinatorInfo.coordinatorEmail) {
+          setValue('coordinator_email', coordinatorInfo.coordinatorEmail);
+        }
+      } catch (error: any) {
+        console.error('Error parsing saved coordinator info:', error);
+      }
+    }
+  }, [searchParams, setValue]);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -143,16 +172,14 @@ function ParentFundingReferralContent() {
       const result = await apiClient.createParentReferralRequest(formattedData);
       console.log('Referral request submitted successfully:', result);
 
+      // Clear saved coordinator info from localStorage
+      localStorage.removeItem('pendingCoordinatorInfo');
+
       setSubmitResult({
         success: true,
         message: 'Referral request submitted successfully! Your coordinator will be in touch soon.',
       });
-
-      // Redirect to parent home after a brief delay
-      setTimeout(() => {
-        router.push('/parent-home');
-      }, 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting referral request:', error);
       console.error('Error message:', error?.message);
       console.error('Error details:', error?.details);
@@ -204,12 +231,13 @@ function ParentFundingReferralContent() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Alert className="bg-green-50 border-green-200">
+            <Alert className="bg-green-50 border-green-200 mb-6">
               <AlertDescription className="text-green-800">
                 {submitResult.message}
               </AlertDescription>
             </Alert>
-            <div className="mt-6 space-y-4">
+
+            <div className="mb-6 space-y-4">
               <h3 className="font-semibold">What happens next?</h3>
               <ul className="list-disc list-inside space-y-2 text-sm text-gray-600">
                 <li>Your coordinator will receive your request</li>
@@ -217,6 +245,22 @@ function ParentFundingReferralContent() {
                 <li>Our team will review the referral and contact you</li>
                 <li>You'll be invited to schedule an assessment session</li>
               </ul>
+            </div>
+
+            <div className="space-y-3">
+              <Button
+                className="w-full bg-[#2a5e84] hover:bg-[#1e4665] text-white py-3 text-base"
+                onClick={() => router.push('/parent')}
+              >
+                Go to My Dashboard
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => router.push('/parent/referrals')}
+              >
+                View My Referral Status
+              </Button>
             </div>
           </CardContent>
         </Card>

@@ -217,6 +217,19 @@ export default function EnrollmentPage() {
         const targetPath = `/enroll/vmrc?${queryParams.toString()}`;
 
         if (!user) {
+          // Save coordinator info to localStorage before signup
+          const coordinatorInfo = {
+            coordinatorName: formData.coordinatorName,
+            coordinatorEmail: formData.coordinatorEmail,
+            coordinatorPhone: formData.coordinatorPhone,
+            selectedFundingSourceId: formData.selectedFundingSourceId,
+            childFirstName: formData.firstName,
+            childLastName: formData.lastName,
+            childDOB: formData.dob,
+          };
+
+          localStorage.setItem('pendingCoordinatorInfo', JSON.stringify(coordinatorInfo));
+
           const signupParams = new URLSearchParams({
             redirect: targetPath,
             child: `${formData.firstName.trim()} ${formData.lastName.trim()}`
