@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { RoleGuard } from '@/components/auth/RoleGuard';
@@ -108,10 +109,18 @@ export default function EditSwimmerPage() {
               </div>
               <div className="space-y-2">
                 <Label>Gender</Label>
-                <Input
+                <Select
                   value={swimmer.gender || ''}
-                  onChange={(e) => setSwimmer({...swimmer, gender: e.target.value})}
-                />
+                  onValueChange={(value) => setSwimmer({...swimmer, gender: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

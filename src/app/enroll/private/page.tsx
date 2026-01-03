@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { SWIM_GOALS, AVAILABILITY_SLOTS, DIAGNOSIS_OPTIONS } from '@/lib/constants';
@@ -970,11 +971,18 @@ export default function PrivatePayEnrollmentPage() {
 
                   <div>
                     <Label htmlFor="child_gender">Gender *</Label>
-                    <Input
-                      id="child_gender"
-                      {...register('child_gender')}
-                      placeholder="Male, Female, Other, or Prefer not to say"
-                    />
+                    <Select
+                      value={watch('child_gender')}
+                      onValueChange={(value) => setValue('child_gender', value)}
+                    >
+                      <SelectTrigger id="child_gender">
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                      </SelectContent>
+                    </Select>
                     {errors.child_gender && (
                       <p className="text-sm text-red-600 mt-1">{errors.child_gender.message}</p>
                     )}
