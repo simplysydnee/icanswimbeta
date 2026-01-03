@@ -51,6 +51,7 @@ interface SwimmerResponse {
     startTime: string;
     instructorName?: string;
   } | null;
+  adminNotes?: string;
 }
 
 // Response type
@@ -169,6 +170,7 @@ export async function GET(request: Request) {
         authorization_expires_at,
         created_at,
         updated_at,
+        admin_notes,
         parent:profiles!swimmers_parent_id_fkey(
           id,
           full_name,
@@ -326,7 +328,8 @@ export async function GET(request: Request) {
         nextSession: nextBooking?.session?.[0] ? {
           startTime: nextBooking.session[0].start_time,
           instructorName: nextBooking.session[0].instructor?.[0]?.full_name
-        } : null
+        } : null,
+        adminNotes: swimmer.admin_notes
       };
     });
 

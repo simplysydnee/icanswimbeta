@@ -57,6 +57,7 @@ interface SwimmerResponse {
   priorityBookingReason?: string | null;
   priorityBookingNotes?: string | null;
   priorityBookingExpiresAt?: string | null;
+  adminNotes?: string;
 }
 
 // Response type
@@ -157,6 +158,7 @@ export async function GET(request: Request) {
         priority_booking_reason,
         priority_booking_notes,
         priority_booking_expires_at,
+        admin_notes,
         parent:profiles!swimmers_parent_id_fkey(
           id,
           full_name,
@@ -321,7 +323,9 @@ export async function GET(request: Request) {
         isPriorityBooking: swimmer.is_priority_booking,
         priorityBookingReason: swimmer.priority_booking_reason,
         priorityBookingNotes: swimmer.priority_booking_notes,
-        priorityBookingExpiresAt: swimmer.priority_booking_expires_at
+        priorityBookingExpiresAt: swimmer.priority_booking_expires_at,
+        // Admin Notes
+        adminNotes: swimmer.admin_notes
       };
     });
 

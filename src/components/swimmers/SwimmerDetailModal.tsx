@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
 import { StatusBadge } from './StatusBadge';
 import { EmailComposerModal } from '@/components/email/EmailComposerModal';
 import { format, parseISO } from 'date-fns';
@@ -41,6 +42,7 @@ import {
   Users,
   Award,
   Plus,
+  MessageSquare,
 } from 'lucide-react';
 
 // Types
@@ -107,6 +109,7 @@ export interface Swimmer {
   coordinatorName?: string;
   coordinatorEmail?: string;
   coordinatorPhone?: string;
+  admin_notes?: string;
 }
 
 interface SwimmerDetailModalProps {
@@ -139,6 +142,8 @@ export function SwimmerDetailModal({
     name: string;
     type: 'coordinator' | 'parent';
   } | null>(null);
+  const [adminNotes, setAdminNotes] = useState(swimmer?.admin_notes || '');
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
 
   const fetchAdditionalData = useCallback(async () => {
     if (!swimmer?.id) return;
@@ -223,6 +228,11 @@ export function SwimmerDetailModal({
     }
   }, [isOpen, swimmer?.id, fetchAdditionalData]);
 
+  // Update admin notes when swimmer changes
+  useEffect(() => {
+    setAdminNotes(swimmer?.admin_notes || '');
+  }, [swimmer?.admin_notes]);
+
   if (!swimmer) return null;
 
   // Safely get payment type with fallback
@@ -291,6 +301,27 @@ export function SwimmerDetailModal({
     router.push(viewPath);
   };
 
+  const handleSaveAdminNotes = async () => {
+    if (!swimmer?.id) return;
+
+    setIsSavingNotes(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('swimmers')
+        .update({ admin_notes: adminNotes })
+        .eq('id', swimmer.id);
+
+      if (error) throw error;
+      toast({ title: 'Internal notes saved' });
+    } catch (error) {
+      console.error('Failed to save notes:', error);
+      toast({ title: 'Failed to save notes', variant: 'destructive' });
+    } finally {
+      setIsSavingNotes(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="!max-w-[1400px] w-[95vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
@@ -344,7 +375,7 @@ export function SwimmerDetailModal({
               <Button variant="outline" onClick={handleViewFullPage}>View Full Page</Button>
 
               {/* Only admins see Approve/Decline */}
-              {isAdmin && swimmer.enrollmentStatus === 'waitlist' && onApprove && onDecline && (
+              {isAdmin && swimmer.approvalStatus === 'pending' && onApprove && onDecline && (
                 <>
                   <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => onApprove(swimmer)}>
                     <CheckCircle className="h-4 w-4 mr-1" /> Approve
@@ -1233,6 +1264,34 @@ export function SwimmerDetailModal({
           )}
         </Tabs>
         </div>
+
+        {/* Admin Internal Notes Section - Admin only */}
+        {isAdmin && swimmer && (
+          <div className="border-t pt-4 mt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+              <h4 className="font-medium text-sm">Internal Notes (Staff Only)</h4>
+            </div>
+            <p className="text-xs text-muted-foreground mb-2">
+              These notes are only visible to admins and instructors, not parents.
+            </p>
+            <Textarea
+              value={adminNotes}
+              onChange={(e) => setAdminNotes(e.target.value)}
+              placeholder="Add internal notes about this swimmer (behavior observations, special considerations, etc.)"
+              className="min-h-[80px] text-sm"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-2"
+              onClick={handleSaveAdminNotes}
+              disabled={isSavingNotes}
+            >
+              {isSavingNotes ? 'Saving...' : 'Save Notes'}
+            </Button>
+          </div>
+        )}
 
         {/* Email Modal */}
         {emailRecipient && (

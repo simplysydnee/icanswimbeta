@@ -33,12 +33,42 @@ export async function GET(request: Request) {
     const startOfTargetDate = startOfDay(targetDate);
     const endOfTargetDate = endOfDay(targetDate);
 
-    // Fetch today's sessions for this instructor using the view we created
+    // Fetch today's sessions for this instructor using direct query
     const { data: sessions, error } = await supabase
-      .from('instructor_today_sessions')
-      .select('*')
+      .from('sessions')
+      .select(`
+        id as session_id,
+        start_time,
+        end_time,
+        location,
+        status as session_status,
+        instructor_id,
+        bookings!inner(
+          id as booking_id,
+          swimmer_id,
+          status as booking_status,
+          swimmers!inner(
+            id,
+            first_name,
+            last_name,
+            current_level_id,
+            swim_levels!current_level_id(
+              name as current_level_name,
+              color as level_color
+            )
+          )
+        ),
+        progress_notes!left(
+          id as progress_note_id,
+          lesson_summary,
+          shared_with_parent,
+          created_at as note_created_at
+        )
+      `)
+      .eq('instructor_id', user.id)
       .gte('start_time', startOfTargetDate.toISOString())
       .lte('start_time', endOfTargetDate.toISOString())
+      .in('status', ['open', 'booked', 'confirmed', 'completed'])
       .order('start_time', { ascending: true });
 
     if (error) {
@@ -47,29 +77,36 @@ export async function GET(request: Request) {
     }
 
     // Transform data for frontend
-    const transformedSessions = sessions.map(session => ({
-      id: session.session_id,
-      startTime: session.start_time,
-      endTime: session.end_time,
-      location: session.location,
-      sessionStatus: session.session_status,
-      bookingId: session.booking_id,
-      bookingStatus: session.booking_status,
-      swimmer: {
-        id: session.swimmer_id,
-        firstName: session.first_name,
-        lastName: session.last_name,
-        currentLevelId: session.current_level_id,
-        currentLevelName: session.current_level_name,
-        levelColor: session.level_color,
-      },
-      progressNote: session.progress_note_id ? {
-        id: session.progress_note_id,
-        lessonSummary: session.lesson_summary,
-        sharedWithParent: session.shared_with_parent,
-        createdAt: session.note_created_at,
-      } : null,
-    }));
+    const transformedSessions = sessions.map(session => {
+      const booking = session.bookings?.[0];
+      const swimmer = booking?.swimmers?.[0];
+      const level = swimmer?.swim_levels?.[0];
+      const progressNote = session.progress_notes?.[0];
+
+      return {
+        id: session.session_id,
+        startTime: session.start_time,
+        endTime: session.end_time,
+        location: session.location,
+        sessionStatus: session.session_status,
+        bookingId: booking?.booking_id,
+        bookingStatus: booking?.booking_status,
+        swimmer: swimmer ? {
+          id: swimmer.id,
+          firstName: swimmer.first_name,
+          lastName: swimmer.last_name,
+          currentLevelId: swimmer.current_level_id,
+          currentLevelName: level?.current_level_name,
+          levelColor: level?.level_color,
+        } : null,
+        progressNote: progressNote ? {
+          id: progressNote.progress_note_id,
+          lessonSummary: progressNote.lesson_summary,
+          sharedWithParent: progressNote.shared_with_parent,
+          createdAt: progressNote.note_created_at,
+        } : null,
+      };
+    });
 
     return NextResponse.json({
       date: targetDate.toISOString(),
