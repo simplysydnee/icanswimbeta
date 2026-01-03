@@ -18,8 +18,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from './StatusBadge';
 import { EmailComposerModal } from '@/components/email/EmailComposerModal';
+import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
 import { format, parseISO } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -133,6 +135,7 @@ export function SwimmerDetailModal({
   const isAdmin = role === 'admin';
   const [progressNotes, setProgressNotes] = useState<any[]>([]);
   const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
+  const [recentBookings, setRecentBookings] = useState<any[]>([]);
   const [swimmerSkills, setSwimmerSkills] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -144,6 +147,8 @@ export function SwimmerDetailModal({
   } | null>(null);
   const [adminNotes, setAdminNotes] = useState(swimmer?.admin_notes || '');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [progressModalOpen, setProgressModalOpen] = useState(false);
+  const [selectedBookingForProgress, setSelectedBookingForProgress] = useState<any>(null);
 
   const fetchAdditionalData = useCallback(async () => {
     if (!swimmer?.id) return;
@@ -192,6 +197,24 @@ export function SwimmerDetailModal({
       });
 
       setUpcomingBookings(sortedBookings);
+
+      // Fetch recent past bookings for progress updates
+      const { data: pastBookings, error: pastBookingsError } = await supabase
+        .from('bookings')
+        .select(`
+          id, status, session_id,
+          sessions!inner(id, start_time, end_time, location, instructor_id)
+        `)
+        .eq('swimmer_id', swimmer.id)
+        .eq('status', 'confirmed')
+        .lt('sessions.start_time', new Date().toISOString())
+        .order('sessions.start_time', { ascending: false })
+        .limit(10);
+
+      if (pastBookingsError) {
+        console.error('Error fetching past bookings:', pastBookingsError);
+      }
+      setRecentBookings(pastBookings || []);
 
       // Fetch swimmer skills - check if table exists first
       try {
@@ -780,6 +803,37 @@ export function SwimmerDetailModal({
                 </div>
               </div>
             </div>
+
+            {/* Admin Internal Notes - Admin only */}
+            {isAdmin && swimmer && (
+              <Card className="mt-6">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                    Internal Notes (Staff Only)
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    General notes about this swimmer - not visible to parents
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
+                    placeholder="Add internal notes (e.g., parent communications, scheduling issues, special considerations...)"
+                    className="min-h-[100px] text-sm"
+                  />
+                  <Button
+                    size="sm"
+                    className="mt-2"
+                    onClick={handleSaveAdminNotes}
+                    disabled={isSavingNotes}
+                  >
+                    {isSavingNotes ? 'Saving...' : 'Save Notes'}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Medical & Safety Tab */}
@@ -1093,18 +1147,55 @@ export function SwimmerDetailModal({
                   </div>
                 </div>
 
-                {/* Session History Placeholder */}
-                <div className="border-t pt-4 mt-4">
-                  <h4 className="text-sm font-medium mb-3">Recent Sessions</h4>
-                  <div className="text-center py-8">
-                    <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                    <h5 className="text-lg font-semibold text-gray-700 mb-2">Session History</h5>
-                    <p className="text-gray-500 max-w-md mx-auto">
-                      View past sessions, attendance records, and progress notes here.
-                      This feature is coming soon.
-                    </p>
-                  </div>
-                </div>
+                {/* Quick Progress Update Section - Admin only */}
+                {isAdmin && swimmer && (
+                  <Card className="mt-6">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">Quick Progress Update</CardTitle>
+                      <p className="text-xs text-muted-foreground">
+                        Select a recent session to add progress notes
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      {loadingData ? (
+                        <div className="space-y-2">
+                          <Skeleton className="h-12 w-full" />
+                          <Skeleton className="h-12 w-full" />
+                        </div>
+                      ) : recentBookings && recentBookings.length > 0 ? (
+                        <div className="space-y-2">
+                          {recentBookings.slice(0, 5).map((booking) => (
+                            <div
+                              key={booking.id}
+                              className="flex items-center justify-between p-2 border rounded hover:bg-muted/50"
+                            >
+                              <div>
+                                <p className="text-sm font-medium">
+                                  {booking.sessions?.start_time ? format(new Date(booking.sessions.start_time), 'MMM d, yyyy h:mm a') : 'Date TBD'}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {booking.sessions?.location || 'No location'}
+                                </p>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedBookingForProgress(booking);
+                                  setProgressModalOpen(true);
+                                }}
+                              >
+                                Add Note
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No recent sessions found</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </section>
           </TabsContent>
@@ -1265,33 +1356,6 @@ export function SwimmerDetailModal({
         </Tabs>
         </div>
 
-        {/* Admin Internal Notes Section - Admin only */}
-        {isAdmin && swimmer && (
-          <div className="border-t pt-4 mt-4">
-            <div className="flex items-center gap-2 mb-2">
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-              <h4 className="font-medium text-sm">Internal Notes (Staff Only)</h4>
-            </div>
-            <p className="text-xs text-muted-foreground mb-2">
-              These notes are only visible to admins and instructors, not parents.
-            </p>
-            <Textarea
-              value={adminNotes}
-              onChange={(e) => setAdminNotes(e.target.value)}
-              placeholder="Add internal notes about this swimmer (behavior observations, special considerations, etc.)"
-              className="min-h-[80px] text-sm"
-            />
-            <Button
-              size="sm"
-              variant="outline"
-              className="mt-2"
-              onClick={handleSaveAdminNotes}
-              disabled={isSavingNotes}
-            >
-              {isSavingNotes ? 'Saving...' : 'Save Notes'}
-            </Button>
-          </div>
-        )}
 
         {/* Email Modal */}
         {emailRecipient && (
@@ -1305,6 +1369,26 @@ export function SwimmerDetailModal({
             recipientName={emailRecipient.name}
             recipientType={emailRecipient.type}
             swimmerName={`${swimmer.firstName} ${swimmer.lastName}`}
+          />
+        )}
+
+        {/* Progress Update Modal */}
+        {selectedBookingForProgress && swimmer && (
+          <ProgressUpdateModal
+            open={progressModalOpen}
+            onOpenChange={setProgressModalOpen}
+            bookingId={selectedBookingForProgress.id}
+            sessionId={selectedBookingForProgress.session_id}
+            swimmerId={swimmer.id}
+            swimmerName={`${swimmer.firstName} ${swimmer.lastName}`}
+            swimmerPhotoUrl={swimmer.photoUrl}
+            sessionTime={selectedBookingForProgress.sessions?.start_time || ''}
+            onSuccess={() => {
+              setProgressModalOpen(false);
+              setSelectedBookingForProgress(null);
+              // Refresh progress notes
+              fetchAdditionalData();
+            }}
           />
         )}
       </DialogContent>

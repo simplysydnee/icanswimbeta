@@ -57,8 +57,10 @@ export default function DashboardRedirect() {
       } else if (role === 'parent') {
         console.log('Dashboard: Redirecting parent to /parent');
         router.replace('/parent');
-      } else {
-        console.log('Dashboard: Role is null/undefined, waiting...');
+      } else if (role === null || role === undefined) {
+        console.log('Dashboard: Role is null/undefined, using default parent role');
+        // Use parent as default role if role is not determined
+        router.replace('/parent');
       }
       // If role is null/undefined, don't redirect - wait for role to be determined
       // or show appropriate UI
@@ -79,17 +81,15 @@ export default function DashboardRedirect() {
   }
 
   // Show timeout or error state
-  if (hasTimedOut || (user && !role)) {
+  if (hasTimedOut) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="text-center max-w-md p-6 bg-white rounded-lg shadow">
           <h2 className="text-xl font-semibold text-gray-800 mb-2">
-            {hasTimedOut ? 'Loading Timeout' : 'Unable to Determine Role'}
+            Loading Timeout
           </h2>
           <p className="text-gray-600 mb-4">
-            {hasTimedOut
-              ? 'The dashboard is taking longer than expected to load. This might be a temporary issue.'
-              : 'We couldn\'t determine your user role. Please contact support or try logging out and back in.'}
+            The dashboard is taking longer than expected to load. This might be a temporary issue.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button onClick={() => window.location.reload()} className="bg-cyan-600 hover:bg-cyan-700">

@@ -65,6 +65,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch user profile and role (only called when we have a user)
   const fetchUserProfile = async (userId: string, userEmail?: string, retryCount = 0) => {
+    console.log('=== AUTH DEBUG: fetchUserProfile called ===');
+    console.log('Parameters:', { userId, userEmail, retryCount });
+
     try {
       setIsLoadingProfile(true)
 
@@ -156,6 +159,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       let rolesError: { code?: string; message?: string; details?: string; hint?: string } | null = null;
 
       try {
+        console.log('=== AUTH DEBUG: Fetching roles for user ===');
+        console.log('User ID:', userId);
+
         const rolesPromise = supabase
           .from('user_roles')
           .select('*')
@@ -164,7 +170,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const rolesResult = await Promise.race([rolesPromise, queryTimeoutPromise, globalTimeoutPromise]) as any;
         rolesData = rolesResult.data;
         rolesError = rolesResult.error;
-      } catch {
+
+        console.log('Roles query result:', {
+          data: rolesData,
+          error: rolesError,
+          hasData: !!rolesData,
+          dataLength: rolesData?.length || 0
+        });
+      } catch (error) {
+        console.error('=== AUTH DEBUG: Roles query catch error ===', error);
         rolesError = {
           code: 'TIMEOUT',
           message: 'Roles query timeout',
@@ -188,7 +202,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const rolePriority: UserRole[] = ['admin', 'coordinator', 'instructor', 'parent']
 
         for (const role of rolePriority) {
-          const hasRole = rolesData.some(r => r.role === role || r.role === 'vmrc_coordinator' && role === 'coordinator')
+          const hasRole = rolesData.some(r => {
+            const userRole = r.role as string; // Cast to string to handle 'vmrc_coordinator'
+            return userRole === role || (userRole === 'vmrc_coordinator' && role === 'coordinator');
+          });
           if (hasRole) {
             primaryRole = role
             break
@@ -210,6 +227,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
       }
 
+      console.log('=== AUTH DEBUG: Setting role ===');
+      console.log('Primary role determined:', primaryRole);
+      console.log('Roles data:', rolesData);
+      console.log('Final profile data exists:', !!finalProfileData);
+
       const userWithRole: UserWithRole = {
         ...finalProfileData,
         role: primaryRole,
@@ -218,7 +240,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setProfile(userWithRole)
       setRole(primaryRole)
+      console.log('=== AUTH DEBUG: Role set to ===', primaryRole);
     } catch (error) {
+      console.error('=== AUTH DEBUG: fetchUserProfile catch block error ===', error);
+      console.error('Error details:', {
+        userId,
+        retryCount,
+        errorString: String(error)
+      });
+
       // Try to extract as much error information as possible
       let errorDetails: any = {
         errorType: typeof error,
@@ -430,6 +460,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (profileError) throw profileError
 
+        // Assign default 'parent' role to new user
+        try {
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: data.user.id,
+              role: 'parent'
+            });
+
+          if (roleError) {
+            console.error('Failed to assign default role:', roleError);
+            // Don't fail signup if role assignment fails - user can still login
+            // and will get default 'parent' role from fetchUserProfile fallback
+          } else {
+            console.log('Assigned default parent role to new user:', data.user.id);
+          }
+        } catch (roleError) {
+          console.error('Error assigning default role:', roleError);
+          // Continue anyway - user will get default role from fetchUserProfile
+        }
+
         // Send account created email (for users with no swimmers enrolled yet)
         try {
           await emailService.sendAccountCreated({
@@ -440,11 +491,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('Failed to send account created email:', emailError)
           // Don't fail signup if email fails
         }
-
-        // Database trigger will auto-assign role based on email domain
-        // @regional-center.net → coordinator (regional center coordinator)
-        // @icanswim209.com → admin
-        // All others → parent
 
         // Wait for session to be fully established and database transaction to complete
         await new Promise(resolve => setTimeout(resolve, 500))
