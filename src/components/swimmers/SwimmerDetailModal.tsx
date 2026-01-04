@@ -22,6 +22,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from './StatusBadge';
 import { EmailComposerModal } from '@/components/email/EmailComposerModal';
 import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
+import { SkillChecklist } from '@/components/instructor/SkillChecklist';
+import { LevelSelector } from './LevelSelector';
 import { format, parseISO } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -45,6 +47,7 @@ import {
   Award,
   Plus,
   MessageSquare,
+  ClipboardList,
 } from 'lucide-react';
 
 // Types
@@ -139,6 +142,7 @@ export function SwimmerDetailModal({
   const [swimmerSkills, setSwimmerSkills] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [skillTrackerOpen, setSkillTrackerOpen] = useState(false);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [emailRecipient, setEmailRecipient] = useState<{
     email: string;
@@ -804,6 +808,31 @@ export function SwimmerDetailModal({
               </div>
             </div>
 
+            {/* Level Management - Admin only */}
+            {isAdmin && swimmer && (
+              <Card className="mt-6">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Award className="h-4 w-4 text-muted-foreground" />
+                    Level Management
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">
+                    Manually adjust swimmer's level (admin only)
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <LevelSelector
+                    swimmerId={swimmer.id}
+                    currentLevelId={swimmer.currentLevel?.id || null}
+                    onLevelChange={() => {
+                      // Optionally refresh swimmer data
+                      fetchAdditionalData();
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
             {/* Admin Internal Notes - Admin only */}
             {isAdmin && swimmer && (
               <Card className="mt-6">
@@ -1079,6 +1108,23 @@ export function SwimmerDetailModal({
                     )}
                   </div>
                 </div>
+
+                {/* Skill Tracker Button */}
+                {(isAdmin || role === 'instructor') && (
+                  <div className="mt-6">
+                    <Button
+                      variant="outline"
+                      onClick={() => setSkillTrackerOpen(true)}
+                      className="w-full"
+                    >
+                      <ClipboardList className="h-4 w-4 mr-2" />
+                      Open Skill Tracker
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2 text-center">
+                      View and update all skills by level
+                    </p>
+                  </div>
+                )}
               </div>
             </section>
           </TabsContent>
@@ -1391,6 +1437,24 @@ export function SwimmerDetailModal({
             }}
           />
         )}
+
+        {/* Skill Tracker Modal */}
+        <Dialog open={skillTrackerOpen} onOpenChange={setSkillTrackerOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ClipboardList className="h-5 w-5" />
+                Skill Tracker - {swimmer?.firstName} {swimmer?.lastName}
+              </DialogTitle>
+            </DialogHeader>
+            {swimmer && (
+              <SkillChecklist
+                swimmerId={swimmer.id}
+                readOnly={!isAdmin && role !== 'instructor'}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
