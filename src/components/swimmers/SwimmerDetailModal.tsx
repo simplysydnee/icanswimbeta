@@ -431,6 +431,7 @@ export function SwimmerDetailModal({
                 <SelectItem value="progress">Progress & Skills</SelectItem>
                 <SelectItem value="sessions">Sessions & Bookings</SelectItem>
                 {isAdmin && <SelectItem value="billing">Billing & Funding</SelectItem>}
+                {isAdmin && <SelectItem value="notes">Internal Notes</SelectItem>}
               </SelectContent>
             </Select>
           </div>
@@ -444,6 +445,9 @@ export function SwimmerDetailModal({
               <TabsTrigger value="sessions" className="px-2 py-1.5 text-[11px] sm:text-xs">Sessions & Bookings</TabsTrigger>
               {isAdmin && (
                 <TabsTrigger value="billing" className="px-2 py-1.5 text-[11px] sm:text-xs">Billing & Funding</TabsTrigger>
+              )}
+              {isAdmin && (
+                <TabsTrigger value="notes" className="px-2 py-1.5 text-[11px] sm:text-xs">Internal Notes</TabsTrigger>
               )}
             </TabsList>
 
@@ -808,61 +812,6 @@ export function SwimmerDetailModal({
               </div>
             </div>
 
-            {/* Level Management - Admin only */}
-            {isAdmin && swimmer && (
-              <Card className="mt-6">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <Award className="h-4 w-4 text-muted-foreground" />
-                    Level Management
-                  </CardTitle>
-                  <p className="text-xs text-muted-foreground">
-                    Manually adjust swimmer's level (admin only)
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <LevelSelector
-                    swimmerId={swimmer.id}
-                    currentLevelId={swimmer.currentLevel?.id || null}
-                    onLevelChange={() => {
-                      // Optionally refresh swimmer data
-                      fetchAdditionalData();
-                    }}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Admin Internal Notes - Admin only */}
-            {isAdmin && swimmer && (
-              <Card className="mt-6">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                    Internal Notes (Staff Only)
-                  </CardTitle>
-                  <p className="text-xs text-muted-foreground">
-                    General notes about this swimmer - not visible to parents
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <Textarea
-                    value={adminNotes}
-                    onChange={(e) => setAdminNotes(e.target.value)}
-                    placeholder="Add internal notes (e.g., parent communications, scheduling issues, special considerations...)"
-                    className="min-h-[100px] text-sm"
-                  />
-                  <Button
-                    size="sm"
-                    className="mt-2"
-                    onClick={handleSaveAdminNotes}
-                    disabled={isSavingNotes}
-                  >
-                    {isSavingNotes ? 'Saving...' : 'Save Notes'}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
           </TabsContent>
 
           {/* Medical & Safety Tab */}
@@ -1018,6 +967,30 @@ export function SwimmerDetailModal({
               </h3>
 
               <div className="space-y-6">
+                {/* Level Management - Admin Only */}
+                {isAdmin && swimmer && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Award className="h-4 w-4 text-muted-foreground" />
+                        Current Level
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground">
+                        Manually adjust swimmer's level (admin only)
+                      </p>
+                    </CardHeader>
+                    <CardContent>
+                      <LevelSelector
+                        swimmerId={swimmer.id}
+                        currentLevelId={swimmer.currentLevel?.id || null}
+                        onLevelChange={() => {
+                          // Optionally refresh swimmer data
+                          fetchAdditionalData();
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
                 {/* Current Level Progress */}
                 {swimmer.currentLevel && (
                   <div className="bg-white border rounded-lg p-4">
@@ -1398,6 +1371,42 @@ export function SwimmerDetailModal({
               )}
             </section>
           </TabsContent>
+          )}
+
+          {/* Internal Notes Tab - Admin Only */}
+          {isAdmin && (
+            <TabsContent value="notes" className="space-y-4">
+              <section>
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  Internal Notes
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Staff-only notes about this swimmer (not visible to parents)
+                </p>
+
+                <div className="space-y-4">
+                  <Textarea
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
+                    placeholder="Add internal notes (e.g., parent communications, scheduling issues, special considerations, behavior observations...)"
+                    className="min-h-[200px]"
+                  />
+
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-muted-foreground">
+                      {adminNotes?.length || 0} characters
+                    </p>
+                    <Button
+                      onClick={handleSaveAdminNotes}
+                      disabled={isSavingNotes}
+                    >
+                      {isSavingNotes ? 'Saving...' : 'Save Notes'}
+                    </Button>
+                  </div>
+                </div>
+              </section>
+            </TabsContent>
           )}
         </Tabs>
         </div>
