@@ -24,6 +24,7 @@ import { EmailComposerModal } from '@/components/email/EmailComposerModal';
 import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
 import { SkillChecklist } from '@/components/instructor/SkillChecklist';
 import { LevelSelector } from './LevelSelector';
+import { StatusSelector } from './StatusSelector';
 import { format, parseISO } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -990,6 +991,19 @@ export function SwimmerDetailModal({
                       />
                     </CardContent>
                   </Card>
+                )}
+                {/* Status Management - Admin Only */}
+                {isAdmin && swimmer && (
+                  <StatusSelector
+                    swimmerId={swimmer.id}
+                    currentEnrollmentStatus={swimmer.enrollmentStatus || swimmer.enrollment_status}
+                    currentAssessmentStatus={swimmer.assessmentStatus || swimmer.assessment_status}
+                    currentApprovalStatus={swimmer.approvalStatus || swimmer.approval_status}
+                    onStatusChange={() => {
+                      // Refresh swimmer data
+                      fetchAdditionalData();
+                    }}
+                  />
                 )}
                 {/* Current Level Progress */}
                 {swimmer.currentLevel && (

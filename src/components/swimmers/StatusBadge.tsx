@@ -63,23 +63,29 @@ export const assessmentStatusConfig = {
     text: 'text-orange-800',
     border: 'border-orange-200'
   },
+  not_started: {
+    label: 'Not Started',
+    bg: 'bg-amber-100',
+    text: 'text-amber-800',
+    border: 'border-amber-200'
+  },
   scheduled: {
     label: 'Assessment Scheduled',
     bg: 'bg-cyan-100',
     text: 'text-cyan-800',
     border: 'border-cyan-200'
   },
-  pending_assessment: {
-    label: 'Assessment Pending',
-    bg: 'bg-purple-100',
-    text: 'text-purple-800',
-    border: 'border-purple-200'
-  },
   completed: {
     label: 'Completed',
     bg: 'bg-teal-100',
     text: 'text-teal-800',
     border: 'border-teal-200'
+  },
+  pending_approval: {
+    label: 'Pending Approval',
+    bg: 'bg-purple-100',
+    text: 'text-purple-800',
+    border: 'border-purple-200'
   },
 } as const;
 

@@ -99,22 +99,22 @@ export default function InstructorSwimmersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-              <Button variant="outline" className="justify-start">
-                <Calendar className="h-4 w-4 mr-2" />
-                Today&apos;s Swimmers
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+              <Button variant="outline" className="justify-start text-left truncate">
+                <Calendar className="h-4 w-4 mr-2 shrink-0" />
+                <span className="truncate">Today&apos;s Swimmers</span>
               </Button>
-              <Button variant="outline" className="justify-start">
-                <Award className="h-4 w-4 mr-2" />
-                Ready for Next Level
+              <Button variant="outline" className="justify-start text-left truncate">
+                <Award className="h-4 w-4 mr-2 shrink-0" />
+                <span className="truncate">Ready for Next Level</span>
               </Button>
-              <Button variant="outline" className="justify-start">
-                <Users className="h-4 w-4 mr-2" />
-                Regional Center Clients
+              <Button variant="outline" className="justify-start text-left truncate">
+                <Users className="h-4 w-4 mr-2 shrink-0" />
+                <span className="truncate">Regional Center Clients</span>
               </Button>
-              <Button variant="outline" className="justify-start">
-                <Users className="h-4 w-4 mr-2" />
-                New Swimmers
+              <Button variant="outline" className="justify-start text-left truncate">
+                <Users className="h-4 w-4 mr-2 shrink-0" />
+                <span className="truncate">New Swimmers</span>
               </Button>
             </div>
           </CardContent>

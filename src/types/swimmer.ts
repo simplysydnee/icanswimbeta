@@ -3,6 +3,11 @@
  * Generic funding source system (replaces VMRC-specific types)
  */
 
+// Status type definitions for reusability
+export type EnrollmentStatus = 'waitlist' | 'pending_enrollment' | 'enrolled' | 'inactive';
+export type AssessmentStatus = 'not_scheduled' | 'not_started' | 'scheduled' | 'completed' | 'pending_approval';
+export type ApprovalStatus = 'pending' | 'approved' | 'declined';
+
 export interface FundingSource {
   id: string;
   name: string;
@@ -51,9 +56,9 @@ export interface Swimmer {
   po_expires_at?: string;
 
   // Status
-  enrollment_status: 'waitlist' | 'pending_enrollment' | 'enrolled' | 'inactive';
-  assessment_status?: string;
-  approval_status?: 'pending' | 'approved' | 'declined';
+  enrollment_status: EnrollmentStatus;
+  assessment_status?: AssessmentStatus;
+  approval_status?: ApprovalStatus;
 
   // Priority Booking
   is_priority_booking?: boolean;

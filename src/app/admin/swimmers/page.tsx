@@ -185,17 +185,17 @@ export default function AdminSwimmersPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {swimmers.map((swimmer) => (
+                {swimmers.map((swimmer: any) => (
                   <SwimmerCard
                     key={swimmer.id}
                     swimmer={{
                       id: swimmer.id,
-                      first_name: swimmer.first_name,
-                      last_name: swimmer.last_name,
-                      photo_url: swimmer.photo_url,
-                      enrollment_status: swimmer.enrollment_status,
-                      current_level: swimmer.current_level,
-                      payment_type: swimmer.payment_type
+                      first_name: swimmer.firstName || swimmer.first_name,
+                      last_name: swimmer.lastName || swimmer.last_name,
+                      photo_url: swimmer.photoUrl || swimmer.photo_url,
+                      enrollment_status: swimmer.enrollmentStatus || swimmer.enrollment_status,
+                      current_level: swimmer.currentLevel || swimmer.current_level,
+                      payment_type: swimmer.paymentType || swimmer.payment_type
                     }}
                     onClick={() => {
                       // Navigate to swimmer detail page
@@ -219,22 +219,22 @@ export default function AdminSwimmersPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-              <Button variant="outline" className="justify-start">
-                <Users className="h-4 w-4 mr-2" />
-                Needs Assessment
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+              <Button variant="outline" className="justify-start text-left truncate">
+                <Users className="h-4 w-4 mr-2 shrink-0" />
+                <span className="truncate">Needs Assessment</span>
               </Button>
-              <Button variant="outline" className="justify-start">
-                <Users className="h-4 w-4 mr-2" />
-                Regional Center Renewals Due
+              <Button variant="outline" className="justify-start text-left truncate">
+                <Users className="h-4 w-4 mr-2 shrink-0" />
+                <span className="truncate">Regional Center Renewals Due</span>
               </Button>
-              <Button variant="outline" className="justify-start">
-                <Users className="h-4 w-4 mr-2" />
-                No Upcoming Sessions
+              <Button variant="outline" className="justify-start text-left truncate">
+                <Users className="h-4 w-4 mr-2 shrink-0" />
+                <span className="truncate">No Upcoming Sessions</span>
               </Button>
-              <Button variant="outline" className="justify-start">
-                <Users className="h-4 w-4 mr-2" />
-                Waitlist Priority
+              <Button variant="outline" className="justify-start text-left truncate">
+                <Users className="h-4 w-4 mr-2 shrink-0" />
+                <span className="truncate">Waitlist Priority</span>
               </Button>
             </div>
           </CardContent>
