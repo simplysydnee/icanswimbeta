@@ -36,6 +36,9 @@ import { createClient } from '@/lib/supabase/client';
 import { POBillingModal } from '@/components/admin/POBillingModal';
 import { FundingSourceSummary } from '@/components/admin/FundingSourceSummary';
 import { FundingSourceDetailModal } from '@/components/admin/FundingSourceDetailModal';
+import { PostTabs, POSTab } from '@/components/admin/pos/PostTabs';
+import { MonthlyBillingTab } from '@/components/admin/pos/MonthlyBillingTab';
+import type { FundingSource } from '@/types/billing-types';
 
 interface PurchaseOrder {
   id: string;
@@ -157,6 +160,26 @@ export default function POSPage() {
 
   const [fundingSourceStats, setFundingSourceStats] = useState<FundingSourceStats[]>([]);
 
+  // Tab state
+  const [activeTab, setActiveTab] = useState<POSTab>('purchase-orders');
+  const [fundingSources, setFundingSources] = useState<FundingSource[]>([]);
+
+  const fetchFundingSources = useCallback(async () => {
+    const supabase = createClient();
+    try {
+      const { data, error } = await supabase
+        .from('funding_sources')
+        .select('id, short_name, name, is_active')
+        .eq('is_active', true)
+        .order('short_name');
+
+      if (error) throw error;
+      setFundingSources(data || []);
+    } catch (error) {
+      console.error('Error fetching funding sources:', error);
+    }
+  }, []);
+
   const fetchPurchaseOrders = useCallback(async () => {
     setLoading(true);
     try {
@@ -201,7 +224,8 @@ export default function POSPage() {
 
   useEffect(() => {
     fetchPurchaseOrders();
-  }, [fetchPurchaseOrders]);
+    fetchFundingSources();
+  }, [fetchPurchaseOrders, fetchFundingSources]);
 
   const handleApprove = async () => {
     if (!selectedPO) return;
@@ -351,39 +375,53 @@ export default function POSPage() {
       {/* Header */}
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Purchase Orders</h1>
-          <p className="text-muted-foreground">Manage funding authorizations</p>
+          <h1 className="text-3xl font-bold">
+            {activeTab === 'purchase-orders' ? 'Purchase Orders' : 'Monthly Billing'}
+          </h1>
+          <p className="text-muted-foreground">
+            {activeTab === 'purchase-orders' ? 'Manage funding authorizations' : 'Generate and export VMRC/CVRC billing'}
+          </p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className="border rounded-md px-3 py-2 bg-white text-sm"
-            >
-              <option value="2025-12">December 2025</option>
-              <option value="2025-11">November 2025</option>
-              <option value="2025-10">October 2025</option>
-              <option value="2025-09">September 2025</option>
-              <option value="2025-08">August 2025</option>
-              <option value="2025-07">July 2025</option>
-            </select>
-          </div>
+          {activeTab === 'purchase-orders' && (
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="border rounded-md px-3 py-2 bg-white text-sm"
+              >
+                <option value="2025-12">December 2025</option>
+                <option value="2025-11">November 2025</option>
+                <option value="2025-10">October 2025</option>
+                <option value="2025-09">September 2025</option>
+                <option value="2025-08">August 2025</option>
+                <option value="2025-07">July 2025</option>
+              </select>
+            </div>
+          )}
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={fetchPurchaseOrders}>
+            <Button variant="outline" size="sm" onClick={activeTab === 'purchase-orders' ? fetchPurchaseOrders : fetchFundingSources}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
+            {activeTab === 'purchase-orders' && (
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Overall Summary */}
+      {/* Tabs */}
+      <PostTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* Conditional Content */}
+      {activeTab === 'purchase-orders' ? (
+        <>
+          {/* Overall Summary */}
       <div className="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="p-4">
@@ -838,6 +876,10 @@ I Can Swim Team`;
             setSelectedFundingSourceForDetail(null);
           }}
         />
+      )}
+        </>
+      ) : (
+        <MonthlyBillingTab fundingSources={fundingSources} />
       )}
       </div>
     </div>
