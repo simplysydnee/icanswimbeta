@@ -55,12 +55,15 @@ import {
 export interface Swimmer {
   id: string;
   parentId: string;
+  parentEmail?: string;
   firstName: string;
   lastName: string;
   fullName: string;
   dateOfBirth?: string;
   age?: number;
   gender?: string;
+  height?: string;
+  weight?: string;
   enrollmentStatus: string;
   approvalStatus?: string;
   assessmentStatus: string;
@@ -98,16 +101,24 @@ export interface Swimmer {
   hasMedicalConditions?: boolean;
   medicalConditionsDescription?: string;
   historyOfSeizures?: boolean;
-  toiletTrained?: boolean;
+  seizuresDescription?: string;
+  toiletTrained?: string;
   nonAmbulatory?: boolean;
+  communicationType?: string[];
+  otherTherapies?: boolean;
+  therapiesDescription?: string;
   selfInjuriousBehavior?: boolean;
-  selfInjuriousDescription?: string;
+  selfInjuriousBehaviorDescription?: string;
   aggressiveBehavior?: boolean;
   aggressiveBehaviorDescription?: string;
   elopementHistory?: boolean;
-  elopementDescription?: string;
+  elopementHistoryDescription?: string;
+  hasBehaviorPlan?: boolean;
+  restraintHistory?: boolean;
+  restraintHistoryDescription?: string;
   previousSwimLessons?: boolean;
   comfortableInWater?: string;
+  strengthsInterests?: string;
   flexibleSwimmer?: boolean;
   signedWaiver?: boolean;
   photoRelease?: boolean;
@@ -519,9 +530,81 @@ export function SwimmerDetailModal({
                         </Button>
                       </div>
                     </div>
+                  ) : swimmer.parentEmail ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-amber-600">Pending Parent Signup</p>
+                          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Mail className="h-4 w-4" />
+                              <span>{swimmer.parentEmail}</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-amber-600 mt-2">
+                            Parent has not created an account yet. They will be automatically linked when they sign up.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   ) : (
                     <p className="text-muted-foreground">No parent information available</p>
                   )}
+                </div>
+
+                {/* Key Info Section */}
+                <div className="bg-white border rounded-lg p-4">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <Award className="h-5 w-5" />
+                    Key Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Diagnosis */}
+                    {swimmer.diagnosis && swimmer.diagnosis.length > 0 && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground mb-2">Diagnosis</p>
+                        <div className="flex flex-wrap gap-2">
+                          {swimmer.diagnosis.map((d, i) => (
+                            <Badge key={i} variant="secondary" className="bg-purple-100 text-purple-800">
+                              {d}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Height */}
+                    {swimmer.height && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Height</p>
+                        <p className="font-medium">{swimmer.height}</p>
+                      </div>
+                    )}
+
+                    {/* Weight */}
+                    {swimmer.weight && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Weight</p>
+                        <p className="font-medium">{swimmer.weight}</p>
+                      </div>
+                    )}
+
+                    {/* Age */}
+                    {calculateAge(swimmer.dateOfBirth) !== '—' && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Age</p>
+                        <p className="font-medium">{calculateAge(swimmer.dateOfBirth)}</p>
+                      </div>
+                    )}
+
+                    {/* Gender */}
+                    {swimmer.gender && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Gender</p>
+                        <p className="font-medium capitalize">{swimmer.gender}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Medical & Safety Summary */}
@@ -571,7 +654,7 @@ export function SwimmerDetailModal({
                 <div className="bg-white border rounded-lg p-4">
                   <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                     <Award className="h-5 w-5" />
-                    Swimming Background & Goals
+                    Swimming Background
                   </h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -600,20 +683,105 @@ export function SwimmerDetailModal({
                       </div>
                     )}
 
-                    {swimmer.diagnosis && swimmer.diagnosis.length > 0 && (
+                    {swimmer.strengthsInterests && (
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground mb-2">Diagnosis</p>
-                        <div className="flex flex-wrap gap-2">
-                          {swimmer.diagnosis.map((d, i) => (
-                            <Badge key={i} variant="outline">
-                              {d}
-                            </Badge>
-                          ))}
-                        </div>
+                        <p className="text-sm font-medium text-muted-foreground mb-2">Strengths & Interests</p>
+                        <p className="font-medium">{swimmer.strengthsInterests}</p>
                       </div>
                     )}
                   </div>
                 </div>
+
+                {/* Care Needs Section */}
+                {(swimmer.toiletTrained || swimmer.nonAmbulatory || swimmer.communicationType || swimmer.otherTherapies) && (
+                  <div className="bg-white border rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      <Heart className="h-5 w-5" />
+                      Care Needs
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Toilet Trained */}
+                        {swimmer.toiletTrained && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Toilet Trained</p>
+                            <p className="font-medium capitalize">{swimmer.toiletTrained}</p>
+                          </div>
+                        )}
+
+                        {/* Non-ambulatory */}
+                        {swimmer.nonAmbulatory !== undefined && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Non-ambulatory</p>
+                            <p className="font-medium">{swimmer.nonAmbulatory ? 'Yes' : 'No'}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Communication Type */}
+                      {swimmer.communicationType && swimmer.communicationType.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground mb-2">Communication Type</p>
+                          <div className="flex flex-wrap gap-2">
+                            {swimmer.communicationType.map((type, index) => (
+                              <Badge key={index} variant="outline" className="bg-blue-50 text-blue-800">
+                                {type}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Other Therapies */}
+                      {swimmer.otherTherapies && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground mb-2">Other Therapies</p>
+                          <p className="font-medium">{swimmer.therapiesDescription || 'Receives other therapies'}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Coordinator Info (for VMRC/CVRC clients) */}
+                {(swimmer.coordinatorName || swimmer.coordinatorEmail || swimmer.coordinatorPhone) && (
+                  <div className="bg-white border rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      <Building2 className="h-5 w-5" />
+                      Coordinator Information
+                    </h3>
+                    <div className="space-y-3">
+                      {swimmer.coordinatorName && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Coordinator Name</p>
+                          <p className="font-medium">{swimmer.coordinatorName}</p>
+                        </div>
+                      )}
+                      {swimmer.coordinatorEmail && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Coordinator Email</p>
+                          <div className="flex items-center gap-1">
+                            <Mail className="h-4 w-4" />
+                            <a href={`mailto:${swimmer.coordinatorEmail}`} className="font-medium text-blue-600 hover:underline">
+                              {swimmer.coordinatorEmail}
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                      {swimmer.coordinatorPhone && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Coordinator Phone</p>
+                          <div className="flex items-center gap-1">
+                            <Phone className="h-4 w-4" />
+                            <a href={`tel:${swimmer.coordinatorPhone}`} className="font-medium text-blue-600 hover:underline">
+                              {swimmer.coordinatorPhone}
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Right Column - Stats & Actions */}
@@ -823,139 +991,163 @@ export function SwimmerDetailModal({
                 Medical & Safety Information
               </h3>
 
-              {/* Medical Alerts */}
-              {(swimmer.hasAllergies || swimmer.hasMedicalConditions) && (
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="w-full p-3 bg-red-50 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-5 w-5 text-red-600" />
-                      <span className="font-medium text-red-800">Medical Alerts</span>
-                    </div>
-                  </div>
-                  <div className="p-4 space-y-3">
-                    {swimmer.hasAllergies && (
-                      <div>
-                        <h5 className="text-sm font-medium mb-1 flex items-center gap-2">
-                          <Stethoscope className="h-4 w-4" />
-                          Allergies
-                        </h5>
-                        <p className="text-sm">
-                          {swimmer.allergiesDescription || 'Allergies reported'}
-                        </p>
-                      </div>
-                    )}
-
-                    {swimmer.hasMedicalConditions && (
-                      <div>
-                        <h5 className="text-sm font-medium mb-1 flex items-center gap-2">
-                          <Heart className="h-4 w-4" />
-                          Medical Conditions
-                        </h5>
-                        <p className="text-sm">
-                          {swimmer.medicalConditionsDescription || 'Medical conditions reported'}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Safety Information */}
-              <div className="mt-6">
+              {/* Medical Section */}
+              <div className="mb-6">
                 <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Safety Information
+                  <Heart className="h-5 w-5" />
+                  Medical Information
                 </h4>
 
-                <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Seizures */}
+                <div className="space-y-4">
+                  {/* Allergies */}
+                  {swimmer.hasAllergies !== undefined && (
+                    <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium text-amber-800">Has Allergies</div>
+                        <Badge variant={swimmer.hasAllergies ? "destructive" : "outline"}>
+                          {swimmer.hasAllergies ? "Yes" : "No"}
+                        </Badge>
+                      </div>
+                      {swimmer.hasAllergies && swimmer.allergiesDescription && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium text-amber-700 mb-1">Allergies Description:</p>
+                          <p className="text-sm text-amber-800">{swimmer.allergiesDescription}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Medical Conditions */}
+                  {swimmer.hasMedicalConditions !== undefined && (
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium text-red-800">Has Medical Conditions</div>
+                        <Badge variant={swimmer.hasMedicalConditions ? "destructive" : "outline"}>
+                          {swimmer.hasMedicalConditions ? "Yes" : "No"}
+                        </Badge>
+                      </div>
+                      {swimmer.hasMedicalConditions && swimmer.medicalConditionsDescription && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium text-red-700 mb-1">Medical Conditions Description:</p>
+                          <p className="text-sm text-red-800">{swimmer.medicalConditionsDescription}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* History of Seizures */}
                   {swimmer.historyOfSeizures !== undefined && (
-                    <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm font-medium text-amber-800">History of Seizures</div>
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium text-purple-800">History of Seizures</div>
                         <Badge variant={swimmer.historyOfSeizures ? "destructive" : "outline"}>
                           {swimmer.historyOfSeizures ? "Yes" : "No"}
                         </Badge>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Toilet Trained */}
-                  {swimmer.toiletTrained !== undefined && (
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm font-medium text-blue-800">Toilet Trained</div>
-                        <Badge variant={swimmer.toiletTrained ? "default" : "outline"}>
-                          {swimmer.toiletTrained ? "Yes" : "No"}
-                        </Badge>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Non-Ambulatory */}
-                  {swimmer.nonAmbulatory !== undefined && (
-                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm font-medium text-purple-800">Non-Ambulatory</div>
-                        <Badge variant={swimmer.nonAmbulatory ? "destructive" : "outline"}>
-                          {swimmer.nonAmbulatory ? "Yes" : "No"}
-                        </Badge>
-                      </div>
+                      {swimmer.historyOfSeizures && swimmer.seizuresDescription && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium text-purple-700 mb-1">Seizures Description:</p>
+                          <p className="text-sm text-purple-800">{swimmer.seizuresDescription}</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Behavioral Information */}
-              {(swimmer.aggressiveBehavior || swimmer.elopementHistory || swimmer.selfInjuriousBehavior) && (
-                <div className="mt-6">
-                  <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-red-600" />
-                    Behavioral Information
-                  </h4>
+              {/* Safety/Behavioral Section */}
+              <div>
+                <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Safety & Behavioral Information
+                </h4>
 
-                  <div className="space-y-3">
-                    {/* Aggressive Behavior */}
-                    {swimmer.aggressiveBehavior && (
-                      <div className="bg-red-50 p-3 rounded-lg border border-red-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-sm font-medium text-red-800">Aggressive Behavior</div>
-                          <Badge variant="destructive">Yes</Badge>
-                        </div>
-                        {swimmer.aggressiveBehaviorDescription && (
-                          <p className="text-sm text-red-700">{swimmer.aggressiveBehaviorDescription}</p>
-                        )}
+                <div className="space-y-4">
+                  {/* Self Injurious Behavior */}
+                  {swimmer.selfInjuriousBehavior !== undefined && (
+                    <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium text-pink-800">Self Injurious Behavior</div>
+                        <Badge variant={swimmer.selfInjuriousBehavior ? "destructive" : "outline"}>
+                          {swimmer.selfInjuriousBehavior ? "Yes" : "No"}
+                        </Badge>
                       </div>
-                    )}
+                      {swimmer.selfInjuriousBehavior && swimmer.selfInjuriousBehaviorDescription && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium text-pink-700 mb-1">Description:</p>
+                          <p className="text-sm text-pink-800">{swimmer.selfInjuriousBehaviorDescription}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                    {/* Elopement History */}
-                    {swimmer.elopementHistory && (
-                      <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-sm font-medium text-orange-800">Elopement History</div>
-                          <Badge variant="destructive">Yes</Badge>
-                        </div>
-                        {swimmer.elopementDescription && (
-                          <p className="text-sm text-orange-700">{swimmer.elopementDescription}</p>
-                        )}
+                  {/* Aggressive Behavior */}
+                  {swimmer.aggressiveBehavior !== undefined && (
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium text-red-800">Aggressive Behavior</div>
+                        <Badge variant={swimmer.aggressiveBehavior ? "destructive" : "outline"}>
+                          {swimmer.aggressiveBehavior ? "Yes" : "No"}
+                        </Badge>
                       </div>
-                    )}
+                      {swimmer.aggressiveBehavior && swimmer.aggressiveBehaviorDescription && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium text-red-700 mb-1">Description:</p>
+                          <p className="text-sm text-red-800">{swimmer.aggressiveBehaviorDescription}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                    {/* Self-Injurious Behavior */}
-                    {swimmer.selfInjuriousBehavior && (
-                      <div className="bg-pink-50 p-3 rounded-lg border border-pink-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="text-sm font-medium text-pink-800">Self-Injurious Behavior</div>
-                          <Badge variant="destructive">Yes</Badge>
-                        </div>
-                        {swimmer.selfInjuriousDescription && (
-                          <p className="text-sm text-pink-700">{swimmer.selfInjuriousDescription}</p>
-                        )}
+                  {/* Elopement History */}
+                  {swimmer.elopementHistory !== undefined && (
+                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium text-orange-800">Elopement History</div>
+                        <Badge variant={swimmer.elopementHistory ? "destructive" : "outline"}>
+                          {swimmer.elopementHistory ? "Yes" : "No"}
+                        </Badge>
                       </div>
-                    )}
-                  </div>
+                      {swimmer.elopementHistory && swimmer.elopementHistoryDescription && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium text-orange-700 mb-1">Description:</p>
+                          <p className="text-sm text-orange-800">{swimmer.elopementHistoryDescription}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Has Behavior Plan */}
+                  {swimmer.hasBehaviorPlan !== undefined && (
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-medium text-blue-800">Has Behavior Plan</div>
+                        <Badge variant={swimmer.hasBehaviorPlan ? "default" : "outline"}>
+                          {swimmer.hasBehaviorPlan ? "Yes" : "No"}
+                        </Badge>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Restraint History */}
+                  {swimmer.restraintHistory !== undefined && (
+                    <div className="bg-rose-50 p-4 rounded-lg border border-rose-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm font-medium text-rose-800">Restraint History</div>
+                        <Badge variant={swimmer.restraintHistory ? "destructive" : "outline"}>
+                          {swimmer.restraintHistory ? "Yes" : "No"}
+                        </Badge>
+                      </div>
+                      {swimmer.restraintHistory && swimmer.restraintHistoryDescription && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium text-rose-700 mb-1">Description:</p>
+                          <p className="text-sm text-rose-800">{swimmer.restraintHistoryDescription}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </section>
           </TabsContent>
 

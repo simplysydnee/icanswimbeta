@@ -21,6 +21,9 @@ export async function GET() {
         first_name,
         last_name,
         date_of_birth,
+        gender,
+        height,
+        weight,
         enrollment_status,
         assessment_status,
         current_level_id,
@@ -32,6 +35,37 @@ export async function GET() {
         is_vmrc_client,
         vmrc_coordinator_name,
         funding_coordinator_name,
+        funding_coordinator_email,
+        funding_coordinator_phone,
+        -- Medical & Safety fields
+        has_allergies,
+        allergies_description,
+        has_medical_conditions,
+        medical_conditions_description,
+        diagnosis,
+        history_of_seizures,
+        seizures_description,
+        -- Care needs
+        toilet_trained,
+        non_ambulatory,
+        communication_type,
+        other_therapies,
+        therapies_description,
+        -- Behavioral
+        self_injurious_behavior,
+        self_injurious_behavior_description,
+        aggressive_behavior,
+        aggressive_behavior_description,
+        elopement_history,
+        elopement_history_description,
+        has_behavior_plan,
+        restraint_history,
+        restraint_history_description,
+        -- Swimming background
+        previous_swim_lessons,
+        comfortable_in_water,
+        swim_goals,
+        strengths_interests,
         swim_levels:current_level_id(name, display_name, color),
         funding_source:funding_source_id(id, name, short_name, type),
         bookings!bookings_swimmer_id_fkey(
@@ -76,6 +110,9 @@ export async function GET() {
         firstName: swimmer.first_name,
         lastName: swimmer.last_name,
         dateOfBirth: swimmer.date_of_birth,
+        gender: swimmer.gender,
+        height: swimmer.height,
+        weight: swimmer.weight,
         enrollmentStatus: swimmer.enrollment_status,
         assessmentStatus: swimmer.assessment_status,
         currentLevelId: swimmer.current_level_id,
@@ -96,7 +133,40 @@ export async function GET() {
         nextSession: nextBooking?.session?.[0] ? {
           startTime: nextBooking.session[0].start_time,
           instructorName: nextBooking.session[0].instructor?.[0]?.full_name
-        } : null
+        } : null,
+        // Medical & Safety
+        hasAllergies: swimmer.has_allergies,
+        allergiesDescription: swimmer.allergies_description,
+        hasMedicalConditions: swimmer.has_medical_conditions,
+        medicalConditionsDescription: swimmer.medical_conditions_description,
+        diagnosis: swimmer.diagnosis,
+        historyOfSeizures: swimmer.history_of_seizures,
+        seizuresDescription: swimmer.seizures_description,
+        // Care needs
+        toiletTrained: swimmer.toilet_trained,
+        nonAmbulatory: swimmer.non_ambulatory,
+        communicationType: swimmer.communication_type,
+        otherTherapies: swimmer.other_therapies,
+        therapiesDescription: swimmer.therapies_description,
+        // Behavioral
+        selfInjuriousBehavior: swimmer.self_injurious_behavior,
+        selfInjuriousBehaviorDescription: swimmer.self_injurious_behavior_description,
+        aggressiveBehavior: swimmer.aggressive_behavior,
+        aggressiveBehaviorDescription: swimmer.aggressive_behavior_description,
+        elopementHistory: swimmer.elopement_history,
+        elopementHistoryDescription: swimmer.elopement_history_description,
+        hasBehaviorPlan: swimmer.has_behavior_plan,
+        restraintHistory: swimmer.restraint_history,
+        restraintHistoryDescription: swimmer.restraint_history_description,
+        // Swimming background
+        previousSwimLessons: swimmer.previous_swim_lessons,
+        comfortableInWater: swimmer.comfortable_in_water,
+        swimGoals: swimmer.swim_goals,
+        strengthsInterests: swimmer.strengths_interests,
+        // Coordinator info
+        coordinatorName: swimmer.funding_coordinator_name,
+        coordinatorEmail: swimmer.funding_coordinator_email,
+        coordinatorPhone: swimmer.funding_coordinator_phone
       };
     });
 
