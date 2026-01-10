@@ -192,11 +192,6 @@ export async function GET(request: Request) {
         authorized_sessions_total,
         current_authorization_number,
         authorization_expires_at,
-        -- VMRC fields
-        is_vmrc_client,
-        vmrc_coordinator_name,
-        vmrc_coordinator_email,
-        vmrc_coordinator_phone,
         photo_url,
         created_at,
         updated_at,
@@ -408,10 +403,10 @@ export async function GET(request: Request) {
         priorityBookingExpiresAt: swimmer.priority_booking_expires_at,
         // Admin Notes
         adminNotes: swimmer.admin_notes,
-        // Coordinator fields
-        coordinatorName: swimmer.funding_coordinator_name || swimmer.vmrc_coordinator_name,
-        coordinatorEmail: swimmer.funding_coordinator_email || swimmer.vmrc_coordinator_email,
-        coordinatorPhone: swimmer.funding_coordinator_phone || swimmer.vmrc_coordinator_phone,
+        // Coordinator fields - use funding coordinator fields
+        coordinatorName: swimmer.funding_coordinator_name,
+        coordinatorEmail: swimmer.funding_coordinator_email,
+        coordinatorPhone: swimmer.funding_coordinator_phone,
         // Medical & Safety
         hasAllergies: swimmer.has_allergies,
         allergiesDescription: swimmer.allergies_description,
