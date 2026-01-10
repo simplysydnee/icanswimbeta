@@ -302,7 +302,7 @@ export default function AdminDashboard() {
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back, {user?.fullName?.split(' ')[0] || 'Admin'}!
+            Welcome back, {user?.fullName ? user.fullName.split(' ')[0] : 'Admin'}!
           </p>
         </div>
         <div className="text-right text-sm text-muted-foreground">

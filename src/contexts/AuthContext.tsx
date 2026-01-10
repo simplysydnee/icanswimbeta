@@ -56,8 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }): AuthUser => ({
     id: supabaseUser.id,
     email: supabaseUser.email || '',
-    fullName: supabaseUser.user_metadata?.full_name as string,
-    avatarUrl: supabaseUser.user_metadata?.avatar_url as string,
+    fullName: supabaseUser.user_metadata?.full_name as string || '',
+    avatarUrl: supabaseUser.user_metadata?.avatar_url as string || '',
     emailConfirmed: supabaseUser.email_confirmed_at !== null && supabaseUser.email_confirmed_at !== undefined,
     createdAt: supabaseUser.created_at,
   })
