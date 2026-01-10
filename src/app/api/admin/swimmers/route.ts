@@ -185,21 +185,9 @@ export async function GET(request: Request) {
         current_level_id,
         payment_type,
         funding_source_id,
-        funding_coordinator_name,
-        funding_coordinator_email,
-        funding_coordinator_phone,
-        authorized_sessions_used,
-        authorized_sessions_total,
-        current_authorization_number,
-        authorization_expires_at,
         photo_url,
         created_at,
         updated_at,
-        is_priority_booking,
-        priority_booking_reason,
-        priority_booking_notes,
-        priority_booking_expires_at,
-        admin_notes,
         -- Medical & Safety fields
         has_allergies,
         allergies_description,
@@ -379,10 +367,10 @@ export async function GET(request: Request) {
                           swimmer.payment_type === 'private_pay' ? 'Private Pay' :
                           swimmer.payment_type === 'scholarship' ? 'Scholarship' : 'Other',
         photoUrl: swimmer.photo_url,
-        fundingSourceSessionsUsed: swimmer.authorized_sessions_used || 0,
-        fundingSourceSessionsAuthorized: swimmer.authorized_sessions_total || 0,
-        fundingSourceCurrentPosNumber: swimmer.current_authorization_number,
-        fundingSourcePosExpiresAt: swimmer.authorization_expires_at,
+        fundingSourceSessionsUsed: 0,
+        fundingSourceSessionsAuthorized: 0,
+        fundingSourceCurrentPosNumber: undefined,
+        fundingSourcePosExpiresAt: undefined,
         createdAt: swimmer.created_at,
         updatedAt: swimmer.updated_at,
         parent: swimmer.parent ? {
@@ -397,16 +385,16 @@ export async function GET(request: Request) {
           instructorName: nextBooking.session[0].instructor?.[0]?.full_name
         } : null,
         // Priority Booking
-        isPriorityBooking: swimmer.is_priority_booking,
-        priorityBookingReason: swimmer.priority_booking_reason,
-        priorityBookingNotes: swimmer.priority_booking_notes,
-        priorityBookingExpiresAt: swimmer.priority_booking_expires_at,
+        isPriorityBooking: false,
+        priorityBookingReason: undefined,
+        priorityBookingNotes: undefined,
+        priorityBookingExpiresAt: undefined,
         // Admin Notes
-        adminNotes: swimmer.admin_notes,
-        // Coordinator fields - use funding coordinator fields
-        coordinatorName: swimmer.funding_coordinator_name,
-        coordinatorEmail: swimmer.funding_coordinator_email,
-        coordinatorPhone: swimmer.funding_coordinator_phone,
+        adminNotes: undefined,
+        // Coordinator fields
+        coordinatorName: undefined,
+        coordinatorEmail: undefined,
+        coordinatorPhone: undefined,
         // Medical & Safety
         hasAllergies: swimmer.has_allergies,
         allergiesDescription: swimmer.allergies_description,
