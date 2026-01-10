@@ -1,0 +1,17 @@
+{
+  "name": "airtable-supabase-migration",
+  "version": "1.0.0",
+  "description": "Migration script for Airtable clients to Supabase",
+  "main": "airtable_migration.js",
+  "scripts": {
+    "migrate": "node airtable_migration.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.7",
+    "airtable": "^0.12.2",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

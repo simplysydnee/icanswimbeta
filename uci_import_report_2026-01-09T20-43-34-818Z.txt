@@ -1,0 +1,35 @@
+
+UCI NUMBERS IMPORT REPORT
+=========================
+
+Summary:
+--------
+Total CSV Records: 9
+Successfully Matched: 0
+Unmatched (no swimmer found): 9
+Ambiguous (multiple matches): 0
+Errors: 0
+
+Matched Records (0):
+------------------------------------
+
+
+Unmatched Records (9):
+----------------------------------------
+  • BARAJAS ( JR,  AL) - No matching swimmer found
+  • CASTILLO ( ELLIE, Castillo) - No matching swimmer found
+  • FERRY ( RYLIE, Ferry) - No matching swimmer found
+  • GARCIA ( ARIELLA, Garcia) - No matching swimmer found
+  • HARVEY ( CAMERON, Harvey) - No matching swimmer found
+  • JOHNSON ( THOMAS, Johnson) - No matching swimmer found
+  • SINGH ( RAYYAAN, Singh) - No matching swimmer found
+  • SINGH ( TEGHVEER, Singh) - No matching swimmer found
+  • TORRES ( KYNZLEI, Torres) - No matching swimmer found
+
+Ambiguous Records (0):
+----------------------------------------
+
+
+Errors (0):
+--------------------------
+

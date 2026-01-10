@@ -90,10 +90,11 @@ export default function AdminDashboard() {
     const supabase = createClient();
 
     try {
-      // Fetch swimmers data
+      // Fetch swimmers data - fetch all records without pagination
       const { data: swimmers } = await supabase
         .from('swimmers')
-        .select('id, enrollment_status, payment_type, funding_source_id');
+        .select('id, enrollment_status, payment_type, funding_source_id')
+        .limit(10000); // Explicit limit to fetch all records
 
       // Fetch pending purchase orders
       const { data: pos } = await supabase
@@ -361,7 +362,7 @@ export default function AdminDashboard() {
                   <p className="text-sm text-muted-foreground">Waitlisted</p>
                   <p className="text-3xl font-bold">{stats?.waitlistedSwimmers || 0}</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Pending enrollment
+                    Pending Assessment
                   </p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center">

@@ -82,7 +82,44 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 6. Create booking record
+    // 6. Funding source authorization validation for assessment
+    if (swimmer.funding_source_id) {
+      // First check if funding source requires authorization
+      const { data: fundingSource } = await supabase
+        .from('funding_sources')
+        .select('requires_authorization')
+        .eq('id', swimmer.funding_source_id)
+        .single();
+
+      if (fundingSource?.requires_authorization) {
+        // Find active purchase order for this swimmer
+        const { data: purchaseOrders } = await supabase
+          .from('purchase_orders')
+          .select('id, sessions_authorized, sessions_used')
+          .eq('swimmer_id', swimmerId)
+          .eq('status', 'approved')
+          .order('end_date', { ascending: true })
+          .limit(1);
+
+        if (!purchaseOrders || purchaseOrders.length === 0) {
+          return NextResponse.json(
+            { error: 'No valid funding source authorization for assessment' },
+            { status: 400 }
+          );
+        }
+
+        const activePo = purchaseOrders[0];
+        // Check if swimmer has available sessions for assessment
+        if (activePo.sessions_used >= activePo.sessions_authorized) {
+          return NextResponse.json(
+            { error: 'Funding source authorization exhausted - no sessions available for assessment' },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    // 7. Create booking record
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
       .insert({
@@ -104,7 +141,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 7. Create assessment record
+    // 8. Create assessment record
     const { data: assessment, error: assessmentError } = await supabase
       .from('assessments')
       .insert({
@@ -129,7 +166,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 8. Update session booking count
+    // 9. Update session booking count
     const { error: updateError } = await supabase
       .from('sessions')
       .update({
@@ -144,7 +181,7 @@ export async function POST(request: NextRequest) {
       // Don't rollback - booking is valid, just log the error
     }
 
-    // 9. Update swimmer assessment status
+    // 10. Update swimmer assessment status
     await supabase
       .from('swimmers')
       .update({
@@ -153,7 +190,7 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', swimmerId)
 
-    // 10. Create Assessment Purchase Order for funded clients
+    // 11. Create Assessment Purchase Order for funded clients
     let assessmentPO = null
     if (swimmer.funding_source_id) {
       assessmentPO = await createAssessmentPO(
@@ -167,7 +204,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 11. Return success with all details for email
+    // 12. Return success with all details for email
     return NextResponse.json({
       success: true,
       booking: booking,

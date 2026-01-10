@@ -1,0 +1,67 @@
+
+UCI NUMBERS IMPORT REPORT
+=========================
+
+Summary:
+--------
+Total CSV Records: 9
+Successfully Matched: 1
+Unmatched (no swimmer found): 0
+Ambiguous (multiple matches): 8
+Errors: 0
+
+Matched Records (1):
+------------------------------------
+  • BARAJAS, JR, AL → Alejandro Barajas (ID: c55cb986-a2ae-4b85-af56-1799d4e4e3f7) UCI: 7763834 
+
+Unmatched Records (0):
+----------------------------------------
+
+
+Ambiguous Records (8):
+----------------------------------------
+  • CASTILLO, ELLIE (Castillo, Ellie)
+    Potential matches:
+        - Noah Castillo (ID: 0e542b88-4af6-4829-8cc4-4c41904535e2, Current UCI: none)
+        - Noelle Castillo (ID: d169dd66-c1cd-4e66-819f-01671340edaa, Current UCI: none)
+
+  • FERRY, RYLIE (Ferry, Rylie)
+    Potential matches:
+        - Riley Ferry (ID: d7873f9a-91d1-4b09-b721-08b5638527fa, Current UCI: none)
+        - Nolan Ferry (ID: 0ba01f78-e977-4a87-9b48-4d42979e14d8, Current UCI: 7779572)
+
+  • GARCIA, ARIELLA (Garcia, Ariella)
+    Potential matches:
+        - Gael Garcia (ID: 9372539c-f18f-4cb9-a0f8-fcaf92294db6, Current UCI: 8658969)
+        - Jorge Garcia (ID: 10f81f01-f491-4385-8af4-11b19d5d469b, Current UCI: 6852407)
+        - Aria Garcia (ID: 426bc44b-e74b-49ad-ab8b-6259e8f0b92b, Current UCI: 7776148)
+        - Olivia Garcia (ID: 6485e119-3544-4379-a6c7-994d13553442, Current UCI: 7776001)
+
+  • HARVEY, CAMERON (Harvey, Cameron)
+    Potential matches:
+        - Myles Harvey (ID: e3aa2afc-7262-4080-afe0-4fd3f778aaae, Current UCI: 7785159)
+        - Gianna Harvey (ID: e6bb3bb6-2aee-4133-92b5-2cb3356ba912, Current UCI: 7783670)
+
+  • JOHNSON, THOMAS (Johnson, Thomas)
+    Potential matches:
+        - Alex Johnson (ID: 1b0810d3-3cb9-4ccc-a161-83ccd02fe2cd, Current UCI: none)
+        - Liam Johnson (ID: 25b427c2-81c0-424d-811a-d14716fbaffa, Current UCI: none)
+
+  • SINGH, RAYYAAN (Singh, Rayyaan)
+    Potential matches:
+        - Karamjot Singh (ID: 83678010-568b-4de6-a139-f835e9284bb7, Current UCI: 8656006)
+        - Himmat Singh (ID: 92d6ba7d-9b1e-4233-80c3-f2a5ae178500, Current UCI: none)
+
+  • SINGH, TEGHVEER (Singh, Teghveer)
+    Potential matches:
+        - Karamjot Singh (ID: 83678010-568b-4de6-a139-f835e9284bb7, Current UCI: 8656006)
+        - Himmat Singh (ID: 92d6ba7d-9b1e-4233-80c3-f2a5ae178500, Current UCI: none)
+
+  • TORRES, KYNZLEI (Torres, Kynzlei)
+    Potential matches:
+        - Sebastian Torres (ID: 8e959ef1-6bb3-4517-9d00-95bec9c7f2a4, Current UCI: none)
+        - Ulises Torres (ID: 65f43b16-91d8-4e27-a387-fb6176120737, Current UCI: none)
+
+Errors (0):
+--------------------------
+

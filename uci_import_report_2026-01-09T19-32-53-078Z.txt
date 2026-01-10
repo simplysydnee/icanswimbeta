@@ -1,0 +1,383 @@
+
+UCI NUMBERS IMPORT REPORT
+=========================
+
+Summary:
+--------
+Total CSV Records: 322
+Successfully Matched: 229
+Unmatched (no swimmer found): 84
+Ambiguous (multiple matches): 9
+Errors: 0
+
+Matched Records (229):
+------------------------------------
+  • ALBA, AMADO → Amado Alba (ID: e0e996de-fa5f-401e-aa01-dfbe7a04d54a) UCI: 8655233 
+  • ALFARO, SCARLET → Scarlett Alfaro (ID: bd3405ff-f053-4c8e-90b2-a2794aa28263) UCI: 7772916 
+  • ALVARADO, AMILI → Amiliano Alvarado (ID: 21207380-df09-4d19-931c-d5918164cbb1) UCI: 8655820 
+  • ALVAREZ, LEIF → Leif Alvarez (ID: 5c66409a-1737-4781-ac3d-23463777f23f) UCI: 8663384 
+  • ALVAREZ, MATEO → Mateo Alvarez (ID: 19bd1afe-7b81-4b6a-8676-4b39682cf4c1) UCI: 7776714 
+  • AMEZCUA, SANTIA → Santiago Amezcua (ID: c235e53f-d399-4d15-9a14-6ea99450477a) UCI: 7786586 
+  • ANDREWS, LIAM → Liam Andrews (ID: 74a52b10-4dbc-4629-b580-9d6a0151b2dd) UCI: 8658550 
+  • ASHAK, NOAH → Noah Ashak (ID: a62bee87-8c79-433d-84f7-725207002a49) UCI: 7755930 
+  • AVALOS, KEVIN → Kevin Avalos (ID: b03d728f-a272-4d35-b4f1-e19a635a7cc6) UCI: 7776952 
+  • AYALA, ISABEL → Isabel Ayala (ID: ed8cd726-1862-4bf7-a2e7-655e9eaf42d4) UCI: 7785775 
+  • BABAUTA, CASH → Crew Babauta (ID: b46bfc17-2be0-4b8d-b6f4-6269dd68d8b0) UCI: 7781399 
+  • BACKOVICH, PARK → Parker Backovich (ID: 99695e11-be55-4821-beff-730787e8564b) UCI: 8660577 
+  • BARAJAS, MATIAS → Matias Barajas (ID: cdf41861-edd0-4c72-bbf4-653700f88ad4) UCI: 7780466 
+  • BARRAGAN, MADEL → Madeline Barragan (ID: 0c400374-d9ef-4e50-a99c-8fb7efdbf5d6) UCI: 7778509 
+  • BAUMAN, BRYNLEE → Brynlee Bauman (ID: 0a0dd973-2758-4eae-8bc7-19a067c4af6c) UCI: 8663967 
+  • BEASON, CYRUS → Cyrus Beason (ID: 4b5cb966-73d8-4937-9cc5-04af264c937a) UCI: 8655235 
+  • BOLA, ARMAAN → Armaan Bola (ID: 1d07fc40-51bc-458f-bdf1-c1f117be3fe0) UCI: 7769580 
+  • BROOKE, CHARLOT → Charlotte Brooke (ID: 0519375f-675f-4574-aedb-9e8df4d6146b) UCI: 7779950 
+  • BROOKE, ISABELL → Isabella Brooke (ID: c185b38e-e595-4139-9d44-004ad0f8b2f3) UCI: 7779951 
+  • BROWN, BLAYNE → Blayne Brown (ID: 1e54c541-3780-4d94-8eac-82ce7042d2cf) UCI: 7776805 
+  • BROWN, ISAIAH → Isaiah Brown (ID: 2c57f3dc-c0ab-41f4-87c3-ad7f39e448ba) UCI: 7751806 
+  • BUCHHOLZ, BROOK → Brooke Buchholz (ID: 91015634-1b8d-4bfe-a059-8df696c5b9b0) UCI: 8656444 
+  • BUCIO, MIA → Mia Bucio (ID: abac9084-c70c-4002-b692-4b772d13d05d) UCI: 8167127 
+  • BURSALYAN, LUKE → Luke Bursalyan (ID: 553e0041-5c41-4eb7-9e07-f363f952c0e3) UCI: 7782273 
+  • CAGLE, LUKA → Luka Cagle (ID: 23eab8ac-f547-4b22-8173-d15994c64068) UCI: 7785436 
+  • CALDERON, CAMIL → Camila Calderon (ID: a48ae5ea-8afc-4d79-8590-c5ef5f4b7baa) UCI: 7759680 
+  • CALDERON, MATTE → Matteo Calderon (ID: 66d5e598-6184-466c-9910-4b1306a1b666) UCI: 7755237 
+  • CAMILLO, JOHN → John Camillo (ID: c0d60310-3f46-4ed5-ac38-5f798c312c0e) UCI: 7764169 
+  • CAMPOS, ALEXAND → Alexander Campos (ID: 3cf80149-450a-4d6a-8392-b554439a5e70) UCI: 6793974 
+  • CARDENAS, ADRIE → Adriel Cardenas (ID: 9bb8bc68-69a2-421e-ae13-7b19cb48541e) UCI: 7774650 
+  • CARLOS, ARRABEL → Arrabelle Carlos (ID: 4ffd07a4-bb53-4a0f-b2e4-6eba1b60b7f3) UCI: 7756710 
+  • CASTLE, CALLAHA → Callahan Castle (ID: e0a6a94b-b6b9-4771-9861-11901dbc6d10) UCI: 8660593 
+  • CELANO, CAGE → Cage Celano (ID: 0022d670-7514-4efd-9393-f899e7617552) UCI: 6342534 
+  • CEVEDIA, NOAH → Noah Cevedia (ID: ee11339b-6784-4aa1-8368-3d624fd655ff) UCI: 6851334 
+  • CLARK, BRYAN → Bryan Clark (ID: d34da5b6-552f-4be2-9dfc-662942ab8961) UCI: 7762962 
+  • COBIAN, ARIANNA → Arianna Cobian (ID: 25da803c-0621-46ab-9d9c-255457b9b962) UCI: 7777520 
+  • COOPER, JASON → Jason Cooper (ID: e34b5789-4b34-4b69-b78a-343d3996d07b) UCI: 7787016 
+  • COOPER, LILY → Lily Cooper (ID: 004316e0-cddf-4fe7-b40d-1d8421dec828) UCI: 7787146 
+  • CORSAUT, BELLA → Bella Corsaut (ID: 49943965-c194-433a-8f0c-d9e7d51c4557) UCI: 7779197 
+  • COUNTS, TYLER → Tyler Counts (ID: 9e6c02f1-5e38-4fca-8600-32c1e3bff49e) UCI: 7780451 
+  • CRUZ, MARIO → Mario Cruz (ID: 61614592-0ae5-43a1-ad0e-0d553139f06b) UCI: 8659323 
+  • DAVIS, JOAQUIN → Joaquin Davis (ID: 1ca26bc6-c08c-404e-916b-846b10e34e3a) UCI: 7787563 
+  • DE LA CRUZ, ELI → Elias De La Cruz (ID: f339039f-d65a-4d36-8ae6-2b6d9e99b809) UCI: 7769183 
+  • DE LA HUERTA, E → Emiliano De La Huerta (ID: 52cdd0e7-e2b4-48d2-8f80-d690b9c38454) UCI: 8660774 
+  • DE LUNA, TERESA → Teresa De Luna (ID: c178c84c-574a-4c3e-9f6f-08f15355c092) UCI: 8658141 
+  • DELEON, MATEO → Mateo DeLeon (ID: 9a846296-8fb7-4311-add9-8279be34db41) UCI: 7783213 
+  • DHESI, PARVAAN → Parvaan Dhesi (ID: 59193b9f-5cae-48d4-8822-27301b1c5eac) UCI: 7756951 
+  • DIAS, AURORA → Aurora Dias (ID: df0f95e9-f895-450f-8b5e-33ed176b1914) UCI: 8656866 
+  • DIAZ, ENZO → Enzo Diaz (ID: 0779d9ea-cff4-4f34-b221-ac15c2b0d7c8) UCI: 7785876 
+  • DIAZ, GAEL → Gael Diaz (ID: 307aa20c-8de4-4ae2-bfa0-8a4ac47937a6) UCI: 8657823 
+  • FERREIRA, RODER → Roderick Ferreira (ID: f974aa1f-3650-44c1-b2ba-33039653bf17) UCI: 8656393 
+  • FERRY, NOLAN → Nolan Ferry (ID: 0ba01f78-e977-4a87-9b48-4d42979e14d8) UCI: 7779572 
+  • FLORES, JULIAN → Julian Flores (ID: ce640ae1-129b-47e6-baae-3061ec63c0c6) UCI: 8655731 
+  • FLORES PARRA, D → Daniel Flores Parra (ID: d9f6c692-e9a6-4171-960c-6daba4581190) UCI: 8656880 
+  • FRANCO, ANTHONY → Anthony Franco (ID: 2fdc8ccb-0013-41cd-abf7-4f84ff0a0c11) UCI: 7762668 
+  • GARCIA, ARIA → Aria Garcia (ID: 426bc44b-e74b-49ad-ab8b-6259e8f0b92b) UCI: 7776148 
+  • GARCIA, GAEL → Gael Garcia (ID: 9372539c-f18f-4cb9-a0f8-fcaf92294db6) UCI: 8658969 
+  • GARCIA, JORGE → Jorge Garcia (ID: 10f81f01-f491-4385-8af4-11b19d5d469b) UCI: 6852407 
+  • GARCIA, OLIVIA → Olivia Garcia (ID: 6485e119-3544-4379-a6c7-994d13553442) UCI: 7776001 
+  • GARDUNO, LEONAR → Leonardo Garduno (ID: 821ad900-e7a3-40d9-a4bd-394632508598) UCI: 8660078 
+  • GARRETT, ZANE → Zane Garrett (ID: 05f319ba-8d9c-486e-b0a6-ebac336b61e7) UCI: 7752518 
+  • GATCH, OLIVIA → Olivia Gatch (ID: 6dcf0114-3bc9-44d1-9e79-2fbb6bcaf627) UCI: 8655893 
+  • GODINEZ, ANDRES → Andres Godinez (ID: a78c9d1c-ac52-4b41-815c-154801c30aa7) UCI: 7777272 
+  • GOMEZ, ALESSAND → Alessandro Gomez (ID: 0210431c-5ca3-4973-bde7-01c65387c2ae) UCI: 8658736 
+  • GOMEZ, EDAHI → Alessandro Gomez (ID: 0210431c-5ca3-4973-bde7-01c65387c2ae) UCI: 8657486 (was: 8658736)
+  • GONZALEZ, ADRIA → Adrian Gonzalez (ID: d54e840f-8665-41c8-a052-1bedca22bb89) UCI: 7774944 
+  • GONZALEZ, CHRIS → Christopher Gonzalez (ID: 7006eb6e-67d5-4e85-8496-4459dbd19efb) UCI: 7784176 
+  • GONZALEZ, ELIJA → Elijah Gonzalez (ID: 93917bde-157e-4eca-8d1b-a4c4010d6728) UCI: 8656824 
+  • GONZALEZ, ISAIA → Isaiah Gonzalez (ID: d3529c5a-652e-4192-8ca0-e51be7011bd7) UCI: 8656613 
+  • GONZALEZ, LEONA → Leonardo Gonzalez (ID: 939f1ab4-217a-4d3c-acf5-9608854a8579) UCI: 7777569 
+  • GRADILLA, GIANN → Gianna Gradilla (ID: 88c6a97f-23f9-47b1-a8eb-ef5f9338497e) UCI: 7787126 
+  • GROSS, JACK → Jack Gross (ID: f6dcf0f0-872d-4e20-9afe-54ec0c32c5b5) UCI: 7776624 
+  • GUILLEN, MONICA → Monica Guillen (ID: 0e88826f-3f66-464e-9016-6bc1c9fc5133) UCI: 7755865 
+  • GUTIERREZ, AIDE → Aiden Gutierrez (ID: c5cdfe88-765f-40a4-9169-9175996d9d20) UCI: 6453192 
+  • GUTIERREZ, JULI → Julian Gutierrez (ID: 8fb7766f-5d81-41c7-9a6b-7df3767448eb) UCI: 7777562 
+  • GUTIERREZ, MATT → Matthew Gutierrez (ID: d2493eec-b97a-47ad-ac6d-b102f3e28a16) UCI: 7774945 
+  • HACKETT, MYLES → Myles Hackett (ID: 00b9ef7c-a3a3-4d9c-9c17-68bdadea07f5) UCI: 7780218 
+  • HARVEY, GIANNA → Gianna Harvey (ID: e6bb3bb6-2aee-4133-92b5-2cb3356ba912) UCI: 7783670 
+  • HARVEY, MYLES → Myles Harvey (ID: e3aa2afc-7262-4080-afe0-4fd3f778aaae) UCI: 7785159 
+  • HAYER, SWARAJ → Swaraj Hayer (ID: a7e8e2a0-00f9-415c-8daf-851c476c01dc) UCI: 7768751 
+  • HECKERMAN, OLIV → Oliver Heckerman (ID: 06c20776-e8bf-41bd-9c93-ae2ba55eb525) UCI: 8657728 
+  • HELFER, CHLOE → Chloe Helfer (ID: 4f946f9d-f86b-4737-9a46-a50955e70874) UCI: 7771263 
+  • HERNANDEZ, EZRA → Ezra Hernandez (ID: d9f33b6f-29fa-4cbf-a7bf-616b44ac425f) UCI: 7781085 
+  • HERNANDEZ, KARI → Karin Hernandez (ID: ec031a61-7e8e-414d-8117-55b833e32457) UCI: 8662837 
+  • HERRERA, MATEO → Mateo Herrera (ID: 5da9e768-e484-476d-be6a-e3f7648b3907) UCI: 7774243 
+  • HESS, WADE → Wade Hess (ID: 5a1f904c-c1b2-496e-b987-0fee32e620e7) UCI: 8063969 
+  • HESS, WENDELL → Wendell Hess (ID: a1bba853-19d3-407f-97f1-205695fd3a2b) UCI: 8063970 
+  • HICKS, BOSTON → Boston Hicks (ID: 5db988f7-866d-4396-b8e0-9ea0091e1e0b) UCI: 7782354 
+  • HILDRETH, DECLA → Declan Hildreth (ID: bfd6e169-ea0e-4aa2-a63a-3ecf0682a9c7) UCI: 8658984 
+  • HOMA, MCKOY → McKoy Homa (ID: f7325b6d-1bc3-46db-8c85-a3441a9d43b4) UCI: 7780467 
+  • HOUSE, ROMAN → Roman House (ID: 512a9d4a-2bec-4a14-aabe-887968f20a57) UCI: 7783879 
+  • HOUTEKAMER, ELI → Elias Houtekamer (ID: 77370b1c-879c-49b4-b734-4c3b86e61a21) UCI: 8660374 
+  • ISHAYA, ELLIS → Ellis Ishaya (ID: 6752e704-7248-4580-a64e-42cd41211613) UCI: 8655100 
+  • JACKSON, AXCEL → Axcel Jackson (ID: 3100dad2-20fd-4664-a880-a195bf4e03ce) UCI: 8658582 
+  • JAIN, AVYAAN → Avyaan Jain (ID: 5f609f62-ce4a-4a9c-9e7a-f2e37e630082) UCI: 8663458 
+  • JASSO, NAIYOMI → Nayomi Jasso (ID: 508548ba-2594-4464-bc0c-445d45a8406c) UCI: 8658970 
+  • JIMENEZ, DELYLA → Delylah Jimenez (ID: 5894dcd1-0dda-4f8b-b3eb-ffa7d25141cd) UCI: 7787594 
+  • JIMENEZ, NICOLA → Nicolas Jimenez (ID: e9c2c58d-1286-4079-a215-9969c2f42a64) UCI: 8656388 
+  • JUAREZ, CARMEN → Carmen Juarez (ID: 66929a26-bf59-4cb4-844e-ba1a746cca0d) UCI: 8656921 
+  • KANG, AMIRA → Amira Kang (ID: b770dd5a-3737-42dd-8cf3-733e55fe754a) UCI: 6796180 
+  • KASTER, ELIAS → Elias Kaster (ID: 49fe7f11-e671-49b0-b3cd-a5c4243d7af8) UCI: 8660803 
+  • LACOMBE, SHANE → Shane Lacombe (ID: 52a2c46f-2a93-46e5-88e2-df81eadcefb1) UCI: 7786744 
+  • LANE, MADDOX → Maddox Lane (ID: 2c87cfe3-0d77-4c6b-9323-a1effc3855eb) UCI: 7775597 
+  • LARA, IZEN → Izen Lara (ID: 9344c776-8fe5-4767-9ada-6454d2fbdcf9) UCI: 8657165 
+  • LOPEZ, ABRAHAM → Abraham Lopez (ID: 180efb40-09c5-4e97-8655-f14e60ce98e7) UCI: 7768367 
+  • LOPEZ, ALFREDO → Alfredo Lopez (ID: b437bc70-4a4c-4fe2-9057-c8afa6bebe4f) UCI: 8656120 
+  • LOPEZ, ELIAS → Elias Lopez (ID: 50be11bc-79ae-414b-8ef2-42a992057da4) UCI: 7787009 
+  • LOPEZ, MARIO → Mario Lopez (ID: 95e304da-8e92-434f-a95e-f349cb67d594) UCI: 7778425 
+  • LOPEZ, NOAH → Noah Lopez (ID: 1b3c9b9e-56a1-4bd1-af1e-410950804fa1) UCI: 7780257 
+  • LOZADA DIAZ, AN → Andres Lozada Diaz (ID: 79184e19-1096-43fc-9493-129707963368) UCI: 7777426 
+  • MACHADO, THEO → Theo Machado (ID: 965d019a-4265-48ca-b716-4cd5274ff486) UCI: 7783381 
+  • MACHAIN, MARISO → Marisol Machain (ID: 56f0b121-1ef9-4cd3-8b77-4a978bd55679) UCI: 7768782 
+  • MACHAIN, MARISS → Marissa Machain (ID: b4a30602-065e-4d9c-8ef5-abcceba31d49) UCI: 7768001 
+  • MACVICAR, LOGAN → Logan Macvicar (ID: a25814f9-0a7d-45f2-9796-927e9d4a8ea4) UCI: 7784611 
+  • MALDONADO, ELIJ → Elijah Maldonado (ID: 7e75c150-87f3-4a2a-b0b2-9574f1815258) UCI: 7786600 
+  • MANZANO, JULIAN → Julian Manzano (ID: 71a2b64a-604f-4be4-b8e7-46f47b92691d) UCI: 8663461 
+  • MANZO, MAXIMILI → Maximiliano Manzo (ID: ac0a5e9a-b658-44ba-8993-65e914e90019) UCI: 8655944 
+  • MARTIN, KAILEN → kailen martin (ID: 436ed7b7-4b9d-472b-bce2-e5baa029a215) UCI: 8659085 
+  • MARTIN, MAX → kailen martin (ID: 436ed7b7-4b9d-472b-bce2-e5baa029a215) UCI: 8656022 (was: 8659085)
+  • MASSON, ZACHARY → Zachary Masson (ID: 3d646400-11fb-4fdc-ba4a-29e8819c4c99) UCI: 7778434 
+  • MCGINTY, TANNER → TANNER MCGINTY (ID: 874bf673-151d-458b-9894-b85d652d8317) UCI: 8662336 
+  • MCMILLEN, ELORA → Elora McMillen (ID: 09694ea5-0f3f-4670-83a5-0838fde31dd6) UCI: 7787212 
+  • MEJIA, HENRY → Henry mejia (ID: 5ecabbcc-605b-4591-9c52-ce7e46993062) UCI: 7786114 
+  • MEJIA, KEVIN → Henry mejia (ID: 5ecabbcc-605b-4591-9c52-ce7e46993062) UCI: 7785532 (was: 7786114)
+  • MENDEZ, JOSIAH → Josiah Mendez (ID: 1ebbe077-4d5c-4683-8467-f83921c9affd) UCI: 7787485 
+  • MENDOZA, REYNAL → Armando Mendoza (ID: 9b7e464a-f78d-4e2f-8beb-aebde9f8de55) UCI: 7786087 
+  • MENDOZA RUIZ, G → Gael Mendoza Ruiz (ID: 2995f729-0d2c-44f9-a5f4-3d63b87eacec) UCI: 7772810 
+  • MENEZES, KADE → Kade Menezes (ID: 5cfbb21c-aade-43c0-b5d0-d18eda453b6f) UCI: 7786092 
+  • MICHAEL, JAYCE → Jayce Michael (ID: 1fda37ea-e618-4abd-8f46-8c4a5259f636) UCI: 8655641 
+  • MICHEL, ANTONIO → Antonio Michel (ID: 93067a42-1d65-4ae6-a400-5d12c1e88408) UCI: 7777933 
+  • MINOZA, TYRON → Tyron Minoza (ID: dbfba573-516c-439d-ac81-5a52e592e94b) UCI: 7769949 
+  • MIRANDA, AYDEN → Ayden Miranda (ID: b0f561e4-57bd-4041-a096-8b91725a7157) UCI: 6787933 
+  • MOCTEZUMA, KAL- → Kal-El Moctezuma (ID: 09b776fc-c923-48ad-b3f1-a09b14a32c69) UCI: 6181431 
+  • MOON, CHARLIE → Charlie Moon (ID: 2c7820ce-deb8-4da0-8084-8a69fae0199c) UCI: 8656332 
+  • MORALES, SEBAST → Sebastian Morales (ID: 3fb5313a-7fdd-4ba5-a794-306fbdb70899) UCI: 7780917 
+  • MORENO, GILBERT → Gilberto Moreno (ID: d84c2c67-5eb2-43a7-b618-057c6b16fbc3) UCI: 7774359 
+  • MORENO, RAVEN → Raven Moreno (ID: 80a76351-b5d6-4efb-859c-77d45fcb1230) UCI: 7759074 
+  • MOROZ, VOLODYMY → Volodymyr Moroz (ID: 5c4f0daa-d0ed-4f8c-b818-ce1e9543028b) UCI: 8657636 
+  • MUNIZ, CAMILA → Camila Muniz (ID: eeb5c17e-cabd-4c19-94bb-076c5283d68c) UCI: 7787480 
+  • MURPHY, MYCAH → Mycah Murphy (ID: 4465ef0e-da41-49bb-842b-e7ec320881bc) UCI: 7775589 
+  • MURPHY, SEBASTI → SEBASTIAN MURPHY (ID: d0493bd9-ba4c-4b81-9479-4ae3c653dd94) UCI: 7772549 
+  • MY, BRYSEN → Brysen My (ID: 4ef647f8-9e4e-4cda-9d41-c005a2fb1479) UCI: 7769178 
+  • NAGORE, ADRIAN → Adrian Nagore (ID: af86c9e1-a57f-4845-b41a-6d45767f70aa) UCI: 7780621 
+  • NAVA OREGEL, DY → Dylan Nava Oregel (ID: ee483866-7b40-43b0-b704-e23e8a0e9e89) UCI: 7786508 
+  • NEGRON, XAVIEN → Xavien Negron (ID: f25ddf95-efbc-488e-bec4-6182308be6b8) UCI: 7779963 
+  • NOLASCO, BENJAM → Benjamin Nolasco (ID: 8c425df2-5c51-47dd-b41f-80dd2383ecfa) UCI: 8186114 
+  • O'KELLEY, MIA → Mia O'Kelley (ID: 177cde46-6965-4c2d-a998-fbc99a1da551) UCI: 8657356 
+  • OCHOA, ADAN → Adan Ochoa (ID: 7ed1ed9c-1a08-4acc-94ba-e4f84ea2a44a) UCI: 8656330 
+  • OLIVO, JUANLUIS → Juanluis Olivo (ID: 726cfd90-5a4c-4fa4-8cf5-2580284a4b0c) UCI: 8658745 
+  • OROZCO, ROMEO → Romeo Orozco (ID: 52a11e2c-1000-4ba6-aa30-0f61526809b6) UCI: 8660693 
+  • ORTIZ, ISAIAH → Isaiah Ortiz (ID: 0f1cde96-5c7d-4e6d-90c3-78618a2bc35e) UCI: 8657932 
+  • ORVIS, ADONIS → Adonis Orvis (ID: e282618a-bcd5-4034-90bb-d9afe1270de2) UCI: 6780209 
+  • OSE, KAIRYK → Kairyk Ose (ID: 67512c4d-df05-49ac-9b6f-ccbd6cde4ad6) UCI: 8659815 
+  • OSORIO, ALAN → ALAN OSORIO (ID: 101b5dd7-8fbd-4538-96bb-148f7eddd4fa) UCI: 7781355 
+  • OWYOUNG, KAYLEE → Kaylee Owyoung (ID: 2f4cf353-dcf1-473e-850a-c6f112d362d4) UCI: 8177784 
+  • PACHECO, MADDOX → Maddox Pacheco (ID: 7c78ebb5-0516-44b0-aefb-0d98317cf9c9) UCI: 7786612 
+  • PADILLA, MALAKA → Malakai Padilla (ID: a701ebd9-72d6-4a36-9914-32d680a717fc) UCI: 8661735 
+  • PARADA, YOCELYN → Yocelyn Parada (ID: c376108d-0246-4c63-bb0a-830da64e8c93) UCI: 8660366 
+  • PARTIDA, CESAR → Cesar Partida (ID: 06ef6d51-b845-4855-9344-55f90f764817) UCI: 7770291 
+  • PAYNE, KASON → Kason Payne (ID: 7eca7eba-437a-428e-93f2-c04810794715) UCI: 8655452 
+  • PEASE, PARKER → Parker Pease (ID: 2dbbc257-2f97-47ea-b402-63810c287386) UCI: 7779018 
+  • PEDROZA, EMMA → Emma Pedroza (ID: 65c6fcfc-5781-48f7-bb95-43e409a66dd4) UCI: 6639395 
+  • PEREZ, JIANNA → Jianna Perez (ID: 6c21f80d-2620-40c9-b8dc-d9548ebce232) UCI: 7782690 
+  • PERNSTEINER, BL → Blaine Pernsteiner (ID: 32cef9a8-95ce-4c46-835e-1f348e5aedea) UCI: 7780452 
+  • PLASCENCIA, MAX → Maximiliano Plascencia (ID: 75ce4e37-073d-443e-9a14-7aa25917e95e) UCI: 7155586 
+  • QUINDOY, MATEO → Mateo Quindoy (ID: f2c4d76c-9f73-4d94-99c9-a6f63fb72f12) UCI: 8050907 
+  • RAINONE, SANTIA → Santiago Rainone (ID: 485a7739-e65a-4a45-a216-f278465f1057) UCI: 7781301 
+  • RAMOS, SOPHIA → Sophia Ramos (ID: 0ecc3aee-ad67-4b93-9a47-d6ca690d39ac) UCI: 7769143 
+  • RAYGOZA, EMMA → Emma Raygoza (ID: e9118721-30d3-4a9b-9679-ea32b6ef0d7b) UCI: 7778316 
+  • REYNOSO, BENJAM → Benjamin Reynoso (ID: bc3d3e9b-910e-4c4f-bdee-a4b5259c5786) UCI: 8663169 
+  • RIBBLE, AUBREY → Aubrey Ribble (ID: 17803f47-36b7-4b16-937d-652e46fc9bee) UCI: 7768946 
+  • RICH, ATLAS → Atlas Rich (ID: 592032d6-f166-49ce-afd8-b6bb717893c7) UCI: 8659515 
+  • RIOS, JAYDEN → Jayden Rios (ID: 15e71499-90e9-4323-9026-7a1abe8294d0) UCI: 7768331 
+  • RIOS, SAMAYA → Samaya Rios (ID: 2ba47c5e-c8a4-47bb-9e9f-024a063a086e) UCI: 8660969 
+  • RITHY, ZOEY → Zoey Rithy (ID: cf04c5b9-0a93-4196-8da3-ff04771c463b) UCI: 7768378 
+  • RIVAS, LIAM → Liam Rivas (ID: f17314c6-f4d9-4531-8471-54e2e390feb2) UCI: 8226299 
+  • RIVERA, GIOVANN → Giovanni Rivera (ID: 07850da4-1155-4209-afc8-da26818b8b0e) UCI: 7773186 
+  • RIVERA, MATTHEW → Matthew Rivera (ID: 571f9cc5-7530-4041-b3c6-1f1794aae440) UCI: 8659886 
+  • RODRIGUEZ, LEVI → Levi Rodriguez (ID: f1b77f3c-1cd9-4570-8fb7-8c6eba196921) UCI: 8659634 
+  • RODRIGUEZ, SANT → Santana Rodriguez (ID: 3fbfbe87-07d5-4899-85d0-fa1fc86a8b03) UCI: 8657263 
+  • ROMO, ALASDAIR → Alasdair Romo (ID: 3abf3912-06dc-49b5-bf53-fa20439b8561) UCI: 7782587 
+  • ROSS, GIANNA → Gianna Ross (ID: c1873804-9bc9-414e-b2f1-d7332054e22a) UCI: 8659863 
+  • ROTH, MILES → Miles Roth (ID: b258e404-5b42-4fe5-8b55-19bcbdcd9eb2) UCI: 8655705 
+  • RUBIO, EMMA → Emma Rubio (ID: 1dec7863-ceeb-47e9-887f-8fc9f5823041) UCI: 7786410 
+  • RUBIO, NATE → Nate Rubio (ID: 4b2e2872-3ee2-4fc1-9f5e-eb4357ee6d00) UCI: 7785785 
+  • RUIZ, ALAYA → Alaya Ruiz (ID: 61649a1a-ee27-41ae-942b-0ff9a1671bde) UCI: 7786740 
+  • RUIZ JR., ARMAN → Armando Ruiz Jr. (ID: 07615bca-b043-4338-948b-5ecf7dcf1da2) UCI: 7784270 
+  • RUTHERFORD, MON → Montgomery Rutherford (ID: fef3ecaf-fba4-469a-9cb8-e0703fed3401) UCI: 8657830 
+  • SALTOS, ALEXA → Alexa Saltos (ID: ad33eebd-c399-47ea-813c-de5625ee2719) UCI: 7770523 
+  • SANCHEZ, ARIANA → Ariana Sanchez (ID: c1b46790-8f78-40bc-b82a-d7c01131346d) UCI: 7761025 
+  • SEDANO, ALEXAND → Alexander Sedano (ID: 7f11f3f4-f904-462c-a653-65a41b2de1da) UCI: 8378816 
+  • SERRANO, ASHTON → Ashton Serrano (ID: 6d855ac3-cc18-43b5-8387-79ade0c13764) UCI: 8660087 
+  • SILVA, ZEKE → Zeke Silva (ID: a7ec6038-b2d8-4553-af84-693977864171) UCI: 7779965 
+  • SIMMER, RAYGAN → Raygan Simmer (ID: c4edac0c-a111-4eaf-b5c6-9aad69ca598e) UCI: 7781579 
+  • SINGH, KARAMJOT → Karamjot Singh (ID: 83678010-568b-4de6-a139-f835e9284bb7) UCI: 8656006 
+  • SIORDIA, MIKE → Mike Siordia (ID: e05350c0-bee8-4845-8b5e-b7624c0a0446) UCI: 7763040 
+  • SOLORIO, LIAM → Liam Solorio (ID: c514738d-3be2-49ec-9c83-f6002a05385c) UCI: 8661821 
+  • STONE, BENJAMIN → Benjamin Stone (ID: 8409e3b5-af6e-4c6c-ab03-9766c67df242) UCI: 7774292 
+  • SUHAIL, ARSALAN → Arsalan Suhail (ID: 9cbbec21-caf9-45d4-bc69-1cd0723dcfe2) UCI: 8663381 
+  • SULIEMAN, JANNA → Jannah Sulieman (ID: f2977532-a7b8-4966-a4a8-f19ebc006bb9) UCI: 8659073 
+  • TEJEDA, DANIEL → Daniel Tejeda (ID: 5e1cc00b-fa15-478e-8fba-a06a5c482633) UCI: 7770982 
+  • TOMPKINS, LIAM → Liam Tompkins (ID: e79e59fa-10e2-409b-9c0e-5456377ce1a3) UCI: 7765905 
+  • TRUJILLO, CHRIS → Christopher Trujillo (ID: 7e04c803-e495-4f65-87c9-5f600583050b) UCI: 8656624 
+  • TYSON, IRIS → Iris Tyson (ID: b772407e-dd27-46e9-9148-32b10bee96d2) UCI: 7759628 
+  • UTRERA, YUREM → Yurem Utrera (ID: ef1ef018-6ba6-4560-8cad-b56a767c15f1) UCI: 8656649 
+  • VALDEZ, AVAYAH → Avayah Valdez (ID: 43472b3c-74a0-41c8-868e-4f7776eee6c7) UCI: 7787726 
+  • VALDEZ, AVAYAH → Avayah Valdez (ID: 43472b3c-74a0-41c8-868e-4f7776eee6c7) UCI: 8658760 (was: 7787726)
+  • VALENCIA, ALESS → Alessandra Valencia (ID: 1764eba8-0395-45c6-a53e-943078d2a383) UCI: 7786066 
+  • VARGAS, ISAIAH → Isaiah Vargas (ID: dc26ac4a-6ee0-4213-8484-e64fed2a9da1) UCI: 7775696 
+  • VARGAS, ISLA → Isla Vargas (ID: 31212d9a-467c-4843-901f-a6df04d5c5a7) UCI: 7776788 
+  • VARGAS, XIAMARA → Xiamara Vargas (ID: c8f39fa2-0bc9-4b7d-8dde-aa99ffd7a7f0) UCI: 7777738 
+  • VASQUEZ, MASON → Mason Vasquez (ID: 21ba85e2-4b81-4629-a6c4-b8399d190938) UCI: 7785691 
+  • VELASQUEZ, MICH → Michael Velasquez (ID: 3b63e6da-a010-4def-aa69-57b7d0953bf4) UCI: 7786840 
+  • VELAZQUEZ, LUCA → Lucas Velazquez (ID: 3f6c80fa-b30d-48ef-882e-c520a57ac1aa) UCI: 8659380 
+  • VIGIL, CAMILA → Camila Vigil (ID: b0bb69b5-243b-4fdd-a020-b33166f828d9) UCI: 7782986 
+  • VILLASENOR, DUL → Dulce Villasenor (ID: 0d47271e-407a-4751-99e9-9cd15778e589) UCI: 8662092 
+  • VIVEROS, BRIAN → Roberto Viveros (ID: f84c8227-078a-4ee4-aaa4-c1bc0277068f) UCI: 7775868 
+  • VIVEROS, ROBERT → Roberto Viveros (ID: f84c8227-078a-4ee4-aaa4-c1bc0277068f) UCI: 7785872 (was: 7775868)
+  • VONGDARA, JACOB → Jacob Vongdara (ID: 14cbe136-f1e6-4818-bd64-fcea2a6c6fa5) UCI: 7774522 
+  • WALLACE, WILLIA → William Wallace (ID: 1a302ae7-f0ad-4476-98c8-6a3311d9cbad) UCI: 8655449 
+  • WARD, JAXON → Jaxon Ward (ID: a5df4d98-31cc-4a1c-bfd6-5f4a74acf4b6) UCI: 8656913 
+  • WEIL, KASTIA → Kastia Weil (ID: 8ae2669d-bb2d-48da-a2dd-66ccb2c78e59) UCI: 7786098 
+  • WILKERSON, PRES → Preston Wilkerson (ID: 54931633-fc72-4e81-92d0-b74742246670) UCI: 7777688 
+  • WILKINS, BRYER → Bryer Wilkins (ID: 20a8cc6a-4308-446c-8340-b6abcdfef410) UCI: 7776790 
+  • WRIGHT, SAGE → Sage Wright (ID: 02190073-c3db-4edb-b653-4e420f455d8b) UCI: 8661605 
+  • YBARRA, GRAYSON → Grayson Ybarra (ID: 0659786a-4fa5-4048-be4d-ddd8ee0209b9) UCI: 8658335 
+  • YEPEZ, MIA → Mia Yepez (ID: 88cb887c-1ec8-48f7-8b1a-9767df24cc81) UCI: 8662073 
+  • YOHANNA, THEODO → Theodore Yohanna (ID: bb1c99c1-88ab-4304-98c4-b95711b874d7) UCI: 8660575 
+  • ZUNIGA, MILA → Mila Zuniga (ID: ff274ea5-7555-427f-a3a7-c42e492381a5) UCI: 7784607 
+
+Unmatched Records (84):
+----------------------------------------
+  • ACOSTA REYES, E (ACOSTA REYES, E) - No matching swimmer found
+  • AGREDANO, JOSE (AGREDANO, JOSE) - No matching swimmer found
+  • ALLENBAUGH, JOS (ALLENBAUGH, JOS) - No matching swimmer found
+  • ALTAMIRANO, LAN (ALTAMIRANO, LAN) - No matching swimmer found
+  • AYALA RODRIGUE, (AYALA RODRIGUE,, ) - No matching swimmer found
+  • BARAJAS SANCHE, (BARAJAS SANCHE,, ) - No matching swimmer found
+  • BECERRA QUINTA, (BECERRA QUINTA,, ) - No matching swimmer found
+  • BLANCO, NEVAEH (BLANCO, NEVAEH) - No matching swimmer found
+  • CARRANZA REYES, (CARRANZA REYES,, ) - No matching swimmer found
+  • CARRANZA REYES, (CARRANZA REYES,, ) - No matching swimmer found
+  • CARRANZA REYES, (CARRANZA REYES,, ) - No matching swimmer found
+  • CASTANEDA REVU, (CASTANEDA REVU,, ) - No matching swimmer found
+  • CASTRO, DAVID (CASTRO, DAVID) - No matching swimmer found
+  • DERBY, JOSEPH (DERBY, JOSEPH) - No matching swimmer found
+  • DOMINGUEZ PONC, (DOMINGUEZ PONC,, ) - No matching swimmer found
+  • DURAN, LUCIANA (DURAN, LUCIANA) - No matching swimmer found
+  • ESPINOZA-MURGU, (ESPINOZA-MURGU,, ) - No matching swimmer found
+  • ESPINOZA-MURGU, (ESPINOZA-MURGU,, ) - No matching swimmer found
+  • FITZPATRICK, CA (FITZPATRICK, CA) - No matching swimmer found
+  • FLETCHER, GIOVA (FLETCHER, GIOVA) - No matching swimmer found
+  • FULLER, MALAKAI (FULLER, MALAKAI) - No matching swimmer found
+  • GALVAN IV, RICH (GALVAN IV, RICH) - No matching swimmer found
+  • GONZALES NAVAR, (GONZALES NAVAR,, ) - No matching swimmer found
+  • GUERRERO, ELIAH (GUERRERO, ELIAH) - No matching swimmer found
+  • HARDING, ANDRE (HARDING, ANDRE) - No matching swimmer found
+  • HERNANDEZ-LIZA, (HERNANDEZ-LIZA,, ) - No matching swimmer found
+  • JONES, EMERSON (JONES, EMERSON) - No matching swimmer found
+  • KASINGER-ZAVAL, (KASINGER-ZAVAL,, ) - No matching swimmer found
+  • KHAN, LANNAH (KHAN, LANNAH) - No matching swimmer found
+  • KOEHMSTEDT, GRA (KOEHMSTEDT, GRA) - No matching swimmer found
+  • LEON, DANIEL (LEON, DANIEL) - No matching swimmer found
+  • LINARES-BENAVI, (LINARES-BENAVI,, ) - No matching swimmer found
+  • LIPHAM DIAS, KA (LIPHAM DIAS, KA) - No matching swimmer found
+  • LITTLE-VIOLETT, (LITTLE-VIOLETT,, ) - No matching swimmer found
+  • LIZARRAGA TORR, (LIZARRAGA TORR,, ) - No matching swimmer found
+  • LOBATO CALDERO, (LOBATO CALDERO,, ) - No matching swimmer found
+  • LOPEZ-GUZMAN, L (LOPEZ-GUZMAN, L) - No matching swimmer found
+  • LORBIECKI, JACK (LORBIECKI, JACK) - No matching swimmer found
+  • MACIAS, GENEVIE (MACIAS, GENEVIE) - No matching swimmer found
+  • MAGEE, GREYSEN (MAGEE, GREYSEN) - No matching swimmer found
+  • MEDINA, ARTHUR (MEDINA, ARTHUR) - No matching swimmer found
+  • MEDINA, CHRISTI (MEDINA, CHRISTI) - No matching swimmer found
+  • MEDINA HERNAND, (MEDINA HERNAND,, ) - No matching swimmer found
+  • MENDOZA TORRES, (MENDOZA TORRES,, ) - No matching swimmer found
+  • MILLS ESPARZA, (MILLS ESPARZA,, ) - No matching swimmer found
+  • MIRANDA ALVARE, (MIRANDA ALVARE,, ) - No matching swimmer found
+  • MORALES-OROZCO, (MORALES-OROZCO,, ) - No matching swimmer found
+  • MORALES-OROZCO, (MORALES-OROZCO,, ) - No matching swimmer found
+  • NARANJO, JAZLEN (NARANJO, JAZLEN) - No matching swimmer found
+  • NIZAAM, AAYAN (NIZAAM, AAYAN) - No matching swimmer found
+  • NOBLES, JAMES (NOBLES, JAMES) - No matching swimmer found
+  • OLIDE, HARPER (OLIDE, HARPER) - No matching swimmer found
+  • OROPEZA, III, P (OROPEZA, III, P) - No matching swimmer found
+  • ORTEGA CASTILL, (ORTEGA CASTILL,, ) - No matching swimmer found
+  • ORTEGA-CASTILL, (ORTEGA-CASTILL,, ) - No matching swimmer found
+  • ORWIN, OLIVIANA (ORWIN, OLIVIANA) - No matching swimmer found
+  • PACHECO-CANEPA, (PACHECO-CANEPA,, ) - No matching swimmer found
+  • PADILLA RODRIG, (PADILLA RODRIG,, ) - No matching swimmer found
+  • PALOMARES BECE, (PALOMARES BECE,, ) - No matching swimmer found
+  • PALUMBO-LOPEZ, (PALUMBO-LOPEZ,, ) - No matching swimmer found
+  • PEREZ GONZALEZ, (PEREZ GONZALEZ,, ) - No matching swimmer found
+  • PETERSON, KIERA (PETERSON, KIERA) - No matching swimmer found
+  • POLUGAR-BROWNE, (POLUGAR-BROWNE,, ) - No matching swimmer found
+  • PRECIADO MALDO, (PRECIADO MALDO,, ) - No matching swimmer found
+  • RESENDIZ-MOREN, (RESENDIZ-MOREN,, ) - No matching swimmer found
+  • REYES BECERRA, (REYES BECERRA,, ) - No matching swimmer found
+  • RODRIGUEZ OLIV, (RODRIGUEZ OLIV,, ) - No matching swimmer found
+  • ROSE, MILYLANI (ROSE, MILYLANI) - No matching swimmer found
+  • SALAS-SARMENTO, (SALAS-SARMENTO,, ) - No matching swimmer found
+  • SANCHEZ ESTRAD, (SANCHEZ ESTRAD,, ) - No matching swimmer found
+  • SANCHEZ MALFAV, (SANCHEZ MALFAV,, ) - No matching swimmer found
+  • SANDOVAL GARCI, (SANDOVAL GARCI,, ) - No matching swimmer found
+  • SEIDU, ABBIGAIL (SEIDU, ABBIGAIL) - No matching swimmer found
+  • SOTO ESQUIVEL, (SOTO ESQUIVEL,, ) - No matching swimmer found
+  • STREHL, TRAVIS (STREHL, TRAVIS) - No matching swimmer found
+  • SUAREZ AYALA, L (SUAREZ AYALA, L) - No matching swimmer found
+  • TAMERZRIHANABA, (TAMERZRIHANABA,, ) - No matching swimmer found
+  • TORRES MOFHITZ, (TORRES MOFHITZ,, ) - No matching swimmer found
+  • VALIENTE-SANCH, (VALIENTE-SANCH,, ) - No matching swimmer found
+  • VAZQUEZ, GAEL (VAZQUEZ, GAEL) - No matching swimmer found
+  • VELAZQUEZ RANG, (VELAZQUEZ RANG,, ) - No matching swimmer found
+  • VILLA ESCARENO, (VILLA ESCARENO,, ) - No matching swimmer found
+  • VILLALBA-GARCI, (VILLALBA-GARCI,, ) - No matching swimmer found
+  • ZAMBRANO, BELLA (ZAMBRANO, BELLA) - No matching swimmer found
+
+Ambiguous Records (9):
+----------------------------------------
+  • BARAJAS, JR, AL (BARAJAS, JR, AL)
+    Potential matches:
+        - Alejandro Barajas (ID: c55cb986-a2ae-4b85-af56-1799d4e4e3f7, Current UCI: none)
+        - Matias Barajas (ID: cdf41861-edd0-4c72-bbf4-653700f88ad4, Current UCI: 7780466)
+
+  • CASTILLO, ELLIE (CASTILLO, ELLIE)
+    Potential matches:
+        - Noah Castillo (ID: 0e542b88-4af6-4829-8cc4-4c41904535e2, Current UCI: none)
+        - Noelle Castillo (ID: d169dd66-c1cd-4e66-819f-01671340edaa, Current UCI: none)
+
+  • FERRY, RYLIE (FERRY, RYLIE)
+    Potential matches:
+        - Riley Ferry (ID: d7873f9a-91d1-4b09-b721-08b5638527fa, Current UCI: none)
+        - Nolan Ferry (ID: 0ba01f78-e977-4a87-9b48-4d42979e14d8, Current UCI: 7779572)
+
+  • GARCIA, ARIELLA (GARCIA, ARIELLA)
+    Potential matches:
+        - Gael Garcia (ID: 9372539c-f18f-4cb9-a0f8-fcaf92294db6, Current UCI: none)
+        - Jorge Garcia (ID: 10f81f01-f491-4385-8af4-11b19d5d469b, Current UCI: none)
+        - Olivia Garcia (ID: 6485e119-3544-4379-a6c7-994d13553442, Current UCI: none)
+        - Aria Garcia (ID: 426bc44b-e74b-49ad-ab8b-6259e8f0b92b, Current UCI: 7776148)
+
+  • HARVEY, CAMERON (HARVEY, CAMERON)
+    Potential matches:
+        - Myles Harvey (ID: e3aa2afc-7262-4080-afe0-4fd3f778aaae, Current UCI: none)
+        - Gianna Harvey (ID: e6bb3bb6-2aee-4133-92b5-2cb3356ba912, Current UCI: none)
+
+  • JOHNSON, THOMAS (JOHNSON, THOMAS)
+    Potential matches:
+        - Alex Johnson (ID: 1b0810d3-3cb9-4ccc-a161-83ccd02fe2cd, Current UCI: none)
+        - Liam Johnson (ID: 25b427c2-81c0-424d-811a-d14716fbaffa, Current UCI: none)
+
+  • SINGH, RAYYAAN (SINGH, RAYYAAN)
+    Potential matches:
+        - Karamjot Singh (ID: 83678010-568b-4de6-a139-f835e9284bb7, Current UCI: 8656006)
+        - Himmat Singh (ID: 92d6ba7d-9b1e-4233-80c3-f2a5ae178500, Current UCI: none)
+
+  • SINGH, TEGHVEER (SINGH, TEGHVEER)
+    Potential matches:
+        - Karamjot Singh (ID: 83678010-568b-4de6-a139-f835e9284bb7, Current UCI: 8656006)
+        - Himmat Singh (ID: 92d6ba7d-9b1e-4233-80c3-f2a5ae178500, Current UCI: none)
+
+  • TORRES, KYNZLEI (TORRES, KYNZLEI)
+    Potential matches:
+        - Sebastian Torres (ID: 8e959ef1-6bb3-4517-9d00-95bec9c7f2a4, Current UCI: none)
+        - Ulises Torres (ID: 65f43b16-91d8-4e27-a387-fb6176120737, Current UCI: none)
+
+Errors (0):
+--------------------------
+
