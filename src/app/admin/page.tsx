@@ -87,26 +87,26 @@ export default function AdminDashboard() {
 
     try {
       // Use count queries instead of fetching all records
-      const { count: totalSwimmers } = await supabase
+      const { count: totalSwimmers, error: totalError } = await supabase
         .from('swimmers')
         .select('*', { count: 'exact', head: true });
 
-      const { count: activeSwimmers } = await supabase
+      const { count: activeSwimmers, error: activeError } = await supabase
         .from('swimmers')
         .select('*', { count: 'exact', head: true })
         .eq('enrollment_status', 'enrolled');
 
-      const { count: waitlistedSwimmers } = await supabase
+      const { count: waitlistedSwimmers, error: waitlistError } = await supabase
         .from('swimmers')
         .select('*', { count: 'exact', head: true })
         .eq('enrollment_status', 'waitlist');
 
-      const { count: privatePayCount } = await supabase
+      const { count: privatePayCount, error: privateError } = await supabase
         .from('swimmers')
         .select('*', { count: 'exact', head: true })
         .eq('payment_type', 'private_pay');
 
-      const { count: fundedCount } = await supabase
+      const { count: fundedCount, error: fundedError } = await supabase
         .from('swimmers')
         .select('*', { count: 'exact', head: true })
         .in('payment_type', ['funded', 'scholarship', 'other']);
@@ -178,17 +178,17 @@ export default function AdminDashboard() {
 
       setTodaysSessions(sessions || []);
       setStats({
-        totalSwimmers: totalSwimmers || 0,
-        activeSwimmers: activeSwimmers || 0,
-        waitlistedSwimmers: waitlistedSwimmers || 0,
-        privatePayCount: privatePayCount || 0,
-        fundedCount: fundedCount || 0,
-        sessionsToday: sessions?.length || 0,
+        totalSwimmers: totalSwimmers ?? 0,
+        activeSwimmers: activeSwimmers ?? 0,
+        waitlistedSwimmers: waitlistedSwimmers ?? 0,
+        privatePayCount: privatePayCount ?? 0,
+        fundedCount: fundedCount ?? 0,
+        sessionsToday: sessions?.length ?? 0,
         pendingReferrals: 0, // Placeholder - referral_requests table might not exist
-        pendingPOs: pos?.length || 0,
-        sessionsNeedingProgress,
-        privatePayRevenue,
-        fundedRevenue
+        pendingPOs: pos?.length ?? 0,
+        sessionsNeedingProgress: sessionsNeedingProgress ?? 0,
+        privatePayRevenue: privatePayRevenue ?? 0,
+        fundedRevenue: fundedRevenue ?? 0
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -274,6 +274,22 @@ export default function AdminDashboard() {
               <Skeleton key={i} className="h-64 rounded-lg" />
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If stats is still null after loading, show error state
+  if (!stats) {
+    return (
+      <div className="w-full px-6 py-6">
+        <div className="text-center py-12">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Failed to load dashboard</h2>
+          <p className="text-muted-foreground mb-6">
+            Unable to fetch dashboard statistics. Please try again.
+          </p>
+          <Button onClick={fetchStats}>Retry</Button>
         </div>
       </div>
     );
