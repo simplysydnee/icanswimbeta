@@ -12,18 +12,14 @@ import {
   Users,
   Calendar,
   AlertCircle,
-  DollarSign,
   Clock,
   FileText,
-  Plus,
   ArrowRight,
   TrendingUp,
   Building2,
   CreditCard,
   CheckCircle,
-  UserPlus,
   CalendarPlus,
-  Mail,
   Settings,
   LayoutDashboard,
   ClipboardList,
@@ -90,11 +86,30 @@ export default function AdminDashboard() {
     const supabase = createClient();
 
     try {
-      // Fetch swimmers data - fetch all records without pagination
-      const { data: swimmers } = await supabase
+      // Use count queries instead of fetching all records
+      const { count: totalSwimmers } = await supabase
         .from('swimmers')
-        .select('id, enrollment_status, payment_type, funding_source_id')
-        .limit(10000); // Explicit limit to fetch all records
+        .select('*', { count: 'exact', head: true });
+
+      const { count: activeSwimmers } = await supabase
+        .from('swimmers')
+        .select('*', { count: 'exact', head: true })
+        .eq('enrollment_status', 'enrolled');
+
+      const { count: waitlistedSwimmers } = await supabase
+        .from('swimmers')
+        .select('*', { count: 'exact', head: true })
+        .eq('enrollment_status', 'waitlist');
+
+      const { count: privatePayCount } = await supabase
+        .from('swimmers')
+        .select('*', { count: 'exact', head: true })
+        .eq('payment_type', 'private_pay');
+
+      const { count: fundedCount } = await supabase
+        .from('swimmers')
+        .select('*', { count: 'exact', head: true })
+        .in('payment_type', ['funded', 'scholarship', 'other']);
 
       // Fetch pending purchase orders
       const { data: pos } = await supabase
@@ -125,19 +140,6 @@ export default function AdminDashboard() {
         .gte('start_time', fortyEightHoursAgo)
         .lte('start_time', now)
         .order('start_time');
-
-      const swimmerList = swimmers || [];
-
-      // Calculate stats based on actual schema
-      const activeSwimmers = swimmerList.filter(s => s.enrollment_status === 'enrolled').length;
-      const waitlistedSwimmers = swimmerList.filter(s => s.enrollment_status === 'waitlist').length;
-      const privatePayCount = swimmerList.filter(s => s.payment_type === 'private_pay').length;
-      // Funded includes funded, scholarship, and other payment types
-      const fundedCount = swimmerList.filter(s =>
-        s.payment_type === 'funded' ||
-        s.payment_type === 'scholarship' ||
-        s.payment_type === 'other'
-      ).length;
 
       // Calculate sessions needing progress updates
       const sessionsNeedingProgress = sessions?.filter(s => {
@@ -176,11 +178,11 @@ export default function AdminDashboard() {
 
       setTodaysSessions(sessions || []);
       setStats({
-        totalSwimmers: swimmerList.length,
-        activeSwimmers,
-        waitlistedSwimmers,
-        privatePayCount,
-        fundedCount,
+        totalSwimmers: totalSwimmers || 0,
+        activeSwimmers: activeSwimmers || 0,
+        waitlistedSwimmers: waitlistedSwimmers || 0,
+        privatePayCount: privatePayCount || 0,
+        fundedCount: fundedCount || 0,
         sessionsToday: sessions?.length || 0,
         pendingReferrals: 0, // Placeholder - referral_requests table might not exist
         pendingPOs: pos?.length || 0,
