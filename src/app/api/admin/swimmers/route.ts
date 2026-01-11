@@ -188,7 +188,6 @@ export async function GET(request: Request) {
         photo_url,
         created_at,
         updated_at,
-        -- Medical & Safety fields
         has_allergies,
         allergies_description,
         has_medical_conditions,
@@ -196,13 +195,11 @@ export async function GET(request: Request) {
         diagnosis,
         history_of_seizures,
         seizures_description,
-        -- Care needs
         toilet_trained,
         non_ambulatory,
         communication_type,
         other_therapies,
         therapies_description,
-        -- Behavioral
         self_injurious_behavior,
         self_injurious_behavior_description,
         aggressive_behavior,
@@ -212,26 +209,22 @@ export async function GET(request: Request) {
         has_behavior_plan,
         restraint_history,
         restraint_history_description,
-        -- Swimming background
         previous_swim_lessons,
         comfortable_in_water,
         swim_goals,
         strengths_interests,
-        -- Parent info
         parent:profiles!swimmers_parent_id_fkey(
           id,
           full_name,
           email,
           phone
         ),
-        -- Level info
         swim_levels:current_level_id(
           id,
           name,
           display_name,
           color
         ),
-        -- Bookings
         bookings!bookings_swimmer_id_fkey(
           id,
           status,
