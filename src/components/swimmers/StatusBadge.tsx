@@ -117,13 +117,29 @@ export const fundingTypeConfig = {
     border: 'border-sky-200',
     size: 'default'
   },
+  funded: {
+    label: 'Funded',
+    icon: Building2,
+    bg: 'bg-violet-100',
+    text: 'text-violet-800',
+    border: 'border-violet-200',
+    size: 'large'
+  },
   vmrc: {
     label: 'VMRC',
     icon: Building2,
     bg: 'bg-violet-100',
     text: 'text-violet-800',
     border: 'border-violet-200',
-    size: 'large'
+    size: 'default'
+  },
+  cvrc: {
+    label: 'CVRC',
+    icon: Building2,
+    bg: 'bg-violet-100',
+    text: 'text-violet-800',
+    border: 'border-violet-200',
+    size: 'default'
   },
   scholarship: {
     label: 'Scholarship',
@@ -163,7 +179,7 @@ export function StatusBadge({ type, value, className, showIcon = true, size }: S
   // Get the appropriate configuration based on type
   let config: Record<string, { label: string; bg: string; text: string; border: string; icon?: React.ComponentType<{ className?: string }>; size?: string }>;
   let defaultConfig = {
-    label: value,
+    label: value || '—',
     bg: 'bg-gray-100',
     text: 'text-gray-800',
     border: 'border-gray-200'

@@ -607,48 +607,6 @@ export function SwimmerDetailModal({
                   </div>
                 </div>
 
-                {/* Medical & Safety Summary */}
-                {(swimmer.hasAllergies || swimmer.hasMedicalConditions || swimmer.historyOfSeizures) && (
-                  <div className="bg-white border rounded-lg p-4">
-                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                      <AlertTriangle className="h-5 w-5 text-amber-600" />
-                      Medical & Safety Alerts
-                    </h3>
-                    <div className="space-y-3">
-                      {swimmer.hasAllergies && (
-                        <div className="flex items-start gap-2">
-                          <div className="h-2 w-2 rounded-full bg-amber-500 mt-2"></div>
-                          <div>
-                            <p className="font-medium">Allergies</p>
-                            {swimmer.allergiesDescription && (
-                              <p className="text-sm text-muted-foreground">{swimmer.allergiesDescription}</p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      {swimmer.hasMedicalConditions && (
-                        <div className="flex items-start gap-2">
-                          <div className="h-2 w-2 rounded-full bg-red-500 mt-2"></div>
-                          <div>
-                            <p className="font-medium">Medical Conditions</p>
-                            {swimmer.medicalConditionsDescription && (
-                              <p className="text-sm text-muted-foreground">{swimmer.medicalConditionsDescription}</p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      {swimmer.historyOfSeizures && (
-                        <div className="flex items-start gap-2">
-                          <div className="h-2 w-2 rounded-full bg-red-500 mt-2"></div>
-                          <div>
-                            <p className="font-medium">History of Seizures</p>
-                            <p className="text-sm text-muted-foreground">Requires special attention during lessons</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
 
                 {/* Swimming Background */}
                 <div className="bg-white border rounded-lg p-4">
@@ -1001,17 +959,17 @@ export function SwimmerDetailModal({
                 <div className="space-y-4">
                   {/* Allergies */}
                   {swimmer.hasAllergies !== undefined && (
-                    <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                    <div className={`p-4 rounded-lg border ${swimmer.hasAllergies ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="flex items-center justify-between mb-2">
-                        <div className="text-sm font-medium text-amber-800">Has Allergies</div>
-                        <Badge variant={swimmer.hasAllergies ? "destructive" : "outline"}>
+                        <div className={`text-sm font-medium ${swimmer.hasAllergies ? 'text-red-800' : 'text-gray-800'}`}>Allergies</div>
+                        <Badge variant={swimmer.hasAllergies ? "destructive" : "outline"} className={swimmer.hasAllergies ? "" : "bg-gray-50 text-gray-700 border-gray-200"}>
                           {swimmer.hasAllergies ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {swimmer.hasAllergies && swimmer.allergiesDescription && (
-                        <div className="mt-2">
-                          <p className="text-sm font-medium text-amber-700 mb-1">Allergies Description:</p>
-                          <p className="text-sm text-amber-800">{swimmer.allergiesDescription}</p>
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                          <p className="text-sm font-medium text-red-800 mb-1">Allergy Details</p>
+                          <p className="text-sm text-red-700">{swimmer.allergiesDescription}</p>
                         </div>
                       )}
                     </div>
@@ -1019,17 +977,17 @@ export function SwimmerDetailModal({
 
                   {/* Medical Conditions */}
                   {swimmer.hasMedicalConditions !== undefined && (
-                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                    <div className={`p-4 rounded-lg border ${swimmer.hasMedicalConditions ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="flex items-center justify-between mb-2">
-                        <div className="text-sm font-medium text-red-800">Has Medical Conditions</div>
-                        <Badge variant={swimmer.hasMedicalConditions ? "destructive" : "outline"}>
+                        <div className={`text-sm font-medium ${swimmer.hasMedicalConditions ? 'text-red-800' : 'text-gray-800'}`}>Medical Conditions</div>
+                        <Badge variant={swimmer.hasMedicalConditions ? "destructive" : "outline"} className={swimmer.hasMedicalConditions ? "" : "bg-gray-50 text-gray-700 border-gray-200"}>
                           {swimmer.hasMedicalConditions ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {swimmer.hasMedicalConditions && swimmer.medicalConditionsDescription && (
-                        <div className="mt-2">
-                          <p className="text-sm font-medium text-red-700 mb-1">Medical Conditions Description:</p>
-                          <p className="text-sm text-red-800">{swimmer.medicalConditionsDescription}</p>
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                          <p className="text-sm font-medium text-red-800 mb-1">Condition Details</p>
+                          <p className="text-sm text-red-700">{swimmer.medicalConditionsDescription}</p>
                         </div>
                       )}
                     </div>
@@ -1037,17 +995,17 @@ export function SwimmerDetailModal({
 
                   {/* History of Seizures */}
                   {swimmer.historyOfSeizures !== undefined && (
-                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                    <div className={`p-4 rounded-lg border ${swimmer.historyOfSeizures ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="flex items-center justify-between mb-2">
-                        <div className="text-sm font-medium text-purple-800">History of Seizures</div>
-                        <Badge variant={swimmer.historyOfSeizures ? "destructive" : "outline"}>
+                        <div className={`text-sm font-medium ${swimmer.historyOfSeizures ? 'text-red-800' : 'text-gray-800'}`}>History of Seizures</div>
+                        <Badge variant={swimmer.historyOfSeizures ? "destructive" : "outline"} className={swimmer.historyOfSeizures ? "" : "bg-gray-50 text-gray-700 border-gray-200"}>
                           {swimmer.historyOfSeizures ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {swimmer.historyOfSeizures && swimmer.seizuresDescription && (
-                        <div className="mt-2">
-                          <p className="text-sm font-medium text-purple-700 mb-1">Seizures Description:</p>
-                          <p className="text-sm text-purple-800">{swimmer.seizuresDescription}</p>
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                          <p className="text-sm font-medium text-red-800 mb-1">Seizure Details</p>
+                          <p className="text-sm text-red-700">{swimmer.seizuresDescription}</p>
                         </div>
                       )}
                     </div>
@@ -1065,17 +1023,17 @@ export function SwimmerDetailModal({
                 <div className="space-y-4">
                   {/* Self Injurious Behavior */}
                   {swimmer.selfInjuriousBehavior !== undefined && (
-                    <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
+                    <div className={`p-4 rounded-lg border ${swimmer.selfInjuriousBehavior ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="flex items-center justify-between mb-2">
-                        <div className="text-sm font-medium text-pink-800">Self Injurious Behavior</div>
-                        <Badge variant={swimmer.selfInjuriousBehavior ? "destructive" : "outline"}>
+                        <div className={`text-sm font-medium ${swimmer.selfInjuriousBehavior ? 'text-red-800' : 'text-gray-800'}`}>Self Injurious Behavior</div>
+                        <Badge variant={swimmer.selfInjuriousBehavior ? "destructive" : "outline"} className={swimmer.selfInjuriousBehavior ? "" : "bg-gray-50 text-gray-700 border-gray-200"}>
                           {swimmer.selfInjuriousBehavior ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {swimmer.selfInjuriousBehavior && swimmer.selfInjuriousBehaviorDescription && (
-                        <div className="mt-2">
-                          <p className="text-sm font-medium text-pink-700 mb-1">Description:</p>
-                          <p className="text-sm text-pink-800">{swimmer.selfInjuriousBehaviorDescription}</p>
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                          <p className="text-sm font-medium text-red-800 mb-1">Description</p>
+                          <p className="text-sm text-red-700">{swimmer.selfInjuriousBehaviorDescription}</p>
                         </div>
                       )}
                     </div>
@@ -1083,17 +1041,17 @@ export function SwimmerDetailModal({
 
                   {/* Aggressive Behavior */}
                   {swimmer.aggressiveBehavior !== undefined && (
-                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                    <div className={`p-4 rounded-lg border ${swimmer.aggressiveBehavior ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="flex items-center justify-between mb-2">
-                        <div className="text-sm font-medium text-red-800">Aggressive Behavior</div>
-                        <Badge variant={swimmer.aggressiveBehavior ? "destructive" : "outline"}>
+                        <div className={`text-sm font-medium ${swimmer.aggressiveBehavior ? 'text-red-800' : 'text-gray-800'}`}>Aggressive Behavior</div>
+                        <Badge variant={swimmer.aggressiveBehavior ? "destructive" : "outline"} className={swimmer.aggressiveBehavior ? "" : "bg-gray-50 text-gray-700 border-gray-200"}>
                           {swimmer.aggressiveBehavior ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {swimmer.aggressiveBehavior && swimmer.aggressiveBehaviorDescription && (
-                        <div className="mt-2">
-                          <p className="text-sm font-medium text-red-700 mb-1">Description:</p>
-                          <p className="text-sm text-red-800">{swimmer.aggressiveBehaviorDescription}</p>
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                          <p className="text-sm font-medium text-red-800 mb-1">Description</p>
+                          <p className="text-sm text-red-700">{swimmer.aggressiveBehaviorDescription}</p>
                         </div>
                       )}
                     </div>
@@ -1101,17 +1059,17 @@ export function SwimmerDetailModal({
 
                   {/* Elopement History */}
                   {swimmer.elopementHistory !== undefined && (
-                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                    <div className={`p-4 rounded-lg border ${swimmer.elopementHistory ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="flex items-center justify-between mb-2">
-                        <div className="text-sm font-medium text-orange-800">Elopement History</div>
-                        <Badge variant={swimmer.elopementHistory ? "destructive" : "outline"}>
+                        <div className={`text-sm font-medium ${swimmer.elopementHistory ? 'text-red-800' : 'text-gray-800'}`}>Elopement History</div>
+                        <Badge variant={swimmer.elopementHistory ? "destructive" : "outline"} className={swimmer.elopementHistory ? "" : "bg-gray-50 text-gray-700 border-gray-200"}>
                           {swimmer.elopementHistory ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {swimmer.elopementHistory && swimmer.elopementHistoryDescription && (
-                        <div className="mt-2">
-                          <p className="text-sm font-medium text-orange-700 mb-1">Description:</p>
-                          <p className="text-sm text-orange-800">{swimmer.elopementHistoryDescription}</p>
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                          <p className="text-sm font-medium text-red-800 mb-1">Description</p>
+                          <p className="text-sm text-red-700">{swimmer.elopementHistoryDescription}</p>
                         </div>
                       )}
                     </div>
@@ -1119,10 +1077,10 @@ export function SwimmerDetailModal({
 
                   {/* Has Behavior Plan */}
                   {swimmer.hasBehaviorPlan !== undefined && (
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div className={`p-4 rounded-lg border ${swimmer.hasBehaviorPlan ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="flex items-center justify-between">
-                        <div className="text-sm font-medium text-blue-800">Has Behavior Plan</div>
-                        <Badge variant={swimmer.hasBehaviorPlan ? "default" : "outline"}>
+                        <div className={`text-sm font-medium ${swimmer.hasBehaviorPlan ? 'text-amber-800' : 'text-gray-800'}`}>Behavior Plan</div>
+                        <Badge variant="outline" className={swimmer.hasBehaviorPlan ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-gray-50 text-gray-700 border-gray-200"}>
                           {swimmer.hasBehaviorPlan ? "Yes" : "No"}
                         </Badge>
                       </div>
@@ -1131,17 +1089,17 @@ export function SwimmerDetailModal({
 
                   {/* Restraint History */}
                   {swimmer.restraintHistory !== undefined && (
-                    <div className="bg-rose-50 p-4 rounded-lg border border-rose-200">
+                    <div className={`p-4 rounded-lg border ${swimmer.restraintHistory ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="flex items-center justify-between mb-2">
-                        <div className="text-sm font-medium text-rose-800">Restraint History</div>
-                        <Badge variant={swimmer.restraintHistory ? "destructive" : "outline"}>
+                        <div className={`text-sm font-medium ${swimmer.restraintHistory ? 'text-red-800' : 'text-gray-800'}`}>Restraint History</div>
+                        <Badge variant={swimmer.restraintHistory ? "destructive" : "outline"} className={swimmer.restraintHistory ? "" : "bg-gray-50 text-gray-700 border-gray-200"}>
                           {swimmer.restraintHistory ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {swimmer.restraintHistory && swimmer.restraintHistoryDescription && (
-                        <div className="mt-2">
-                          <p className="text-sm font-medium text-rose-700 mb-1">Description:</p>
-                          <p className="text-sm text-rose-800">{swimmer.restraintHistoryDescription}</p>
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                          <p className="text-sm font-medium text-red-800 mb-1">Description</p>
+                          <p className="text-sm text-red-700">{swimmer.restraintHistoryDescription}</p>
                         </div>
                       )}
                     </div>

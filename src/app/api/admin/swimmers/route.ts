@@ -37,6 +37,7 @@ interface SwimmerResponse {
     color?: string;
   } | null;
   fundingSourceId?: string;
+  paymentType?: string;
   fundingSourceName?: string;
   photoUrl?: string;
   fundingSourceSessionsUsed?: number;
@@ -356,6 +357,7 @@ export async function GET(request: Request) {
           color: swimmer.swim_levels[0].color
         } : null,
         fundingSourceId: swimmer.payment_type,
+        paymentType: swimmer.payment_type,
         fundingSourceName: swimmer.payment_type === 'funded' ? 'Funded' :
                           swimmer.payment_type === 'private_pay' ? 'Private Pay' :
                           swimmer.payment_type === 'scholarship' ? 'Scholarship' : 'Other',

@@ -306,7 +306,9 @@ export default function InstructorSwimmerDetailPage() {
                 </Card>
 
                 {/* Medical & Safety Summary */}
-                {(swimmer.has_allergies || swimmer.has_medical_conditions || swimmer.history_of_seizures) && (
+                {(swimmer.has_allergies || swimmer.has_medical_conditions || swimmer.history_of_seizures ||
+                  swimmer.non_ambulatory || swimmer.self_injurious_behavior || swimmer.aggressive_behavior ||
+                  swimmer.elopement_history || swimmer.restraint_history) && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -343,6 +345,59 @@ export default function InstructorSwimmerDetailPage() {
                           <div>
                             <p className="font-medium">History of Seizures</p>
                             <p className="text-sm text-muted-foreground">Requires special attention during lessons</p>
+                          </div>
+                        </div>
+                      )}
+                      {swimmer.non_ambulatory && (
+                        <div className="flex items-start gap-2">
+                          <div className="h-2 w-2 rounded-full bg-red-500 mt-2"></div>
+                          <div>
+                            <p className="font-medium">Non-Ambulatory</p>
+                            <p className="text-sm text-muted-foreground">Requires wheelchair accessibility</p>
+                          </div>
+                        </div>
+                      )}
+                      {swimmer.self_injurious_behavior && (
+                        <div className="flex items-start gap-2">
+                          <div className="h-2 w-2 rounded-full bg-red-500 mt-2"></div>
+                          <div>
+                            <p className="font-medium">Self-Injurious Behavior</p>
+                            {swimmer.self_injurious_description && (
+                              <p className="text-sm text-muted-foreground">{swimmer.self_injurious_description}</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {swimmer.aggressive_behavior && (
+                        <div className="flex items-start gap-2">
+                          <div className="h-2 w-2 rounded-full bg-red-500 mt-2"></div>
+                          <div>
+                            <p className="font-medium">Aggressive Behavior</p>
+                            {swimmer.aggressive_behavior_description && (
+                              <p className="text-sm text-muted-foreground">{swimmer.aggressive_behavior_description}</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {swimmer.elopement_history && (
+                        <div className="flex items-start gap-2">
+                          <div className="h-2 w-2 rounded-full bg-red-500 mt-2"></div>
+                          <div>
+                            <p className="font-medium">Elopement History</p>
+                            {swimmer.elopement_description && (
+                              <p className="text-sm text-muted-foreground">{swimmer.elopement_description}</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {swimmer.restraint_history && (
+                        <div className="flex items-start gap-2">
+                          <div className="h-2 w-2 rounded-full bg-red-500 mt-2"></div>
+                          <div>
+                            <p className="font-medium">Restraint History</p>
+                            {swimmer.restraint_history_description && (
+                              <p className="text-sm text-muted-foreground">{swimmer.restraint_history_description}</p>
+                            )}
                           </div>
                         </div>
                       )}
@@ -462,80 +517,303 @@ export default function InstructorSwimmerDetailPage() {
 
           {/* Medical & Safety Tab */}
           <TabsContent value="medical" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Stethoscope className="h-5 w-5" />
-                  Medical & Safety Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Allergies */}
-                <div>
-                  <h3 className="font-semibold mb-2">Allergies</h3>
-                  <div className="flex items-center justify-between">
-                    <span>Has Allergies</span>
-                    <Badge variant={swimmer.has_allergies ? "destructive" : "outline"}>
-                      {swimmer.has_allergies ? 'Yes' : 'No'}
-                    </Badge>
-                  </div>
-                  {swimmer.has_allergies && swimmer.allergies_description && (
-                    <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded">
-                      <p className="font-medium text-amber-800">Allergy Details:</p>
-                      <p className="text-amber-700">{swimmer.allergies_description}</p>
-                    </div>
-                  )}
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Medical Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Stethoscope className="h-5 w-5" />
+                    Medical Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    {/* Height and Weight */}
+                    {(swimmer.height || swimmer.weight) && (
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        {swimmer.height && (
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">Height</span>
+                            <span className="text-muted-foreground">{swimmer.height}</span>
+                          </div>
+                        )}
+                        {swimmer.weight && (
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">Weight</span>
+                            <span className="text-muted-foreground">{swimmer.weight}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                {/* Medical Conditions */}
-                <div>
-                  <h3 className="font-semibold mb-2">Medical Conditions</h3>
-                  <div className="flex items-center justify-between">
-                    <span>Has Medical Conditions</span>
-                    <Badge variant={swimmer.has_medical_conditions ? "destructive" : "outline"}>
-                      {swimmer.has_medical_conditions ? 'Yes' : 'No'}
-                    </Badge>
-                  </div>
-                  {swimmer.has_medical_conditions && swimmer.medical_conditions_description && (
-                    <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded">
-                      <p className="font-medium text-red-800">Condition Details:</p>
-                      <p className="text-red-700">{swimmer.medical_conditions_description}</p>
+                    {/* Allergies */}
+                    <div className="flex items-start gap-3">
+                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${swimmer.has_allergies ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                        {swimmer.has_allergies ? (
+                          <span className="text-xs font-bold">⚠️</span>
+                        ) : (
+                          <span className="text-xs font-bold">✓</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Allergies</span>
+                          <Badge variant={swimmer.has_allergies ? "destructive" : "outline"} className={swimmer.has_allergies ? "" : "bg-green-50 text-green-700 border-green-200"}>
+                            {swimmer.has_allergies ? 'Yes' : 'No'}
+                          </Badge>
+                        </div>
+                        {swimmer.has_allergies && swimmer.allergies_description && (
+                          <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                            <p className="font-medium text-red-800 mb-1">Allergy Details</p>
+                            <p className="text-red-700 text-sm">{swimmer.allergies_description}</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
 
-                {/* Seizures */}
-                <div>
-                  <h3 className="font-semibold mb-2">Seizure History</h3>
-                  <div className="flex items-center justify-between">
-                    <span>History of Seizures</span>
-                    <Badge variant={swimmer.history_of_seizures ? "destructive" : "outline"}>
-                      {swimmer.history_of_seizures ? 'Yes' : 'No'}
-                    </Badge>
-                  </div>
-                  {swimmer.history_of_seizures && (
-                    <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded">
-                      <p className="font-medium text-red-800">⚠️ Important Safety Note:</p>
-                      <p className="text-red-700">This swimmer has a history of seizures. Be prepared to respond appropriately during lessons.</p>
+                    {/* Medical Conditions */}
+                    <div className="flex items-start gap-3">
+                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${swimmer.has_medical_conditions ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                        {swimmer.has_medical_conditions ? (
+                          <span className="text-xs font-bold">⚠️</span>
+                        ) : (
+                          <span className="text-xs font-bold">✓</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Medical Conditions</span>
+                          <Badge variant={swimmer.has_medical_conditions ? "destructive" : "outline"} className={swimmer.has_medical_conditions ? "" : "bg-green-50 text-green-700 border-green-200"}>
+                            {swimmer.has_medical_conditions ? 'Yes' : 'No'}
+                          </Badge>
+                        </div>
+                        {swimmer.has_medical_conditions && swimmer.medical_conditions_description && (
+                          <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                            <p className="font-medium text-red-800 mb-1">Condition Details</p>
+                            <p className="text-red-700 text-sm">{swimmer.medical_conditions_description}</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
 
-                {/* Diagnosis */}
-                {swimmer.diagnosis && swimmer.diagnosis.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Diagnosis</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {swimmer.diagnosis.map((d, i) => (
-                        <Badge key={i} variant="secondary">
-                          {d}
-                        </Badge>
-                      ))}
+                    {/* History of Seizures */}
+                    <div className="flex items-start gap-3">
+                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${swimmer.history_of_seizures ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                        {swimmer.history_of_seizures ? (
+                          <span className="text-xs font-bold">⚠️</span>
+                        ) : (
+                          <span className="text-xs font-bold">✓</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">History of Seizures</span>
+                          <Badge variant={swimmer.history_of_seizures ? "destructive" : "outline"} className={swimmer.history_of_seizures ? "" : "bg-green-50 text-green-700 border-green-200"}>
+                            {swimmer.history_of_seizures ? 'Yes' : 'No'}
+                          </Badge>
+                        </div>
+                        {swimmer.history_of_seizures && swimmer.seizures_description && (
+                          <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                            <p className="font-medium text-red-800 mb-1">Seizure Details</p>
+                            <p className="text-red-700 text-sm">{swimmer.seizures_description}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Diagnosis */}
+                    {swimmer.diagnosis && swimmer.diagnosis.length > 0 && (
+                      <div className="pt-2 border-t">
+                        <p className="font-medium mb-2">Diagnosis</p>
+                        <div className="flex flex-wrap gap-2">
+                          {swimmer.diagnosis.map((d, i) => (
+                            <Badge key={i} variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+                              {d}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Safety & Mobility */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    Safety & Mobility
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    {/* Toilet Trained */}
+                    <div className="flex items-start gap-3">
+                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${swimmer.toilet_trained === 'yes' ? 'bg-green-100 text-green-600' : swimmer.toilet_trained === 'in_progress' ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-600'}`}>
+                        {swimmer.toilet_trained === 'yes' ? (
+                          <span className="text-xs font-bold">✓</span>
+                        ) : swimmer.toilet_trained === 'in_progress' ? (
+                          <span className="text-xs font-bold">↻</span>
+                        ) : (
+                          <span className="text-xs font-bold">✗</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Toilet Trained</span>
+                          <Badge variant="outline" className={
+                            swimmer.toilet_trained === 'yes' ? 'bg-green-50 text-green-700 border-green-200' :
+                            swimmer.toilet_trained === 'in_progress' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                            'bg-gray-50 text-gray-700 border-gray-200'
+                          }>
+                            {swimmer.toilet_trained === 'yes' ? 'Yes' : swimmer.toilet_trained === 'in_progress' ? 'In Progress' : swimmer.toilet_trained === 'no' ? 'No' : 'Not specified'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Non-Ambulatory */}
+                    <div className="flex items-start gap-3">
+                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${swimmer.non_ambulatory ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                        {swimmer.non_ambulatory ? (
+                          <span className="text-xs font-bold">⚠️</span>
+                        ) : (
+                          <span className="text-xs font-bold">✓</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Non-Ambulatory</span>
+                          <Badge variant={swimmer.non_ambulatory ? "destructive" : "outline"} className={swimmer.non_ambulatory ? "" : "bg-green-50 text-green-700 border-green-200"}>
+                            {swimmer.non_ambulatory ? 'Yes' : 'No'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Self-Injurious Behavior */}
+                    <div className="flex items-start gap-3">
+                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${swimmer.self_injurious_behavior ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                        {swimmer.self_injurious_behavior ? (
+                          <span className="text-xs font-bold">⚠️</span>
+                        ) : (
+                          <span className="text-xs font-bold">✓</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Self-Injurious Behavior</span>
+                          <Badge variant={swimmer.self_injurious_behavior ? "destructive" : "outline"} className={swimmer.self_injurious_behavior ? "" : "bg-green-50 text-green-700 border-green-200"}>
+                            {swimmer.self_injurious_behavior ? 'Yes' : 'No'}
+                          </Badge>
+                        </div>
+                        {swimmer.self_injurious_behavior && swimmer.self_injurious_description && (
+                          <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                            <p className="font-medium text-red-800 mb-1">Behavior Details</p>
+                            <p className="text-red-700 text-sm">{swimmer.self_injurious_description}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Aggressive Behavior */}
+                    <div className="flex items-start gap-3">
+                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${swimmer.aggressive_behavior ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                        {swimmer.aggressive_behavior ? (
+                          <span className="text-xs font-bold">⚠️</span>
+                        ) : (
+                          <span className="text-xs font-bold">✓</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Aggressive Behavior</span>
+                          <Badge variant={swimmer.aggressive_behavior ? "destructive" : "outline"} className={swimmer.aggressive_behavior ? "" : "bg-green-50 text-green-700 border-green-200"}>
+                            {swimmer.aggressive_behavior ? 'Yes' : 'No'}
+                          </Badge>
+                        </div>
+                        {swimmer.aggressive_behavior && swimmer.aggressive_behavior_description && (
+                          <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                            <p className="font-medium text-red-800 mb-1">Behavior Details</p>
+                            <p className="text-red-700 text-sm">{swimmer.aggressive_behavior_description}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Elopement History */}
+                    <div className="flex items-start gap-3">
+                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${swimmer.elopement_history ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                        {swimmer.elopement_history ? (
+                          <span className="text-xs font-bold">⚠️</span>
+                        ) : (
+                          <span className="text-xs font-bold">✓</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Elopement History</span>
+                          <Badge variant={swimmer.elopement_history ? "destructive" : "outline"} className={swimmer.elopement_history ? "" : "bg-green-50 text-green-700 border-green-200"}>
+                            {swimmer.elopement_history ? 'Yes' : 'No'}
+                          </Badge>
+                        </div>
+                        {swimmer.elopement_history && swimmer.elopement_description && (
+                          <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                            <p className="font-medium text-red-800 mb-1">Elopement Details</p>
+                            <p className="text-red-700 text-sm">{swimmer.elopement_description}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Behavior Plan */}
+                    <div className="flex items-start gap-3">
+                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${swimmer.has_behavior_plan ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-600'}`}>
+                        {swimmer.has_behavior_plan ? (
+                          <span className="text-xs font-bold">📋</span>
+                        ) : (
+                          <span className="text-xs font-bold">-</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Behavior Plan</span>
+                          <Badge variant="outline" className={swimmer.has_behavior_plan ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-gray-50 text-gray-700 border-gray-200"}>
+                            {swimmer.has_behavior_plan ? 'Yes' : 'No'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Restraint History */}
+                    <div className="flex items-start gap-3">
+                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${swimmer.restraint_history ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                        {swimmer.restraint_history ? (
+                          <span className="text-xs font-bold">⚠️</span>
+                        ) : (
+                          <span className="text-xs font-bold">✓</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Restraint History</span>
+                          <Badge variant={swimmer.restraint_history ? "destructive" : "outline"} className={swimmer.restraint_history ? "" : "bg-green-50 text-green-700 border-green-200"}>
+                            {swimmer.restraint_history ? 'Yes' : 'No'}
+                          </Badge>
+                        </div>
+                        {swimmer.restraint_history && swimmer.restraint_history_description && (
+                          <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
+                            <p className="font-medium text-red-800 mb-1">Restraint Details</p>
+                            <p className="text-red-700 text-sm">{swimmer.restraint_history_description}</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Progress & Skills Tab - Placeholder */}
