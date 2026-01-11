@@ -28,16 +28,26 @@ export default function SignupForm() {
   const [formError, setFormError] = useState<string | null>(null)
   const [isFromReferral, setIsFromReferral] = useState(false)
   const [isFromEnrollment, setIsFromEnrollment] = useState(false)
+  const [isFromInvitation, setIsFromInvitation] = useState(false)
   const [childName, setChildName] = useState('')
   const [redirectUrl, setRedirectUrl] = useState('')
   const [emailParam, setEmailParam] = useState('')
+  const [invitationToken, setInvitationToken] = useState('')
+  const [invitationSwimmerName, setInvitationSwimmerName] = useState('')
+  const [invitationError, setInvitationError] = useState<string | null>(null)
+  const [validatingInvitation, setValidatingInvitation] = useState(false)
 
   useEffect(() => {
     const emailParamValue = searchParams.get('email')
     const childParam = searchParams.get('child')
     const redirectParam = searchParams.get('redirect')
+    const tokenParam = searchParams.get('token')
 
-    if (emailParamValue) {
+    // Handle invitation token
+    if (tokenParam) {
+      setInvitationToken(tokenParam)
+      validateInvitationToken(tokenParam)
+    } else if (emailParamValue) {
       const decodedEmail = decodeURIComponent(emailParamValue)
       setEmailParam(decodedEmail)
       setFormData(prev => ({ ...prev, email: decodedEmail }))
@@ -55,6 +65,30 @@ export default function SignupForm() {
       setRedirectUrl(decodeURIComponent(redirectParam))
     }
   }, [searchParams])
+
+  const validateInvitationToken = async (token: string) => {
+    setValidatingInvitation(true)
+    setInvitationError(null)
+    try {
+      const response = await fetch(`/api/invitations/validate?token=${encodeURIComponent(token)}`)
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid invitation')
+      }
+
+      // Token is valid
+      setIsFromInvitation(true)
+      setEmailParam(data.parent_email)
+      setFormData(prev => ({ ...prev, email: data.parent_email }))
+      setInvitationSwimmerName(data.swimmer_name)
+    } catch (error) {
+      console.error('Error validating invitation token:', error)
+      setInvitationError(error instanceof Error ? error.message : 'Invalid or expired invitation')
+    } finally {
+      setValidatingInvitation(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -90,6 +124,7 @@ export default function SignupForm() {
         confirm_password: formData.confirmPassword,
         terms_accepted: formData.termsAccepted,
         redirect_url: redirectUrl || (isFromReferral ? '/dashboard' : undefined),
+        invitation_token: isFromInvitation ? invitationToken : undefined,
       })
     } catch {
       // Error is handled by AuthContext
@@ -117,14 +152,36 @@ export default function SignupForm() {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl text-center">Create Account</CardTitle>
         <CardDescription className="text-center">
-          {isFromEnrollment && childName
+          {isFromInvitation && invitationSwimmerName
+            ? `Sign up to access ${invitationSwimmerName}'s swimmer account`
+            : isFromEnrollment && childName
             ? `Sign up to complete enrollment for ${childName}`
             : 'Enter your information to create your account'
           }
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {isFromEnrollment && childName && (
+        {validatingInvitation && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center">
+              <Loader2 className="h-4 w-4 mr-2 animate-spin text-blue-600" />
+              <p className="text-sm text-blue-800">Validating invitation...</p>
+            </div>
+          </div>
+        )}
+
+        {isFromInvitation && invitationSwimmerName && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-800 font-medium text-sm">
+              🎉 Welcome! You're signing up to access {invitationSwimmerName}'s swimmer account.
+            </p>
+            <p className="text-xs text-green-700 mt-1">
+              Your email has been pre-filled. After signing up, you'll be automatically linked to the swimmer.
+            </p>
+          </div>
+        )}
+
+        {isFromEnrollment && childName && !isFromInvitation && (
           <div className="mb-6 p-4 bg-[#2a5e84]/10 border border-[#2a5e84]/20 rounded-lg">
             <p className="text-[#2a5e84] font-medium text-sm">
               🏊 Welcome! You're signing up to complete enrollment for {childName}.
@@ -135,10 +192,19 @@ export default function SignupForm() {
           </div>
         )}
 
-        {emailParam && !isFromReferral && (
+        {emailParam && !isFromReferral && !isFromInvitation && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <p className="text-sm text-blue-800">
               Create an account to continue. Your email has been pre-filled.
+            </p>
+          </div>
+        )}
+
+        {invitationError && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800 font-medium text-sm">⚠️ {invitationError}</p>
+            <p className="text-xs text-red-700 mt-1">
+              You can still create an account, but the invitation link is invalid or expired.
             </p>
           </div>
         )}
@@ -212,14 +278,19 @@ export default function SignupForm() {
               placeholder="you@example.com"
               value={formData.email}
               onChange={handleChange}
-              disabled={loading || isFromReferral}
-              readOnly={isFromReferral}
-              className={isFromReferral ? 'bg-gray-50 cursor-not-allowed' : ''}
+              disabled={loading || isFromReferral || isFromInvitation}
+              readOnly={isFromReferral || isFromInvitation}
+              className={(isFromReferral || isFromInvitation) ? 'bg-gray-50 cursor-not-allowed' : ''}
               required
             />
             {isFromReferral && (
               <p className="text-xs text-gray-500 mt-1">
                 This email is linked to your referral and cannot be changed.
+              </p>
+            )}
+            {isFromInvitation && (
+              <p className="text-xs text-gray-500 mt-1">
+                This email is linked to your invitation and cannot be changed.
               </p>
             )}
           </div>

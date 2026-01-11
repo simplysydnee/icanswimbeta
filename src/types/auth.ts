@@ -53,6 +53,7 @@ export interface RegisterCredentials {
   confirm_password: string;
   terms_accepted: boolean;
   redirect_url?: string;
+  invitation_token?: string;
 }
 
 export interface ResetPasswordRequest {

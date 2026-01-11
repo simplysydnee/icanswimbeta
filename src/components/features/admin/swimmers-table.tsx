@@ -54,6 +54,7 @@ export interface Swimmer {
     color?: string;
   } | null;
   paymentType: string;
+  fundingSourceName?: string;
   hasFundingAuthorization: boolean;
   photoUrl?: string;
   authorizedSessionsUsed?: number;
@@ -526,7 +527,7 @@ export function SwimmersTable({
                             'bg-gray-100 text-gray-800 border-gray-200'
                         )}
                       >
-                        {paymentDisplay[swimmer.paymentType] || swimmer.paymentType}
+                        {swimmer.fundingSourceName || paymentDisplay[swimmer.paymentType] || swimmer.paymentType}
                         {swimmer.hasFundingAuthorization && ' (Funded)'}
                       </Badge>
                     </TableCell>
@@ -655,7 +656,7 @@ export function SwimmersTable({
                     <div>
                       <div className="text-muted-foreground">Funding</div>
                       <div className="font-medium">
-                        {paymentDisplay[swimmer.paymentType] || swimmer.paymentType}
+                        {swimmer.fundingSourceName || paymentDisplay[swimmer.paymentType] || swimmer.paymentType}
                         {swimmer.hasFundingAuthorization && ' (Funded)'}
                       </div>
                     </div>

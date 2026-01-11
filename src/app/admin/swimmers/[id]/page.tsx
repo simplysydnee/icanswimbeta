@@ -28,10 +28,11 @@ import {
   CheckCircle,
   XCircle,
   Stethoscope,
-  Circle
+  Circle,
+  UserPlus
 } from 'lucide-react'
 import { RoleGuard } from '@/components/auth/RoleGuard'
-import { format, parseISO, differenceInYears } from 'date-fns'
+import { format, parseISO, differenceInYears, differenceInDays } from 'date-fns'
 import { useToast } from '@/hooks/use-toast'
 import {
   LineChart,
@@ -241,6 +242,7 @@ function AdminSwimmerDetailContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isGeneratingReport, setIsGeneratingReport] = useState(false)
+  const [invitingParent, setInvitingParent] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -461,6 +463,55 @@ function AdminSwimmerDetailContent() {
         description: "This swimmer doesn't have a coordinator assigned or is not a funded client.",
         variant: "destructive",
       })
+    }
+  }
+
+  const handleInviteParent = async () => {
+    if (!swimmer?.id) return
+
+    setInvitingParent(true)
+    try {
+      const response = await fetch(`/api/admin/swimmers/${swimmer.id}/invite-parent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          parent_email: swimmer.parent_email,
+          parent_name: swimmer.parent?.full_name,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send invitation')
+      }
+
+      if (data.linked) {
+        toast({
+          title: 'Parent account found and linked!',
+          description: 'The swimmer has been automatically linked to the existing parent account.',
+        })
+        // Refresh swimmer data to show updated parent info
+        fetchSwimmerData()
+      } else {
+        toast({
+          title: data.isResend ? 'Invitation resent!' : 'Invitation sent!',
+          description: data.message,
+        })
+        // Refresh swimmer data to update invited_at timestamp
+        fetchSwimmerData()
+      }
+    } catch (error) {
+      console.error('Error inviting parent:', error)
+      toast({
+        title: 'Failed to send invitation',
+        description: error instanceof Error ? error.message : 'Please try again',
+        variant: 'destructive',
+      })
+    } finally {
+      setInvitingParent(false)
     }
   }
 
@@ -702,7 +753,12 @@ function AdminSwimmerDetailContent() {
                       <>
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="font-medium">{swimmer.parent.full_name || 'Not provided'}</p>
+                            <div className="flex items-center gap-2 mb-2">
+                              <p className="font-medium">{swimmer.parent.full_name || 'Not provided'}</p>
+                              <Badge className="bg-green-100 text-green-800 border-green-200">
+                                <CheckCircle className="h-3 w-3 mr-1" /> Parent Linked
+                              </Badge>
+                            </div>
                             <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                               {swimmer.parent.email && (
                                 <div className="flex items-center gap-1">
@@ -735,8 +791,71 @@ function AdminSwimmerDetailContent() {
                           </Button>
                         </div>
                       </>
+                    ) : swimmer.parent_email ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-amber-600">Pending Parent Signup</p>
+                            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Mail className="h-4 w-4" />
+                                <span>{swimmer.parent_email}</span>
+                              </div>
+                            </div>
+                            <p className="text-xs text-amber-600 mt-2">
+                              Parent has not created an account yet. They will be automatically linked when they sign up.
+                            </p>
+                            {swimmer.invited_at && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                Invitation sent {differenceInDays(new Date(), new Date(swimmer.invited_at))} days ago
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            {swimmer.invited_at ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleInviteParent}
+                                disabled={invitingParent}
+                              >
+                                {invitingParent ? (
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                  <Mail className="h-4 w-4 mr-2" />
+                                )}
+                                Resend Invite
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                onClick={handleInviteParent}
+                                disabled={invitingParent}
+                              >
+                                {invitingParent ? (
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                  <UserPlus className="h-4 w-4 mr-2" />
+                                )}
+                                Invite Parent
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     ) : (
-                      <p className="text-muted-foreground">No parent information available</p>
+                      <div className="space-y-3">
+                        <p className="text-muted-foreground">No parent information available</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled
+                          title="Add parent email to swimmer profile first"
+                        >
+                          <UserPlus className="h-4 w-4 mr-2" />
+                          Invite Parent
+                        </Button>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
@@ -978,6 +1097,25 @@ function AdminSwimmerDetailContent() {
                       <Mail className="h-4 w-4 mr-2" />
                       Send to Coordinator
                     </Button>
+
+                    {/* Invite Parent - when no parent linked */}
+                    {!swimmer.parent && swimmer.parent_email && (
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={handleInviteParent}
+                        disabled={invitingParent}
+                      >
+                        {invitingParent ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : swimmer.invited_at ? (
+                          <Mail className="h-4 w-4 mr-2" />
+                        ) : (
+                          <UserPlus className="h-4 w-4 mr-2" />
+                        )}
+                        {invitingParent ? 'Sending...' : swimmer.invited_at ? 'Resend Invite' : 'Invite Parent'}
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
 

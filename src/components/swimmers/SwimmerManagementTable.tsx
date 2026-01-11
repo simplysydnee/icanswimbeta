@@ -62,6 +62,7 @@ export interface Swimmer {
     color?: string;
   } | null;
   paymentType: string;
+  fundingSourceName?: string;
   hasFundingAuthorization: boolean;
   photoUrl?: string;
   vmrcSessionsUsed?: number;
@@ -735,7 +736,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
                     <div className="flex flex-col gap-1">
                       <StatusBadge
                         type="funding"
-                        value={swimmer.paymentType}
+                        value={swimmer.fundingSourceName || swimmer.paymentType}
                         showIcon={true}
                       />
                       {swimmer.hasFundingAuthorization && swimmer.vmrcCurrentPosNumber && (

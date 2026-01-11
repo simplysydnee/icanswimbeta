@@ -46,6 +46,7 @@ interface SwimmerResponse {
   fundingSourcePosExpiresAt?: string;
   createdAt: string;
   updatedAt: string;
+  invitedAt?: string;
   parent?: {
     id: string;
     fullName?: string;
@@ -189,6 +190,7 @@ export async function GET(request: Request) {
         photo_url,
         created_at,
         updated_at,
+        invited_at,
         has_allergies,
         allergies_description,
         has_medical_conditions,
@@ -225,6 +227,11 @@ export async function GET(request: Request) {
           name,
           display_name,
           color
+        ),
+        funding_source:funding_source_id(
+          id,
+          name,
+          short_name
         ),
         bookings!bookings_swimmer_id_fkey(
           id,
@@ -356,11 +363,12 @@ export async function GET(request: Request) {
           displayName: swimmer.swim_levels[0].display_name,
           color: swimmer.swim_levels[0].color
         } : null,
-        fundingSourceId: swimmer.payment_type,
+        fundingSourceId: swimmer.funding_source_id,
         paymentType: swimmer.payment_type,
-        fundingSourceName: swimmer.payment_type === 'funded' ? 'Funded' :
-                          swimmer.payment_type === 'private_pay' ? 'Private Pay' :
-                          swimmer.payment_type === 'scholarship' ? 'Scholarship' : 'Other',
+        fundingSourceName: swimmer.funding_source?.[0]?.short_name ||
+                          (swimmer.payment_type === 'private_pay' ? 'Private Pay' :
+                          swimmer.payment_type === 'scholarship' ? 'Scholarship' :
+                          swimmer.payment_type === 'other' ? 'Other' : 'Funded'),
         photoUrl: swimmer.photo_url,
         fundingSourceSessionsUsed: 0,
         fundingSourceSessionsAuthorized: 0,
@@ -368,7 +376,8 @@ export async function GET(request: Request) {
         fundingSourcePosExpiresAt: undefined,
         createdAt: swimmer.created_at,
         updatedAt: swimmer.updated_at,
-        parent: swimmer.parent ? {
+        invitedAt: swimmer.invited_at,
+        parent: swimmer.parent && Array.isArray(swimmer.parent) && swimmer.parent.length > 0 ? {
           id: (swimmer.parent as any[])[0]?.id,
           fullName: (swimmer.parent as any[])[0]?.full_name,
           email: (swimmer.parent as any[])[0]?.email,

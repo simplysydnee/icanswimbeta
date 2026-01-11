@@ -203,7 +203,37 @@ export function StatusBadge({ type, value, className, showIcon = true, size }: S
   }
 
   // Get the status configuration or use default
-  const statusConfig = config[value] || defaultConfig;
+  // For funding type, handle various formats
+  let statusConfig = config[value] || defaultConfig;
+  if (type === 'funding' && !config[value]) {
+    // Try different formats for funding sources
+    let lookupValue = value;
+
+    // Convert to lowercase for case-insensitive lookup
+    lookupValue = value?.toLowerCase();
+    statusConfig = config[lookupValue] || defaultConfig;
+
+    // If still not found, try mapping common display names to config keys
+    if (!config[lookupValue]) {
+      const displayNameToKey: Record<string, string> = {
+        'private pay': 'private_pay',
+        'private_pay': 'private_pay',
+        'funded': 'funded',
+        'scholarship': 'scholarship',
+        'other': 'other',
+        'vmrc': 'vmrc',
+        'cvrc': 'cvrc',
+        'regional center': 'funded',
+        'regional_center': 'funded'
+      };
+
+      const normalizedValue = value?.toLowerCase().trim();
+      const mappedKey = displayNameToKey[normalizedValue];
+      if (mappedKey) {
+        statusConfig = config[mappedKey] || defaultConfig;
+      }
+    }
+  }
 
   // Determine badge size
   const badgeSize = size || statusConfig.size || 'default';

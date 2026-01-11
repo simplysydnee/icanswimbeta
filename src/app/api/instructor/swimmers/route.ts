@@ -184,6 +184,11 @@ export async function GET(request: Request) {
           display_name,
           color
         ),
+        funding_source:funding_source_id(
+          id,
+          name,
+          short_name
+        ),
         bookings!bookings_swimmer_id_fkey(
           id,
           status,
@@ -311,8 +316,12 @@ export async function GET(request: Request) {
           displayName: swimmer.swim_levels[0].display_name,
           color: swimmer.swim_levels[0].color
         } : null,
-        fundingSourceId: swimmer.payment_type,
+        fundingSourceId: swimmer.funding_source_id,
         paymentType: swimmer.payment_type,
+        fundingSourceName: swimmer.funding_source?.[0]?.short_name ||
+                          (swimmer.payment_type === 'private_pay' ? 'Private Pay' :
+                          swimmer.payment_type === 'scholarship' ? 'Scholarship' :
+                          swimmer.payment_type === 'other' ? 'Other' : 'Funded'),
         photoUrl: null,
         fundingSourceSessionsUsed: swimmer.authorized_sessions_used || 0,
         fundingSourceSessionsAuthorized: swimmer.authorized_sessions_total || 0,

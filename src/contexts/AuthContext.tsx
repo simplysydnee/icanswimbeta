@@ -363,10 +363,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (event, session) => {
         // Handle specific auth events
         if (event === 'SIGNED_OUT') {
-          setUser(null)
-          setProfile(null)
-          setRole(null)
-          setLoading(false) // Sign out completes immediately
+          // Only update state if not already cleared by manual signOut
+          // This prevents race conditions with the signOut function
+          setUser((currentUser) => {
+            if (currentUser !== null) {
+              setProfile(null)
+              setRole(null)
+              setLoading(false)
+            }
+            return null
+          })
         } else if (session?.user) {
           console.log('Auth: Auth state change - user signed in:', session.user.id, session.user.email)
           const authUser = transformUser(session.user)
@@ -427,7 +433,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signUp = async ({ email, password, name, phone, redirect_url }: RegisterCredentials) => {
+  const signUp = async ({ email, password, name, phone, redirect_url, invitation_token }: RegisterCredentials) => {
     try {
       setLoading(true)
       setError(null)
@@ -512,6 +518,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             headers: {
               'Content-Type': 'application/json',
             },
+            body: JSON.stringify({ invitation_token }),
             credentials: 'include', // Ensure cookies are sent
           });
 
@@ -552,11 +559,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       setLoading(true)
+
+      // Clear auth state immediately before signOut to prevent race conditions
+      setUser(null)
+      setProfile(null)
+      setRole(null)
+
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      router.push('/')
+
+      // Force refresh the router to clear any cached auth state
+      router.refresh()
+
+      // Redirect to login page (not home page)
+      router.push('/login')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Logout failed')
+      // Even on error, clear auth state
+      setUser(null)
+      setProfile(null)
+      setRole(null)
+      router.refresh()
+      router.push('/login')
     } finally {
       setLoading(false)
     }

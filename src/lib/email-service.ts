@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import { generateReferralRequestEmail, generateReferralConfirmationEmail, generateAssessmentBookingEmail, generateLessonBookingEmail, generateRecurringBookingEmail, generateCancellationEmail } from '@/lib/emails'
+import { generateReferralRequestEmail, generateReferralConfirmationEmail, generateAssessmentBookingEmail, generateLessonBookingEmail, generateRecurringBookingEmail, generateCancellationEmail, generateParentInvitationEmail } from '@/lib/emails'
 
 type EmailTemplate =
   | 'enrollment_invite'
@@ -14,6 +14,7 @@ type EmailTemplate =
   | 'account_created'  // NEW - for users with no swimmers enrolled yet
   | 'instructor_change'  // NEW - for instructor replacement notifications
   | 'referral_request'  // NEW - for coordinator referral notifications
+  | 'parent_invitation'  // NEW - for parent invitation emails
   | 'custom'  // For custom HTML emails
 
 interface EmailCustomData {
@@ -453,6 +454,32 @@ export const emailService = {
       templateType: 'custom',
       toName: params.parentName,
       customData: { subject, html }
+    })
+  },
+
+  async sendParentInvitation(params: {
+    parentEmail: string
+    parentName?: string | null
+    swimmerFirstName: string
+    swimmerLastName: string
+    inviteToken: string
+  }) {
+    const { subject, html } = generateParentInvitationEmail({
+      parentEmail: params.parentEmail,
+      parentName: params.parentName,
+      swimmerFirstName: params.swimmerFirstName,
+      swimmerLastName: params.swimmerLastName,
+      inviteToken: params.inviteToken,
+    })
+
+    return sendEmail({
+      to: params.parentEmail,
+      templateType: 'parent_invitation',
+      toName: params.parentName || undefined,
+      customData: {
+        subject,
+        html,
+      },
     })
   },
 }
