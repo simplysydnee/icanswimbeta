@@ -9,12 +9,18 @@ import { DollarSign, Building2, Award as AwardIcon, HelpCircle } from 'lucide-re
 export const enrollmentStatusConfig = {
   waitlist: {
     label: 'Waitlist',
-    bg: 'bg-amber-100',
-    text: 'text-amber-800',
-    border: 'border-amber-200'
+    bg: 'bg-yellow-100',
+    text: 'text-yellow-800',
+    border: 'border-yellow-200'
   },
-  pending_enrollment: {
-    label: 'Pending',
+  pending: {
+    label: 'Pending Enrollment',
+    bg: 'bg-orange-100',
+    text: 'text-orange-800',
+    border: 'border-orange-200'
+  },
+  pending_approval: {
+    label: 'Pending Approval',
     bg: 'bg-blue-100',
     text: 'text-blue-800',
     border: 'border-blue-200'
@@ -25,11 +31,23 @@ export const enrollmentStatusConfig = {
     text: 'text-green-800',
     border: 'border-green-200'
   },
-  inactive: {
-    label: 'Inactive',
+  expired: {
+    label: 'Expired',
+    bg: 'bg-red-100',
+    text: 'text-red-800',
+    border: 'border-red-200'
+  },
+  declined: {
+    label: 'Declined',
     bg: 'bg-gray-100',
-    text: 'text-gray-800',
+    text: 'text-gray-600',
     border: 'border-gray-200'
+  },
+  dropped: {
+    label: 'Dropped',
+    bg: 'bg-gray-900',
+    text: 'text-gray-100',
+    border: 'border-gray-800'
   },
 } as const;
 
@@ -37,9 +55,9 @@ export const enrollmentStatusConfig = {
 export const approvalStatusConfig = {
   pending: {
     label: 'Pending Approval',
-    bg: 'bg-yellow-100',
-    text: 'text-yellow-800',
-    border: 'border-yellow-200'
+    bg: 'bg-orange-100',
+    text: 'text-orange-800',
+    border: 'border-orange-200'
   },
   approved: {
     label: 'Approved',
@@ -49,9 +67,9 @@ export const approvalStatusConfig = {
   },
   declined: {
     label: 'Declined',
-    bg: 'bg-red-100',
-    text: 'text-red-800',
-    border: 'border-red-200'
+    bg: 'bg-gray-100',
+    text: 'text-gray-800',
+    border: 'border-gray-200'
   },
 } as const;
 

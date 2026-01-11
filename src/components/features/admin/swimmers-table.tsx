@@ -91,11 +91,14 @@ export interface SwimmersResponse {
 
 // Status badge colors
 const statusColors: Record<string, string> = {
-  enrolled: 'bg-green-100 text-green-800 border-green-200',
   waitlist: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  pending: 'bg-blue-100 text-blue-800 border-blue-200',
+  pending: 'bg-orange-100 text-orange-800 border-orange-200',
+  pending_approval: 'bg-blue-100 text-blue-800 border-blue-200',
+  enrolled: 'bg-green-100 text-green-800 border-green-200',
+  expired: 'bg-red-100 text-red-800 border-red-200',
+  declined: 'bg-gray-100 text-gray-600 border-gray-200',
+  dropped: 'bg-gray-900 text-gray-100 border-gray-800',
   inactive: 'bg-gray-100 text-gray-800 border-gray-200',
-  dropped: 'bg-red-100 text-red-800 border-red-200',
 };
 
 // Payment type colors
@@ -108,11 +111,14 @@ const paymentColors: Record<string, string> = {
 
 // Status display names
 const statusDisplay: Record<string, string> = {
-  enrolled: 'Enrolled',
   waitlist: 'Waitlist',
-  pending: 'Pending',
-  inactive: 'Inactive',
+  pending: 'Pending Enrollment',
+  pending_approval: 'Pending Approval',
+  enrolled: 'Enrolled',
+  expired: 'Expired',
+  declined: 'Declined',
   dropped: 'Dropped',
+  inactive: 'Inactive',
 };
 
 // Payment type display names
@@ -320,9 +326,13 @@ export function SwimmersTable({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="enrolled">Enrolled</SelectItem>
                   <SelectItem value="waitlist">Waitlist</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="pending_approval">Pending Approval</SelectItem>
+                  <SelectItem value="enrolled">Enrolled</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                  <SelectItem value="declined">Declined</SelectItem>
+                  <SelectItem value="dropped">Dropped</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>

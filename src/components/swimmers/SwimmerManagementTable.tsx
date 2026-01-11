@@ -579,13 +579,11 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
                     </p>
                   </div>
                   <div className="shrink-0">
-                    <Badge variant={
-                      swimmer.enrollmentStatus === 'enrolled' ? 'default' :
-                      swimmer.enrollmentStatus === 'waitlist' ? 'secondary' :
-                      'outline'
-                    }>
-                      {swimmer.enrollmentStatus || 'Unknown'}
-                    </Badge>
+                    <StatusBadge
+                      type="enrollment"
+                      value={swimmer.enrollmentStatus}
+                      size="small"
+                    />
                   </div>
                 </div>
               </Card>
