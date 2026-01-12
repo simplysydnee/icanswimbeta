@@ -269,7 +269,7 @@ export function AssessmentReportTab({ assessment }: AssessmentReportTabProps) {
 
       {/* Footer Notes */}
       <div className="text-xs text-gray-500 text-center pt-4 border-t">
-        <p>Assessment ID: {assessment.assessment_id.substring(0, 8)}...</p>
+        <p>Assessment ID: {assessment.assessment_id ? assessment.assessment_id.substring(0, 8) + '...' : 'N/A'}</p>
         <p className="mt-1">Report generated on {format(new Date(assessment.created_at), 'MMMM d, yyyy')}</p>
       </div>
     </div>
