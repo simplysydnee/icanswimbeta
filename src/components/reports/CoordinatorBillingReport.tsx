@@ -172,8 +172,8 @@ export function CoordinatorBillingReport() {
         </div>
         <div className="flex items-center gap-2">
           <DateRangePicker
-            dateRange={dateRange}
-            onDateRangeChange={setDateRange}
+            value={dateRange}
+            onChange={setDateRange}
           />
           <Button onClick={handleExport} variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />

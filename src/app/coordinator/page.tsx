@@ -192,15 +192,17 @@ export default function CoordinatorDashboard() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <Link href="/coordinator/clients">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer min-h-[136px]">
             <CardContent className="p-6">
-              <div className="flex justify-between items-start">
-                <div>
+              <div className="flex items-center justify-between h-full">
+                <div className="flex-1 min-w-0">
                   <p className="text-sm text-muted-foreground">My Clients</p>
-                  <p className="text-3xl font-bold mt-1">{stats.totalClients}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{stats.activeClients} active</p>
+                  <p className="text-3xl font-bold">{stats.totalClients}</p>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                    {stats.activeClients} active
+                  </p>
                 </div>
-                <div className="p-3 bg-cyan-100 rounded-full">
+                <div className="h-12 w-12 rounded-full bg-cyan-100 flex items-center justify-center flex-shrink-0 ml-4">
                   <Users className="h-6 w-6 text-cyan-600" />
                 </div>
               </div>
@@ -209,15 +211,17 @@ export default function CoordinatorDashboard() {
         </Link>
 
         <Link href="/coordinator/pos">
-          <Card className={`hover:shadow-md transition-shadow cursor-pointer ${stats.pendingPOs > 0 ? 'bg-orange-50 border-orange-200' : ''}`}>
+          <Card className={`hover:shadow-md transition-shadow cursor-pointer min-h-[136px] ${stats.pendingPOs > 0 ? 'bg-orange-50 border-orange-200' : ''}`}>
             <CardContent className="p-6">
-              <div className="flex justify-between items-start">
-                <div>
+              <div className="flex items-center justify-between h-full">
+                <div className="flex-1 min-w-0">
                   <p className="text-sm text-muted-foreground">Pending POs</p>
-                  <p className="text-3xl font-bold mt-1">{stats.pendingPOs}</p>
-                  <p className="text-sm text-muted-foreground mt-1">Awaiting approval</p>
+                  <p className="text-3xl font-bold">{stats.pendingPOs}</p>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                    Awaiting approval
+                  </p>
                 </div>
-                <div className={`p-3 rounded-full ${stats.pendingPOs > 0 ? 'bg-orange-200' : 'bg-gray-100'}`}>
+                <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ml-4 ${stats.pendingPOs > 0 ? 'bg-orange-200' : 'bg-gray-100'}`}>
                   <FileText className={`h-6 w-6 ${stats.pendingPOs > 0 ? 'text-orange-600' : 'text-gray-400'}`} />
                 </div>
               </div>
@@ -225,30 +229,34 @@ export default function CoordinatorDashboard() {
           </Card>
         </Link>
 
-        <Card className={stats.expiringPOs > 0 ? 'bg-yellow-50 border-yellow-200' : ''}>
+        <Card className={`min-h-[136px] ${stats.expiringPOs > 0 ? 'bg-yellow-50 border-yellow-200' : ''}`}>
           <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
+            <div className="flex items-center justify-between h-full">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">Expiring Soon</p>
-                <p className="text-3xl font-bold mt-1">{stats.expiringPOs}</p>
-                <p className="text-sm text-muted-foreground mt-1">Within 30 days</p>
+                <p className="text-3xl font-bold">{stats.expiringPOs}</p>
+                <p className="text-xs text-muted-foreground mt-1 truncate">
+                  Within 30 days
+                </p>
               </div>
-              <div className={`p-3 rounded-full ${stats.expiringPOs > 0 ? 'bg-yellow-200' : 'bg-gray-100'}`}>
+              <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ml-4 ${stats.expiringPOs > 0 ? 'bg-yellow-200' : 'bg-gray-100'}`}>
                 <Clock className={`h-6 w-6 ${stats.expiringPOs > 0 ? 'text-yellow-600' : 'text-gray-400'}`} />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-h-[136px]">
           <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
+            <div className="flex items-center justify-between h-full">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">Needs Attention</p>
-                <p className="text-3xl font-bold mt-1">{stats.pendingPOs + stats.expiringPOs}</p>
-                <p className="text-sm text-muted-foreground mt-1">Action items</p>
+                <p className="text-3xl font-bold">{stats.pendingPOs + stats.expiringPOs}</p>
+                <p className="text-xs text-muted-foreground mt-1 truncate">
+                  Action items
+                </p>
               </div>
-              <div className={`p-3 rounded-full ${(stats.pendingPOs + stats.expiringPOs) > 0 ? 'bg-red-100' : 'bg-gray-100'}`}>
+              <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ml-4 ${(stats.pendingPOs + stats.expiringPOs) > 0 ? 'bg-red-100' : 'bg-gray-100'}`}>
                 <AlertCircle className={`h-6 w-6 ${(stats.pendingPOs + stats.expiringPOs) > 0 ? 'text-red-500' : 'text-gray-400'}`} />
               </div>
             </div>

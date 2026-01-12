@@ -334,7 +334,7 @@ export function BillingReport() {
           <CardContent>
             <div className="text-2xl font-bold">{totalPOs}</div>
             <p className="text-xs text-muted-foreground">
-              {format(new Date(data.dateRange.start), 'MMM d')} - {format(new Date(data.dateRange.end), 'MMM d, yyyy')}
+              {data.dateRange ? `${format(new Date(data.dateRange.start), 'MMM d')} - ${format(new Date(data.dateRange.end), 'MMM d, yyyy')}` : 'Date range not available'}
             </p>
           </CardContent>
         </Card>

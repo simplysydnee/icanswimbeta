@@ -315,17 +315,17 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {/* Active Swimmers - Links to Swimmer Management */}
         <Link href="/admin/swimmers" className="block">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-cyan-300">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-cyan-300 min-h-[136px]">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex items-center justify-between h-full">
+                <div className="flex-1 min-w-0">
                   <p className="text-sm text-muted-foreground">Active Swimmers</p>
                   <p className="text-3xl font-bold">{stats?.activeSwimmers || 0}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
                     {stats?.totalSwimmers} total • {stats?.waitlistedSwimmers} waitlisted
                   </p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-cyan-100 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-full bg-cyan-100 flex items-center justify-center flex-shrink-0 ml-4">
                   <Users className="h-6 w-6 text-cyan-600" />
                 </div>
               </div>
@@ -335,15 +335,17 @@ export default function AdminDashboard() {
 
         {/* Sessions Today - Links to Schedule */}
         <Link href="/admin/schedule" className="block">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-blue-300">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-blue-300 min-h-[136px]">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex items-center justify-between h-full">
+                <div className="flex-1 min-w-0">
                   <p className="text-sm text-muted-foreground">Sessions Today</p>
                   <p className="text-3xl font-bold">{stats?.sessionsToday || 0}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Scheduled lessons</p>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                    Scheduled lessons
+                  </p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 ml-4">
                   <Calendar className="h-6 w-6 text-blue-600" />
                 </div>
               </div>
@@ -353,17 +355,17 @@ export default function AdminDashboard() {
 
         {/* Pending Items - Links to Referrals */}
         <Link href="/admin/referrals" className="block">
-          <Card className={`cursor-pointer hover:shadow-lg transition-shadow ${pendingCount > 0 ? 'border-orange-300 bg-orange-50 hover:border-orange-400' : 'hover:border-gray-300'}`}>
+          <Card className={`cursor-pointer hover:shadow-lg transition-shadow min-h-[136px] ${pendingCount > 0 ? 'border-orange-300 bg-orange-50 hover:border-orange-400' : 'hover:border-gray-300'}`}>
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex items-center justify-between h-full">
+                <div className="flex-1 min-w-0">
                   <p className="text-sm text-muted-foreground">Needs Attention</p>
                   <p className="text-3xl font-bold">{pendingCount}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {stats?.pendingReferrals} referrals • {stats?.pendingPOs} POs • {stats?.sessionsNeedingProgress} progress updates
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                    {stats?.pendingReferrals} referrals • {stats?.pendingPOs} POs • {stats?.sessionsNeedingProgress} updates
                   </p>
                 </div>
-                <div className={`h-12 w-12 rounded-full flex items-center justify-center ${pendingCount > 0 ? 'bg-orange-200' : 'bg-gray-100'}`}>
+                <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ml-4 ${pendingCount > 0 ? 'bg-orange-200' : 'bg-gray-100'}`}>
                   <AlertCircle className={`h-6 w-6 ${pendingCount > 0 ? 'text-orange-600' : 'text-gray-400'}`} />
                 </div>
               </div>
@@ -373,17 +375,17 @@ export default function AdminDashboard() {
 
         {/* Waitlisted - Links to Swimmer Management */}
         <Link href="/admin/swimmers" className="block">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-yellow-300">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-yellow-300 min-h-[136px]">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex items-center justify-between h-full">
+                <div className="flex-1 min-w-0">
                   <p className="text-sm text-muted-foreground">Waitlisted</p>
                   <p className="text-3xl font-bold">{stats?.waitlistedSwimmers || 0}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
                     Pending Assessment
                   </p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0 ml-4">
                   <Clock className="h-6 w-6 text-yellow-600" />
                 </div>
               </div>
