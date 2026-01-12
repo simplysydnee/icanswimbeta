@@ -68,9 +68,20 @@ export function AssessmentReportTab({ assessment }: AssessmentReportTabProps) {
     );
   }
 
-  // Parse JSON fields
-  const swimSkills = assessment.swim_skills ? JSON.parse(assessment.swim_skills) : {};
-  const roadblocks = assessment.roadblocks ? JSON.parse(assessment.roadblocks) : {};
+  // Parse JSON fields - handle both string and object formats
+  const parseJsonField = (field: any) => {
+    if (!field) return {};
+    if (typeof field === 'object') return field;
+    try {
+      return JSON.parse(field);
+    } catch (error) {
+      console.error('Error parsing JSON field:', error, 'Field value:', field);
+      return {};
+    }
+  };
+
+  const swimSkills = parseJsonField(assessment.swim_skills);
+  const roadblocks = parseJsonField(assessment.roadblocks);
 
   // Format date
   const formattedDate = assessment.assessment_date
