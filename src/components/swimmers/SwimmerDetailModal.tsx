@@ -68,7 +68,9 @@ export interface Swimmer {
   height?: string;
   weight?: string;
   enrollmentStatus: string;
+  enrollment_status?: string;
   approvalStatus?: string;
+  approval_status?: string;
   assessmentStatus: string;
   currentLevel?: {
     id: string;
@@ -263,7 +265,20 @@ export function SwimmerDetailModal({
       }
 
       // Fetch assessment report if swimmer has completed assessment
-      if (swimmer.assessmentStatus === 'completed' || swimmer.assessment_status === 'completed') {
+      // Check both camelCase and snake_case versions, handle null/undefined, and use case-insensitive comparison
+      const hasCompletedAssessment = !!(
+        (swimmer.assessmentStatus && swimmer.assessmentStatus.toString().toLowerCase() === 'completed') ||
+        (swimmer.assessment_status && swimmer.assessment_status.toString().toLowerCase() === 'completed')
+      );
+
+      console.log('Assessment tab debug:', {
+        swimmerId: swimmer.id,
+        assessmentStatus: swimmer.assessmentStatus,
+        assessment_status: swimmer.assessment_status,
+        hasCompletedAssessment
+      });
+
+      if (hasCompletedAssessment) {
         try {
           const { data: assessment, error: assessmentError } = await supabase
             .from('assessment_reports')
@@ -273,6 +288,13 @@ export function SwimmerDetailModal({
             .limit(1)
             .single();
 
+          console.log('Assessment fetch result:', {
+            data: assessment,
+            error: assessmentError,
+            hasData: !!assessment,
+            errorCode: assessmentError?.code
+          });
+
           if (assessmentError && assessmentError.code !== 'PGRST116') { // PGRST116 = no rows returned
             console.error('Error fetching assessment report:', assessmentError);
           } else {
@@ -281,6 +303,8 @@ export function SwimmerDetailModal({
         } catch (error) {
           console.error('Error fetching assessment report:', error);
         }
+      } else {
+        console.log('Skipping assessment fetch - swimmer does not have completed assessment status');
       }
 
     } catch (error) {
@@ -1323,9 +1347,9 @@ export function SwimmerDetailModal({
                 {isAdmin && swimmer && (
                   <StatusSelector
                     swimmerId={swimmer.id}
-                    currentEnrollmentStatus={swimmer.enrollmentStatus || swimmer.enrollment_status}
-                    currentAssessmentStatus={swimmer.assessmentStatus || swimmer.assessment_status}
-                    currentApprovalStatus={swimmer.approvalStatus || swimmer.approval_status}
+                    currentEnrollmentStatus={swimmer.enrollmentStatus || swimmer.enrollment_status || ''}
+                    currentAssessmentStatus={swimmer.assessmentStatus || swimmer.assessment_status || ''}
+                    currentApprovalStatus={swimmer.approvalStatus || swimmer.approval_status || null}
                     onStatusChange={() => {
                       // Refresh swimmer data
                       fetchAdditionalData();
