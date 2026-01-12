@@ -242,20 +242,42 @@ export function AssessmentReportTab({ assessment }: AssessmentReportTabProps) {
         <CardContent>
           {Object.entries(roadblocks).length > 0 ? (
             <div className="space-y-4">
-              {Object.entries(roadblocks).map(([roadblock, strategies]: [string, any]) => (
+              {Object.entries(roadblocks).map(([roadblock, data]: [string, any]) => (
                 <div key={roadblock} className="space-y-2">
                   <h4 className="font-medium text-sm capitalize">{roadblock.replace('_', ' ')}</h4>
-                  {Array.isArray(strategies) ? (
+
+                  {/* Check if data has needs_addressing and intervention fields (object structure) */}
+                  {data && typeof data === 'object' && 'needs_addressing' in data && 'intervention' in data ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">Needs Addressing:</span>
+                        <Badge variant={data.needs_addressing ? "destructive" : "outline"} className="text-xs">
+                          {data.needs_addressing ? 'Yes' : 'No'}
+                        </Badge>
+                      </div>
+                      {data.intervention && (
+                        <div>
+                          <span className="text-sm font-medium">Intervention:</span>
+                          <p className="text-sm mt-1">{data.intervention}</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : Array.isArray(data) ? (
+                    // Handle array of strategies (legacy format)
                     <ul className="space-y-1 pl-5">
-                      {strategies.map((strategy: string, index: number) => (
+                      {data.map((strategy: string, index: number) => (
                         <li key={index} className="text-sm flex items-start gap-2">
                           <span className="text-muted-foreground">•</span>
                           <span>{strategy}</span>
                         </li>
                       ))}
                     </ul>
+                  ) : typeof data === 'string' ? (
+                    // Handle string format
+                    <p className="text-sm">{data}</p>
                   ) : (
-                    <p className="text-sm">{strategies}</p>
+                    // Fallback for unknown format
+                    <p className="text-sm text-gray-500 italic">No details available</p>
                   )}
                   <Separator className="my-2" />
                 </div>
