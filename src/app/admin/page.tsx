@@ -362,7 +362,7 @@ export default function AdminDashboard() {
                   <p className="text-sm text-muted-foreground">Needs Attention</p>
                   <p className="text-3xl font-bold">{pendingCount}</p>
                   <p className="text-xs text-muted-foreground mt-1 truncate">
-                    {stats?.pendingReferrals} referrals • {stats?.pendingPOs} POs • {stats?.sessionsNeedingProgress} updates
+                    {stats?.pendingReferrals} ref • {stats?.pendingPOs} POs • {stats?.sessionsNeedingProgress} upd
                   </p>
                 </div>
                 <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ml-4 ${pendingCount > 0 ? 'bg-orange-200' : 'bg-gray-100'}`}>
