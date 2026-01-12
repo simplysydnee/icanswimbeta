@@ -246,13 +246,23 @@ export function AssessmentReportTab({ assessment }: AssessmentReportTabProps) {
                 <div key={roadblock} className="space-y-2">
                   <h4 className="font-medium text-sm capitalize">{roadblock.replace('_', ' ')}</h4>
 
-                  {/* Check if data has needs_addressing and intervention fields (object structure) */}
-                  {data && typeof data === 'object' && 'needs_addressing' in data && 'intervention' in data ? (
+                  {/* Check if data has roadblock object structure (status/intervention or needs_addressing/intervention) */}
+                  {data && typeof data === 'object' && ('status' in data || 'needs_addressing' in data) && 'intervention' in data ? (
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">Needs Addressing:</span>
-                        <Badge variant={data.needs_addressing ? "destructive" : "outline"} className="text-xs">
-                          {data.needs_addressing ? 'Yes' : 'No'}
+                        <span className="text-sm font-medium">Status:</span>
+                        <Badge
+                          variant={
+                            (data.status === 'needs_addressing' || data.needs_addressing === true)
+                              ? "destructive"
+                              : "outline"
+                          }
+                          className="text-xs"
+                        >
+                          {data.status === 'needs_addressing' ? 'Needs Addressing' :
+                           data.status ? data.status :
+                           data.needs_addressing === true ? 'Needs Addressing' :
+                           data.needs_addressing === false ? 'Addressed' : 'Unknown'}
                         </Badge>
                       </div>
                       {data.intervention && (
