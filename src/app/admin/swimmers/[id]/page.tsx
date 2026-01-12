@@ -982,11 +982,11 @@ function AdminSwimmerDetailContent() {
                       </div>
                     </div>
 
-                    {swimmer.swim_goals && swimmer.swim_goals.length > 0 && (
+                    {(swimmer.swim_goals || swimmer.swimGoals) && (swimmer.swim_goals || swimmer.swimGoals)!.length > 0 && (
                       <div>
                         <p className="text-sm font-medium text-muted-foreground mb-2">Swim Goals</p>
                         <div className="flex flex-wrap gap-2">
-                          {swimmer.swim_goals.map((goal, index) => (
+                          {(swimmer.swim_goals || swimmer.swimGoals)!.map((goal, index) => (
                             <Badge key={index} variant="secondary">
                               {goal}
                             </Badge>
@@ -1790,7 +1790,7 @@ function AdminSwimmerDetailContent() {
             </Card>
 
             {/* Swim Goals */}
-            {swimmer.swim_goals && swimmer.swim_goals.length > 0 && (
+            {(swimmer.swim_goals || swimmer.swimGoals) && (swimmer.swim_goals || swimmer.swimGoals)!.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -1800,7 +1800,7 @@ function AdminSwimmerDetailContent() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
-                    {swimmer.swim_goals.map((goal, index) => (
+                    {(swimmer.swim_goals || swimmer.swimGoals)!.map((goal, index) => (
                       <Badge key={index} variant="outline" className="px-3 py-1">
                         {goal}
                       </Badge>

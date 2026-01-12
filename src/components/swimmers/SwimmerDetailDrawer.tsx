@@ -52,6 +52,7 @@ interface Swimmer {
   gender?: string
   diagnosis?: string[]
   swimGoals?: string[]
+  swim_goals?: string[]
   hasAllergies?: boolean
   allergiesDescription?: string
   hasMedicalConditions?: boolean
@@ -456,14 +457,14 @@ export default function SwimmerDetailDrawer({
               )}
 
               {/* Swim Goals */}
-              {swimmer.swimGoals && swimmer.swimGoals.length > 0 && (
+              {(swimmer.swimGoals || swimmer.swim_goals) && (swimmer.swimGoals || swimmer.swim_goals)!.length > 0 && (
                 <div className="mt-4">
                   <div className="text-sm text-muted-foreground mb-2 flex items-center gap-1">
                     <Target className="h-3 w-3" />
                     Swim Goals
                   </div>
                   <ul className="space-y-1">
-                    {swimmer.swimGoals.map((goal, i) => (
+                    {(swimmer.swimGoals || swimmer.swim_goals)!.map((goal, i) => (
                       <li key={i} className="text-sm flex items-start gap-2">
                         <span className="text-muted-foreground">•</span>
                         <span>{goal}</span>

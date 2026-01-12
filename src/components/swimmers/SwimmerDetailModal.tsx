@@ -98,6 +98,7 @@ export interface Swimmer {
   // Additional fields for expanded view
   diagnosis?: string[];
   swimGoals?: string[];
+  swim_goals?: string[];
   hasAllergies?: boolean;
   allergiesDescription?: string;
   hasMedicalConditions?: boolean;
@@ -738,11 +739,11 @@ export function SwimmerDetailModal({
                       </div>
                     </div>
 
-                    {swimmer.swimGoals && swimmer.swimGoals.length > 0 && (
+                    {(swimmer.swimGoals || swimmer.swim_goals) && (swimmer.swimGoals || swimmer.swim_goals)!.length > 0 && (
                       <div>
                         <p className="text-sm font-medium text-muted-foreground mb-2">Swim Goals</p>
                         <div className="flex flex-wrap gap-2">
-                          {swimmer.swimGoals.map((goal, index) => (
+                          {(swimmer.swimGoals || swimmer.swim_goals)!.map((goal, index) => (
                             <Badge key={index} variant="secondary">
                               {goal}
                             </Badge>
