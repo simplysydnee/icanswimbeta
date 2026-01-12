@@ -25,6 +25,7 @@ import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
 import { SkillChecklist } from '@/components/instructor/SkillChecklist';
 import { LevelSelector } from './LevelSelector';
 import { StatusSelector } from './StatusSelector';
+import { AssessmentReportTab } from './AssessmentReportTab';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -99,6 +100,7 @@ export interface Swimmer {
   diagnosis?: string[];
   swimGoals?: string[];
   swim_goals?: string[];
+  assessment_status?: string;
   hasAllergies?: boolean;
   allergiesDescription?: string;
   hasMedicalConditions?: boolean;
@@ -156,6 +158,7 @@ export function SwimmerDetailModal({
   const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
   const [swimmerSkills, setSwimmerSkills] = useState<any[]>([]);
+  const [assessmentReport, setAssessmentReport] = useState<any>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [skillTrackerOpen, setSkillTrackerOpen] = useState(false);
@@ -259,6 +262,27 @@ export function SwimmerDetailModal({
         setSwimmerSkills([]);
       }
 
+      // Fetch assessment report if swimmer has completed assessment
+      if (swimmer.assessmentStatus === 'completed' || swimmer.assessment_status === 'completed') {
+        try {
+          const { data: assessment, error: assessmentError } = await supabase
+            .from('assessment_reports')
+            .select('*')
+            .eq('swimmer_id', swimmer.id)
+            .order('assessment_date', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (assessmentError && assessmentError.code !== 'PGRST116') { // PGRST116 = no rows returned
+            console.error('Error fetching assessment report:', assessmentError);
+          } else {
+            setAssessmentReport(assessment);
+          }
+        } catch (error) {
+          console.error('Error fetching assessment report:', error);
+        }
+      }
+
     } catch (error) {
       console.error('Error in fetchAdditionalData:', error);
     } finally {
@@ -276,6 +300,13 @@ export function SwimmerDetailModal({
   useEffect(() => {
     setAdminNotes(swimmer?.admin_notes || '');
   }, [swimmer?.admin_notes]);
+
+  // Reset assessment report when swimmer changes or modal closes
+  useEffect(() => {
+    if (!isOpen || !swimmer?.id) {
+      setAssessmentReport(null);
+    }
+  }, [isOpen, swimmer?.id]);
 
   if (!swimmer) return null;
 
@@ -496,6 +527,7 @@ export function SwimmerDetailModal({
                 <SelectItem value="medical">Medical & Safety</SelectItem>
                 <SelectItem value="progress">Progress & Skills</SelectItem>
                 <SelectItem value="sessions">Sessions & Bookings</SelectItem>
+                {assessmentReport && <SelectItem value="assessment">Assessment</SelectItem>}
                 {isAdmin && <SelectItem value="billing">Billing & Funding</SelectItem>}
                 {isAdmin && <SelectItem value="notes">Internal Notes</SelectItem>}
               </SelectContent>
@@ -509,6 +541,9 @@ export function SwimmerDetailModal({
               <TabsTrigger value="medical" className="px-2 py-1.5 text-[11px] sm:text-xs">Medical & Safety</TabsTrigger>
               <TabsTrigger value="progress" className="px-2 py-1.5 text-[11px] sm:text-xs">Progress & Skills</TabsTrigger>
               <TabsTrigger value="sessions" className="px-2 py-1.5 text-[11px] sm:text-xs">Sessions & Bookings</TabsTrigger>
+              {assessmentReport && (
+                <TabsTrigger value="assessment" className="px-2 py-1.5 text-[11px] sm:text-xs">Assessment</TabsTrigger>
+              )}
               {isAdmin && (
                 <TabsTrigger value="billing" className="px-2 py-1.5 text-[11px] sm:text-xs">Billing & Funding</TabsTrigger>
               )}
@@ -739,18 +774,30 @@ export function SwimmerDetailModal({
                       </div>
                     </div>
 
-                    {(swimmer.swimGoals || swimmer.swim_goals) && (swimmer.swimGoals || swimmer.swim_goals)!.length > 0 && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground mb-2">Swim Goals</p>
-                        <div className="flex flex-wrap gap-2">
-                          {(swimmer.swimGoals || swimmer.swim_goals)!.map((goal, index) => (
-                            <Badge key={index} variant="secondary">
-                              {goal}
-                            </Badge>
-                          ))}
+                    {/* Swim Goals - Show instructor goals from assessment if available */}
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Swim Goals</p>
+                      {assessmentReport ? (
+                        <div className="space-y-2">
+                          {assessmentReport.swim_skills_goals && (
+                            <p className="text-sm"><span className="font-medium">Skills:</span> {assessmentReport.swim_skills_goals}</p>
+                          )}
+                          {assessmentReport.safety_goals && (
+                            <p className="text-sm"><span className="font-medium">Safety:</span> {assessmentReport.safety_goals}</p>
+                          )}
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        ((swimmer.swimGoals || swimmer.swim_goals)?.length || 0) > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {(swimmer.swimGoals || swimmer.swim_goals || []).map((goal: string, i: number) => (
+                              <Badge key={i} variant="secondary">{goal}</Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">No goals set</p>
+                        )
+                      )}
+                    </div>
 
                     {swimmer.strengthsInterests && (
                       <div>
@@ -1699,6 +1746,15 @@ export function SwimmerDetailModal({
                     </Button>
                   </div>
                 </div>
+              </section>
+            </TabsContent>
+          )}
+
+          {/* Assessment Tab - Only shows if assessment exists */}
+          {assessmentReport && (
+            <TabsContent value="assessment" className="space-y-4">
+              <section>
+                <AssessmentReportTab assessment={assessmentReport} />
               </section>
             </TabsContent>
           )}

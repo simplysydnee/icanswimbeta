@@ -1,6 +1,25 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
+// Types for assessment report
+interface AssessmentReport {
+  id: string;
+  assessment_id: string;
+  swimmer_id: string;
+  instructor_id: string;
+  assessment_date: string;
+  strengths?: string;
+  challenges?: string;
+  swim_skills?: any; // JSONB field
+  roadblocks?: any; // JSONB field
+  swim_skills_goals?: string;
+  safety_goals?: string;
+  approval_status?: string;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+}
+
 // Types for swimmer update
 interface SwimmerUpdateData {
   // Basic Information
@@ -262,23 +281,43 @@ export async function GET(
     }
 
     // ========== STEP 3: Fetch Swimmer ==========
-    const { data, error } = await supabase
+    const { data: swimmerData, error: swimmerError } = await supabase
       .from('swimmers')
       .select('*')
       .eq('id', swimmerId)
       .single();
 
-    if (error) {
-      console.error('Error fetching swimmer:', error);
+    if (swimmerError) {
+      console.error('Error fetching swimmer:', swimmerError);
       return NextResponse.json(
-        { error: `Failed to fetch swimmer: ${error.message}` },
+        { error: `Failed to fetch swimmer: ${swimmerError.message}` },
         { status: 500 }
       );
     }
 
-    // ========== STEP 4: Return Response ==========
+    // ========== STEP 4: Fetch Assessment Report ==========
+    let assessmentReport = null;
+    if (swimmerData.assessment_status === 'completed') {
+      const { data: assessmentData, error: assessmentError } = await supabase
+        .from('assessment_reports')
+        .select('*')
+        .eq('swimmer_id', swimmerId)
+        .order('assessment_date', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (assessmentError && assessmentError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('Error fetching assessment report:', assessmentError);
+        // Don't fail the request if assessment fetch fails, just log it
+      } else {
+        assessmentReport = assessmentData;
+      }
+    }
+
+    // ========== STEP 5: Return Response ==========
     return NextResponse.json({
-      swimmer: data,
+      swimmer: swimmerData,
+      assessment_report: assessmentReport,
       success: true
     });
 
