@@ -17,14 +17,39 @@ async function updateSwimmerAirtableIdsV2() {
   const records = parse(csvContent, { columns: true, skip_empty_lines: true, bom: true });
   console.log(`Airtable records with UUIDs: ${records.length}`);
 
-  // Get all swimmers
-  console.log('Fetching Supabase swimmers...');
-  const { data: swimmers, error } = await supabase
-    .from('swimmers')
-    .select('id, first_name, last_name, date_of_birth, parent_email, airtable_record_id');
+  // Get all swimmers using pagination (Supabase has 1000 row limit)
+  console.log('Fetching Supabase swimmers with pagination...');
+  let allSwimmers = [];
+  let page = 0;
+  const pageSize = 1000; // Max per request
 
-  if (error) throw new Error(`Fetch error: ${error.message}`);
-  console.log(`Supabase swimmers: ${swimmers.length}\n`);
+  while (true) {
+    const start = page * pageSize;
+    const end = start + pageSize - 1;
+
+    const { data: swimmersPage, error } = await supabase
+      .from('swimmers')
+      .select('id, first_name, last_name, date_of_birth, parent_email, airtable_record_id')
+      .range(start, end);
+
+    if (error) throw new Error(`Fetch error: ${error.message}`);
+
+    if (!swimmersPage || swimmersPage.length === 0) {
+      break;
+    }
+
+    allSwimmers.push(...swimmersPage);
+    console.log(`  Fetched page ${page + 1}: ${swimmersPage.length} swimmers (total: ${allSwimmers.length})`);
+
+    if (swimmersPage.length < pageSize) {
+      break; // Last page
+    }
+
+    page++;
+  }
+
+  const swimmers = allSwimmers;
+  console.log(`Total Supabase swimmers fetched: ${swimmers.length}\n`);
 
   // Build lookup maps
   const bySupabaseId = new Map(); // Map Supabase ID to swimmer
