@@ -1142,35 +1142,38 @@ export function SwimmerDetailModal({
 
           </TabsContent>
 
-          {/* Medical & Safety Tab */}
+          {/* Medical & Safety Tab - Compact Grid Design */}
           <TabsContent value="medical" className="space-y-6">
             <section>
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Stethoscope className="h-5 w-5" />
                 Medical & Safety Information
               </h3>
 
-              {/* Medical Section */}
-              <div className="mb-6">
-                <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <Heart className="h-5 w-5" />
-                  Medical Information
-                </h4>
+              {/* Medical Information Grid */}
+              <div className="mb-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <Heart className="h-5 w-5 text-red-600" />
+                  <h4 className="text-md font-semibold text-gray-800">Medical Information</h4>
+                </div>
 
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {/* Allergies */}
                   {swimmer.hasAllergies !== undefined && (
-                    <div className={`p-4 rounded-lg border ${swimmer.hasAllergies ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className={`text-sm font-medium ${swimmer.hasAllergies ? 'text-red-800' : 'text-gray-800'}`}>Allergies</div>
-                        <Badge variant={swimmer.hasAllergies ? "destructive" : "outline"} className={swimmer.hasAllergies ? "" : "bg-gray-50 text-gray-700 border-gray-200"}>
+                    <div className={`p-3 rounded-lg border ${swimmer.hasAllergies ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className={`text-xs font-medium ${swimmer.hasAllergies ? 'text-red-800' : 'text-gray-700'}`}>Allergies</div>
+                        <Badge
+                          variant={swimmer.hasAllergies ? "destructive" : "outline"}
+                          className={`text-xs h-5 px-1.5 ${swimmer.hasAllergies ? '' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
+                        >
                           {swimmer.hasAllergies ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {swimmer.hasAllergies && swimmer.allergiesDescription && (
-                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
-                          <p className="text-sm font-medium text-red-800 mb-1">Allergy Details</p>
-                          <p className="text-sm text-red-700">{swimmer.allergiesDescription}</p>
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded p-2">
+                          <p className="text-xs font-medium text-red-800 mb-0.5">Details</p>
+                          <p className="text-xs text-red-700 line-clamp-2">{swimmer.allergiesDescription}</p>
                         </div>
                       )}
                     </div>
@@ -1178,17 +1181,20 @@ export function SwimmerDetailModal({
 
                   {/* Medical Conditions */}
                   {swimmer.hasMedicalConditions !== undefined && (
-                    <div className={`p-4 rounded-lg border ${swimmer.hasMedicalConditions ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className={`text-sm font-medium ${swimmer.hasMedicalConditions ? 'text-red-800' : 'text-gray-800'}`}>Medical Conditions</div>
-                        <Badge variant={swimmer.hasMedicalConditions ? "destructive" : "outline"} className={swimmer.hasMedicalConditions ? "" : "bg-gray-50 text-gray-700 border-gray-200"}>
+                    <div className={`p-3 rounded-lg border ${swimmer.hasMedicalConditions ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className={`text-xs font-medium ${swimmer.hasMedicalConditions ? 'text-red-800' : 'text-gray-700'}`}>Conditions</div>
+                        <Badge
+                          variant={swimmer.hasMedicalConditions ? "destructive" : "outline"}
+                          className={`text-xs h-5 px-1.5 ${swimmer.hasMedicalConditions ? '' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
+                        >
                           {swimmer.hasMedicalConditions ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {swimmer.hasMedicalConditions && swimmer.medicalConditionsDescription && (
-                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
-                          <p className="text-sm font-medium text-red-800 mb-1">Condition Details</p>
-                          <p className="text-sm text-red-700">{swimmer.medicalConditionsDescription}</p>
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded p-2">
+                          <p className="text-xs font-medium text-red-800 mb-0.5">Details</p>
+                          <p className="text-xs text-red-700 line-clamp-2">{swimmer.medicalConditionsDescription}</p>
                         </div>
                       )}
                     </div>
@@ -1196,17 +1202,20 @@ export function SwimmerDetailModal({
 
                   {/* History of Seizures */}
                   {swimmer.historyOfSeizures !== undefined && (
-                    <div className={`p-4 rounded-lg border ${swimmer.historyOfSeizures ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className={`text-sm font-medium ${swimmer.historyOfSeizures ? 'text-red-800' : 'text-gray-800'}`}>History of Seizures</div>
-                        <Badge variant={swimmer.historyOfSeizures ? "destructive" : "outline"} className={swimmer.historyOfSeizures ? "" : "bg-gray-50 text-gray-700 border-gray-200"}>
+                    <div className={`p-3 rounded-lg border ${swimmer.historyOfSeizures ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className={`text-xs font-medium ${swimmer.historyOfSeizures ? 'text-red-800' : 'text-gray-700'}`}>Seizures</div>
+                        <Badge
+                          variant={swimmer.historyOfSeizures ? "destructive" : "outline"}
+                          className={`text-xs h-5 px-1.5 ${swimmer.historyOfSeizures ? '' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
+                        >
                           {swimmer.historyOfSeizures ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {swimmer.historyOfSeizures && swimmer.seizuresDescription && (
-                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
-                          <p className="text-sm font-medium text-red-800 mb-1">Seizure Details</p>
-                          <p className="text-sm text-red-700">{swimmer.seizuresDescription}</p>
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded p-2">
+                          <p className="text-xs font-medium text-red-800 mb-0.5">Details</p>
+                          <p className="text-xs text-red-700 line-clamp-2">{swimmer.seizuresDescription}</p>
                         </div>
                       )}
                     </div>
@@ -1214,27 +1223,30 @@ export function SwimmerDetailModal({
                 </div>
               </div>
 
-              {/* Safety/Behavioral Section */}
+              {/* Safety & Behavioral Grid */}
               <div>
-                <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Safety & Behavioral Information
-                </h4>
+                <div className="flex items-center gap-2 mb-3">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                  <h4 className="text-md font-semibold text-gray-800">Safety & Behavioral</h4>
+                </div>
 
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {/* Self Injurious Behavior */}
                   {swimmer.selfInjuriousBehavior !== undefined && (
-                    <div className={`p-4 rounded-lg border ${swimmer.selfInjuriousBehavior ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className={`text-sm font-medium ${swimmer.selfInjuriousBehavior ? 'text-red-800' : 'text-gray-800'}`}>Self Injurious Behavior</div>
-                        <Badge variant={swimmer.selfInjuriousBehavior ? "destructive" : "outline"} className={swimmer.selfInjuriousBehavior ? "" : "bg-gray-50 text-gray-700 border-gray-200"}>
+                    <div className={`p-3 rounded-lg border ${swimmer.selfInjuriousBehavior ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className={`text-xs font-medium ${swimmer.selfInjuriousBehavior ? 'text-red-800' : 'text-gray-700'}`}>Self-Inj.</div>
+                        <Badge
+                          variant={swimmer.selfInjuriousBehavior ? "destructive" : "outline"}
+                          className={`text-xs h-5 px-1.5 ${swimmer.selfInjuriousBehavior ? '' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
+                        >
                           {swimmer.selfInjuriousBehavior ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {swimmer.selfInjuriousBehavior && swimmer.selfInjuriousBehaviorDescription && (
-                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
-                          <p className="text-sm font-medium text-red-800 mb-1">Description</p>
-                          <p className="text-sm text-red-700">{swimmer.selfInjuriousBehaviorDescription}</p>
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded p-2">
+                          <p className="text-xs font-medium text-red-800 mb-0.5">Details</p>
+                          <p className="text-xs text-red-700 line-clamp-2">{swimmer.selfInjuriousBehaviorDescription}</p>
                         </div>
                       )}
                     </div>
@@ -1242,17 +1254,20 @@ export function SwimmerDetailModal({
 
                   {/* Aggressive Behavior */}
                   {swimmer.aggressiveBehavior !== undefined && (
-                    <div className={`p-4 rounded-lg border ${swimmer.aggressiveBehavior ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className={`text-sm font-medium ${swimmer.aggressiveBehavior ? 'text-red-800' : 'text-gray-800'}`}>Aggressive Behavior</div>
-                        <Badge variant={swimmer.aggressiveBehavior ? "destructive" : "outline"} className={swimmer.aggressiveBehavior ? "" : "bg-gray-50 text-gray-700 border-gray-200"}>
+                    <div className={`p-3 rounded-lg border ${swimmer.aggressiveBehavior ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className={`text-xs font-medium ${swimmer.aggressiveBehavior ? 'text-red-800' : 'text-gray-700'}`}>Aggressive</div>
+                        <Badge
+                          variant={swimmer.aggressiveBehavior ? "destructive" : "outline"}
+                          className={`text-xs h-5 px-1.5 ${swimmer.aggressiveBehavior ? '' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
+                        >
                           {swimmer.aggressiveBehavior ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {swimmer.aggressiveBehavior && swimmer.aggressiveBehaviorDescription && (
-                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
-                          <p className="text-sm font-medium text-red-800 mb-1">Description</p>
-                          <p className="text-sm text-red-700">{swimmer.aggressiveBehaviorDescription}</p>
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded p-2">
+                          <p className="text-xs font-medium text-red-800 mb-0.5">Details</p>
+                          <p className="text-xs text-red-700 line-clamp-2">{swimmer.aggressiveBehaviorDescription}</p>
                         </div>
                       )}
                     </div>
@@ -1260,17 +1275,20 @@ export function SwimmerDetailModal({
 
                   {/* Elopement History */}
                   {swimmer.elopementHistory !== undefined && (
-                    <div className={`p-4 rounded-lg border ${swimmer.elopementHistory ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className={`text-sm font-medium ${swimmer.elopementHistory ? 'text-red-800' : 'text-gray-800'}`}>Elopement History</div>
-                        <Badge variant={swimmer.elopementHistory ? "destructive" : "outline"} className={swimmer.elopementHistory ? "" : "bg-gray-50 text-gray-700 border-gray-200"}>
+                    <div className={`p-3 rounded-lg border ${swimmer.elopementHistory ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className={`text-xs font-medium ${swimmer.elopementHistory ? 'text-red-800' : 'text-gray-700'}`}>Elopement</div>
+                        <Badge
+                          variant={swimmer.elopementHistory ? "destructive" : "outline"}
+                          className={`text-xs h-5 px-1.5 ${swimmer.elopementHistory ? '' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
+                        >
                           {swimmer.elopementHistory ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {swimmer.elopementHistory && swimmer.elopementHistoryDescription && (
-                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
-                          <p className="text-sm font-medium text-red-800 mb-1">Description</p>
-                          <p className="text-sm text-red-700">{swimmer.elopementHistoryDescription}</p>
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded p-2">
+                          <p className="text-xs font-medium text-red-800 mb-0.5">Details</p>
+                          <p className="text-xs text-red-700 line-clamp-2">{swimmer.elopementHistoryDescription}</p>
                         </div>
                       )}
                     </div>
@@ -1278,10 +1296,13 @@ export function SwimmerDetailModal({
 
                   {/* Has Behavior Plan */}
                   {swimmer.hasBehaviorPlan !== undefined && (
-                    <div className={`p-4 rounded-lg border ${swimmer.hasBehaviorPlan ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between">
-                        <div className={`text-sm font-medium ${swimmer.hasBehaviorPlan ? 'text-amber-800' : 'text-gray-800'}`}>Behavior Plan</div>
-                        <Badge variant="outline" className={swimmer.hasBehaviorPlan ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-gray-50 text-gray-700 border-gray-200"}>
+                    <div className={`p-3 rounded-lg border ${swimmer.hasBehaviorPlan ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className={`text-xs font-medium ${swimmer.hasBehaviorPlan ? 'text-amber-800' : 'text-gray-700'}`}>Beh. Plan</div>
+                        <Badge
+                          variant="outline"
+                          className={`text-xs h-5 px-1.5 ${swimmer.hasBehaviorPlan ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
+                        >
                           {swimmer.hasBehaviorPlan ? "Yes" : "No"}
                         </Badge>
                       </div>
@@ -1290,21 +1311,42 @@ export function SwimmerDetailModal({
 
                   {/* Restraint History */}
                   {swimmer.restraintHistory !== undefined && (
-                    <div className={`p-4 rounded-lg border ${swimmer.restraintHistory ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className={`text-sm font-medium ${swimmer.restraintHistory ? 'text-red-800' : 'text-gray-800'}`}>Restraint History</div>
-                        <Badge variant={swimmer.restraintHistory ? "destructive" : "outline"} className={swimmer.restraintHistory ? "" : "bg-gray-50 text-gray-700 border-gray-200"}>
+                    <div className={`p-3 rounded-lg border ${swimmer.restraintHistory ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className={`text-xs font-medium ${swimmer.restraintHistory ? 'text-red-800' : 'text-gray-700'}`}>Restraint</div>
+                        <Badge
+                          variant={swimmer.restraintHistory ? "destructive" : "outline"}
+                          className={`text-xs h-5 px-1.5 ${swimmer.restraintHistory ? '' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
+                        >
                           {swimmer.restraintHistory ? "Yes" : "No"}
                         </Badge>
                       </div>
                       {swimmer.restraintHistory && swimmer.restraintHistoryDescription && (
-                        <div className="mt-2 bg-red-50 border border-red-200 rounded-lg p-3">
-                          <p className="text-sm font-medium text-red-800 mb-1">Description</p>
-                          <p className="text-sm text-red-700">{swimmer.restraintHistoryDescription}</p>
+                        <div className="mt-2 bg-red-50 border border-red-200 rounded p-2">
+                          <p className="text-xs font-medium text-red-800 mb-0.5">Details</p>
+                          <p className="text-xs text-red-700 line-clamp-2">{swimmer.restraintHistoryDescription}</p>
                         </div>
                       )}
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Legend/Key */}
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600">
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-3 w-3 rounded-full bg-red-100 border border-red-300"></div>
+                    <span>Red = "Yes" (requires attention)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-3 w-3 rounded-full bg-gray-100 border border-gray-300"></div>
+                    <span>Gray = "No" (no issues)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-3 w-3 rounded-full bg-amber-100 border border-amber-300"></div>
+                    <span>Amber = Behavior Plan exists</span>
+                  </div>
                 </div>
               </div>
             </section>
