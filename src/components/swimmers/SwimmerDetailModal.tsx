@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { StatusBadge } from './StatusBadge';
 import { EmailComposerModal } from '@/components/email/EmailComposerModal';
 import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
@@ -26,7 +26,6 @@ import { EnhancedSkillChecklist } from '@/components/instructor/EnhancedSkillChe
 import { LevelSelector } from './LevelSelector';
 import { StatusSelector } from './StatusSelector';
 import { AssessmentReportTab } from './AssessmentReportTab';
-import { InlineSkillEditor } from './InlineSkillEditor';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -53,6 +52,10 @@ import {
   ClipboardList,
   UserPlus,
   Loader2,
+  Target,
+  CircleDot,
+  Circle,
+  Lightbulb,
 } from 'lucide-react';
 
 // Types
@@ -161,6 +164,8 @@ export function SwimmerDetailModal({
   const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
   const [swimmerSkills, setSwimmerSkills] = useState<any[]>([]);
+  const [swimmerTargets, setSwimmerTargets] = useState<any[]>([]);
+  const [swimmerStrategies, setSwimmerStrategies] = useState<any[]>([]);
   const [assessmentReport, setAssessmentReport] = useState<any>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -248,8 +253,8 @@ export function SwimmerDetailModal({
         const { data: skills, error: skillsError } = await supabase
           .from('swimmer_skills')
           .select(`
-            id, status,
-            skill:skills(id, name, description)
+            id, status, instructor_notes, date_started, date_mastered, updated_at,
+            skill:skills(id, name, description, sequence)
           `)
           .eq('swimmer_id', swimmer.id);
 
@@ -263,6 +268,44 @@ export function SwimmerDetailModal({
       } catch (error) {
         console.error('Error in swimmer skills query:', error);
         setSwimmerSkills([]);
+      }
+
+      // Fetch swimmer targets
+      try {
+        const { data: targets, error: targetsError } = await supabase
+          .from('swimmer_targets')
+          .select('*')
+          .eq('swimmer_id', swimmer.id)
+          .order('created_at', { ascending: false });
+
+        if (targetsError) {
+          console.error('Error fetching swimmer targets:', targetsError);
+          setSwimmerTargets([]);
+        } else {
+          setSwimmerTargets(targets || []);
+        }
+      } catch (error) {
+        console.error('Error in swimmer targets query:', error);
+        setSwimmerTargets([]);
+      }
+
+      // Fetch swimmer strategies
+      try {
+        const { data: strategies, error: strategiesError } = await supabase
+          .from('swimmer_strategies')
+          .select('*')
+          .eq('swimmer_id', swimmer.id)
+          .order('created_at', { ascending: false });
+
+        if (strategiesError) {
+          console.error('Error fetching swimmer strategies:', strategiesError);
+          setSwimmerStrategies([]);
+        } else {
+          setSwimmerStrategies(strategies || []);
+        }
+      } catch (error) {
+        console.error('Error in swimmer strategies query:', error);
+        setSwimmerStrategies([]);
       }
 
       // Fetch assessment report if swimmer has completed assessment
@@ -1444,84 +1487,352 @@ export function SwimmerDetailModal({
                   </Card>
                 )}
 
-                {/* Skills Progress Section */}
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                      <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                      Skills Progress
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      {swimmer.currentLevel ? (
-                        <span>Current level: <span className="font-medium">{swimmer.currentLevel.displayName}</span></span>
+                {/* Level Progress Summary */}
+                {swimmer.currentLevel && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Award className="h-4 w-4 text-muted-foreground" />
+                        Level Progress
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        {swimmer.currentLevel.displayName}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {loadingData ? (
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-6 w-1/2" />
+                        </div>
                       ) : (
-                        <span className="text-amber-600">No level assigned - skills cannot be tracked</span>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="h-3 w-3 rounded-full"
+                                style={{ backgroundColor: swimmer.currentLevel.color || '#ccc' }}
+                              />
+                              <span className="text-sm font-medium">{swimmer.currentLevel.displayName}</span>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {(() => {
+                                const mastered = swimmerSkills.filter(s => s.status === 'mastered').length;
+                                const total = swimmerSkills.length;
+                                return `${mastered}/${total} mastered`;
+                              })()}
+                            </div>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-green-500 h-2 rounded-full"
+                              style={{
+                                width: `${swimmerSkills.length > 0 ?
+                                  (swimmerSkills.filter(s => s.status === 'mastered').length / swimmerSkills.length) * 100 : 0}%`
+                              }}
+                            />
+                          </div>
+                        </div>
                       )}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {!swimmer.currentLevel ? (
-                      <div className="text-center py-6">
-                        <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
-                          <Award className="h-6 w-6 text-amber-600" />
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Focus Today - In Progress Skills */}
+                {swimmer.currentLevel && swimmerSkills.length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Target className="h-4 w-4 text-amber-500" />
+                        Focus Today
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
+                          {swimmerSkills.filter(s => s.status === 'in_progress').length} skills
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Skills currently in progress - focus on these during the lesson
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {loadingData ? (
+                        <div className="space-y-3">
+                          <Skeleton className="h-16 w-full" />
+                          <Skeleton className="h-16 w-full" />
                         </div>
-                        <p className="text-sm font-medium text-amber-800 mb-1">Assign a Level First</p>
-                        <p className="text-xs text-amber-600">Skills can only be tracked after a swim level is assigned</p>
+                      ) : swimmerSkills.filter(s => s.status === 'in_progress').length === 0 ? (
+                        <div className="text-center py-4">
+                          <Target className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                          <p className="text-sm text-gray-600">No skills in progress</p>
+                          <p className="text-xs text-gray-500 mt-1">Mark skills as "In Progress" to see them here</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {swimmerSkills
+                            .filter(skill => skill.status === 'in_progress')
+                            .map((skill) => (
+                              <div key={skill.id} className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <CircleDot className="h-4 w-4 text-amber-500" />
+                                      <span className="font-medium text-sm">{skill.skill?.name}</span>
+                                    </div>
+                                    {skill.instructor_notes ? (
+                                      <div className="mt-2">
+                                        <p className="text-xs font-medium text-gray-600 mb-1">Previous Notes:</p>
+                                        <p className="text-xs text-gray-700 bg-white p-2 rounded border">{skill.instructor_notes}</p>
+                                      </div>
+                                    ) : (
+                                      <p className="text-xs text-gray-500 mt-1">No notes yet</p>
+                                    )}
+                                    {skill.date_started && (
+                                      <p className="text-xs text-gray-500 mt-2">
+                                        Started: {new Date(skill.date_started).toLocaleDateString()}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => {
+                                      // Quick status update to mastered
+                                      handleSkillUpdate(skill.id, 'mastered', skill.instructor_notes);
+                                    }}
+                                    disabled={!isAdmin && role !== 'instructor'}
+                                  >
+                                    <CheckCircle className="h-4 w-4 text-green-500" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Mastered Skills - Collapsible */}
+                {swimmer.currentLevel && swimmerSkills.filter(s => s.status === 'mastered').length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        Mastered Skills
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
+                          {swimmerSkills.filter(s => s.status === 'mastered').length}
+                        </Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {swimmerSkills
+                          .filter(skill => skill.status === 'mastered')
+                          .slice(0, 3) // Show first 3, rest in expandable
+                          .map((skill) => (
+                            <div key={skill.id} className="flex items-center justify-between p-2 bg-green-50 rounded">
+                              <div className="flex items-center gap-2">
+                                <CheckCircle className="h-3 w-3 text-green-500" />
+                                <span className="text-sm">{skill.skill?.name}</span>
+                              </div>
+                              {skill.date_mastered && (
+                                <span className="text-xs text-gray-500">
+                                  {new Date(skill.date_mastered).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        {swimmerSkills.filter(s => s.status === 'mastered').length > 3 && (
+                          <Button variant="ghost" size="sm" className="w-full text-xs">
+                            Show all {swimmerSkills.filter(s => s.status === 'mastered').length} mastered skills
+                          </Button>
+                        )}
                       </div>
-                    ) : loadingData ? (
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Not Started Skills - Collapsible */}
+                {swimmer.currentLevel && swimmerSkills.filter(s => s.status === 'not_started').length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Circle className="h-4 w-4 text-gray-400" />
+                        Not Started
+                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 text-xs">
+                          {swimmerSkills.filter(s => s.status === 'not_started').length}
+                        </Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {swimmerSkills
+                          .filter(skill => skill.status === 'not_started')
+                          .slice(0, 3) // Show first 3
+                          .map((skill) => (
+                            <div key={skill.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                              <div className="flex items-center gap-2">
+                                <Circle className="h-3 w-3 text-gray-400" />
+                                <span className="text-sm">{skill.skill?.name}</span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs"
+                                onClick={() => {
+                                  // Quick status update to in_progress
+                                  handleSkillUpdate(skill.id, 'in_progress', '');
+                                }}
+                                disabled={!isAdmin && role !== 'instructor'}
+                              >
+                                Start
+                              </Button>
+                            </div>
+                          ))}
+                        {swimmerSkills.filter(s => s.status === 'not_started').length > 3 && (
+                          <Button variant="ghost" size="sm" className="w-full text-xs">
+                            Show all {swimmerSkills.filter(s => s.status === 'not_started').length} not started skills
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Swimmer Targets */}
+                {swimmerTargets.length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Target className="h-4 w-4 text-blue-500" />
+                        Targets
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
+                          {swimmerTargets.length}
+                        </Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
                       <div className="space-y-3">
-                        <Skeleton className="h-12 w-full" />
-                        <Skeleton className="h-12 w-full" />
-                        <Skeleton className="h-12 w-full" />
+                        {swimmerTargets.map((target) => (
+                          <div key={target.id} className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                {target.status === 'in_progress' ? (
+                                  <CircleDot className="h-3 w-3 text-yellow-500" />
+                                ) : target.status === 'met' ? (
+                                  <CheckCircle className="h-3 w-3 text-green-500" />
+                                ) : (
+                                  <Circle className="h-3 w-3 text-gray-400" />
+                                )}
+                                <span className="text-sm font-medium">{target.target_name}</span>
+                              </div>
+                              <Badge
+                                variant="outline"
+                                className={`
+                                  text-xs
+                                  ${target.status === 'in_progress' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                                    target.status === 'met' ? 'bg-green-50 text-green-700 border-green-200' :
+                                    'bg-gray-50 text-gray-700 border-gray-200'}
+                                `}
+                              >
+                                {target.status === 'in_progress' ? 'In Progress' :
+                                 target.status === 'met' ? 'Met' : 'Not Started'}
+                              </Badge>
+                            </div>
+                            {target.notes && (
+                              <p className="text-xs text-muted-foreground pl-5">{target.notes}</p>
+                            )}
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground pl-5">
+                              {target.date_started && (
+                                <span>Started: {new Date(target.date_started).toLocaleDateString()}</span>
+                              )}
+                              {target.date_met && (
+                                <span>Met: {new Date(target.date_met).toLocaleDateString()}</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ) : swimmerSkills.length === 0 ? (
-                      <div className="text-center py-6">
-                        <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-3">
-                          <ClipboardList className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <p className="text-sm font-medium text-blue-800 mb-1">No Skills Tracked Yet</p>
-                        <p className="text-xs text-blue-600">Start tracking skills by updating their status</p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Swimmer Strategies */}
+                {swimmerStrategies.length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <Lightbulb className="h-4 w-4 text-purple-500" />
+                        Strategies
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-xs">
+                          {swimmerStrategies.length}
+                        </Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {swimmerStrategies.map((strategy) => (
+                          <div key={strategy.id} className="flex items-center justify-between p-2 bg-purple-50 rounded">
+                            <div className="flex items-center gap-2">
+                              {strategy.is_used ? (
+                                <CheckCircle className="h-3 w-3 text-green-500" />
+                              ) : (
+                                <Circle className="h-3 w-3 text-gray-400" />
+                              )}
+                              <span className="text-sm">{strategy.strategy_name}</span>
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className={`
+                                text-xs
+                                ${strategy.is_used ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-700 border-gray-200'}
+                              `}
+                            >
+                              {strategy.is_used ? 'Used' : 'Not Used'}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Quick Actions */}
+                {(isAdmin || role === 'instructor') && swimmer.currentLevel && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                        Quick Actions
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="mt-3"
+                          className="w-full"
                           onClick={() => setSkillTrackerOpen(true)}
                         >
                           <ClipboardList className="h-3 w-3 mr-1" />
-                          Open Skill Tracker
+                          Full Skill Tracker
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => {
+                            // Open progress note modal
+                            setProgressModalOpen(true);
+                          }}
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          Add Note
                         </Button>
                       </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                          <span>Skill</span>
-                          <span>Status</span>
-                        </div>
-                        <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
-                          {swimmerSkills.map((skill) => (
-                            <InlineSkillEditor
-                              key={skill.id}
-                              skill={skill}
-                              onStatusChange={handleSkillUpdate}
-                              readOnly={!isAdmin && role !== 'instructor'}
-                            />
-                          ))}
-                        </div>
-                        <div className="pt-2 border-t">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            onClick={() => setSkillTrackerOpen(true)}
-                          >
-                            <ClipboardList className="h-3 w-3 mr-1" />
-                            View All Skills by Level
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Recent Progress Notes */}
                 <Card>
