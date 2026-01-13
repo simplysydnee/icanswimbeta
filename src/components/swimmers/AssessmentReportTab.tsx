@@ -15,7 +15,12 @@ import {
   Shield,
   Calendar,
   HelpCircle,
-  MinusCircle
+  MinusCircle,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  PauseCircle,
+  FileText
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -52,6 +57,14 @@ const SkillBadge = ({ skill, status }: { skill: string; status: any }) => {
     normalizedStatus = 'Yes';
   } else if (status === false || status === 'false') {
     normalizedStatus = 'No';
+  } else if (typeof status === 'number' || (typeof status === 'string' && /^\d+$/.test(status))) {
+    // Handle numeric values (0 = No, 1 = Yes)
+    const numValue = typeof status === 'number' ? status : parseInt(status, 10);
+    if (numValue === 1) {
+      normalizedStatus = 'Yes';
+    } else if (numValue === 0) {
+      normalizedStatus = 'No';
+    }
   } else if (typeof status === 'string') {
     // Handle case variations
     normalizedStatus = status.trim();
@@ -89,13 +102,16 @@ const SkillBadge = ({ skill, status }: { skill: string; status: any }) => {
   const Icon = config.icon;
 
   return (
-    <Badge
-      variant="outline"
-      className={`flex items-center gap-1 ${config.className}`}
-    >
-      <Icon className="h-3 w-3" />
-      {skill} ({config.label})
-    </Badge>
+    <div className="inline-flex items-center gap-2 px-3 py-1.5 border rounded-lg bg-white">
+      <div className="text-sm font-medium">{skill}</div>
+      <Badge
+        variant="outline"
+        className={`flex items-center gap-1 ${config.className}`}
+      >
+        <Icon className="h-3 w-3" />
+        {config.label}
+      </Badge>
+    </div>
   );
 };
 
@@ -310,60 +326,151 @@ export function AssessmentReportTab({ assessment }: AssessmentReportTabProps) {
         </CardHeader>
         <CardContent>
           {Object.entries(roadblocks).length > 0 ? (
-            <div className="space-y-4">
+            <>
+              {/* Status Legend */}
+              <div className="mb-6 p-3 bg-gray-50 rounded-lg border">
+                <p className="text-xs font-medium text-gray-700 mb-2">Status Legend:</p>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" className="text-xs bg-red-100 text-red-800 border-red-200 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" /> Needs Addressing
+                  </Badge>
+                  <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-200 flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" /> Addressed
+                  </Badge>
+                  <Badge variant="outline" className="text-xs bg-amber-100 text-amber-800 border-amber-200 flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> In Progress
+                  </Badge>
+                  <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800 border-blue-200 flex items-center gap-1">
+                    <PauseCircle className="h-3 w-3" /> Not Now
+                  </Badge>
+                  <Badge variant="outline" className="text-xs bg-gray-100 text-gray-800 border-gray-200 flex items-center gap-1">
+                    <FileText className="h-3 w-3" /> Other
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="space-y-6">
               {Object.entries(roadblocks).map(([roadblock, data]: [string, any]) => (
-                <div key={roadblock} className="space-y-2">
-                  <h4 className="font-medium text-sm capitalize">{roadblock.replace('_', ' ')}</h4>
+                <div key={roadblock} className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-sm capitalize text-gray-900">{roadblock.replace('_', ' ')}</h4>
+                    {/* Status Legend Indicator */}
+                    {data && typeof data === 'object' && ('status' in data || 'needs_addressing' in data) && 'intervention' in data && (
+                      <div className="text-xs text-gray-500 flex items-center gap-1">
+                        {(() => {
+                          if (data.needs_addressing === true) return <><AlertCircle className="h-3 w-3" /> Requires attention</>;
+                          if (data.needs_addressing === false) return <><CheckCircle2 className="h-3 w-3" /> Resolved</>;
+                          if (data.status?.toLowerCase().includes('progress')) return <><Clock className="h-3 w-3" /> In progress</>;
+                          return <><FileText className="h-3 w-3" /> Note</>;
+                        })()}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Check if data has roadblock object structure (status/intervention or needs_addressing/intervention) */}
                   {data && typeof data === 'object' && ('status' in data || 'needs_addressing' in data) && 'intervention' in data ? (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">Status:</span>
-                        <Badge
-                          variant={
-                            (data.status === 'needs_addressing' || data.needs_addressing === true)
-                              ? "destructive"
-                              : "outline"
+                        <span className="text-sm font-medium text-gray-700">Status:</span>
+                        {(() => {
+                          // Determine status text and color
+                          let statusText = 'Unknown';
+                          let badgeClass = 'bg-gray-100 text-gray-800 border-gray-200';
+                          let IconComponent = FileText;
+
+                          // Handle needs_addressing field (boolean)
+                          if (data.needs_addressing === true) {
+                            statusText = 'Needs Addressing';
+                            badgeClass = 'bg-red-100 text-red-800 border-red-200';
+                            IconComponent = AlertCircle;
+                          } else if (data.needs_addressing === false) {
+                            statusText = 'Addressed';
+                            badgeClass = 'bg-green-100 text-green-800 border-green-200';
+                            IconComponent = CheckCircle2;
                           }
-                          className="text-xs"
-                        >
-                          {data.status === 'needs_addressing' ? 'Needs Addressing' :
-                           data.status ? data.status :
-                           data.needs_addressing === true ? 'Needs Addressing' :
-                           data.needs_addressing === false ? 'Addressed' : 'Unknown'}
-                        </Badge>
+                          // Handle status field (string)
+                          else if (data.status) {
+                            const status = data.status.toLowerCase();
+                            if (status === 'needs_addressing' || status.includes('need') || status.includes('urgent')) {
+                              statusText = 'Needs Addressing';
+                              badgeClass = 'bg-red-100 text-red-800 border-red-200';
+                              IconComponent = AlertCircle;
+                            } else if (status === 'addressed' || status.includes('resolved') || status.includes('complete')) {
+                              statusText = 'Addressed';
+                              badgeClass = 'bg-green-100 text-green-800 border-green-200';
+                              IconComponent = CheckCircle2;
+                            } else if (status.includes('progress') || status.includes('working')) {
+                              statusText = 'In Progress';
+                              badgeClass = 'bg-amber-100 text-amber-800 border-amber-200';
+                              IconComponent = Clock;
+                            } else if (status.includes('not now') || status.includes('deferred') || status.includes('later')) {
+                              statusText = 'Not Now';
+                              badgeClass = 'bg-blue-100 text-blue-800 border-blue-200';
+                              IconComponent = PauseCircle;
+                            } else {
+                              // Default: capitalize the status
+                              statusText = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+                              IconComponent = FileText;
+                            }
+                          }
+
+                          return (
+                            <Badge
+                              variant="outline"
+                              className={`text-xs font-medium ${badgeClass} flex items-center gap-1`}
+                            >
+                              <IconComponent className="h-3 w-3" />
+                              {statusText}
+                            </Badge>
+                          );
+                        })()}
                       </div>
                       {data.intervention && (
-                        <div>
-                          <span className="text-sm font-medium">Intervention:</span>
-                          <p className="text-sm mt-1">{data.intervention}</p>
+                        <div className="bg-white p-3 rounded border">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Lightbulb className="h-4 w-4 text-amber-600" />
+                            <span className="text-sm font-medium text-gray-700">Teaching Strategy:</span>
+                          </div>
+                          <p className="text-sm text-gray-800 pl-6">{data.intervention}</p>
                         </div>
                       )}
                     </div>
                   ) : Array.isArray(data) ? (
                     // Handle array of strategies (legacy format)
-                    <ul className="space-y-1 pl-5">
-                      {data.map((strategy: string, index: number) => (
-                        <li key={index} className="text-sm flex items-start gap-2">
-                          <span className="text-muted-foreground">•</span>
-                          <span>{strategy}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="bg-white p-3 rounded border">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Lightbulb className="h-4 w-4 text-amber-600" />
+                        <span className="text-sm font-medium text-gray-700">Teaching Strategies:</span>
+                      </div>
+                      <ul className="space-y-2 pl-6">
+                        {data.map((strategy: string, index: number) => (
+                          <li key={index} className="text-sm text-gray-800 flex items-start gap-2">
+                            <span className="text-amber-600 mt-1">•</span>
+                            <span>{strategy}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   ) : typeof data === 'string' ? (
                     // Handle string format
-                    <p className="text-sm">{data}</p>
+                    <div className="bg-white p-3 rounded border">
+                      <p className="text-sm text-gray-800">{data}</p>
+                    </div>
                   ) : (
                     // Fallback for unknown format
-                    <p className="text-sm text-gray-500 italic">No details available</p>
+                    <div className="bg-gray-50 p-3 rounded border">
+                      <p className="text-sm text-gray-500 italic">No details available</p>
+                    </div>
                   )}
-                  <Separator className="my-2" />
                 </div>
               ))}
-            </div>
+              </div>
+            </>
           ) : (
-            <p className="text-gray-500 italic">No roadblocks or teaching strategies recorded</p>
+            <div className="text-center py-8 bg-gray-50 rounded-lg border">
+              <Lightbulb className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <p className="text-gray-500 italic">No roadblocks or teaching strategies recorded</p>
+            </div>
           )}
         </CardContent>
       </Card>
