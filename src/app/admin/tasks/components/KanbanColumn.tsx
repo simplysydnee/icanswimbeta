@@ -32,13 +32,13 @@ export function KanbanColumn({ id, title, icon, color, taskCount, children }: Ka
           <Badge variant="secondary">{taskCount}</Badge>
         </div>
       </CardHeader>
-      <CardContent className="p-4">
-        <div className="min-h-[400px]">
+      <CardContent className="p-3 sm:p-4">
+        <div className="min-h-[200px] sm:min-h-[300px] md:min-h-[400px]">
           {children}
         </div>
         {taskCount === 0 && (
-          <div className="text-center py-8 text-muted-foreground">
-            <p className="text-sm">No tasks in this column</p>
+          <div className="text-center py-6 sm:py-8 text-muted-foreground">
+            <p className="text-xs sm:text-sm">No tasks in this column</p>
             <p className="text-xs mt-1">Drag tasks here or create new ones</p>
           </div>
         )}

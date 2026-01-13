@@ -270,21 +270,21 @@ export default function TasksPage() {
   return (
     <div className="container mx-auto p-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold">Task Management</h1>
           <p className="text-muted-foreground">
             Manage tasks and assignments for your team
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 flex-1 sm:flex-none"
           >
             <Filter className="h-4 w-4" />
-            Filters
+            <span className="hidden sm:inline">Filters</span>
             {Object.values(filters).some(Boolean) && (
               <Badge variant="secondary" className="ml-1">
                 {Object.values(filters).filter(Boolean).length}
@@ -293,9 +293,10 @@ export default function TasksPage() {
           </Button>
           <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
             <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
+              <Button className="flex items-center gap-2 flex-1 sm:flex-none">
                 <Plus className="h-4 w-4" />
-                Create Task
+                <span className="hidden sm:inline">Create Task</span>
+                <span className="sm:hidden">New</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
@@ -320,7 +321,7 @@ export default function TasksPage() {
       {showFilters && (
         <Card className="mb-6">
           <CardContent className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
               <div>
                 <Label htmlFor="created_by" className="text-xs sm:text-sm">Created By</Label>
                 <Select
@@ -426,7 +427,7 @@ export default function TasksPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <Card>
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
@@ -524,45 +525,47 @@ export default function TasksPage() {
                 .map(task => (
                   <Card key={task.id} className="p-4">
                     <div className="flex justify-between items-start mb-3">
-                      <h4 className="font-medium text-base">{task.title}</h4>
+                      <h4 className="font-medium text-base line-clamp-2 flex-1 mr-2">{task.title}</h4>
                       <Badge className={getPriorityColor(task.priority)}>
                         {task.priority}
                       </Badge>
                     </div>
 
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Assigned:</span>
-                        <span className="font-medium">
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground text-xs">Assigned:</span>
+                        <span className="font-medium text-right">
                           {task.assigned_to_user ? (
-                            <div className="flex items-center gap-2">
-                              <span className="inline-flex items-center justify-center rounded-full bg-gray-200 text-xs h-5 w-5">
+                            <div className="flex items-center gap-2 justify-end">
+                              <span className="text-sm truncate max-w-[120px]">
+                                {task.assigned_to_user.full_name || task.assigned_to_user.email}
+                              </span>
+                              <span className="inline-flex items-center justify-center rounded-full bg-gray-200 text-xs h-5 w-5 flex-shrink-0">
                                 {task.assigned_to_user.full_name?.charAt(0) || task.assigned_to_user.email.charAt(0)}
                               </span>
-                              <span>{task.assigned_to_user.full_name || task.assigned_to_user.email}</span>
                             </div>
                           ) : (
-                            'Unassigned'
+                            <span className="text-sm">Unassigned</span>
                           )}
                         </span>
                       </div>
 
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Completed:</span>
-                        <span className="font-medium">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground text-xs">Completed:</span>
+                        <span className="font-medium text-sm">
                           {task.completed_at ? format(new Date(task.completed_at), 'MMM d, yyyy') : 'N/A'}
                         </span>
                       </div>
 
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Created by:</span>
-                        <span className="font-medium">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground text-xs">Created by:</span>
+                        <span className="font-medium text-sm truncate max-w-[120px] text-right">
                           {task.created_by_user?.full_name || task.created_by_user?.email || 'Unknown'}
                         </span>
                       </div>
 
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Category:</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground text-xs">Category:</span>
                         <Badge variant="outline" className="text-xs">
                           {task.category === 'swimmer_related' ? 'Swimmer' :
                            task.category === 'business_operations' ? 'Business' :
