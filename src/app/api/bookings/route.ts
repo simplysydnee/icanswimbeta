@@ -99,14 +99,26 @@ export async function GET(request: NextRequest) {
 
     // Search by swimmer name, parent name, or email
     if (search && search.trim() !== '') {
-      // Sanitize search term - escape SQL wildcards and single quotes
-      const sanitizedSearch = search
-        .replace(/[%_]/g, '\\$&')
-        .replace(/'/g, "''");
-      const searchTerm = `%${sanitizedSearch}%`;
-      console.log('Applying search filter with searchTerm:', searchTerm);
-      // Use single quotes around the pattern
-      query = query.or(`swimmers.first_name.ilike.'${searchTerm}',swimmers.last_name.ilike.'${searchTerm}'`)
+      // Escape special characters for SQL LIKE
+      // We need to handle: % _ ' "
+      let escapedSearch = search;
+      // Escape % and _ for SQL LIKE (they are wildcards)
+      escapedSearch = escapedSearch.replace(/[%_]/g, '\\$&');
+      // Escape single quotes by doubling them
+      escapedSearch = escapedSearch.replace(/'/g, "''");
+      // Escape double quotes by doubling them
+      escapedSearch = escapedSearch.replace(/"/g, '""');
+
+      const searchTerm = `%${escapedSearch}%`;
+      console.log('=== SEARCH DEBUG ===');
+      console.log('Original search:', search);
+      console.log('Escaped search:', escapedSearch);
+      console.log('Search term with wildcards:', searchTerm);
+      // Use the filter syntax with ilike - Supabase will combine these with OR
+      // Note: The value needs to be quoted because it contains %
+      const orString = `swimmers.first_name.ilike."${searchTerm}",swimmers.last_name.ilike."${searchTerm}"`;
+      console.log('Generated or() string:', orString);
+      query = query.or(orString);
     }
 
     const { data, error, count } = await query

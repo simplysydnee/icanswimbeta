@@ -126,6 +126,12 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
 
+    // ========== DEBUG LOGGING ==========
+    console.log('=== SWIMMERS API CALLED ===');
+    console.log('Full URL:', request.url);
+    console.log('Search param:', searchParams.get('search'));
+    console.log('All params:', Object.fromEntries(searchParams.entries()));
+
     // ========== STEP 1: Authentication ==========
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -273,14 +279,26 @@ export async function GET(request: Request) {
 
     // Search filter
     if (params.search && params.search.trim() !== '') {
-      // Sanitize search term - escape SQL wildcards and single quotes
-      const sanitizedSearch = params.search
-        .replace(/[%_]/g, '\\$&')
-        .replace(/'/g, "''");
-      const searchTerm = `%${sanitizedSearch}%`;
-      console.log('Applying search filter with searchTerm:', searchTerm);
-      // Use single quotes around the pattern
-      query = query.or(`first_name.ilike.'${searchTerm}',last_name.ilike.'${searchTerm}'`);
+      // Escape special characters for SQL LIKE
+      // We need to handle: % _ ' "
+      let escapedSearch = params.search;
+      // Escape % and _ for SQL LIKE (they are wildcards)
+      escapedSearch = escapedSearch.replace(/[%_]/g, '\\$&');
+      // Escape single quotes by doubling them
+      escapedSearch = escapedSearch.replace(/'/g, "''");
+      // Escape double quotes by doubling them
+      escapedSearch = escapedSearch.replace(/"/g, '""');
+
+      const searchTerm = `%${escapedSearch}%`;
+      console.log('=== SEARCH DEBUG ===');
+      console.log('Original search:', params.search);
+      console.log('Escaped search:', escapedSearch);
+      console.log('Search term with wildcards:', searchTerm);
+      // Use the filter syntax with ilike - Supabase will combine these with OR
+      // Note: The value needs to be quoted because it contains %
+      const orString = `first_name.ilike."${searchTerm}",last_name.ilike."${searchTerm}"`;
+      console.log('Generated or() string:', orString);
+      query = query.or(orString);
     }
 
     // ========== STEP 6: Apply Sorting ==========
