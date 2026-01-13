@@ -22,10 +22,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from './StatusBadge';
 import { EmailComposerModal } from '@/components/email/EmailComposerModal';
 import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
-import { SkillChecklist } from '@/components/instructor/SkillChecklist';
+import { EnhancedSkillChecklist } from '@/components/instructor/EnhancedSkillChecklist';
 import { LevelSelector } from './LevelSelector';
 import { StatusSelector } from './StatusSelector';
 import { AssessmentReportTab } from './AssessmentReportTab';
+import { InlineSkillEditor } from './InlineSkillEditor';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -386,6 +387,43 @@ export function SwimmerDetailModal({
     return `${dayDisplay} ${time}`;
   };
 
+  // Handle skill status updates
+  const handleSkillUpdate = async (skillId: string, newStatus: 'not_started' | 'in_progress' | 'mastered', notes?: string) => {
+    if (!swimmer?.id) return;
+
+    const supabase = createClient();
+    try {
+      const updates: any = {
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (notes !== undefined) {
+        updates.instructor_notes = notes;
+      }
+
+      if (newStatus === 'mastered') {
+        updates.date_mastered = new Date().toISOString();
+      } else if (newStatus === 'in_progress') {
+        updates.date_started = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from('swimmer_skills')
+        .update(updates)
+        .eq('id', skillId)
+        .eq('swimmer_id', swimmer.id);
+
+      if (error) throw error;
+
+      // Refresh skills data
+      fetchAdditionalData();
+    } catch (error) {
+      console.error('Error updating skill:', error);
+      throw error;
+    }
+  };
+
   const handleEdit = () => {
     console.log('handleEdit clicked', { swimmerId: swimmer.id });
     onClose();
@@ -611,6 +649,26 @@ export function SwimmerDetailModal({
                     </Badge>
                   )}
                 </div>
+
+                {/* Status Management - Admin Only */}
+                {isAdmin && swimmer && (
+                  <div className="bg-white border rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Status Management
+                    </h3>
+                    <StatusSelector
+                      swimmerId={swimmer.id}
+                      currentEnrollmentStatus={swimmer.enrollmentStatus || swimmer.enrollment_status || ''}
+                      currentAssessmentStatus={swimmer.assessmentStatus || swimmer.assessment_status || ''}
+                      currentApprovalStatus={swimmer.approvalStatus || swimmer.approval_status || null}
+                      onStatusChange={() => {
+                        // Refresh swimmer data
+                        fetchAdditionalData();
+                      }}
+                    />
+                  </div>
+                )}
 
                 {/* Parent Info */}
                 <div className="bg-white border rounded-lg p-4">
@@ -1385,80 +1443,119 @@ export function SwimmerDetailModal({
                     </CardContent>
                   </Card>
                 )}
-                {/* Status Management - Admin Only */}
-                {isAdmin && swimmer && (
-                  <StatusSelector
-                    swimmerId={swimmer.id}
-                    currentEnrollmentStatus={swimmer.enrollmentStatus || swimmer.enrollment_status || ''}
-                    currentAssessmentStatus={swimmer.assessmentStatus || swimmer.assessment_status || ''}
-                    currentApprovalStatus={swimmer.approvalStatus || swimmer.approval_status || null}
-                    onStatusChange={() => {
-                      // Refresh swimmer data
-                      fetchAdditionalData();
-                    }}
-                  />
-                )}
-                {/* Current Level Progress */}
-                {swimmer.currentLevel && (
-                  <div className="bg-white border rounded-lg p-4">
-                    <h4 className="font-medium mb-3">Current Level: {swimmer.currentLevel.displayName}</h4>
-                    {/* Skills Checklist */}
-                    <div className="space-y-3">
-                      <h4 className="font-medium text-sm">Skills Progress</h4>
-                      {loadingData ? (
-                        <div className="space-y-2">
-                          <Skeleton className="h-8 w-full" />
-                          <Skeleton className="h-8 w-full" />
-                          <Skeleton className="h-8 w-full" />
-                        </div>
-                      ) : swimmerSkills.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No skills tracked yet</p>
+
+                {/* Skills Progress Section */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                      Skills Progress
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      {swimmer.currentLevel ? (
+                        <span>Current level: <span className="font-medium">{swimmer.currentLevel.displayName}</span></span>
                       ) : (
-                        <div className="space-y-2 max-h-48 overflow-y-auto">
-                          {swimmerSkills.map((s) => (
-                            <div key={s.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                              <span className="text-sm">{s.skill?.name}</span>
-                              <Badge className={
-                                s.status === 'mastered' ? 'bg-green-100 text-green-800' :
-                                s.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-gray-100 text-gray-800'
-                              }>
-                                {s.status?.replace('_', ' ')}
-                              </Badge>
-                            </div>
+                        <span className="text-amber-600">No level assigned - skills cannot be tracked</span>
+                      )}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {!swimmer.currentLevel ? (
+                      <div className="text-center py-6">
+                        <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-3">
+                          <Award className="h-6 w-6 text-amber-600" />
+                        </div>
+                        <p className="text-sm font-medium text-amber-800 mb-1">Assign a Level First</p>
+                        <p className="text-xs text-amber-600">Skills can only be tracked after a swim level is assigned</p>
+                      </div>
+                    ) : loadingData ? (
+                      <div className="space-y-3">
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                      </div>
+                    ) : swimmerSkills.length === 0 ? (
+                      <div className="text-center py-6">
+                        <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-3">
+                          <ClipboardList className="h-6 w-6 text-blue-600" />
+                        </div>
+                        <p className="text-sm font-medium text-blue-800 mb-1">No Skills Tracked Yet</p>
+                        <p className="text-xs text-blue-600">Start tracking skills by updating their status</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-3"
+                          onClick={() => setSkillTrackerOpen(true)}
+                        >
+                          <ClipboardList className="h-3 w-3 mr-1" />
+                          Open Skill Tracker
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+                          <span>Skill</span>
+                          <span>Status</span>
+                        </div>
+                        <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+                          {swimmerSkills.map((skill) => (
+                            <InlineSkillEditor
+                              key={skill.id}
+                              skill={skill}
+                              onStatusChange={handleSkillUpdate}
+                              readOnly={!isAdmin && role !== 'instructor'}
+                            />
                           ))}
                         </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                        <div className="pt-2 border-t">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => setSkillTrackerOpen(true)}
+                          >
+                            <ClipboardList className="h-3 w-3 mr-1" />
+                            View All Skills by Level
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
                 {/* Recent Progress Notes */}
-                <div className="bg-white border rounded-lg p-4">
-                  <h4 className="font-medium mb-3">Recent Progress Notes</h4>
-                  {loadingData ? (
-                    <div className="space-y-2">
-                      <Skeleton className="h-24 w-full" />
-                      <Skeleton className="h-24 w-full" />
-                    </div>
-                  ) : progressNotes.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No progress notes yet</p>
-                  ) : (
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {progressNotes.map((note) => (
-                        <div key={note.id} className="p-3 bg-gray-50 rounded-lg">
-                          <div className="flex justify-between text-sm">
-                            <span className="font-medium">{note.instructor?.full_name || 'Unknown Instructor'}</span>
-                            <span className="text-muted-foreground">
-                              {note.created_at ? format(new Date(note.created_at), 'MMM d, yyyy') : 'N/A'}
-                            </span>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      Recent Progress Notes
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingData ? (
+                      <div className="space-y-2">
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                      </div>
+                    ) : progressNotes.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">No progress notes yet</p>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {progressNotes.map((note) => (
+                          <div key={note.id} className="p-3 bg-gray-50 rounded-lg">
+                            <div className="flex justify-between text-sm">
+                              <span className="font-medium">{note.instructor?.full_name || 'Unknown Instructor'}</span>
+                              <span className="text-muted-foreground">
+                                {note.created_at ? format(new Date(note.created_at), 'MMM d, yyyy') : 'N/A'}
+                              </span>
+                            </div>
+                            <p className="text-sm mt-1 line-clamp-2">{note.lesson_summary || note.instructor_notes || 'No summary provided'}</p>
                           </div>
-                          <p className="text-sm mt-1 line-clamp-2">{note.lesson_summary || note.instructor_notes || 'No summary provided'}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
                 {/* Progress Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1488,23 +1585,6 @@ export function SwimmerDetailModal({
                     )}
                   </div>
                 </div>
-
-                {/* Skill Tracker Button */}
-                {(isAdmin || role === 'instructor') && (
-                  <div className="mt-6">
-                    <Button
-                      variant="outline"
-                      onClick={() => setSkillTrackerOpen(true)}
-                      className="w-full"
-                    >
-                      <ClipboardList className="h-4 w-4 mr-2" />
-                      Open Skill Tracker
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-2 text-center">
-                      View and update all skills by level
-                    </p>
-                  </div>
-                )}
               </div>
             </section>
           </TabsContent>
@@ -1873,7 +1953,7 @@ export function SwimmerDetailModal({
               </DialogTitle>
             </DialogHeader>
             {swimmer && (
-              <SkillChecklist
+              <EnhancedSkillChecklist
                 swimmerId={swimmer.id}
                 readOnly={!isAdmin && role !== 'instructor'}
               />
