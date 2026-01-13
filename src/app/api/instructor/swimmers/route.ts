@@ -233,9 +233,13 @@ export async function GET(request: Request) {
       console.log('=== SEARCH DEBUG ===');
       console.log('Original search:', params.search);
 
-      // Escape % and _ in search term (they are SQL wildcards)
-      // We want to search for literal % and _, not use them as wildcards
-      const escapedSearch = params.search.replace(/[%_]/g, '\\$&');
+      // Escape special characters for SQL
+      let escapedSearch = params.search;
+      // Escape % and _ (SQL wildcards) - search for literal % and _
+      escapedSearch = escapedSearch.replace(/[%_]/g, '\\$&');
+      // Escape single quotes by doubling them for SQL
+      escapedSearch = escapedSearch.replace(/'/g, "''");
+
       const searchPattern = `%${escapedSearch}%`;
       console.log('Escaped search:', escapedSearch);
       console.log('Search pattern:', searchPattern);
