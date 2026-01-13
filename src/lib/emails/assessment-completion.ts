@@ -101,11 +101,15 @@ export function categorizeSkills(swimSkills: Record<string, string>) {
 
   for (const [key, value] of Object.entries(swimSkills)) {
     const label = skillLabels[key] || key;
-    if (value === 'yes') {
+    // Handle both raw values and display labels
+    const normalizedValue = typeof value === 'string' ? value.toLowerCase().trim() : '';
+
+    if (normalizedValue === 'yes') {
       currentSkills.push(label);
-    } else if (value === 'no' || value === 'emerging') {
+    } else if (normalizedValue === 'no' || normalizedValue === 'emerging' || normalizedValue === 'emerging skill') {
       skillsToDevelop.push(label);
     }
+    // Note: 'na' or 'n/a' skills are ignored (not shown in email)
   }
 
   return {

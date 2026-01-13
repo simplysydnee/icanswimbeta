@@ -13,7 +13,9 @@ import {
   TrendingUp,
   Lightbulb,
   Shield,
-  Calendar
+  Calendar,
+  HelpCircle,
+  MinusCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -41,19 +43,61 @@ interface AssessmentReportTabProps {
 }
 
 // Helper component for skill badges
-const SkillBadge = ({ skill, mastered }: { skill: string; mastered: boolean }) => (
-  <Badge
-    variant={mastered ? "default" : "outline"}
-    className={`flex items-center gap-1 ${mastered ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-800 border-gray-200'}`}
-  >
-    {mastered ? (
-      <CheckCircle className="h-3 w-3" />
-    ) : (
-      <XCircle className="h-3 w-3" />
-    )}
-    {skill}
-  </Badge>
-);
+const SkillBadge = ({ skill, status }: { skill: string; status: any }) => {
+  // Normalize status value
+  let normalizedStatus = status;
+
+  // Handle boolean values for backward compatibility
+  if (status === true || status === 'true') {
+    normalizedStatus = 'Yes';
+  } else if (status === false || status === 'false') {
+    normalizedStatus = 'No';
+  } else if (typeof status === 'string') {
+    // Handle case variations
+    normalizedStatus = status.trim();
+    if (normalizedStatus.toLowerCase() === 'yes') normalizedStatus = 'Yes';
+    if (normalizedStatus.toLowerCase() === 'no') normalizedStatus = 'No';
+    if (normalizedStatus.toLowerCase() === 'na' || normalizedStatus.toLowerCase() === 'n/a') normalizedStatus = 'N/A';
+    if (normalizedStatus.toLowerCase() === 'emerging' || normalizedStatus.toLowerCase() === 'emerging skill') normalizedStatus = 'Emerging Skill';
+  }
+
+  // Map status to display properties
+  const statusConfig = {
+    'Yes': {
+      icon: CheckCircle,
+      className: 'bg-green-100 text-green-800 border-green-200',
+      label: 'Yes'
+    },
+    'Emerging Skill': {
+      icon: HelpCircle,
+      className: 'bg-amber-100 text-amber-800 border-amber-200',
+      label: 'Emerging'
+    },
+    'No': {
+      icon: XCircle,
+      className: 'bg-red-100 text-red-800 border-red-200',
+      label: 'No'
+    },
+    'N/A': {
+      icon: MinusCircle,
+      className: 'bg-gray-100 text-gray-800 border-gray-200',
+      label: 'N/A'
+    }
+  };
+
+  const config = statusConfig[normalizedStatus as keyof typeof statusConfig] || statusConfig['N/A'];
+  const Icon = config.icon;
+
+  return (
+    <Badge
+      variant="outline"
+      className={`flex items-center gap-1 ${config.className}`}
+    >
+      <Icon className="h-3 w-3" />
+      {skill} ({config.label})
+    </Badge>
+  );
+};
 
 export function AssessmentReportTab({ assessment }: AssessmentReportTabProps) {
   if (!assessment) {
@@ -168,21 +212,46 @@ export function AssessmentReportTab({ assessment }: AssessmentReportTabProps) {
         <CardContent>
           <div className="space-y-4">
             {Object.entries(swimSkills).length > 0 ? (
-              Object.entries(swimSkills).map(([category, skills]: [string, any]) => (
-                <div key={category} className="space-y-2">
-                  <h4 className="font-medium text-sm capitalize">{category.replace('_', ' ')}</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(skills).map(([skill, mastered]: [string, any]) => (
-                      <SkillBadge
-                        key={skill}
-                        skill={skill.replace('_', ' ')}
-                        mastered={mastered === true || mastered === 'true'}
-                      />
-                    ))}
-                  </div>
-                  <Separator className="my-2" />
-                </div>
-              ))
+              // Check if swimSkills has categorized structure or flat structure
+              (() => {
+                // Check if first entry has nested skills object
+                const firstEntry = Object.entries(swimSkills)[0];
+                const hasCategories = firstEntry && typeof firstEntry[1] === 'object' && !Array.isArray(firstEntry[1]);
+
+                if (hasCategories) {
+                  // Categorized structure: { category: { skill: status, ... }, ... }
+                  return Object.entries(swimSkills).map(([category, skills]: [string, any]) => (
+                    <div key={category} className="space-y-2">
+                      <h4 className="font-medium text-sm capitalize">{category.replace('_', ' ')}</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(skills).map(([skill, status]: [string, any]) => (
+                          <SkillBadge
+                            key={skill}
+                            skill={skill.replace('_', ' ')}
+                            status={status}
+                          />
+                        ))}
+                      </div>
+                      <Separator className="my-2" />
+                    </div>
+                  ));
+                } else {
+                  // Flat structure: { skill: status, ... }
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        {Object.entries(swimSkills).map(([skill, status]: [string, any]) => (
+                          <SkillBadge
+                            key={skill}
+                            skill={skill.replace('_', ' ')}
+                            status={status}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+              })()
             ) : (
               <p className="text-gray-500 italic">No swim skills recorded</p>
             )}
