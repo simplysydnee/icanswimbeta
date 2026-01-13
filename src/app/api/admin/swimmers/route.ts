@@ -272,14 +272,15 @@ export async function GET(request: Request) {
     }
 
     // Search filter
-    if (params.search) {
-      const searchTerm = `%${params.search}%`;
-      query = query.or(`
-        first_name.ilike.${searchTerm},
-        last_name.ilike.${searchTerm},
-        parent.full_name.ilike.${searchTerm},
-        parent.email.ilike.${searchTerm}
-      `);
+    if (params.search && params.search.trim() !== '') {
+      // Sanitize search term - escape SQL wildcards and single quotes
+      const sanitizedSearch = params.search
+        .replace(/[%_]/g, '\\$&')
+        .replace(/'/g, "''");
+      const searchTerm = `%${sanitizedSearch}%`;
+      console.log('Applying search filter with searchTerm:', searchTerm);
+      // Use single quotes around the pattern
+      query = query.or(`first_name.ilike.'${searchTerm}',last_name.ilike.'${searchTerm}'`);
     }
 
     // ========== STEP 6: Apply Sorting ==========
@@ -311,12 +312,29 @@ export async function GET(request: Request) {
     query = query.range(offset, offset + limit - 1);
 
     // ========== STEP 8: Execute Query ==========
-    const { data, error, count } = await query;
+    console.log('Executing Supabase query with filters...');
+    let data, error, count;
+    try {
+      const result = await query;
+      data = result.data;
+      error = result.error;
+      count = result.count;
+    } catch (queryError) {
+      console.error('Query execution error:', queryError);
+      return NextResponse.json(
+        { error: `Query execution failed: ${queryError instanceof Error ? queryError.message : String(queryError)}` },
+        { status: 500 }
+      );
+    }
 
     if (error) {
       console.error('Error fetching swimmers:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      console.error('Error code:', error.code);
+      console.error('Error hint:', error.hint);
+      console.error('Error details:', error.details);
       return NextResponse.json(
-        { error: `Failed to fetch swimmers: ${error.message}` },
+        { error: `Failed to fetch swimmers: ${error.message || error.details || error.hint || 'Unknown error'}` },
         { status: 500 }
       );
     }

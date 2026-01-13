@@ -229,14 +229,15 @@ export async function GET(request: Request) {
     }
 
     // Search filter
-    if (params.search) {
-      const searchTerm = `%${params.search}%`;
-      query = query.or(`
-        first_name.ilike.${searchTerm},
-        last_name.ilike.${searchTerm},
-        parent.full_name.ilike.${searchTerm},
-        parent.email.ilike.${searchTerm}
-      `);
+    if (params.search && params.search.trim() !== '') {
+      // Sanitize search term - escape SQL wildcards and single quotes
+      const sanitizedSearch = params.search
+        .replace(/[%_]/g, '\\$&')
+        .replace(/'/g, "''");
+      const searchTerm = `%${sanitizedSearch}%`;
+      console.log('Applying search filter with searchTerm:', searchTerm);
+      // Use single quotes around the pattern
+      query = query.or(`first_name.ilike.'${searchTerm}',last_name.ilike.'${searchTerm}'`);
     }
 
     // ========== STEP 7: Apply Sorting ==========

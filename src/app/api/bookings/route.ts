@@ -98,13 +98,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Search by swimmer name, parent name, or email
-    if (search) {
-      query = query.or(`
-        swimmers.first_name.ilike.%${search}%,
-        swimmers.last_name.ilike.%${search}%,
-        profiles!parent_id.full_name.ilike.%${search}%,
-        profiles!parent_id.email.ilike.%${search}%
-      `)
+    if (search && search.trim() !== '') {
+      // Sanitize search term - escape SQL wildcards and single quotes
+      const sanitizedSearch = search
+        .replace(/[%_]/g, '\\$&')
+        .replace(/'/g, "''");
+      const searchTerm = `%${sanitizedSearch}%`;
+      console.log('Applying search filter with searchTerm:', searchTerm);
+      // Use single quotes around the pattern
+      query = query.or(`swimmers.first_name.ilike.'${searchTerm}',swimmers.last_name.ilike.'${searchTerm}'`)
     }
 
     const { data, error, count } = await query
