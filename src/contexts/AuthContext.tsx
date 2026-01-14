@@ -565,22 +565,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(null)
       setRole(null)
 
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
+      // Redirect to login immediately to prevent any further component updates
+      router.push('/login')
 
       // Force refresh the router to clear any cached auth state
       router.refresh()
 
-      // Redirect to login page (not home page)
-      router.push('/login')
+      // Sign out from Supabase (this will trigger onAuthStateChange)
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Logout failed')
       // Even on error, clear auth state
       setUser(null)
       setProfile(null)
       setRole(null)
-      router.refresh()
       router.push('/login')
+      router.refresh()
     } finally {
       setLoading(false)
     }

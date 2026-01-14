@@ -55,6 +55,7 @@ export interface Swimmer {
   enrollmentStatus: string;
   approvalStatus?: string;
   assessmentStatus: string;
+  currentLevelId?: string | null;
   currentLevel?: {
     id: string;
     name: string;

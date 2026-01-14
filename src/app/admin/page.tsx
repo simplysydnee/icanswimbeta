@@ -305,9 +305,19 @@ export default function AdminDashboard() {
             Welcome back, {user?.fullName ? user.fullName.split(' ')[0] : 'Admin'}!
           </p>
         </div>
-        <div className="text-right text-sm text-muted-foreground">
-          <div className="font-medium">{format(new Date(), 'EEEE')}</div>
-          <div>{format(new Date(), 'MMMM d, yyyy')}</div>
+        <div className="flex flex-col items-end gap-2">
+          <Button
+            onClick={() => router.push('/staff-mode')}
+            variant="outline"
+            className="border-[#2a5e84] text-[#2a5e84] hover:bg-[#e8f4f8]"
+          >
+            <Users className="mr-2 h-4 w-4" />
+            Staff Mode
+          </Button>
+          <div className="text-right text-sm text-muted-foreground">
+            <div className="font-medium">{format(new Date(), 'EEEE')}</div>
+            <div>{format(new Date(), 'MMMM d, yyyy')}</div>
+          </div>
         </div>
       </div>
 
@@ -534,6 +544,18 @@ export default function AdminDashboard() {
                 </span>
               </Button>
             </Link>
+
+            {/* Staff Mode Button */}
+            <Button
+              onClick={() => router.push('/staff-mode')}
+              variant="outline"
+              className="w-full h-auto min-h-[70px] py-3 px-2 flex flex-col items-center justify-center gap-1.5 border-[#2a5e84] text-[#2a5e84] hover:bg-[#e8f4f8]"
+            >
+              <Users className="h-5 w-5 shrink-0" />
+              <span className="text-xs text-center leading-tight whitespace-normal break-words">
+                Staff Mode
+              </span>
+            </Button>
           </CardContent>
         </Card>
       </div>

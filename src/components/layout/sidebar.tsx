@@ -20,8 +20,7 @@ import {
   CheckCircle,
   CheckSquare,
   BarChart3,
-  LogOut,
-  Receipt
+  LogOut
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -44,7 +43,7 @@ const adminNavItems: NavItem[] = [
   { title: 'Staff Management', href: '/admin/staff', icon: <Users className="h-5 w-5" /> },
   { title: 'Referrals', href: '/admin/referrals', icon: <FileText className="h-5 w-5" /> },
   { title: 'Purchase Orders', href: '/admin/pos', icon: <CreditCard className="h-5 w-5" /> },
-  { title: 'Billing', href: '/admin/billing', icon: <Receipt className="h-5 w-5" /> },
+  // { title: 'Billing', href: '/admin/billing', icon: <Receipt className="h-5 w-5" /> }, // TODO: Implement billing
   { title: 'Users', href: '/admin/users', icon: <UserCog className="h-5 w-5" /> },
   { title: 'Funding Sources', href: '/admin/funding-sources', icon: <Building2 className="h-5 w-5" /> },
   { title: 'Settings', href: '/admin/settings', icon: <Settings className="h-5 w-5" /> },

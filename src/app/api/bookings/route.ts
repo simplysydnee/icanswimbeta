@@ -118,6 +118,9 @@ export async function GET(request: NextRequest) {
       const orString = `swimmers.first_name.ilike.${searchPattern},swimmers.last_name.ilike.${searchPattern}`;
       console.log('Generated or() string:', orString);
       query = query.or(orString);
+
+      // Alternative approach if above doesn't work:
+      // query = query.ilike('swimmers.first_name', searchPattern).ilike('swimmers.last_name', searchPattern, { foreignTable: false });
     }
 
     const { data, error, count } = await query

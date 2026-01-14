@@ -45,24 +45,33 @@ export default function NeedsProgressUpdateCard({ className }: NeedsProgressUpda
   const [selectedSwimmer, setSelectedSwimmer] = useState<SwimmerNeedingUpdate | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchSwimmersNeedingUpdate = useCallback(async () => {
+  const fetchSwimmersNeedingUpdate = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     try {
-      const response = await fetch('/api/swimmers/needs-progress-update');
+      const response = await fetch('/api/swimmers/needs-progress-update', { signal });
       if (!response.ok) {
         throw new Error('Failed to fetch swimmers needing update');
       }
       const data = await response.json();
       setSwimmers(data);
     } catch (error) {
-      console.error('Error fetching swimmers needing update:', error);
+      // Only log error if it's not an abort error
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.error('Error fetching swimmers needing update:', error);
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchSwimmersNeedingUpdate();
+    const abortController = new AbortController();
+
+    fetchSwimmersNeedingUpdate(abortController.signal);
+
+    return () => {
+      abortController.abort();
+    };
   }, [fetchSwimmersNeedingUpdate]);
 
   const handleUpdateProgress = (swimmer: SwimmerNeedingUpdate) => {

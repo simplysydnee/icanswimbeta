@@ -14,6 +14,14 @@ export default function SettingsRedirect() {
   useEffect(() => {
     const isLoading = loading || isLoadingProfile;
     if (!isLoading && user) {
+      // Special redirect for staff@icanswim209.com
+      const userEmail = user.email?.toLowerCase();
+      if (userEmail === 'staff@icanswim209.com') {
+        console.log('Settings: Redirecting staff@icanswim209.com to /staff-mode');
+        router.replace('/staff-mode');
+        return;
+      }
+
       // Redirect based on role
       switch (role) {
         case 'admin':

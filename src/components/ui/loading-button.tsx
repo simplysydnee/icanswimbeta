@@ -1,9 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import { Button, ButtonProps } from './button';
+import { Button } from './button';
+import type { ComponentProps } from 'react';
+import type { VariantProps } from 'class-variance-authority';
+import { buttonVariants } from './button';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+type ButtonProps = ComponentProps<'button'> & VariantProps<typeof buttonVariants> & {
+  asChild?: boolean;
+};
 
 interface LoadingButtonProps extends ButtonProps {
   loading?: boolean;

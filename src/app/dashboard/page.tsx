@@ -43,6 +43,14 @@ export default function DashboardRedirect() {
     }
 
     if (!isLoading && user) {
+      // Special redirect for staff@icanswim209.com
+      const userEmail = user.email?.toLowerCase();
+      if (userEmail === 'staff@icanswim209.com') {
+        console.log('Dashboard: Redirecting staff@icanswim209.com to /staff-mode');
+        router.replace('/staff-mode');
+        return;
+      }
+
       // Only redirect if we have a definite role
       console.log('Dashboard: User exists, role:', role);
       if (role === 'admin') {

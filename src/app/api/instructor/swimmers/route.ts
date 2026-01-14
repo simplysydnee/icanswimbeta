@@ -249,6 +249,9 @@ export async function GET(request: Request) {
       const orString = `first_name.ilike.${searchPattern},last_name.ilike.${searchPattern}`;
       console.log('Generated or() string:', orString);
       query = query.or(orString);
+
+      // Alternative approach if above doesn't work:
+      // query = query.ilike('first_name', searchPattern).ilike('last_name', searchPattern, { foreignTable: false });
     }
 
     // ========== STEP 7: Apply Sorting ==========

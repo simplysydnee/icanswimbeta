@@ -286,7 +286,7 @@ export async function GET(request: Request) {
       let escapedSearch = params.search;
       // Escape % and _ (SQL wildcards) - search for literal % and _
       escapedSearch = escapedSearch.replace(/[%_]/g, '\\$&');
-      // Escape single quotes by doubling them for SQL
+      // For single quotes, we need to double them for SQL
       escapedSearch = escapedSearch.replace(/'/g, "''");
 
       const searchPattern = `%${escapedSearch}%`;
@@ -297,7 +297,12 @@ export async function GET(request: Request) {
       // According to Supabase docs, or() should NOT have quotes around the pattern
       const orString = `first_name.ilike.${searchPattern},last_name.ilike.${searchPattern}`;
       console.log('Generated or() string:', orString);
+
+      // Try the query and log any errors
       query = query.or(orString);
+
+      // Alternative approach if above doesn't work:
+      // query = query.ilike('first_name', searchPattern).ilike('last_name', searchPattern, { foreignTable: false });
     }
 
     // ========== STEP 6: Apply Sorting ==========

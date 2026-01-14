@@ -76,6 +76,7 @@ export interface Swimmer {
   approvalStatus?: string;
   approval_status?: string;
   assessmentStatus: string;
+  currentLevelId?: string | null;
   currentLevel?: {
     id: string;
     name: string;
@@ -1477,7 +1478,7 @@ export function SwimmerDetailModal({
                     <CardContent>
                       <LevelSelector
                         swimmerId={swimmer.id}
-                        currentLevelId={swimmer.currentLevel?.id || null}
+                        currentLevelId={swimmer.currentLevelId || swimmer.currentLevel?.id || null}
                         onLevelChange={() => {
                           // Optionally refresh swimmer data
                           fetchAdditionalData();
