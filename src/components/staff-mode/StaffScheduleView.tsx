@@ -127,7 +127,7 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
     // Fetch skills for all swimmers
     const { data: skills, error: skillsError } = await supabase
       .from('swimmer_skills')
-      .select('swimmer_id, is_mastered')
+      .select('swimmer_id, status')
       .in('swimmer_id', swimmerIds)
 
     if (skillsError) {
@@ -140,7 +140,7 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
     skills?.forEach(skill => {
       const current = skillCounts.get(skill.swimmer_id) || { mastered: 0, total: 0 }
       skillCounts.set(skill.swimmer_id, {
-        mastered: current.mastered + (skill.is_mastered ? 1 : 0),
+        mastered: current.mastered + (skill.status === 'mastered' ? 1 : 0),
         total: current.total + 1
       })
     })
@@ -148,7 +148,7 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
     // Fetch strategies for all swimmers
     const { data: strategies, error: strategiesError } = await supabase
       .from('swimmer_strategies')
-      .select('swimmer_id, strategy')
+      .select('swimmer_id, strategy_name')
       .in('swimmer_id', swimmerIds)
       .eq('is_used', true)
       .order('created_at', { ascending: false })
@@ -163,7 +163,7 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
     strategies?.forEach(strategy => {
       const current = strategyMap.get(strategy.swimmer_id) || []
       if (current.length < 3) { // Limit to 3 strategies
-        current.push(strategy.strategy)
+        current.push(strategy.strategy_name)
       }
       strategyMap.set(strategy.swimmer_id, current)
     })

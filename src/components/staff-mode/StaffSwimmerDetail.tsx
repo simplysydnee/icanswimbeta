@@ -91,7 +91,7 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
     // Fetch skills for progress calculation
     const { data: skills, error: skillsError } = await supabase
       .from('swimmer_skills')
-      .select('is_mastered')
+      .select('status')
       .eq('swimmer_id', swimmerId)
 
     if (skillsError) {
@@ -100,7 +100,7 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
     }
 
     // Count mastered skills
-    const masteredSkills = skills?.filter(skill => skill.is_mastered).length || 0
+    const masteredSkills = skills?.filter(skill => skill.status === 'mastered').length || 0
     const totalSkills = skills?.length || 0
 
     // Fetch counts for tabs
