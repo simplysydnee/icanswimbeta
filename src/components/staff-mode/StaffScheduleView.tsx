@@ -39,6 +39,7 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
     const today = new Date().toISOString().split('T')[0]
 
     // Fetch today's sessions for this instructor
+    // Use PostgreSQL date casting: start_time::date to get the date part
     const { data: sessions, error: sessionsError } = await supabase
       .from('sessions')
       .select(`
@@ -49,8 +50,8 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
         )
       `)
       .eq('instructor_id', instructorId)
-      .eq('date', today)
-      .eq('status', 'scheduled')
+      .filter('start_time::date', 'eq', today)
+      .in('status', ['booked', 'open', 'available']) // Sessions that are booked or available
       .order('start_time')
 
     if (sessionsError) {
