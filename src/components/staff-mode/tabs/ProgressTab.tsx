@@ -19,8 +19,7 @@ interface Skill {
   level_name: string
   level_sequence: number
   status: 'not_started' | 'in_progress' | 'mastered'
-  mastered_date: string | null
-  updated_by: string | null
+  date_mastered: string | null
 }
 
 interface SkillsByLevel {
@@ -54,7 +53,7 @@ async function fetchSwimmerSkills(swimmerId: string): Promise<SkillsByLevel[]> {
           sequence
         )
       `)
-      .order('level_sequence')
+      .order('swim_levels(sequence)')
       .order('name')
 
     if (skillsError) {
@@ -65,7 +64,7 @@ async function fetchSwimmerSkills(swimmerId: string): Promise<SkillsByLevel[]> {
     // Fetch this swimmer's skill statuses
     const { data: swimmerSkills, error: swimmerSkillsError } = await supabase
       .from('swimmer_skills')
-      .select('skill_id, status, mastered_date, updated_by')
+      .select('skill_id, status, date_mastered')
       .eq('swimmer_id', swimmerId)
 
     if (swimmerSkillsError) {
@@ -79,8 +78,7 @@ async function fetchSwimmerSkills(swimmerId: string): Promise<SkillsByLevel[]> {
         skill.skill_id,
         {
           status: skill.status as 'not_started' | 'in_progress' | 'mastered',
-          mastered_date: skill.mastered_date,
-          updated_by: skill.updated_by
+          date_mastered: skill.date_mastered
         }
       ]) || []
     )
@@ -103,8 +101,7 @@ async function fetchSwimmerSkills(swimmerId: string): Promise<SkillsByLevel[]> {
 
       const skillStatus = skillStatusMap.get(skill.id) || {
         status: 'not_started' as const,
-        mastered_date: null,
-        updated_by: null
+        date_mastered: null
       }
 
       levelsMap.get(levelId)!.skills.push({
@@ -142,9 +139,8 @@ async function updateSkillStatus(
     const now = new Date().toISOString()
     const updateData = {
       status,
-      updated_by: instructorId,
       updated_at: now,
-      ...(status === 'mastered' ? { mastered_date: now } : {})
+      ...(status === 'mastered' ? { date_mastered: now.split('T')[0] } : {}) // Store as date only
     }
 
     // Check if skill record exists
@@ -506,9 +502,9 @@ export default function ProgressTab({
                                   {skill.description}
                                 </p>
                               )}
-                              {skill.mastered_date && (
+                              {skill.date_mastered && (
                                 <p className="text-xs text-gray-500 mt-1">
-                                  Mastered on {format(new Date(skill.mastered_date), 'MMM d, yyyy')}
+                                  Mastered on {format(new Date(skill.date_mastered), 'MMM d, yyyy')}
                                 </p>
                               )}
                             </div>
