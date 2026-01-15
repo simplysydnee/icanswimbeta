@@ -25,7 +25,16 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
 
   try {
     // Get today's date in YYYY-MM-DD format
-    const today = new Date().toISOString().split('T')[0]
+    const todayUTC = new Date().toISOString().split('T')[0]
+    // Also get local date to debug timezone issues
+    const todayLocal = new Date().toLocaleDateString('en-CA') // Returns YYYY-MM-DD in local timezone
+    console.log('=== DEBUG: Date strings ===')
+    console.log('UTC date (toISOString):', todayUTC)
+    console.log('Local date (toLocaleDateString):', todayLocal)
+    console.log('Current time:', new Date().toString())
+
+    // Use local date for query
+    const today = todayLocal
 
     // First, fetch all active instructors with display_on_team = true
     const { data: instructors, error: instructorsError } = await supabase
@@ -41,14 +50,22 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
     }
 
     if (!instructors || instructors.length === 0) {
+      console.log('=== DEBUG: No instructors found with display_on_team = true and is_active = true')
       return []
     }
 
     // Get instructor IDs
     const instructorIds = instructors.map(instructor => instructor.id)
+    console.log('=== DEBUG: Instructor IDs ===')
+    console.log('Instructor IDs:', instructorIds)
+    console.log('Number of instructors:', instructors.length)
 
     // Fetch today's sessions for these instructors
     // Use PostgreSQL date casting: start_time::date to get the date part
+    console.log('=== DEBUG: Querying sessions ===')
+    console.log('Date filter:', today)
+    console.log('Status filter:', ['booked', 'open', 'available'])
+
     const { data: sessions, error: sessionsError } = await supabase
       .from('sessions')
       .select('instructor_id')
@@ -60,6 +77,10 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
       console.error('Error fetching today\'s sessions:', sessionsError)
       throw new Error('Failed to fetch today\'s sessions')
     }
+
+    console.log('=== DEBUG: Sessions query result ===')
+    console.log('Number of sessions found:', sessions?.length || 0)
+    console.log('Sessions data:', sessions)
 
     // Count sessions per instructor
     const sessionCounts: Record<string, number> = {}

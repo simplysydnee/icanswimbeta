@@ -35,8 +35,12 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
   const supabase = createClient()
 
   try {
-    // Get today's date in YYYY-MM-DD format
-    const today = new Date().toISOString().split('T')[0]
+    // Get today's date in YYYY-MM-DD format - use local timezone, not UTC
+    const today = new Date().toLocaleDateString('en-CA') // Returns YYYY-MM-DD in local timezone
+    console.log('=== DEBUG StaffScheduleView: Date for query ===')
+    console.log('Today (local):', today)
+    console.log('Current time:', new Date().toString())
+    console.log('Instructor ID:', instructorId)
 
     // Fetch today's sessions for this instructor
     // Use PostgreSQL date casting: start_time::date to get the date part
@@ -58,6 +62,10 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
       console.error('Error fetching sessions:', sessionsError)
       throw new Error('Failed to fetch today\'s sessions')
     }
+
+    console.log('=== DEBUG StaffScheduleView: Sessions found ===')
+    console.log('Number of sessions:', sessions?.length || 0)
+    console.log('Sessions:', sessions)
 
     if (!sessions || sessions.length === 0) {
       return []
