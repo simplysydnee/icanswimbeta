@@ -33,8 +33,10 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
     console.log('Local date (toLocaleDateString):', todayLocal)
     console.log('Current time:', new Date().toString())
 
-    // Use local date for query
-    const today = todayLocal
+    // Use UTC date for query (database stores timestamps in UTC)
+    // DATE(start_time) extracts UTC date, so we need to use UTC date for comparison
+    const today = todayUTC
+    console.log('=== DEBUG: Using date for query ===', today)
 
     // First, fetch all active instructors with display_on_team = true
     const { data: instructors, error: instructorsError } = await supabase
@@ -61,16 +63,16 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
     console.log('Number of instructors:', instructors.length)
 
     // Fetch today's sessions for these instructors
-    // Use timestamp range: from midnight to 11:59:59 PM on today's date
+    // Use timestamp range: from midnight to 11:59:59 PM on today's date (UTC)
     console.log('=== DEBUG: Querying sessions ===')
-    console.log('Date range:', `${today}T00:00:00 to ${today}T23:59:59`)
+    console.log('Date range (UTC):', `${today}T00:00:00Z to ${today}T23:59:59Z`)
     console.log('Status filter:', ['booked', 'open', 'available'])
 
     const { data: sessions, error: sessionsError } = await supabase
       .from('sessions')
       .select('instructor_id')
-      .gte('start_time', `${today}T00:00:00`)
-      .lt('start_time', `${today}T23:59:59`)
+      .gte('start_time', `${today}T00:00:00Z`)
+      .lt('start_time', `${today}T23:59:59Z`)
       .in('instructor_id', instructorIds)
       .in('status', ['booked', 'open', 'available']) // Sessions that are booked or available
 

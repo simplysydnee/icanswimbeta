@@ -35,17 +35,22 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
   const supabase = createClient()
 
   try {
-    // Get today's date in YYYY-MM-DD format - use local timezone, not UTC
-    const today = new Date().toLocaleDateString('en-CA') // Returns YYYY-MM-DD in local timezone
+    // Get today's date in YYYY-MM-DD format - use UTC for database queries
+    const todayUTC = new Date().toISOString().split('T')[0]
+    const todayLocal = new Date().toLocaleDateString('en-CA')
     console.log('=== DEBUG StaffScheduleView: Date for query ===')
-    console.log('Today (local):', today)
+    console.log('UTC date:', todayUTC)
+    console.log('Local date:', todayLocal)
     console.log('Current time:', new Date().toString())
     console.log('Instructor ID:', instructorId)
 
+    // Use UTC date for query (database stores timestamps in UTC)
+    const today = todayUTC
+
     // Fetch today's sessions for this instructor
-    // Use timestamp range: from midnight to 11:59:59 PM on today's date
+    // Use timestamp range: from midnight to 11:59:59 PM on today's date (UTC)
     console.log('=== DEBUG StaffScheduleView: Date range ===')
-    console.log('Date range:', `${today}T00:00:00 to ${today}T23:59:59`)
+    console.log('Date range (UTC):', `${today}T00:00:00Z to ${today}T23:59:59Z`)
 
     const { data: sessions, error: sessionsError } = await supabase
       .from('sessions')
@@ -57,8 +62,8 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
         )
       `)
       .eq('instructor_id', instructorId)
-      .gte('start_time', `${today}T00:00:00`)
-      .lt('start_time', `${today}T23:59:59`)
+      .gte('start_time', `${today}T00:00:00Z`)
+      .lt('start_time', `${today}T23:59:59Z`)
       .in('status', ['booked', 'open', 'available']) // Sessions that are booked or available
       .order('start_time')
 
