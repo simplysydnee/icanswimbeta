@@ -61,15 +61,16 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
     console.log('Number of instructors:', instructors.length)
 
     // Fetch today's sessions for these instructors
-    // Use PostgreSQL date casting: start_time::date to get the date part
+    // Use timestamp range: from midnight to 11:59:59 PM on today's date
     console.log('=== DEBUG: Querying sessions ===')
-    console.log('Date filter:', today)
+    console.log('Date range:', `${today}T00:00:00 to ${today}T23:59:59`)
     console.log('Status filter:', ['booked', 'open', 'available'])
 
     const { data: sessions, error: sessionsError } = await supabase
       .from('sessions')
       .select('instructor_id')
-      .filter('start_time::date', 'eq', today)
+      .gte('start_time', `${today}T00:00:00`)
+      .lt('start_time', `${today}T23:59:59`)
       .in('instructor_id', instructorIds)
       .in('status', ['booked', 'open', 'available']) // Sessions that are booked or available
 
