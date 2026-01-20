@@ -6,10 +6,10 @@ import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Loader2, CheckCircle, Clock, Circle, Target, ChevronDown, ChevronRight, Award, TrendingUp } from 'lucide-react'
-import UpdateSkillModal from '../modals/UpdateSkillModal'
+import { Loader2, Award } from 'lucide-react'
+import ThreeStateSwitch from '../ThreeStateSwitch'
+import InlineNote from '../InlineNote'
 
 interface Skill {
   id: string
@@ -20,6 +20,7 @@ interface Skill {
   level_sequence: number
   status: 'not_started' | 'in_progress' | 'mastered'
   date_mastered: string | null
+  instructor_notes: string | null
 }
 
 interface SkillsByLevel {
@@ -30,8 +31,6 @@ interface SkillsByLevel {
 
 interface ProgressTabProps {
   swimmerId: string
-  currentLevelId: string | null
-  levelSequence: number | null
   levelName: string | null
   instructorId: string
 }
@@ -64,7 +63,7 @@ async function fetchSwimmerSkills(swimmerId: string): Promise<SkillsByLevel[]> {
     // Fetch this swimmer's skill statuses
     const { data: swimmerSkills, error: swimmerSkillsError } = await supabase
       .from('swimmer_skills')
-      .select('skill_id, status, date_mastered')
+      .select('skill_id, status, date_mastered, instructor_notes')
       .eq('swimmer_id', swimmerId)
 
     if (swimmerSkillsError) {
@@ -73,12 +72,17 @@ async function fetchSwimmerSkills(swimmerId: string): Promise<SkillsByLevel[]> {
     }
 
     // Create a map of swimmer skill statuses
-    const skillStatusMap = new Map(
+    const skillStatusMap = new Map<string, {
+      status: 'not_started' | 'in_progress' | 'mastered',
+      date_mastered: string | null,
+      instructor_notes: string | null
+    }>(
       swimmerSkills?.map(skill => [
         skill.skill_id,
         {
           status: skill.status as 'not_started' | 'in_progress' | 'mastered',
-          date_mastered: skill.date_mastered
+          date_mastered: skill.date_mastered,
+          instructor_notes: skill.instructor_notes
         }
       ]) || []
     )
@@ -101,7 +105,8 @@ async function fetchSwimmerSkills(swimmerId: string): Promise<SkillsByLevel[]> {
 
       const skillStatus = skillStatusMap.get(skill.id) || {
         status: 'not_started' as const,
-        date_mastered: null
+        date_mastered: null,
+        instructor_notes: null
       }
 
       levelsMap.get(levelId)!.skills.push({
@@ -111,7 +116,9 @@ async function fetchSwimmerSkills(swimmerId: string): Promise<SkillsByLevel[]> {
         level_id: skill.level_id,
         level_name: levelName,
         level_sequence: levelSequence,
-        ...skillStatus
+        status: skillStatus.status,
+        date_mastered: skillStatus.date_mastered,
+        instructor_notes: skillStatus.instructor_notes
       })
     })
 
@@ -137,14 +144,17 @@ async function updateSkillStatus(
 
   try {
     const now = new Date().toISOString()
-    const updateData = {
+    const updateData: any = {
       status,
       updated_at: now,
-      ...(status === 'mastered' ? { date_mastered: now.split('T')[0] } : {}) // Store as date only
+      ...(status === 'mastered' ? { date_mastered: now.split('T')[0] } : { date_mastered: null }) // Clear date_mastered if not mastered
     }
 
+    // Note: updated_by column doesn't exist in the database schema
+    // If we need to track who made the update, we should add this column first
+
     // Check if skill record exists
-    const { data: existing, error: checkError } = await supabase
+    const { error: checkError } = await supabase
       .from('swimmer_skills')
       .select('id')
       .eq('swimmer_id', swimmerId)
@@ -173,30 +183,104 @@ async function updateSkillStatus(
     }
 
     if (result.error) {
-      console.error('Error updating skill status:', result.error)
-      throw new Error('Failed to update skill status')
+      console.error('Error updating skill status:', {
+        message: result.error.message,
+        code: result.error.code,
+        details: result.error.details,
+        hint: result.error.hint
+      })
+      throw new Error(`Failed to update skill status: ${result.error.message || 'Unknown error'}`)
     }
 
     return { success: true }
   } catch (error) {
-    console.error('Error in updateSkillStatus:', error)
+    console.error('Error in updateSkillStatus:', {
+      error,
+      swimmerId,
+      skillId,
+      status,
+      instructorId
+    })
+    throw error
+  }
+}
+
+async function updateSkillNote(
+  swimmerId: string,
+  skillId: string,
+  instructor_notes: string,
+  instructorId: string
+) {
+  const supabase = createClient()
+
+  try {
+    const now = new Date().toISOString()
+    const updateData = {
+      instructor_notes: instructor_notes.trim() || null,
+      updated_at: now
+    }
+
+    // Check if skill record exists
+    const { error: checkError } = await supabase
+      .from('swimmer_skills')
+      .select('id')
+      .eq('swimmer_id', swimmerId)
+      .eq('skill_id', skillId)
+      .single()
+
+    let result
+
+    if (checkError && checkError.code === 'PGRST116') {
+      // Record doesn't exist, insert new
+      result = await supabase
+        .from('swimmer_skills')
+        .insert({
+          swimmer_id: swimmerId,
+          skill_id: skillId,
+          ...updateData,
+          status: 'not_started',
+          created_at: now
+        })
+    } else {
+      // Record exists, update
+      result = await supabase
+        .from('swimmer_skills')
+        .update(updateData)
+        .eq('swimmer_id', swimmerId)
+        .eq('skill_id', skillId)
+    }
+
+    if (result.error) {
+      console.error('Error updating skill note:', {
+        message: result.error.message,
+        code: result.error.code,
+        details: result.error.details,
+        hint: result.error.hint
+      })
+      throw new Error(`Failed to update skill note: ${result.error.message || 'Unknown error'}`)
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error in updateSkillNote:', {
+      error,
+      swimmerId,
+      skillId,
+      instructor_notes,
+      instructorId
+    })
     throw error
   }
 }
 
 export default function ProgressTab({
   swimmerId,
-  currentLevelId,
-  levelSequence,
   levelName,
   instructorId
 }: ProgressTabProps) {
   const { toast } = useToast()
   const queryClient = useQueryClient()
-  const [expandedLevels, setExpandedLevels] = useState<Set<string>>(new Set())
   const [updatingSkillId, setUpdatingSkillId] = useState<string | null>(null)
-  const [showUpdateModal, setShowUpdateModal] = useState(false)
-  const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null)
 
   const { data: skillsByLevel, isLoading, error } = useQuery({
     queryKey: ['swimmerSkills', swimmerId],
@@ -228,40 +312,60 @@ export default function ProgressTab({
     }
   })
 
-  const handleMarkMastered = (skillId: string) => {
-    setUpdatingSkillId(skillId)
-    updateMutation.mutate({ skillId, status: 'mastered' })
-  }
-
-  const handleOpenUpdateModal = (skill: Skill) => {
-    setSelectedSkill(skill)
-    setShowUpdateModal(true)
-  }
-
-  const toggleLevel = (levelId: string) => {
-    const newExpanded = new Set(expandedLevels)
-    if (newExpanded.has(levelId)) {
-      newExpanded.delete(levelId)
-    } else {
-      newExpanded.add(levelId)
+  const updateNoteMutation = useMutation({
+    mutationFn: ({ skillId, instructor_notes }: { skillId: string; instructor_notes: string }) =>
+      updateSkillNote(swimmerId, skillId, instructor_notes, instructorId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['swimmerSkills', swimmerId] })
+      toast({
+        title: 'Note saved',
+        description: 'Skill note has been saved successfully.',
+      })
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to save note',
+        variant: 'destructive',
+      })
     }
-    setExpandedLevels(newExpanded)
+  })
+
+  const handleUpdateSkill = (skillId: string, newStatus: 'not_started' | 'in_progress' | 'mastered') => {
+    setUpdatingSkillId(skillId)
+    updateMutation.mutate({ skillId, status: newStatus })
   }
 
-  // Calculate progress stats
-  const allSkills = skillsByLevel?.flatMap(level => level.skills) || []
-  const masteredCount = allSkills.filter(skill => skill.status === 'mastered').length
-  const inProgressCount = allSkills.filter(skill => skill.status === 'in_progress').length
-  const notStartedCount = allSkills.filter(skill => skill.status === 'not_started').length
-  const totalSkills = allSkills.length
-  const progressPercentage = totalSkills > 0 ? Math.round((masteredCount / totalSkills) * 100) : 0
+  const handleUpdateSkillNote = (skillId: string, note: string) => {
+    updateNoteMutation.mutate({ skillId, instructor_notes: note })
+  }
 
-  // Get skills for "Focus Today" section (in_progress skills)
-  const focusSkills = allSkills.filter(skill => skill.status === 'in_progress')
 
-  // Determine level group
-  const isRedWhiteGroup = levelSequence !== null && levelSequence <= 2
-  const levelGroupBadge = isRedWhiteGroup ? '🔴⚪' : '🟡🟢🔵'
+  // Define level groups
+  const BEGINNER_LEVELS = ['white', 'red']
+  const INTERMEDIATE_LEVELS = ['yellow', 'green', 'blue']
+
+  // Determine which group the swimmer belongs to based on current level
+  const currentLevelLower = levelName?.toLowerCase() || ''
+  const isBeginnerGroup = BEGINNER_LEVELS.includes(currentLevelLower)
+  const levelGroup = isBeginnerGroup ? BEGINNER_LEVELS : INTERMEDIATE_LEVELS
+
+  // Filter skills to only show levels in the appropriate group
+  const filteredSkillsByLevel = skillsByLevel?.filter(level => {
+    const levelNameLower = level.level_name.toLowerCase()
+    return levelGroup.some(groupLevel => levelNameLower.includes(groupLevel))
+  }) || []
+
+  // Recalculate stats based on filtered skills
+  const filteredAllSkills = filteredSkillsByLevel.flatMap(level => level.skills) || []
+  const filteredMasteredCount = filteredAllSkills.filter(skill => skill.status === 'mastered').length
+  const filteredInProgressCount = filteredAllSkills.filter(skill => skill.status === 'in_progress').length
+  const filteredNotStartedCount = filteredAllSkills.filter(skill => skill.status === 'not_started').length
+  const filteredTotalSkills = filteredAllSkills.length
+  const filteredProgressPercentage = filteredTotalSkills > 0 ? Math.round((filteredMasteredCount / filteredTotalSkills) * 100) : 0
+
+  // Level group badge
+  const levelGroupBadge = isBeginnerGroup ? '🔴⚪' : '🟡🟢🔵'
 
   if (isLoading) {
     return (
@@ -301,243 +405,123 @@ export default function ProgressTab({
 
   return (
     <div className="space-y-6">
-      {/* Progress Summary Header */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="text-4xl">
-                {levelGroupBadge}
+      {/* Progress Summary */}
+      <div className="bg-white p-4 rounded-lg border border-gray-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Progress: {filteredProgressPercentage}% ({filteredMasteredCount}/{filteredTotalSkills} skills)</h2>
+            <div className="flex items-center gap-4 mt-2">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span className="text-sm text-gray-600">{filteredMasteredCount} mastered</span>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {levelName || 'Current Level'}
-                </h3>
-                <p className="text-gray-600">
-                  {isRedWhiteGroup ? 'Red/White Group' : 'Yellow/Green/Blue Group'}
-                </p>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                <span className="text-sm text-gray-600">{filteredInProgressCount} in progress</span>
               </div>
-            </div>
-
-            <div className="flex items-center gap-6">
-              <div className="relative h-24 w-24">
-                <svg className="h-24 w-24" viewBox="0 0 36 36">
-                  <path
-                    d="M18 2.0845
-                      a 15.9155 15.9155 0 0 1 0 31.831
-                      a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#e5e7eb"
-                    strokeWidth="3"
-                  />
-                  <path
-                    d="M18 2.0845
-                      a 15.9155 15.9155 0 0 1 0 31.831
-                      a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#2a5e84"
-                    strokeWidth="3"
-                    strokeDasharray={`${progressPercentage}, 100`}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-3xl font-bold text-gray-900">{progressPercentage}%</span>
-                  <span className="text-sm text-gray-600">Progress</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+                <span className="text-sm text-gray-600">{filteredNotStartedCount} not started</span>
               </div>
             </div>
           </div>
-
-          {/* Stats Row */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="flex items-center justify-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                <span className="text-2xl font-bold text-green-700">{masteredCount}</span>
-              </div>
-              <p className="text-sm text-green-600 mt-1">Mastered</p>
-            </div>
-
-            <div className="text-center p-4 bg-amber-50 rounded-lg border border-amber-200">
-              <div className="flex items-center justify-center gap-2">
-                <Clock className="h-5 w-5 text-amber-600" />
-                <span className="text-2xl font-bold text-amber-700">{inProgressCount}</span>
-              </div>
-              <p className="text-sm text-amber-600 mt-1">In Progress</p>
-            </div>
-
-            <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-center gap-2">
-                <Circle className="h-5 w-5 text-gray-500" />
-                <span className="text-2xl font-bold text-gray-700">{notStartedCount}</span>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Not Started</p>
-            </div>
+          <div className="text-3xl">
+            {levelGroupBadge}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* 🎯 Focus Today Section */}
-      {focusSkills.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Target className="h-6 w-6 text-[#2a5e84]" />
-              <h3 className="text-xl font-bold text-gray-900">🎯 Focus Today</h3>
-              <Badge className="bg-[#2a5e84] hover:bg-[#1e4565]">
-                {focusSkills.length} skill{focusSkills.length !== 1 ? 's' : ''}
-              </Badge>
-            </div>
 
-            <div className="space-y-4">
-              {focusSkills.map(skill => (
-                <div
-                  key={skill.id}
-                  className="flex items-center justify-between p-4 bg-amber-50 rounded-lg border border-amber-200"
-                >
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-amber-600" />
-                    <div>
-                      <h4 className="font-medium text-gray-900">{skill.name}</h4>
-                      <p className="text-sm text-gray-600">{skill.level_name}</p>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    className="bg-green-600 hover:bg-green-700"
-                    onClick={() => handleMarkMastered(skill.id)}
-                    disabled={updatingSkillId === skill.id}
-                  >
-                    {updatingSkillId === skill.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      'Mark Mastered'
-                    )}
-                  </Button>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
-                <span className="font-medium">Quick action:</span> Focus on these skills during today's lesson.
-                Mark as mastered when the swimmer demonstrates consistent proficiency.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Skills by Level Sections */}
-      <div className="space-y-4">
-        {skillsByLevel?.map(level => {
-          const isExpanded = expandedLevels.has(level.level_name)
+      {/* Skills by Level */}
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        {filteredSkillsByLevel.map(level => {
           const levelMasteredCount = level.skills.filter(s => s.status === 'mastered').length
           const levelTotalCount = level.skills.length
-          const levelProgress = levelTotalCount > 0 ? Math.round((levelMasteredCount / levelTotalCount) * 100) : 0
+
+          // Get level emoji based on level name
+          const getLevelEmoji = (levelName: string) => {
+            const lowerName = levelName.toLowerCase()
+            if (lowerName.includes('white')) return '⚪'
+            if (lowerName.includes('red')) return '🔴'
+            if (lowerName.includes('yellow')) return '🟡'
+            if (lowerName.includes('green')) return '🟢'
+            if (lowerName.includes('blue')) return '🔵'
+            return '⚪'
+          }
+
+          const levelEmoji = getLevelEmoji(level.level_name)
 
           return (
-            <Card key={level.level_name}>
-              <CardContent className="pt-6">
-                {/* Level Header */}
-                <div
-                  className="flex items-center justify-between cursor-pointer p-3 -mx-3 rounded-lg hover:bg-gray-50"
-                  onClick={() => toggleLevel(level.level_name)}
-                >
-                  <div className="flex items-center gap-3">
-                    {isExpanded ? (
-                      <ChevronDown className="h-5 w-5 text-[#2a5e84]" />
-                    ) : (
-                      <ChevronRight className="h-5 w-5 text-[#2a5e84]" />
-                    )}
-                    <div>
-                      <h3 className="text-lg font-semibold text-[#2a5e84]">
-                        {level.level_name} Level
-                      </h3>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-sm text-gray-600">
-                          {levelMasteredCount} of {levelTotalCount} skills mastered
-                        </span>
-                        <Badge variant="outline" className="text-[#2a5e84] border-[#2a5e84]">
-                          {levelProgress}%
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-2xl">
-                    {level.level_sequence <= 2 ? '🔴⚪' : '🟡🟢🔵'}
+            <div key={level.level_name} className="border-b border-gray-200 last:border-b-0">
+              {/* Level Header */}
+              <div className="px-4 py-2 bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{levelEmoji}</span>
+                    <h3 className="font-semibold text-gray-900 uppercase">
+                      {level.level_name} ({levelMasteredCount}/{levelTotalCount})
+                    </h3>
                   </div>
                 </div>
+              </div>
 
-                {/* Level Skills (collapsible) */}
-                {isExpanded && (
-                  <div className="mt-4 space-y-3">
-                    {level.skills.map(skill => {
-                      const isUpdating = updatingSkillId === skill.id
+              {/* Level Separator */}
+              <div className="h-px bg-gray-300"></div>
 
-                      return (
-                        <div
-                          key={skill.id}
-                          className="flex items-center justify-between p-4 rounded-lg border border-gray-200 hover:border-[#6abedc] transition-colors"
-                        >
-                          <div className="flex items-center gap-4 flex-1 min-w-0">
-                            {/* Status Icon */}
-                            <div className="shrink-0">
-                              {skill.status === 'mastered' && (
-                                <CheckCircle className="h-6 w-6 text-green-500" />
-                              )}
-                              {skill.status === 'in_progress' && (
-                                <Clock className="h-6 w-6 text-amber-500" />
-                              )}
-                              {skill.status === 'not_started' && (
-                                <Circle className="h-6 w-6 text-gray-300" />
-                              )}
-                            </div>
+              {/* Skills List */}
+              <div className="divide-y divide-gray-100">
+                {level.skills.map(skill => {
+                  const isUpdating = updatingSkillId === skill.id
 
-                            {/* Skill Info */}
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-gray-900 truncate">{skill.name}</h4>
-                              {skill.description && (
-                                <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                                  {skill.description}
-                                </p>
-                              )}
-                              {skill.date_mastered && (
-                                <p className="text-xs text-gray-500 mt-1">
-                                  Mastered on {format(new Date(skill.date_mastered), 'MMM d, yyyy')}
-                                </p>
-                              )}
-                            </div>
-
-                            {/* Update Button */}
-                            <div className="shrink-0">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleOpenUpdateModal(skill)}
-                                disabled={isUpdating}
-                              >
-                                {isUpdating ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  'Update'
-                                )}
-                              </Button>
-                            </div>
-                          </div>
+                  return (
+                    <div
+                      key={skill.id}
+                      className="flex items-center justify-between px-4 py-1.5 hover:bg-gray-50"
+                    >
+                      {/* Skill Name */}
+                      <div className="flex-1 min-w-0 pr-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-gray-900 truncate text-sm">{skill.name}</span>
+                          {skill.date_mastered && (
+                            <span className="text-xs text-gray-500 whitespace-nowrap">
+                              • {format(new Date(skill.date_mastered), 'MMM d')}
+                            </span>
+                          )}
                         </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                        {skill.description && (
+                          <p className="text-xs text-gray-600 truncate mt-0.5">
+                            {skill.description}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Status and Note Controls */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <ThreeStateSwitch
+                          value={skill.status || 'not_started'}
+                          onChange={(newStatus) => handleUpdateSkill(skill.id, newStatus)}
+                          size="xs"
+                          disabled={isUpdating}
+                        />
+                        <div className="w-32">
+                          <InlineNote
+                            value={skill.instructor_notes}
+                            onSave={(note) => handleUpdateSkillNote(skill.id, note)}
+                            placeholder="Add note..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           )
         })}
       </div>
 
       {/* Empty State */}
-      {skillsByLevel?.length === 0 && (
+      {filteredSkillsByLevel.length === 0 && (
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
@@ -551,24 +535,10 @@ export default function ProgressTab({
         </Card>
       )}
 
-      {/* Update Skill Modal */}
-      {selectedSkill && (
-        <UpdateSkillModal
-          open={showUpdateModal}
-          onOpenChange={setShowUpdateModal}
-          skill={selectedSkill}
-          swimmerId={swimmerId}
-          instructorId={instructorId}
-          onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['swimmerSkills', swimmerId] })
-            queryClient.invalidateQueries({ queryKey: ['swimmerDetail', swimmerId] })
-          }}
-        />
-      )}
 
       {/* Footer Note */}
       <div className="text-center text-gray-500 text-sm">
-        <p>Track skill progress by updating status. Mark skills as "In Progress" when introduced, and "Mastered" when consistently demonstrated.</p>
+        <p>Track skill progress using the status switches and add notes for each skill. Mark skills as "In Progress" when introduced, and "Mastered" when consistently demonstrated.</p>
         <p className="mt-1">All updates are tracked with timestamp and instructor ID for accountability.</p>
       </div>
     </div>

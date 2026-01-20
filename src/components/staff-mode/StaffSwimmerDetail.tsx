@@ -12,8 +12,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Loader2, ArrowLeft, Phone, Mail, User, AlertTriangle, FileText, Target, Brain, MessageSquare, Stethoscope, Users, Calendar, Award, CheckCircle } from 'lucide-react'
+import { Loader2, ArrowLeft, Phone, Mail, User, AlertTriangle, FileText, Target, Brain, MessageSquare, Stethoscope, Users, Calendar, Award, CheckCircle, LogOut } from 'lucide-react'
 import { AssessmentTab, ProgressTab, TargetsTab, StrategiesTab, NotesTab } from './tabs'
+import ImportantNoticeHeader from './ImportantNoticeHeader'
 
 interface SwimmerDetail {
   id: string
@@ -26,7 +27,7 @@ interface SwimmerDetail {
   level_name: string
   level_sequence: number
   assessment_status: string | null
-  important_info: string[] | null
+  important_notes: string[] | null
 
   // Medical fields
   diagnosis: string | null
@@ -151,7 +152,7 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
       level_name: swimmer.swim_levels?.name || 'Unknown',
       level_sequence: swimmer.swim_levels?.sequence || 0,
       assessment_status: swimmer.assessment_status,
-      important_info: swimmer.important_info,
+      important_notes: swimmer.important_notes,
 
       // Medical fields
       diagnosis: swimmer.diagnosis,
@@ -198,7 +199,7 @@ interface StaffSwimmerDetailProps {
 
 export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProps) {
   const router = useRouter()
-  const { selectedInstructor } = useStaffMode()
+  const { selectedInstructor, clearInstructor } = useStaffMode()
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState('progress')
 
@@ -217,11 +218,22 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
     return `${firstName[0]}${lastName[0]}`.toUpperCase()
   }
 
-  const calculateAge = (dateOfBirth: string) => {
+  const calculateAge = (dateOfBirth: string | null | undefined) => {
+    if (!dateOfBirth) return null
+
     try {
-      return differenceInYears(new Date(), parseISO(dateOfBirth))
+      const birthDate = parseISO(dateOfBirth)
+      const today = new Date()
+      const age = differenceInYears(today, birthDate)
+
+      // If birthday hasn't occurred this year yet, subtract 1
+      const hasHadBirthdayThisYear =
+        today.getMonth() > birthDate.getMonth() ||
+        (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate())
+
+      return hasHadBirthdayThisYear ? age : age - 1
     } catch {
-      return 0
+      return null
     }
   }
 
@@ -333,7 +345,7 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
     swimmer.level_sequence
   )
   const isAssessment = swimmer.assessment_status === 'scheduled'
-  const hasImportantInfo = swimmer.important_info && swimmer.important_info.length > 0
+  const hasImportantNotes = swimmer.important_notes && swimmer.important_notes.length > 0
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#e8f4f8] to-white">
@@ -395,7 +407,7 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
                     <div className="flex items-center gap-4 mt-2 flex-wrap">
                       <div className="flex items-center gap-2 text-gray-600">
                         <Calendar className="h-4 w-4" />
-                        <span>{age} years old</span>
+                        <span>{age !== null ? `${age} years old` : 'Age not available'}</span>
                         <span className="text-gray-400">•</span>
                         <span>Born {formatDate(swimmer.date_of_birth)}</span>
                       </div>
@@ -471,24 +483,30 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
                   </div>
                 </div>
               </div>
+
+              {/* Logout button */}
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={clearInstructor}
+                  className="h-12 w-12 rounded-full text-gray-500 hover:text-red-600 hover:bg-red-50"
+                  title="Log out"
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
 
-            {/* Important Info Box */}
-            {hasImportantInfo && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="h-5 w-5 text-amber-600" />
-                  <h3 className="font-semibold text-amber-800">Important Information</h3>
-                </div>
-                <div className="space-y-1">
-                  {swimmer.important_info!.map((info, index) => (
-                    <p key={index} className="text-amber-700 text-sm">
-                      • {info}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Important Notice Header */}
+            <ImportantNoticeHeader
+              importantNotes={swimmer.important_notes || []}
+              isAdmin={false} // TODO: Get actual admin status from auth context
+              onEdit={() => {
+                // TODO: Implement edit modal for important notes
+                console.log('Edit important notes')
+              }}
+            />
           </div>
         </div>
 
@@ -573,7 +591,7 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Date of Birth</p>
-                        <p className="font-medium">{formatDate(swimmer.date_of_birth)} ({age} years old)</p>
+                        <p className="font-medium">{formatDate(swimmer.date_of_birth)} {age !== null ? `(${age} years old)` : ''}</p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Gender</p>
