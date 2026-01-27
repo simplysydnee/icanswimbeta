@@ -39,6 +39,7 @@ interface Session {
 interface Instructor {
   id: string
   full_name: string
+  email?: string
 }
 
 interface EditSessionDialogProps {
@@ -67,27 +68,51 @@ export function EditSessionDialog({
   const [status, setStatus] = useState<string>('')
   const [maxCapacity, setMaxCapacity] = useState<number>(1)
 
-  // Load instructors
+  // Load instructors - only active, real instructors (no test accounts)
   useEffect(() => {
     const fetchInstructors = async () => {
       setLoading(true)
       try {
-        const { data: roleData } = await supabase
+        // First get user IDs with instructor role
+        const { data: roleData, error: rolesError } = await supabase
           .from('user_roles')
           .select('user_id')
           .eq('role', 'instructor')
 
-        if (roleData) {
-          const instructorIds = roleData.map(r => r.user_id)
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('id, full_name')
-            .in('id', instructorIds)
-            .eq('is_active', true)
-            .order('full_name')
-
-          setInstructors(profiles || [])
+        if (rolesError || !roleData) {
+          console.error('Error fetching instructor roles:', rolesError)
+          setInstructors([])
+          return
         }
+
+        const instructorIds = roleData.map(r => r.user_id)
+
+        if (instructorIds.length === 0) {
+          setInstructors([])
+          return
+        }
+
+        // Fetch profiles - only active instructors displayed on team, exclude test accounts
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', instructorIds)
+          .eq('is_active', true)
+          .eq('display_on_team', true)
+          .order('full_name')
+
+        if (profilesError) {
+          console.error('Error fetching instructor profiles:', profilesError)
+          setInstructors([])
+          return
+        }
+
+        // Filter out test accounts (@test.com emails)
+        const realInstructors = (profiles || []).filter(
+          profile => profile.email && !profile.email.includes('@test.com')
+        )
+
+        setInstructors(realInstructors)
       } catch (error) {
         console.error('Error fetching instructors:', error)
         toast({

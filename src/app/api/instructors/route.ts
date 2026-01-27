@@ -52,7 +52,12 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch instructor profiles' }, { status: 500 });
     }
 
-    const instructorList = profiles || [];
+    let instructorList = profiles || [];
+
+    // Filter out test accounts (@test.com emails)
+    instructorList = instructorList.filter(profile =>
+      profile.email && !profile.email.includes('@test.com')
+    );
 
     // Sort by full_name client-side
     instructorList.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));

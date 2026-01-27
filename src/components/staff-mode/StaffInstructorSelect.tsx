@@ -45,8 +45,18 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
       return []
     }
 
+    // Filter out test accounts (@test.com emails)
+    const realInstructors = instructors.filter(instructor =>
+      instructor.email && !instructor.email.includes('@test.com')
+    )
+
+    if (realInstructors.length === 0) {
+      console.log('=== DEBUG: No real instructors found after filtering test emails')
+      return []
+    }
+
     // Get instructor IDs
-    const instructorIds = instructors.map(instructor => instructor.id)
+    const instructorIds = realInstructors.map(instructor => instructor.id)
 
     // Query sessions with bookings and status filter
     const { data: sessions, error: sessionsError } = await supabase
@@ -80,7 +90,7 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
     })
 
     // Combine instructor data with session counts
-    const instructorsWithSessions = instructors.map(instructor => ({
+    const instructorsWithSessions = realInstructors.map(instructor => ({
       id: instructor.id,
       name: instructor.full_name || 'Unknown Instructor',
       avatarUrl: instructor.avatar_url,

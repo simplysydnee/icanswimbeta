@@ -52,12 +52,13 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
 
     const instructorIds = instructorRoles.map(role => role.user_id)
 
-    // Fetch active instructor profiles
+    // Fetch active instructor profiles displayed on team
     const { data: instructors, error: instructorsError } = await supabase
       .from('profiles')
       .select('id, full_name, avatar_url, email')
       .in('id', instructorIds)
       .eq('is_active', true)
+      .eq('display_on_team', true)
       .order('full_name')
 
     if (instructorsError) {

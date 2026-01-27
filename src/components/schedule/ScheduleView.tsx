@@ -90,6 +90,23 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
   const [instructors, setInstructors] = useState<Instructor[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Filter instructors to only those with sessions for the current view
+  const instructorsWithSessions = useMemo(() => {
+    if (sessions.length === 0) return instructors; // Show all if no sessions loaded yet
+
+    const instructorIdsWithSessions = new Set(
+      sessions
+        .map(s => s.instructor_id)
+        .filter(Boolean)
+    );
+
+    // Filter to only instructors who have sessions
+    const filtered = instructors.filter(i => instructorIdsWithSessions.has(i.id));
+
+    // If no instructors have sessions, return empty array (not all instructors)
+    return filtered;
+  }, [instructors, sessions]);
+
   // Admin action states
   const [showReassignDialog, setShowReassignDialog] = useState(false)
   const [showCancelDayDialog, setShowCancelDayDialog] = useState(false)
@@ -117,43 +134,60 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
 
   // Fetch instructors
   const fetchInstructors = useCallback(async () => {
-    // For admin role: fetch instructors who have at least one session (not cancelled)
+    // For admin role: fetch ALL active instructors, not just those with sessions
     // and filter out test accounts
     if (role === 'admin') {
-      // Get distinct instructors who have any sessions (not cancelled)
-      // First, get unique instructor IDs from sessions
-      const { data: sessionInstructors } = await supabase
-        .from('sessions')
-        .select('instructor_id')
-        .neq('status', 'cancelled')
-        .not('instructor_id', 'is', null)
+      console.log('Fetching instructors for admin schedule...')
 
-      if (sessionInstructors && sessionInstructors.length > 0) {
-        // Get unique instructor IDs
-        const uniqueInstructorIds = Array.from(new Set(sessionInstructors.map(s => s.instructor_id)))
+      // First get user IDs with instructor role from user_roles table
+      const { data: instructorRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'instructor')
 
-        // Fetch profiles for these instructors
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url, email')
-          .in('id', uniqueInstructorIds)
-          .eq('is_active', true)
-          .order('full_name')
+      if (rolesError) {
+        console.error('Error fetching instructor roles:', rolesError)
+        setInstructors([])
+        return
+      }
 
-        if (profiles) {
-          // Filter out test accounts (@test.com emails) and map to instructor format
-          const instructorsArray = profiles
-            .filter(profile => profile.email && !profile.email.includes('@test.com'))
-            .map((p, idx) => ({
-              ...p,
-              colorIndex: idx % INSTRUCTOR_COLORS.length
-            }))
+      const instructorIds = instructorRoles?.map(role => role.user_id) || []
+      console.log('Found instructor IDs from user_roles:', instructorIds)
 
-          setInstructors(instructorsArray)
-        } else {
-          setInstructors([])
-        }
+      if (instructorIds.length === 0) {
+        console.log('No instructors found in user_roles table')
+        setInstructors([])
+        return
+      }
+
+      // Fetch profiles for these instructors with display_on_team = true
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url, email')
+        .eq('display_on_team', true)
+        .eq('is_active', true)
+        .in('id', instructorIds)
+        .order('full_name')
+
+      if (profilesError) {
+        console.error('Error fetching instructor profiles:', profilesError)
+        setInstructors([])
+        return
+      }
+
+      if (profiles) {
+        // Filter out test accounts (@test.com emails) and map to instructor format
+        const instructorsArray = profiles
+          .filter(profile => profile.email && !profile.email.includes('@test.com'))
+          .map((p, idx) => ({
+            ...p,
+            colorIndex: idx % INSTRUCTOR_COLORS.length
+          }))
+
+        console.log('Filtered instructors for admin schedule:', instructorsArray.map(i => i.full_name))
+        setInstructors(instructorsArray)
       } else {
+        console.log('No profiles found for instructors')
         setInstructors([])
       }
     } else {
@@ -208,6 +242,26 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
       endDate.setHours(23, 59, 59, 999)
     }
 
+    // Convert to UTC for database query (database stores timestamps in UTC)
+    // Sessions are stored in UTC relative to Pacific time (UTC-8)
+    // So we need to convert Pacific time to UTC
+    const PACIFIC_OFFSET_MS = -8 * 60 * 60 * 1000; // UTC-8 in milliseconds
+
+    const startDateUTC = new Date(startDate.getTime() - PACIFIC_OFFSET_MS)
+    const endDateUTC = new Date(endDate.getTime() - PACIFIC_OFFSET_MS)
+
+    console.log('Fetching sessions for Pacific date range:', {
+      pacificDate: format(currentDate, 'yyyy-MM-dd'),
+      pacificStart: startDate.toISOString(),
+      pacificEnd: endDate.toISOString(),
+      utcStart: startDateUTC.toISOString(),
+      utcEnd: endDateUTC.toISOString(),
+      currentDate: currentDate.toISOString(),
+      view,
+      browserTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      pacificOffset: -8
+    })
+
     let query = supabase
       .from('sessions')
       .select(`
@@ -225,8 +279,8 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
           parent:profiles!parent_id(email)
         )
       `)
-      .gte('start_time', startDate.toISOString())
-      .lte('start_time', endDate.toISOString())
+      .gte('start_time', startDateUTC.toISOString())
+      .lte('start_time', endDateUTC.toISOString())
       .neq('status', 'cancelled')
       .order('start_time')
 
@@ -241,6 +295,16 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
       toast({ title: 'Error', description: 'Failed to load sessions', variant: 'destructive' })
       console.error(error)
     } else if (data) {
+      console.log(`Fetched ${data.length} sessions:`, data.map(s => ({
+        id: s.id,
+        start_time: s.start_time,
+        start_time_local: new Date(s.start_time).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
+        instructor_id: s.instructor_id,
+        instructor_name: Array.isArray(s.instructor) ? s.instructor[0]?.full_name : s.instructor?.full_name,
+        status: s.status,
+        bookings_count: s.bookings?.length || 0
+      })))
+
       const formatted: Session[] = data.map((s) => {
         // Handle instructor data which might be an array or object
         const instructor = Array.isArray(s.instructor) ? s.instructor[0] : s.instructor
@@ -266,6 +330,8 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
         }
       })
       setSessions(formatted)
+    } else {
+      console.log('No sessions data returned')
     }
     setLoading(false)
   }, [supabase, currentDate, view, role, userId, toast])
@@ -294,19 +360,32 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
       if (selectedInstructorFilter !== 'all' && session.instructor_id !== selectedInstructorFilter) return false
       if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
 
-      const sessionStart = parseISO(session.start_time)
-      return sessionStart.getHours() === slotHour &&
-             Math.floor(sessionStart.getMinutes() / 30) === Math.floor(slotMinute / 30)
+      // Convert UTC session time to Pacific time for comparison
+      const sessionStartUTC = parseISO(session.start_time)
+      // Pacific is UTC-8, so subtract 8 hours to get Pacific time
+      const sessionStartPacific = new Date(sessionStartUTC.getTime() - (8 * 60 * 60 * 1000))
+      const sessionStartHour = sessionStartPacific.getHours()
+      const sessionStartMinute = sessionStartPacific.getMinutes()
+
+      // Check if session starts in this 30-minute slot
+      // Slot represents the start of a 30-minute period (e.g., "13:00" means 1:00-1:30 PM)
+      return sessionStartHour === slotHour &&
+             sessionStartMinute >= slotMinute &&
+             sessionStartMinute < slotMinute + 30
     })
   }
 
-  // Get filtered instructors based on current filters
-  const filteredInstructors = useMemo(() => {
+  // Get displayed instructors based on sessions and filters
+  const displayedInstructors = useMemo(() => {
+    // First filter to instructors with sessions
+    const withSessions = instructorsWithSessions;
+
+    // Then apply the instructor filter dropdown
     if (selectedInstructorFilter === 'all') {
-      return instructors
+      return withSessions;
     }
-    return instructors.filter(instructor => instructor.id === selectedInstructorFilter)
-  }, [instructors, selectedInstructorFilter])
+    return withSessions.filter(instructor => instructor.id === selectedInstructorFilter);
+  }, [instructorsWithSessions, selectedInstructorFilter])
 
   // Check if there are substitute instructors available for a given day
   const hasSubstituteInstructors = useCallback((instructorId: string) => {
@@ -529,7 +608,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Instructors</SelectItem>
-                {instructors.map(instructor => (
+                {instructorsWithSessions.map(instructor => (
                   <SelectItem key={instructor.id} value={instructor.id}>
                     {instructor.full_name}
                   </SelectItem>
@@ -598,9 +677,9 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
       </div>
 
       {/* Instructor Legend (Admin only with multiple instructors) */}
-      {role === 'admin' && filteredInstructors.length > 0 && (
+      {role === 'admin' && displayedInstructors.length > 0 && (
         <div className="flex flex-wrap gap-3 mb-4">
-          {filteredInstructors.map((instructor) => {
+          {displayedInstructors.map((instructor) => {
             const color = INSTRUCTOR_COLORS[instructor.colorIndex]
             const hasSubstitutes = hasSubstituteInstructors(instructor.id)
             return (
@@ -643,11 +722,11 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
             <div className="flex justify-center items-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-[#2a5e84]" />
             </div>
-          ) : filteredInstructors.length === 0 ? (
+          ) : displayedInstructors.length === 0 ? (
             <div className="text-center py-20 text-gray-500">
               <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p className="font-medium">
-                {role === 'admin' ? 'No active instructors found' : 'No schedule found'}
+                {role === 'admin' ? 'No sessions scheduled for this date' : 'No schedule found'}
               </p>
             </div>
           ) : view === 'day' ? (
@@ -664,9 +743,12 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                       // Apply location filter
                       if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
 
-                      const sessionStart = parseISO(session.start_time)
-                      return sessionStart.getHours() === slotHour &&
-                             Math.floor(sessionStart.getMinutes() / 30) === Math.floor(slotMinute / 30)
+                      const sessionStartUTC = parseISO(session.start_time)
+                      // Convert to Pacific time
+                      const sessionStartPacific = new Date(sessionStartUTC.getTime() - (8 * 60 * 60 * 1000))
+                      return sessionStartPacific.getHours() === slotHour &&
+                             sessionStartPacific.getMinutes() >= slotMinute &&
+                             sessionStartPacific.getMinutes() < slotMinute + 30
                     })
                   })
 
@@ -688,9 +770,12 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                       // Apply location filter
                       if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
 
-                      const sessionStart = parseISO(session.start_time)
-                      return sessionStart.getHours() === slotHour &&
-                             Math.floor(sessionStart.getMinutes() / 30) === Math.floor(slotMinute / 30)
+                      const sessionStartUTC = parseISO(session.start_time)
+                      // Convert to Pacific time
+                      const sessionStartPacific = new Date(sessionStartUTC.getTime() - (8 * 60 * 60 * 1000))
+                      return sessionStartPacific.getHours() === slotHour &&
+                             sessionStartPacific.getMinutes() >= slotMinute &&
+                             sessionStartPacific.getMinutes() < slotMinute + 30
                     })
 
                     if (slotSessions.length === 0) return null
@@ -765,7 +850,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                   <thead>
                     <tr className="bg-gray-50">
                       <th className="border p-2 text-left w-24 text-sm font-semibold sticky left-0 bg-gray-50">Time</th>
-                      {filteredInstructors.map((instructor) => {
+                      {displayedInstructors.map((instructor) => {
                         const color = INSTRUCTOR_COLORS[instructor.colorIndex]
                         return (
                           <th key={instructor.id} className="border p-2 text-center min-w-[150px] md:min-w-[180px]">
@@ -789,7 +874,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                         <td className="border p-2 text-sm font-medium text-gray-600 sticky left-0 bg-white">
                           {format(new Date(`2000-01-01T${slot}:00`), 'h:mm a')}
                         </td>
-                        {filteredInstructors.map((instructor) => {
+                        {displayedInstructors.map((instructor) => {
                           const slotSessions = getSessionsForSlot(instructor.id, slot)
                           const color = INSTRUCTOR_COLORS[instructor.colorIndex]
 
@@ -940,7 +1025,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                   <thead>
                     <tr className="bg-gray-50">
                       <th className="border p-2 text-left w-24 md:w-28 text-sm font-semibold sticky left-0 bg-gray-50">Day</th>
-                      {filteredInstructors.map((instructor) => {
+                      {displayedInstructors.map((instructor) => {
                         const color = INSTRUCTOR_COLORS[instructor.colorIndex]
                         return (
                           <th key={instructor.id} className="border p-2 text-center min-w-[120px] md:min-w-[150px]">
@@ -978,7 +1063,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                             <div className="text-xs text-gray-500">{dayDate}</div>
                           </td>
 
-                          {filteredInstructors.map((instructor) => {
+                          {displayedInstructors.map((instructor) => {
                             const instructorDaySessions = daySessions
                               .filter(s => s.instructor_id === instructor.id)
                               .sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime())

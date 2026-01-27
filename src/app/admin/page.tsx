@@ -117,7 +117,7 @@ export default function AdminDashboard() {
         .select('id')
         .in('status', ['pending', 'approved_pending_auth']);
 
-      // Fetch sessions for the last 48 hours with progress_notes check
+      // Fetch sessions for the last 48 hours
       // More inclusive to catch test data
       const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
       const now = new Date().toISOString();
@@ -141,30 +141,47 @@ export default function AdminDashboard() {
         .lte('start_time', now)
         .order('start_time');
 
-      // Calculate bookings needing progress updates
-      // Count individual bookings that don't have progress notes
+      // Get accurate count of bookings needing progress updates from the API
       let bookingsNeedingProgress = 0;
-      sessions?.forEach(s => {
-        const sessionTime = new Date(s.start_time);
-        const now = new Date();
-        const isPastOrCurrent = sessionTime <= now;
+      try {
+        const response = await fetch('/api/swimmers/needs-progress-update');
+        if (response.ok) {
+          const bookings = await response.json();
+          bookingsNeedingProgress = bookings.length || 0;
+        } else {
+          console.error('Failed to fetch bookings needing progress update:', response.status);
+          // Fallback to approximate calculation
+          sessions?.forEach(s => {
+            const sessionTime = new Date(s.start_time);
+            const now = new Date();
+            const isPastOrCurrent = sessionTime <= now;
 
-        if (isPastOrCurrent && s.bookings && s.bookings.length > 0) {
-          // For each booking, check if it has a progress note
-          // Since we don't have progress_notes at booking level in this query,
-          // we'll use a simpler approach: if session has any progress notes,
-          // assume some bookings might be updated, but not all
-          // This is an approximation - the API route provides accurate counts
-          if (!s.progress_notes || s.progress_notes.length === 0) {
-            // No progress notes at all for this session
-            bookingsNeedingProgress += s.bookings.length;
-          } else if (s.progress_notes.length < s.bookings.length) {
-            // Some but not all bookings have progress notes
-            // Approximate: assume missing progress notes = missing bookings
-            bookingsNeedingProgress += (s.bookings.length - s.progress_notes.length);
-          }
+            if (isPastOrCurrent && s.bookings && s.bookings.length > 0) {
+              if (!s.progress_notes || s.progress_notes.length === 0) {
+                bookingsNeedingProgress += s.bookings.length;
+              } else if (s.progress_notes.length < s.bookings.length) {
+                bookingsNeedingProgress += (s.bookings.length - s.progress_notes.length);
+              }
+            }
+          });
         }
-      });
+      } catch (error) {
+        console.error('Error fetching bookings needing progress update:', error);
+        // Fallback to approximate calculation
+        sessions?.forEach(s => {
+          const sessionTime = new Date(s.start_time);
+          const now = new Date();
+          const isPastOrCurrent = sessionTime <= now;
+
+          if (isPastOrCurrent && s.bookings && s.bookings.length > 0) {
+            if (!s.progress_notes || s.progress_notes.length === 0) {
+              bookingsNeedingProgress += s.bookings.length;
+            } else if (s.progress_notes.length < s.bookings.length) {
+              bookingsNeedingProgress += (s.bookings.length - s.progress_notes.length);
+            }
+          }
+        });
+      }
 
       // Get revenue this month from bookings
       const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
