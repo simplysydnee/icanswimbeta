@@ -32,3 +32,10 @@ tsconfig.tsbuildinfo
 
 # Migration configuration with secrets
 .env.migration
+
+# Environment files with secrets
+.env.local
+.env.*.local
+.env.migration
+.env.migrate_*
+
