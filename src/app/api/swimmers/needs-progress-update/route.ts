@@ -32,11 +32,14 @@ export async function GET() {
     // Get sessions that have ended and need progress updates
     const now = new Date().toISOString();
 
-    // Get sessions that have ended (not in future)
+    // Get sessions that have started (or are in progress/ended)
+    // Exclude cancelled sessions
     let sessionsQuery = supabase
       .from('sessions')
       .select('id, start_time, end_time, instructor_id, status')
-      .lte('end_time', now);                // Has ended (not in future)
+      .lte('start_time', now)                // Has started (not in future)
+      .neq('status', 'cancelled')            // Exclude cancelled sessions
+      .neq('status', 'draft');               // Exclude draft sessions
 
     // Instructors only see their own sessions
     if (isInstructor) {
@@ -77,7 +80,7 @@ export async function GET() {
         )
       `)
       .in('session_id', sessionIds)
-      .eq('status', 'confirmed');
+      .in('status', ['confirmed', 'completed']);
 
     if (bookingsError) {
       console.error('Bookings query error:', bookingsError);
