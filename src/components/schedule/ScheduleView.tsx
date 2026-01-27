@@ -117,33 +117,76 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
 
   // Fetch instructors
   const fetchInstructors = useCallback(async () => {
-    const { data: roleData } = await supabase
-      .from('user_roles')
-      .select('user_id')
-      .eq('role', 'instructor')
+    // For admin role: fetch instructors who have at least one session (not cancelled)
+    // and filter out test accounts
+    if (role === 'admin') {
+      // Get distinct instructors who have any sessions (not cancelled)
+      // First, get unique instructor IDs from sessions
+      const { data: sessionInstructors } = await supabase
+        .from('sessions')
+        .select('instructor_id')
+        .neq('status', 'cancelled')
+        .not('instructor_id', 'is', null)
 
-    if (roleData && roleData.length > 0) {
-      const instructorIds = roleData.map(r => r.user_id)
+      if (sessionInstructors && sessionInstructors.length > 0) {
+        // Get unique instructor IDs
+        const uniqueInstructorIds = Array.from(new Set(sessionInstructors.map(s => s.instructor_id)))
 
-      // If instructor role, only fetch their own profile
-      const query = supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url')
-        .order('full_name')
+        // Fetch profiles for these instructors
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, email')
+          .in('id', uniqueInstructorIds)
+          .eq('is_active', true)
+          .order('full_name')
 
-      if (role === 'instructor' && userId) {
-        query.eq('id', userId)
+        if (profiles) {
+          // Filter out test accounts (@test.com emails) and map to instructor format
+          const instructorsArray = profiles
+            .filter(profile => profile.email && !profile.email.includes('@test.com'))
+            .map((p, idx) => ({
+              ...p,
+              colorIndex: idx % INSTRUCTOR_COLORS.length
+            }))
+
+          setInstructors(instructorsArray)
+        } else {
+          setInstructors([])
+        }
       } else {
-        query.in('id', instructorIds)
+        setInstructors([])
       }
+    } else {
+      // For instructor role: fetch only their own profile
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'instructor')
 
-      const { data: profiles } = await query
+      if (roleData && roleData.length > 0) {
+        const instructorIds = roleData.map(r => r.user_id)
 
-      if (profiles) {
-        setInstructors(profiles.map((p, idx) => ({
-          ...p,
-          colorIndex: idx % INSTRUCTOR_COLORS.length
-        })))
+        // If instructor role, only fetch their own profile
+        const query = supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .eq('is_active', true)
+          .order('full_name')
+
+        if (role === 'instructor' && userId) {
+          query.eq('id', userId)
+        } else {
+          query.in('id', instructorIds)
+        }
+
+        const { data: profiles } = await query
+
+        if (profiles) {
+          setInstructors(profiles.map((p, idx) => ({
+            ...p,
+            colorIndex: idx % INSTRUCTOR_COLORS.length
+          })))
+        }
       }
     }
   }, [supabase, role, userId])
