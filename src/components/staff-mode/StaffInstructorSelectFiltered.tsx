@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useStaffMode } from './StaffModeContext'
 import { useToast } from '@/hooks/use-toast'
+import { format, addDays } from 'date-fns'
 import IcanSwimLogo from '@/components/IcanSwimLogo'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
@@ -30,8 +31,17 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
   const supabase = createClient()
 
   try {
-    // Get today's date in local timezone (YYYY-MM-DD format)
-    const today = new Date().toLocaleDateString('en-CA') // Returns YYYY-MM-DD in local timezone
+    // Get today's date with proper timezone adjustment
+    // Sessions are stored in UTC but represent local time with 8-hour offset
+    const today = new Date()
+    const dateStr = format(today, 'yyyy-MM-dd')
+    const startOfDayUTC = `${dateStr}T08:00:00.000Z`
+    const endOfDayUTC = `${format(addDays(today, 1), 'yyyy-MM-dd')}T08:00:00.000Z`
+
+    console.log('=== DEBUG: Session count date range ===')
+    console.log('Today:', dateStr)
+    console.log('Start (UTC):', startOfDayUTC)
+    console.log('End (UTC):', endOfDayUTC)
 
     // First, fetch users with instructor role from user_roles table
     // This ensures we only show actual instructors, not coordinators or parents
@@ -80,6 +90,7 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
     }
 
     // Query sessions with bookings and status filter
+    // Use the same timezone-adjusted date range as StaffScheduleView
     const { data: sessions, error: sessionsError } = await supabase
       .from('sessions')
       .select(`
@@ -88,14 +99,21 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
           id
         )
       `)
-      .gte('start_time', `${today}T00:00:00Z`)
-      .lt('start_time', `${today}T23:59:59Z`)
+      .gte('start_time', startOfDayUTC)
+      .lt('start_time', endOfDayUTC)
       .in('instructor_id', instructorIds)
       .in('status', ['booked', 'open', 'available']) // Sessions that are booked or available
+      .neq('status', 'cancelled')
 
     if (sessionsError) {
       console.error('Error fetching today\'s sessions:', sessionsError)
       throw new Error('Failed to fetch today\'s sessions')
+    }
+
+    console.log('=== DEBUG: Session count query results ===')
+    console.log('Number of sessions found:', sessions?.length || 0)
+    if (sessions && sessions.length > 0) {
+      console.log('Session instructor IDs:', sessions.map(s => s.instructor_id))
     }
 
     // Count sessions per instructor
@@ -105,6 +123,9 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
         sessionCounts[session.instructor_id] = (sessionCounts[session.instructor_id] || 0) + 1
       }
     })
+
+    console.log('=== DEBUG: Session counts per instructor ===')
+    console.log(sessionCounts)
 
     // Combine instructor data with session counts
     const instructorsWithSessions = realInstructors.map(instructor => ({

@@ -5,14 +5,13 @@ import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useStaffMode } from './StaffModeContext'
-import { useToast } from '@/hooks/use-toast'
-import { format, parseISO, isToday, isPast, isFuture, differenceInYears } from 'date-fns'
+import { format, addDays } from 'date-fns'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Loader2, ArrowLeft, Search, Calendar, User, Target, Clock, Users, LogOut } from 'lucide-react'
+import { Loader2, ArrowLeft, Search, Calendar, Users, LogOut } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface SessionWithSwimmer {
   id: string
@@ -46,35 +45,71 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
   const supabase = createClient()
 
   try {
-    // Get today's date in local timezone (YYYY-MM-DD format)
-    const today = new Date().toLocaleDateString('en-CA')
+    // Get today's date with proper timezone adjustment
+    // Sessions are stored in UTC but represent local time with 8-hour offset
+    const today = new Date()
+    const dateStr = format(today, 'yyyy-MM-dd')
+    const startOfDayUTC = `${dateStr}T08:00:00.000Z`
+    const endOfDayUTC = `${format(addDays(today, 1), 'yyyy-MM-dd')}T08:00:00.000Z`
 
-    // Fetch today's sessions for this instructor
-    // Use timestamp range: from midnight to 11:59:59 PM on today's date
+    console.log('=== DEBUG: Fetching sessions for instructor ===')
+    console.log('Instructor ID:', instructorId)
+    console.log('Date range (UTC):', { startOfDayUTC, endOfDayUTC })
+    console.log('Local date:', today.toLocaleDateString())
+    console.log('Local time now:', new Date().toLocaleTimeString())
 
-    const { data: sessions, error: sessionsError } = await supabase
+    // First, let's debug by fetching ALL sessions for this instructor
+    // without date filter to see what we get
+    const { data: allSessions, error: allSessionsError } = await supabase
       .from('sessions')
       .select(`
         id,
         start_time,
+        status,
         bookings!inner (
           swimmer_id
         )
       `)
       .eq('instructor_id', instructorId)
-      .gte('start_time', `${today}T00:00:00Z`)
-      .lt('start_time', `${today}T23:59:59Z`)
-      .in('status', ['booked', 'open', 'available']) // Sessions that are booked or available
       .order('start_time')
 
-    if (sessionsError) {
-      console.error('Error fetching sessions:', sessionsError)
-      throw new Error('Failed to fetch today\'s sessions')
+    if (allSessionsError) {
+      console.error('Error fetching all sessions:', allSessionsError)
+      throw new Error('Failed to fetch sessions')
     }
 
-    console.log('=== DEBUG StaffScheduleView: Sessions found ===')
+    console.log('=== DEBUG: ALL sessions for instructor ===')
+    console.log('Total sessions:', allSessions?.length || 0)
+    if (allSessions && allSessions.length > 0) {
+      console.log('All session dates:', allSessions.map(s => ({
+        id: s.id,
+        start_time: s.start_time,
+        status: s.status,
+        local_time: new Date(s.start_time).toLocaleString(),
+        has_booking: !!s.bookings?.[0]?.swimmer_id
+      })))
+    }
+
+    // Now filter for today's sessions
+    const sessions = allSessions?.filter(session => {
+      const sessionDate = new Date(session.start_time)
+      const sessionDateStr = format(sessionDate, 'yyyy-MM-dd')
+      return sessionDateStr === dateStr
+    }) || []
+
+    console.log('=== DEBUG: Filtered to today ===')
+    console.log('Today\'s sessions:', sessions.length)
+    console.log('Session statuses:', sessions.map(s => s.status))
+
+
+    console.log('=== DEBUG: Sessions found ===')
     console.log('Number of sessions:', sessions?.length || 0)
-    console.log('Sessions:', sessions)
+    if (sessions && sessions.length > 0) {
+      console.log('Session times (UTC):', sessions.map(s => s.start_time))
+      console.log('Session times (Local):', sessions.map(s => new Date(s.start_time).toLocaleString()))
+    } else {
+      console.log('No sessions found for this date range')
+    }
 
     if (!sessions || sessions.length === 0) {
       return []
@@ -218,8 +253,8 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
           seizures_description: swimmer.seizures_description,
           important_notes: swimmer.important_notes || [],
           // Parent contact information
-          parent_phone: swimmer.profiles?.phone || null,
-          parent_email: swimmer.profiles?.email || null
+          parent_phone: swimmer.parent_phone || null,
+          parent_email: swimmer.parent_email || null
         }
       })
       .filter(Boolean) as SessionWithSwimmer[]
@@ -235,7 +270,6 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
 export default function StaffScheduleView() {
   const router = useRouter()
   const { selectedInstructor, clearInstructor } = useStaffMode()
-  const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState('')
 
   const { data: sessions, isLoading, error } = useQuery({
@@ -259,86 +293,13 @@ export default function StaffScheduleView() {
     )
   }, [sessions, searchQuery])
 
-  // Find the next upcoming session
-  const nextSession = useMemo(() => {
-    if (!sessions) return null
-
-    const now = new Date()
-    return sessions.find(session => {
-      const sessionTime = parseISO(session.start_time)
-      return isFuture(sessionTime) || isToday(sessionTime)
-    })
-  }, [sessions])
 
   const handleBack = () => {
     clearInstructor()
   }
 
-  const handleSwimmerClick = (swimmerId: string) => {
-    router.push(`/staff-mode/swimmer/${swimmerId}`)
-  }
-
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName[0]}${lastName[0]}`.toUpperCase()
-  }
-
-  const calculateAge = (dateOfBirth: string) => {
-    try {
-      return differenceInYears(new Date(), parseISO(dateOfBirth))
-    } catch {
-      return 0
-    }
-  }
-
-  const getLevelBadge = (sequence: number) => {
-    if (sequence <= 2) {
-      return '🔴⚪' // Red/White group
-    } else {
-      return '🟡🟢🔵' // Yellow/Green/Blue group
-    }
-  }
-
-  const calculateProgress = (mastered: number, total: number, levelSequence: number) => {
-    if (total === 0) return 0
-
-    // Red/White group (levels 1-2): 9 total skills
-    // Yellow/Green/Blue group (levels 3-5): 12 total skills
-    const maxSkills = levelSequence <= 2 ? 9 : 12
-    const actualTotal = Math.min(total, maxSkills)
-    const percentage = Math.round((mastered / actualTotal) * 100)
-    return Math.min(percentage, 100)
-  }
-
-  const hasImportantInfo = (session: SessionWithSwimmer) => {
-    return session.important_notes && session.important_notes.length > 0
-  }
-
-  const getImportantNotes = (session: SessionWithSwimmer) => {
-    if (!session.important_notes || session.important_notes.length === 0) {
-      return []
-    }
-    return session.important_notes
-  }
-
-  const formatTime = (timeString: string) => {
-    try {
-      return format(parseISO(timeString), 'h:mm a')
-    } catch {
-      return timeString
-    }
-  }
-
-  const getTimeBadgeVariant = (session: SessionWithSwimmer) => {
-    if (nextSession?.id === session.id) {
-      return 'next' as const
-    }
-
-    const sessionTime = parseISO(session.start_time)
-    if (isPast(sessionTime) && !isToday(sessionTime)) {
-      return 'secondary' as const
-    }
-
-    return 'default' as const
   }
 
   if (!selectedInstructor) {
@@ -433,9 +394,9 @@ export default function StaffScheduleView() {
 
           <div className="text-center">
             <h1 className="text-2xl font-bold text-[#2a5e84]">Today's Schedule</h1>
-            <p className="text-gray-600 flex items-center justify-center gap-2">
-              <Calendar className="h-4 w-4" />
-              {format(new Date(), 'EEEE, MMM d')}
+            <p className="text-gray-600">{format(new Date(), 'EEEE, MMMM d')}</p>
+            <p className="text-sm text-gray-400 mt-1">
+              {filteredSessions.length} {filteredSessions.length === 1 ? 'session' : 'sessions'} today
             </p>
           </div>
 
@@ -499,190 +460,103 @@ export default function StaffScheduleView() {
           )}
         </div>
 
-        {/* Swimmer cards - Grid layout for iPad */}
+        {/* Session List - Agenda Style */}
         {filteredSessions.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-3">
             {filteredSessions.map((session) => {
-              const age = calculateAge(session.date_of_birth)
-              const progress = calculateProgress(
-                session.mastered_skills_count,
-                session.total_skills_count,
-                session.level_sequence
-              )
-              const isAssessment = session.assessment_status === 'scheduled'
-              const timeBadgeVariant = getTimeBadgeVariant(session)
+              const sessionTime = new Date(session.start_time)
+              const now = new Date()
+              const isPast = sessionTime < now
+              const isNow = Math.abs(sessionTime.getTime() - now.getTime()) < 30 * 60 * 1000 // Within 30 min
+              const canUpdateProgress = sessionTime <= now // At or after session time
+
+              // Calculate age
+              const age = session.date_of_birth
+                ? Math.floor((now.getTime() - new Date(session.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+                : null
 
               return (
-                <Card
+                <div
                   key={session.id}
-                  className="cursor-pointer transition-all hover:shadow-lg border-[#6abedc]/30 hover:border-[#2a5e84] h-full flex flex-col"
-                  onClick={() => handleSwimmerClick(session.swimmer_id)}
+                  className={cn(
+                    'flex items-center gap-4 p-4 rounded-xl border transition-all',
+                    isPast && 'bg-gray-50 opacity-75',
+                    isNow && 'bg-blue-50 border-blue-300 shadow-md',
+                    !isPast && !isNow && 'bg-white hover:shadow-sm'
+                  )}
                 >
-                  <CardContent className="p-4 flex-1 flex flex-col">
-                    {/* Compact header with time, name, and alerts */}
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          className={`${
-                            timeBadgeVariant === 'next'
-                              ? 'bg-[#06b6d4] hover:bg-[#06b6d4] text-white'
-                              : ''
-                          }`}
-                          variant={timeBadgeVariant === 'next' ? 'default' : timeBadgeVariant}
-                          size="sm"
-                        >
-                          {timeBadgeVariant === 'next' ? 'NEXT' : <Clock className="h-3 w-3" />}
-                        </Badge>
-                        <span className="font-bold text-gray-900">
-                          {formatTime(session.start_time)}
-                        </span>
-                        {/* Warning badge for important info */}
-                        {hasImportantInfo(session) && (
-                          <Badge
-                            variant="outline"
-                            className="bg-amber-100 text-amber-800 border-amber-300 text-xs"
-                            size="sm"
-                          >
-                            ⚠️
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="text-xl">
-                        {getLevelBadge(session.level_sequence)}
-                      </div>
-                    </div>
+                  {/* Time Column */}
+                  <div className="flex flex-col items-center min-w-[80px]">
+                    {isNow && (
+                      <span className="text-xs font-semibold text-white bg-blue-500 px-2 py-0.5 rounded-full mb-1">
+                        NOW
+                      </span>
+                    )}
+                    <span className={cn(
+                      'text-lg font-semibold',
+                      isNow ? 'text-blue-700' : isPast ? 'text-gray-400' : 'text-gray-700'
+                    )}>
+                      {format(sessionTime, 'h:mm a')}
+                    </span>
+                  </div>
 
-                    {/* Swimmer info - compact layout */}
-                    <div className="flex items-center gap-3 mb-3">
-                      {/* Swimmer avatar - smaller */}
-                      <Avatar className="h-12 w-12 border-2 border-[#6abedc]">
-                        {session.photo_url ? (
-                          <AvatarImage
-                            src={session.photo_url}
-                            alt={`${session.first_name} ${session.last_name}`}
-                            className="object-cover"
-                          />
-                        ) : null}
-                        <AvatarFallback className="bg-[#2a5e84] text-white text-sm font-semibold">
-                          {getInitials(session.first_name, session.last_name)}
-                        </AvatarFallback>
-                      </Avatar>
+                  {/* Swimmer Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3">
+                      {/* Avatar */}
+                      <div className={cn(
+                        'h-12 w-12 rounded-full flex items-center justify-center text-white font-semibold',
+                        isPast ? 'bg-gray-400' : 'bg-[#2a5e84]'
+                      )}>
+                        {session.first_name?.[0]}{session.last_name?.[0]}
+                      </div>
 
+                      {/* Name & Details */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-gray-900 truncate">
+                        <h3 className="font-semibold text-gray-900 truncate">
                           {session.first_name} {session.last_name}
                         </h3>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <span>{age > 0 ? `${age}y` : 'Infant'}</span>
-                          <span>•</span>
-                          <span className="truncate">{session.level_name}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Important notes - yellow attention box */}
-                    {hasImportantInfo(session) && (
-                      <div className="mb-3 bg-amber-50 border border-amber-200 rounded-lg p-2">
-                        <div className="flex items-start gap-1">
-                          <span className="text-amber-700">⚠️</span>
-                          <div className="flex-1">
-                            <div className="text-xs font-semibold text-amber-800 mb-1">Important Notes:</div>
-                            <div className="text-xs text-amber-700 space-y-1">
-                              {getImportantNotes(session).map((note, index) => (
-                                <div key={index} className="truncate">
-                                  • {note}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Progress or Assessment - compact */}
-                    <div className="mb-3">
-                      {isAssessment ? (
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs w-full justify-center">
-                          <Target className="h-3 w-3 mr-1" />
-                          Assessment
-                        </Badge>
-                      ) : (
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="relative h-8 w-8">
-                              <svg className="h-8 w-8" viewBox="0 0 36 36">
-                                <path
-                                  d="M18 2.0845
-                                    a 15.9155 15.9155 0 0 1 0 31.831
-                                    a 15.9155 15.9155 0 0 1 0 -31.831"
-                                  fill="none"
-                                  stroke="#e5e7eb"
-                                  strokeWidth="3"
-                                />
-                                <path
-                                  d="M18 2.0845
-                                    a 15.9155 15.9155 0 0 1 0 31.831
-                                    a 15.9155 15.9155 0 0 1 0 -31.831"
-                                  fill="none"
-                                  stroke="#2a5e84"
-                                  strokeWidth="3"
-                                  strokeDasharray={`${progress}, 100`}
-                                />
-                              </svg>
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="text-xs font-bold">{progress}%</span>
-                              </div>
-                            </div>
-                            <span className="text-xs text-gray-600">
-                              {session.mastered_skills_count}/{session.level_sequence <= 2 ? 9 : 12}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Strategies - compact */}
-                    {session.strategies.length > 0 && (
-                      <div className="mt-2 pt-2 border-t border-gray-100">
-                        <div className="flex flex-wrap gap-1">
-                          {session.strategies.slice(0, 2).map((strategy, index) => (
-                            <Badge
-                              key={index}
-                              variant="secondary"
-                              className="bg-[#e8f4f8] text-[#2a5e84] border-[#6abedc]/30 text-xs"
-                            >
-                              {strategy.length > 12 ? `${strategy.substring(0, 12)}...` : strategy}
-                            </Badge>
-                          ))}
-                          {session.strategies.length > 2 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{session.strategies.length - 2}
-                            </Badge>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          {age && <span>{age}y</span>}
+                          {session.level_name && (
+                            <>
+                              <span>•</span>
+                              <span className={cn(
+                                'px-2 py-0.5 rounded-full text-xs font-medium',
+                                session.level_name === 'white' && 'bg-gray-100 text-gray-700',
+                                session.level_name === 'red' && 'bg-red-100 text-red-700',
+                                session.level_name === 'yellow' && 'bg-yellow-100 text-yellow-700',
+                                session.level_name === 'green' && 'bg-green-100 text-green-700',
+                                session.level_name === 'blue' && 'bg-blue-100 text-blue-700',
+                              )}>
+                                {session.level_name}
+                              </span>
+                            </>
                           )}
                         </div>
                       </div>
-                    )}
-
-                    {/* Contact information - compact */}
-                    <div className="mt-2 pt-2 border-t border-gray-100">
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
-                        {session.parent_phone && (
-                          <div className="truncate" title={`Phone: ${session.parent_phone}`}>
-                            📞 {session.parent_phone.length > 10 ? `${session.parent_phone.substring(0, 10)}...` : session.parent_phone}
-                          </div>
-                        )}
-                        {session.parent_email && (
-                          <div className="truncate" title={`Email: ${session.parent_email}`}>
-                            ✉️ {session.parent_email.length > 15 ? `${session.parent_email.substring(0, 15)}...` : session.parent_email}
-                          </div>
-                        )}
-                        {!session.parent_phone && !session.parent_email && (
-                          <div className="text-gray-400 italic">No contact info</div>
-                        )}
-                      </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="flex-shrink-0">
+                    {canUpdateProgress ? (
+                      <Button
+                        onClick={() => router.push(`/staff-mode/swimmer/${session.swimmer_id}`)}
+                        className="bg-[#2a5e84] hover:bg-[#1e4a6d] text-white"
+                      >
+                        Update Progress
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        onClick={() => router.push(`/staff-mode/swimmer/${session.swimmer_id}`)}
+                      >
+                        View Details
+                      </Button>
+                    )}
+                  </div>
+                </div>
               )
             })}
           </div>
