@@ -24,6 +24,7 @@ import { format, parseISO, startOfDay, endOfDay } from 'date-fns';
 function getStatusColor(status: string) {
   switch (status) {
     case 'draft': return 'bg-yellow-100 text-yellow-700 border-yellow-300'
+    case 'available': // Database uses 'available' not 'open'
     case 'open': return 'bg-green-100 text-green-700 border-green-300'
     case 'booked': return 'bg-blue-100 text-blue-700 border-blue-300'
     case 'completed': return 'bg-gray-100 text-gray-700 border-gray-300'
@@ -76,7 +77,9 @@ function AdminSessionsContent() {
 
     // Apply status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(s => s.status === statusFilter);
+      // Map UI status 'open' to database status 'available'
+      const dbStatus = statusFilter === 'open' ? 'available' : statusFilter;
+      filtered = filtered.filter(s => s.status === dbStatus);
     }
 
     // Apply date range filter
@@ -455,16 +458,16 @@ function AdminSessionsContent() {
         </div>
 
         {/* Summary Statistics Cards - Clickable */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
           <Card
             className={`cursor-pointer hover:shadow-md transition-all ${
               statusFilter === 'all' ? 'ring-2 ring-primary' : ''
             }`}
             onClick={() => handleStatusChange('all')}
           >
-            <CardContent className="p-4">
-              <p className="text-xs sm:text-sm text-muted-foreground">Total</p>
-              <p className="text-xl sm:text-2xl font-bold">{stats.total}</p>
+            <CardContent className="p-3">
+              <p className="text-xs text-muted-foreground">Total</p>
+              <p className="text-xl font-bold">{stats.total}</p>
             </CardContent>
           </Card>
           <Card
@@ -473,9 +476,9 @@ function AdminSessionsContent() {
             }`}
             onClick={() => handleStatusChange('draft')}
           >
-            <CardContent className="p-4">
-              <p className="text-xs sm:text-sm text-muted-foreground">Drafts</p>
-              <p className="text-xl sm:text-2xl font-bold text-yellow-600">{stats.draft}</p>
+            <CardContent className="p-3">
+              <p className="text-xs text-muted-foreground">Drafts</p>
+              <p className="text-xl font-bold text-yellow-600">{stats.draft}</p>
             </CardContent>
           </Card>
           <Card
@@ -484,9 +487,9 @@ function AdminSessionsContent() {
             }`}
             onClick={() => handleStatusChange('open')}
           >
-            <CardContent className="p-4">
-              <p className="text-xs sm:text-sm text-muted-foreground">Open</p>
-              <p className="text-xl sm:text-2xl font-bold text-green-600">{stats.open}</p>
+            <CardContent className="p-3">
+              <p className="text-xs text-muted-foreground">Open</p>
+              <p className="text-xl font-bold text-green-600">{stats.open}</p>
             </CardContent>
           </Card>
           <Card
@@ -495,9 +498,9 @@ function AdminSessionsContent() {
             }`}
             onClick={() => handleStatusChange('booked')}
           >
-            <CardContent className="p-4">
-              <p className="text-xs sm:text-sm text-muted-foreground">Booked</p>
-              <p className="text-xl sm:text-2xl font-bold text-blue-600">{stats.booked}</p>
+            <CardContent className="p-3">
+              <p className="text-xs text-muted-foreground">Booked</p>
+              <p className="text-xl font-bold text-blue-600">{stats.booked}</p>
             </CardContent>
           </Card>
           <Card
@@ -506,9 +509,9 @@ function AdminSessionsContent() {
             }`}
             onClick={() => handleStatusChange('completed')}
           >
-            <CardContent className="p-4">
-              <p className="text-xs sm:text-sm text-muted-foreground">Completed</p>
-              <p className="text-xl sm:text-2xl font-bold text-gray-600">{stats.completed}</p>
+            <CardContent className="p-3">
+              <p className="text-xs text-muted-foreground">Completed</p>
+              <p className="text-xl font-bold text-gray-600">{stats.completed}</p>
             </CardContent>
           </Card>
           <Card
@@ -517,9 +520,9 @@ function AdminSessionsContent() {
             }`}
             onClick={() => handleStatusChange('cancelled')}
           >
-            <CardContent className="p-4">
-              <p className="text-xs sm:text-sm text-muted-foreground">Cancelled</p>
-              <p className="text-xl sm:text-2xl font-bold text-orange-600">{stats.cancelled}</p>
+            <CardContent className="p-3">
+              <p className="text-xs text-muted-foreground">Cancelled</p>
+              <p className="text-xl font-bold text-orange-600">{stats.cancelled}</p>
             </CardContent>
           </Card>
           <Card
@@ -528,9 +531,9 @@ function AdminSessionsContent() {
             }`}
             onClick={() => handleStatusChange('no_show')}
           >
-            <CardContent className="p-4">
-              <p className="text-xs sm:text-sm text-muted-foreground">No-Shows</p>
-              <p className="text-xl sm:text-2xl font-bold text-red-600">{stats.no_shows}</p>
+            <CardContent className="p-3">
+              <p className="text-xs text-muted-foreground">No-Shows</p>
+              <p className="text-xl font-bold text-red-600">{stats.no_shows}</p>
             </CardContent>
           </Card>
         </div>
@@ -539,7 +542,7 @@ function AdminSessionsContent() {
         {statusFilter !== 'all' && (
           <div className="flex items-center gap-2 mb-6">
             <Badge variant="secondary" className="capitalize">
-              Showing: {statusFilter.replace('_', '-')} sessions
+              Showing: {statusFilter === 'open' ? 'Open' : statusFilter.replace('_', '-')} sessions
             </Badge>
             <Button variant="ghost" size="sm" onClick={() => handleStatusChange('all')}>
               <X className="h-3 w-3 mr-1" /> Clear
@@ -850,7 +853,7 @@ function AdminSessionsContent() {
                           {/* Status */}
                           <TableCell className="px-2 py-2">
                             <Badge className={getStatusColor(session.status) + ' text-xs px-1.5 py-0.5'}>
-                              {session.status.charAt(0).toUpperCase() + session.status.slice(1).replace('_', '-')}
+                              {session.status === 'available' ? 'Open' : session.status.charAt(0).toUpperCase() + session.status.slice(1).replace('_', '-')}
                             </Badge>
                           </TableCell>
 

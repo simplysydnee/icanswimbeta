@@ -50,7 +50,7 @@ interface AllSessionsResponse {
   };
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const supabase = await createClient();
 
@@ -80,7 +80,52 @@ export async function GET(request: Request) {
       );
     }
 
-    // ========== STEP 3: Fetch All Sessions ==========
+    // ========== STEP 3: Fetch Statistics ==========
+    // First, get accurate counts using aggregation query
+    const { count: totalCount, error: countError } = await supabase
+      .from('sessions')
+      .select('*', { count: 'exact', head: true });
+
+    if (countError) {
+      console.error('Error fetching total session count:', countError);
+      return NextResponse.json(
+        { error: `Failed to fetch session count: ${countError.message}` },
+        { status: 500 }
+      );
+    }
+
+    // Get counts by status using separate queries
+    const { count: draftCount } = await supabase
+      .from('sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', SESSION_STATUS.DRAFT);
+
+    const { count: availableCount } = await supabase
+      .from('sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', SESSION_STATUS.AVAILABLE);
+
+    const { count: bookedCount } = await supabase
+      .from('sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', SESSION_STATUS.BOOKED);
+
+    const { count: completedCount } = await supabase
+      .from('sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', SESSION_STATUS.COMPLETED);
+
+    const { count: cancelledCount } = await supabase
+      .from('sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', SESSION_STATUS.CANCELLED);
+
+    const { count: noShowCount } = await supabase
+      .from('sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'no_show');
+
+    // ========== STEP 4: Fetch All Sessions ==========
     const { data: sessions, error: sessionsError } = await supabase
       .from('sessions')
       .select(`
@@ -104,7 +149,7 @@ export async function GET(request: Request) {
 
     // ========== STEP 4: Get Instructor Information ==========
     // Get unique instructor IDs from sessions
-    const instructorIds = [...new Set(sessions.map(s => s.instructor_id).filter(Boolean))];
+    const instructorIds = Array.from(new Set(sessions.map(s => s.instructor_id).filter(Boolean)));
 
     let instructorsMap = new Map<string, { id: string; name: string }>();
 
@@ -137,7 +182,7 @@ export async function GET(request: Request) {
       return {
         ...session,
         instructor_name: instructor.name,
-        bookings: session.bookings?.map(booking => ({
+        bookings: session.bookings?.map((booking: any) => ({
           id: booking.id,
           status: booking.status,
           swimmer: booking.swimmer,
@@ -148,13 +193,13 @@ export async function GET(request: Request) {
 
     // ========== STEP 6: Calculate Statistics ==========
     const stats = {
-      total: processedSessions.length,
-      draft: processedSessions.filter(s => s.status === SESSION_STATUS.DRAFT).length,
-      open: processedSessions.filter(s => s.status === SESSION_STATUS.OPEN).length,
-      booked: processedSessions.filter(s => s.status === SESSION_STATUS.BOOKED).length,
-      completed: processedSessions.filter(s => s.status === SESSION_STATUS.COMPLETED).length,
-      cancelled: processedSessions.filter(s => s.status === SESSION_STATUS.CANCELLED).length,
-      no_shows: processedSessions.filter(s => s.status === SESSION_STATUS.NO_SHOW).length,
+      total: totalCount || 0,
+      draft: draftCount || 0,
+      open: availableCount || 0, // Note: database uses 'available' not 'open'
+      booked: bookedCount || 0,
+      completed: completedCount || 0,
+      cancelled: cancelledCount || 0,
+      no_shows: noShowCount || 0,
     };
 
     // ========== STEP 7: Return Response ==========
