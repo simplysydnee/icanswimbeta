@@ -141,14 +141,30 @@ export default function AdminDashboard() {
         .lte('start_time', now)
         .order('start_time');
 
-      // Calculate sessions needing progress updates
-      const sessionsNeedingProgress = sessions?.filter(s => {
+      // Calculate bookings needing progress updates
+      // Count individual bookings that don't have progress notes
+      let bookingsNeedingProgress = 0;
+      sessions?.forEach(s => {
         const sessionTime = new Date(s.start_time);
         const now = new Date();
         const isPastOrCurrent = sessionTime <= now;
-        const hasProgressNote = s.progress_notes && s.progress_notes.length > 0;
-        return isPastOrCurrent && !hasProgressNote && s.bookings?.length > 0;
-      }).length || 0;
+
+        if (isPastOrCurrent && s.bookings && s.bookings.length > 0) {
+          // For each booking, check if it has a progress note
+          // Since we don't have progress_notes at booking level in this query,
+          // we'll use a simpler approach: if session has any progress notes,
+          // assume some bookings might be updated, but not all
+          // This is an approximation - the API route provides accurate counts
+          if (!s.progress_notes || s.progress_notes.length === 0) {
+            // No progress notes at all for this session
+            bookingsNeedingProgress += s.bookings.length;
+          } else if (s.progress_notes.length < s.bookings.length) {
+            // Some but not all bookings have progress notes
+            // Approximate: assume missing progress notes = missing bookings
+            bookingsNeedingProgress += (s.bookings.length - s.progress_notes.length);
+          }
+        }
+      });
 
       // Get revenue this month from bookings
       const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
@@ -186,7 +202,7 @@ export default function AdminDashboard() {
         sessionsToday: sessions?.length ?? 0,
         pendingReferrals: 0, // Placeholder - referral_requests table might not exist
         pendingPOs: pos?.length ?? 0,
-        sessionsNeedingProgress: sessionsNeedingProgress ?? 0,
+        sessionsNeedingProgress: bookingsNeedingProgress ?? 0,
         privatePayRevenue: privatePayRevenue ?? 0,
         fundedRevenue: fundedRevenue ?? 0
       });
