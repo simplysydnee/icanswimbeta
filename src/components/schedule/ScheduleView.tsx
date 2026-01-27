@@ -39,7 +39,7 @@ import {
 } from 'lucide-react'
 import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, parseISO, isSameDay } from 'date-fns'
 
-// Instructor color palette
+// Instructor color palette - visually distinct, accessible colors
 const INSTRUCTOR_COLORS = [
   { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-800' },
   { bg: 'bg-green-100', border: 'border-green-400', text: 'text-green-800' },
@@ -47,8 +47,12 @@ const INSTRUCTOR_COLORS = [
   { bg: 'bg-orange-100', border: 'border-orange-400', text: 'text-orange-800' },
   { bg: 'bg-pink-100', border: 'border-pink-400', text: 'text-pink-800' },
   { bg: 'bg-teal-100', border: 'border-teal-400', text: 'text-teal-800' },
+  { bg: 'bg-yellow-100', border: 'border-yellow-500', text: 'text-yellow-800' },
   { bg: 'bg-indigo-100', border: 'border-indigo-400', text: 'text-indigo-800' },
-  { bg: 'bg-amber-100', border: 'border-amber-400', text: 'text-amber-800' },
+  { bg: 'bg-red-100', border: 'border-red-400', text: 'text-red-800' },
+  { bg: 'bg-cyan-100', border: 'border-cyan-400', text: 'text-cyan-800' },
+  { bg: 'bg-emerald-100', border: 'border-emerald-400', text: 'text-emerald-800' },
+  { bg: 'bg-rose-100', border: 'border-rose-400', text: 'text-rose-800' },
 ]
 
 interface Session {
@@ -676,22 +680,26 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
         </div>
       </div>
 
-      {/* Instructor Legend (Admin only with multiple instructors) */}
+      {/* Instructor Color Legend */}
       {role === 'admin' && displayedInstructors.length > 0 && (
-        <div className="flex flex-wrap gap-3 mb-4">
+        <div className="flex flex-wrap gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
+          <span className="text-sm font-medium text-gray-600 mr-2">Instructors:</span>
           {displayedInstructors.map((instructor) => {
             const color = INSTRUCTOR_COLORS[instructor.colorIndex]
             const hasSubstitutes = hasSubstituteInstructors(instructor.id)
             return (
-              <div key={instructor.id} className="flex items-center gap-2">
-                <div className={`w-4 h-4 rounded ${color.bg} ${color.border} border-2`} />
-                <span className="text-sm font-medium">{instructor.full_name}</span>
+              <div
+                key={instructor.id}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${color.bg} ${color.text}`}
+              >
+                <div className={`w-2 h-2 rounded-full ${color.border} border-2`} />
+                {instructor.full_name?.split(' ')[0]}
                 {/* Admin: Cancel or Transfer all for this instructor */}
-                <div className="flex gap-1">
+                <div className="flex gap-1 ml-1">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-2 text-red-600 hover:text-red-700 hover:bg-red-50 print:hidden"
+                    className="h-5 w-5 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 print:hidden"
                     onClick={() => handleCancelInstructorDay(instructor)}
                     title="Cancel all sessions for this instructor"
                   >
@@ -701,7 +709,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 print:hidden"
+                      className="h-5 w-5 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 print:hidden"
                       onClick={() => handleTransferInstructorDay(instructor)}
                       title="Transfer all sessions to substitute instructor"
                     >
@@ -853,7 +861,10 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                       {displayedInstructors.map((instructor) => {
                         const color = INSTRUCTOR_COLORS[instructor.colorIndex]
                         return (
-                          <th key={instructor.id} className="border p-2 text-center min-w-[150px] md:min-w-[180px]">
+                          <th
+                            key={instructor.id}
+                            className={`px-4 py-3 text-center font-semibold border-b-4 ${color.border} ${color.bg}`}
+                          >
                             <div className="flex flex-col items-center gap-1">
                               <Avatar className="h-8 w-8 print:hidden">
                                 <AvatarImage src={instructor.avatar_url || undefined} />
@@ -861,7 +872,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                   {getInitials(instructor.full_name)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="text-sm font-semibold">{instructor.full_name}</span>
+                              <span className={`text-sm font-semibold ${color.text}`}>{instructor.full_name}</span>
                             </div>
                           </th>
                         )
@@ -1028,7 +1039,10 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                       {displayedInstructors.map((instructor) => {
                         const color = INSTRUCTOR_COLORS[instructor.colorIndex]
                         return (
-                          <th key={instructor.id} className="border p-2 text-center min-w-[120px] md:min-w-[150px]">
+                          <th
+                            key={instructor.id}
+                            className={`px-3 py-2 text-center font-semibold border-b-4 ${color.border} ${color.bg}`}
+                          >
                             <div className="flex flex-col items-center gap-1">
                               <Avatar className="h-5 w-5 md:h-6 md:w-6 print:hidden">
                                 <AvatarImage src={instructor.avatar_url || undefined} />
@@ -1036,7 +1050,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                   {getInitials(instructor.full_name)}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="text-xs font-semibold truncate max-w-[100px]">{instructor.full_name}</span>
+                              <span className={`text-xs font-semibold truncate max-w-[100px] ${color.text}`}>{instructor.full_name}</span>
                             </div>
                           </th>
                         )
