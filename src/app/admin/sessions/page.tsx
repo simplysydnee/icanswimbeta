@@ -18,6 +18,8 @@ import { AlertCircle, Loader2, Calendar, FilterX, Plus, MoreHorizontal, Eye, Edi
 import { useToast } from '@/hooks/use-toast';
 import { useAllSessions, useOpenSessions, useDeleteSessions, useInstructors } from '@/hooks';
 import { format, parseISO, startOfDay, endOfDay, startOfMonth, endOfMonth, addMonths, subMonths, format as dateFnsFormat } from 'date-fns';
+import { AddSwimmerToSessionDialog } from '@/components/admin/AddSwimmerToSessionDialog';
+import { EditSessionDialog } from '@/components/admin/EditSessionDialog';
 
 
 // Status color helper
@@ -91,6 +93,12 @@ function AdminSessionsContent() {
   const [bookingSession, setBookingSession] = useState<any>(null);
   const [bulkChangingInstructor, setBulkChangingInstructor] = useState(false);
   const [openDraftsModal, setOpenDraftsModal] = useState(false);
+
+  // New dialog states
+  const [addSwimmerDialogOpen, setAddSwimmerDialogOpen] = useState(false);
+  const [selectedSessionForAddSwimmer, setSelectedSessionForAddSwimmer] = useState<any>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedSessionForEdit, setSelectedSessionForEdit] = useState<any>(null);
 
   // Month navigation functions
   const navigateToMonth = (month: number, year: number) => {
@@ -394,6 +402,17 @@ function AdminSessionsContent() {
       description: 'Bulk cancel will be implemented soon.',
     });
   };
+
+  // New dialog handlers
+  const handleAddSwimmer = (session: any) => {
+    setSelectedSessionForAddSwimmer(session)
+    setAddSwimmerDialogOpen(true)
+  }
+
+  const handleEditSession = (session: any) => {
+    setSelectedSessionForEdit(session)
+    setEditDialogOpen(true)
+  }
 
   const handleStatusChange = (status: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -1022,7 +1041,7 @@ function AdminSessionsContent() {
                                 <DropdownMenuItem onClick={() => setViewingSession(session)}>
                                   <Eye className="h-4 w-4 mr-2" /> View Details
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setEditingSession(session)}>
+                                <DropdownMenuItem onClick={() => handleEditSession(session)}>
                                   <Edit className="h-4 w-4 mr-2" /> Edit Session
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setChangingInstructor(session)}>
@@ -1053,9 +1072,9 @@ function AdminSessionsContent() {
                                   </DropdownMenuItem>
                                 )}
 
-                                {session.status === 'open' && (
-                                  <DropdownMenuItem onClick={() => setBookingSession(session)}>
-                                    <UserPlus className="h-4 w-4 mr-2" /> Book Client
+                                {(session.status === 'open' || session.status === 'available') && (
+                                  <DropdownMenuItem onClick={() => handleAddSwimmer(session)}>
+                                    <UserPlus className="h-4 w-4 mr-2" /> Add Swimmer
                                   </DropdownMenuItem>
                                 )}
 
@@ -1213,41 +1232,6 @@ function AdminSessionsContent() {
           </div>
         )}
 
-        {editingSession && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-full md:max-w-md w-full">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Edit Session</h2>
-                <Button variant="ghost" size="sm" onClick={() => setEditingSession(null)}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <p className="text-muted-foreground mb-4">
-                Edit session: {format(parseISO(editingSession.start_time), 'MMM d, yyyy h:mm a')}
-              </p>
-              <div className="space-y-4">
-                <div className="text-sm text-muted-foreground">
-                  <p>Session editing functionality will be implemented soon.</p>
-                  <p className="mt-2">For now, use the "Change Instructor" or "Reschedule" options for specific changes.</p>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 mt-6">
-                <Button variant="outline" onClick={() => setEditingSession(null)}>
-                  Cancel
-                </Button>
-                <Button onClick={() => {
-                  toast({
-                    title: 'Feature coming soon',
-                    description: 'Session editing will be implemented in a future update.',
-                  });
-                  setEditingSession(null);
-                }}>
-                  Save Changes
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {changingInstructor && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -1402,41 +1386,6 @@ function AdminSessionsContent() {
           </div>
         )}
 
-        {bookingSession && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-full md:max-w-md w-full">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Book Client</h2>
-                <Button variant="ghost" size="sm" onClick={() => setBookingSession(null)}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <p className="text-muted-foreground mb-4">
-                Book a client for session on {format(parseISO(bookingSession.start_time), 'MMM d, yyyy h:mm a')}
-              </p>
-              <div className="space-y-4">
-                <div className="text-sm text-muted-foreground">
-                  <p>Client booking functionality will be implemented soon.</p>
-                  <p className="mt-2">For now, use the parent booking interface.</p>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 mt-6">
-                <Button variant="outline" onClick={() => setBookingSession(null)}>
-                  Cancel
-                </Button>
-                <Button onClick={() => {
-                  toast({
-                    title: 'Feature coming soon',
-                    description: 'Client booking will be implemented in a future update.',
-                  });
-                  setBookingSession(null);
-                }}>
-                  Book Client
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {bulkChangingInstructor && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -1533,6 +1482,25 @@ function AdminSessionsContent() {
             </div>
           </div>
         )}
+
+        {/* New Dialogs */}
+        <AddSwimmerToSessionDialog
+          open={addSwimmerDialogOpen}
+          onOpenChange={setAddSwimmerDialogOpen}
+          session={selectedSessionForAddSwimmer}
+          onSuccess={() => {
+            refetch()
+          }}
+        />
+
+        <EditSessionDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          session={selectedSessionForEdit}
+          onSuccess={() => {
+            refetch()
+          }}
+        />
 
       </div>
     </RoleGuard>
