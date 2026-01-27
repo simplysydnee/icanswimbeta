@@ -269,21 +269,7 @@ export default function ProgressUpdateModal({
           </div>
         </div>
 
-        {/* Tabs for Progress Update and Swimmer Info */}
-        <Tabs defaultValue="progress" className="w-full">
-          <TabsList className="grid w-full grid-cols-1 md:grid-cols-2">
-            <TabsTrigger value="progress" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Update Progress
-            </TabsTrigger>
-            <TabsTrigger value="assessment" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Swimmer Info
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Progress Update Tab */}
-          <TabsContent value="progress" className="space-y-6 mt-4">
+        <div className="space-y-6 mt-4">
             {/* Attendance & Mood */}
             <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
@@ -445,16 +431,7 @@ export default function ProgressUpdateModal({
                 </div>
               </RadioGroup>
             </div>
-          </TabsContent>
-
-          {/* Swimmer Info Tab */}
-          <TabsContent value="assessment" className="mt-4">
-            <SwimmerAssessmentInfo
-              swimmerData={swimmerAssessmentData}
-              assessmentData={assessmentData}
-            />
-          </TabsContent>
-        </Tabs>
+        </div>
 
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-4 border-t">

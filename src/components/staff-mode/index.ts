@@ -7,6 +7,7 @@ export { StaffModeProvider, useStaffMode } from './StaffModeContext';
 export { default as StaffInstructorSelect } from './StaffInstructorSelect';
 export { default as StaffScheduleView } from './StaffScheduleView';
 export { default as StaffSwimmerDetail } from './StaffSwimmerDetail';
+export { default as ThreeStateSwitch } from './ThreeStateSwitch';
 
 // Export tabs components
 export * from './tabs';

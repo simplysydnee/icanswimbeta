@@ -3,6 +3,8 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 interface NavLink {
   name: string;
@@ -16,6 +18,8 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ isOpen, onClose, navLinks }: MobileNavProps) {
+  const { user, loading, signOut } = useAuth();
+
   // Close menu when clicking Escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -99,21 +103,53 @@ export function MobileNav({ isOpen, onClose, navLinks }: MobileNavProps) {
             </div>
           </nav>
 
-          {/* Login Button */}
+          {/* Login/Logout Button */}
           <div className="border-t border-gray-200 p-4">
-            <Link
-              href="/login"
-              className="flex w-full items-center justify-center rounded-lg bg-cyan-600 px-4 py-3 text-base font-semibold text-white shadow-sm hover:bg-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 transition-colors"
-              onClick={onClose}
-            >
-              Login
-            </Link>
-            <p className="mt-4 text-center text-sm text-gray-600">
-              Need help? Call us at{' '}
-              <a href="tel:2097787877" className="font-medium text-cyan-600 hover:text-cyan-500">
-                (209) 778-7877
-              </a>
-            </p>
+            {loading ? (
+              <div className="flex items-center justify-center py-3">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-cyan-600" />
+              </div>
+            ) : user ? (
+              <div className="space-y-3">
+                <div className="text-center">
+                  <p className="text-sm text-gray-600">Logged in as</p>
+                  <p className="font-medium text-gray-900">{user.email}</p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    signOut();
+                    onClose();
+                  }}
+                >
+                  Sign Out
+                </Button>
+                <Link
+                  href="/dashboard"
+                  className="flex w-full items-center justify-center rounded-lg bg-cyan-600 px-4 py-3 text-base font-semibold text-white shadow-sm hover:bg-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 transition-colors"
+                  onClick={onClose}
+                >
+                  Go to Dashboard
+                </Link>
+              </div>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="flex w-full items-center justify-center rounded-lg bg-cyan-600 px-4 py-3 text-base font-semibold text-white shadow-sm hover:bg-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 transition-colors"
+                  onClick={onClose}
+                >
+                  Login
+                </Link>
+                <p className="mt-4 text-center text-sm text-gray-600">
+                  Need help? Call us at{' '}
+                  <a href="tel:2097787877" className="font-medium text-cyan-600 hover:text-cyan-500">
+                    (209) 778-7877
+                  </a>
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>

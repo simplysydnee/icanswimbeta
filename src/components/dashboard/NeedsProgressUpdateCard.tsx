@@ -7,10 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { AlertCircle, FileText, ChevronRight, User, Clock, CheckCircle } from 'lucide-react';
+import { AlertCircle, FileText, ChevronRight, User, Clock, CheckCircle, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
-import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
+import QuickProgressUpdateModal from '@/components/progress/QuickProgressUpdateModal';
+import CompactQuickActions from './CompactQuickActions';
 
 interface SwimmerNeedingUpdate {
   id: string;
@@ -183,15 +184,24 @@ export default function NeedsProgressUpdateCard({ className }: NeedsProgressUpda
                   </div>
                 </div>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-orange-600 border-orange-300 hover:bg-orange-100"
-                onClick={() => handleUpdateProgress(item)}
-              >
-                <FileText className="h-4 w-4 mr-1" />
-                Update
-              </Button>
+              <div className="flex flex-col items-end gap-2">
+                <CompactQuickActions
+                  bookingId={item.id}
+                  sessionId={item.session_id}
+                  swimmerId={item.swimmer.id}
+                  swimmerName={`${item.swimmer.first_name} ${item.swimmer.last_name}`}
+                  onSuccess={handleProgressSubmitted}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-orange-600 border-orange-300 hover:bg-orange-100"
+                  onClick={() => handleUpdateProgress(item)}
+                >
+                  <FileText className="h-4 w-4 mr-1" />
+                  Detailed Update
+                </Button>
+              </div>
             </div>
           ))}
           {swimmers.length > 5 && (
@@ -206,7 +216,7 @@ export default function NeedsProgressUpdateCard({ className }: NeedsProgressUpda
       </Card>
 
       {selectedSwimmer && (
-        <ProgressUpdateModal
+        <QuickProgressUpdateModal
           open={isModalOpen}
           onOpenChange={setIsModalOpen}
           bookingId={selectedSwimmer.id}

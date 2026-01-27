@@ -6,10 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Loader2, Target, CheckCircle, Clock, Circle, TrendingUp } from 'lucide-react'
-import UpdateTargetModal from '../modals/UpdateTargetModal'
+import { Loader2, Target, CheckCircle } from 'lucide-react'
 
 interface SwimmerTarget {
   id: string
@@ -114,14 +112,13 @@ async function updateTargetStatus(
     const now = new Date().toISOString()
     const updateData = {
       status,
-      updated_by: instructorId,
       updated_at: now,
       notes: notes || null,
       ...(status === 'mastered' ? { date_met: now } : { date_met: null })
     }
 
     // Check if target record exists
-    const { data: existing, error: checkError } = await supabase
+    const { error: checkError } = await supabase
       .from('swimmer_targets')
       .select('id')
       .eq('swimmer_id', swimmerId)
@@ -172,8 +169,6 @@ export default function TargetsTab({
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const [updatingTargetId, setUpdatingTargetId] = useState<string | null>(null)
-  const [showUpdateModal, setShowUpdateModal] = useState(false)
-  const [selectedTarget, setSelectedTarget] = useState<SwimmerTarget | null>(null)
 
   const { data: targets, isLoading, error } = useQuery({
     queryKey: ['swimmerTargets', swimmerId],
@@ -214,15 +209,6 @@ export default function TargetsTab({
     }
   })
 
-  const handleOpenUpdateModal = (target: SwimmerTarget) => {
-    setSelectedTarget(target)
-    setShowUpdateModal(true)
-  }
-
-  const handleQuickUpdate = (targetId: string, targetName: string, status: 'not_started' | 'in_progress' | 'mastered') => {
-    setUpdatingTargetId(targetId)
-    updateMutation.mutate({ targetId, targetName, status })
-  }
 
   // Calculate progress stats
   const masteredCount = targets?.filter(target => target.status === 'mastered').length || 0
@@ -268,240 +254,185 @@ export default function TargetsTab({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <Target className="h-8 w-8 text-blue-500" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900">🎯 I Can Swim Targets</h3>
-                <p className="text-gray-600">Standard skill progression checklist</p>
-              </div>
+    <div className="space-y-4 p-4">
+      {/* Header Stats */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Target className="w-5 h-5 text-blue-600" />
             </div>
-
-            <div className="flex items-center gap-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">{masteredCount}/{totalTargets}</div>
-                <p className="text-sm text-gray-600">Targets met</p>
-              </div>
-              <div className="relative h-20 w-20">
-                <svg className="h-20 w-20" viewBox="0 0 36 36">
-                  <path
-                    d="M18 2.0845
-                      a 15.9155 15.9155 0 0 1 0 31.831
-                      a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#e5e7eb"
-                    strokeWidth="3"
-                  />
-                  <path
-                    d="M18 2.0845
-                      a 15.9155 15.9155 0 0 1 0 31.831
-                      a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#3B82F6"
-                    strokeWidth="3"
-                    strokeDasharray={`${progressPercentage}, 100`}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold text-gray-900">{progressPercentage}%</span>
-                  <span className="text-xs text-gray-600">Progress</span>
-                </div>
-              </div>
+            <div>
+              <h2 className="font-semibold text-gray-900">I Can Swim Targets</h2>
+              <p className="text-xs text-gray-500">Standard skill progression checklist</p>
             </div>
           </div>
-
-          {/* Stats Row */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="flex items-center justify-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                <span className="text-2xl font-bold text-green-700">{masteredCount}</span>
-              </div>
-              <p className="text-sm text-green-600 mt-1">Met</p>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-blue-600">
+              {masteredCount}<span className="text-gray-400">/{totalTargets}</span>
             </div>
-
-            <div className="text-center p-4 bg-amber-50 rounded-lg border border-amber-200">
-              <div className="flex items-center justify-center gap-2">
-                <Clock className="h-5 w-5 text-amber-600" />
-                <span className="text-2xl font-bold text-amber-700">{inProgressCount}</span>
-              </div>
-              <p className="text-sm text-amber-600 mt-1">In Progress</p>
-            </div>
-
-            <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-center gap-2">
-                <Circle className="h-5 w-5 text-gray-500" />
-                <span className="text-2xl font-bold text-gray-700">{notStartedCount}</span>
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Not Started</p>
-            </div>
+            <div className="text-xs text-gray-500">Met</div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Targets List */}
-      <div className="space-y-4">
+        {/* Progress Bar */}
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+            <span>Progress</span>
+            <span>{progressPercentage}%</span>
+          </div>
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-blue-500 rounded-full transition-all duration-300"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="text-center p-2 bg-green-50 rounded-lg border border-green-200">
+            <div className="text-lg font-bold text-green-700">{masteredCount}</div>
+            <div className="text-xs text-green-600">Met</div>
+          </div>
+          <div className="text-center p-2 bg-amber-50 rounded-lg border border-amber-200">
+            <div className="text-lg font-bold text-amber-700">{inProgressCount}</div>
+            <div className="text-xs text-amber-600">In Progress</div>
+          </div>
+          <div className="text-center p-2 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="text-lg font-bold text-gray-700">{notStartedCount}</div>
+            <div className="text-xs text-gray-600">Not Started</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Helper Text */}
+      <div className="flex items-center gap-2 text-xs text-gray-500 bg-blue-50 p-2 rounded-lg">
+        <Target className="w-4 h-4 text-blue-500" />
+        <span>Tap status button to cycle: Not Started → In Progress → Met → Not Started</span>
+      </div>
+
+      {/* Compact Targets List - iPad-friendly touch targets */}
+      <div className="space-y-1">
         {targets?.map((target, index) => {
           const isUpdating = updatingTargetId === target.id
 
+          // Determine next status for cycling
+          const getNextStatus = (currentStatus: 'not_started' | 'in_progress' | 'mastered') => {
+            if (currentStatus === 'not_started') return 'in_progress'
+            if (currentStatus === 'in_progress') return 'mastered'
+            return 'not_started' // mastered -> not_started
+          }
+
+          const handleTap = () => {
+            if (isUpdating) return
+            const nextStatus = getNextStatus(target.status)
+            setUpdatingTargetId(target.id)
+            updateMutation.mutate({
+              targetId: target.id,
+              targetName: target.target_name,
+              status: nextStatus
+            })
+          }
+
+          // Status colors and icons
+          const statusConfig = {
+            not_started: {
+              bg: 'bg-gray-100',
+              border: 'border-gray-300',
+              text: 'text-gray-700',
+              buttonBg: 'bg-gray-200',
+              buttonText: 'text-gray-700',
+              buttonHover: 'hover:bg-gray-300',
+              label: 'Not Started'
+            },
+            in_progress: {
+              bg: 'bg-amber-50',
+              border: 'border-amber-300',
+              text: 'text-amber-800',
+              buttonBg: 'bg-amber-500',
+              buttonText: 'text-white',
+              buttonHover: 'hover:bg-amber-600',
+              label: 'In Progress'
+            },
+            mastered: {
+              bg: 'bg-green-50',
+              border: 'border-green-300',
+              text: 'text-green-800',
+              buttonBg: 'bg-green-500',
+              buttonText: 'text-white',
+              buttonHover: 'hover:bg-green-600',
+              label: 'Met'
+            }
+          }
+
+          const config = statusConfig[target.status]
+
           return (
-            <Card key={target.id}>
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4 flex-1 min-w-0">
-                    {/* Target Number */}
-                    <div className="shrink-0">
-                      <div className="h-10 w-10 rounded-full bg-blue-50 border-2 border-blue-200 flex items-center justify-center">
-                        <span className="font-bold text-blue-600">{index + 1}</span>
-                      </div>
-                    </div>
-
-                    {/* Target Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        {/* Status Icon */}
-                        <div className="shrink-0">
-                          {target.status === 'mastered' && (
-                            <CheckCircle className="h-6 w-6 text-green-500" />
-                          )}
-                          {target.status === 'in_progress' && (
-                            <Clock className="h-6 w-6 text-amber-500" />
-                          )}
-                          {target.status === 'not_started' && (
-                            <Circle className="h-6 w-6 text-gray-300" />
-                          )}
-                        </div>
-
-                        <h4 className="text-lg font-semibold text-gray-900 truncate">
-                          {target.target_name}
-                        </h4>
-                      </div>
-
-                      {/* Target Details */}
-                      <div className="space-y-2">
-                        {target.date_met && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>Met on {format(new Date(target.date_met), 'MMM d, yyyy')}</span>
-                          </div>
-                        )}
-
-                        {target.notes && (
-                          <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                            <p className="font-medium mb-1">Notes:</p>
-                            <p className="line-clamp-2">{target.notes}</p>
-                          </div>
-                        )}
-
-                        {target.updated_by && (
-                          <p className="text-xs text-gray-500">
-                            Last updated by instructor
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="shrink-0 flex flex-col gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleOpenUpdateModal(target)}
-                      disabled={isUpdating}
-                      className="min-w-[100px]"
-                    >
-                      {isUpdating ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        'Update'
-                      )}
-                    </Button>
-
-                    {/* Quick Action Buttons */}
-                    <div className="flex gap-1">
-                      {target.status !== 'mastered' && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
-                          onClick={() => handleQuickUpdate(target.id, target.target_name, 'mastered')}
-                          disabled={isUpdating}
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {target.status !== 'in_progress' && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 px-2 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
-                          onClick={() => handleQuickUpdate(target.id, target.target_name, 'in_progress')}
-                          disabled={isUpdating}
-                        >
-                          <Clock className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {target.status !== 'not_started' && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 px-2 text-gray-600 hover:text-gray-700 hover:bg-gray-50"
-                          onClick={() => handleQuickUpdate(target.id, target.target_name, 'not_started')}
-                          disabled={isUpdating}
-                        >
-                          <Circle className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
+            <div
+              key={target.id}
+              className={`flex items-center justify-between min-h-[48px] px-4 py-3 rounded-lg border ${config.bg} ${config.border} ${config.text}`}
+            >
+              {/* Target Name on Left */}
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                {/* Target Number */}
+                <div className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center shrink-0">
+                  <span className="font-bold text-gray-700 text-sm">{index + 1}</span>
                 </div>
-              </CardContent>
-            </Card>
+
+                {/* Target Name */}
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{target.target_name}</div>
+                  {target.date_met && (
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      Met {format(new Date(target.date_met), 'MMM d')}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Status Button on Right */}
+              <button
+                onClick={handleTap}
+                disabled={isUpdating}
+                className={`flex items-center justify-center min-w-[100px] h-10 px-4 rounded-lg font-medium transition-colors ${config.buttonBg} ${config.buttonText} ${config.buttonHover} disabled:opacity-50 disabled:cursor-not-allowed`}
+                aria-label={`Change status from ${config.label}`}
+              >
+                {isUpdating ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  config.label
+                )}
+              </button>
+            </div>
           )
         })}
       </div>
 
       {/* Empty State */}
       {(!targets || targets.length === 0) && (
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center">
-              <Target className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-700">No targets found</h3>
-              <p className="text-gray-500 mt-2">
-                Targets data is not available for this swimmer. Please contact an administrator.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="text-center py-8">
+          <Target className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+          <h3 className="text-lg font-semibold text-gray-700">No targets found</h3>
+          <p className="text-gray-500 text-sm mt-1">
+            Targets data is not available for this swimmer.
+          </p>
+        </div>
       )}
 
-      {/* Update Target Modal */}
-      {selectedTarget && (
-        <UpdateTargetModal
-          open={showUpdateModal}
-          onOpenChange={setShowUpdateModal}
-          target={selectedTarget}
-          swimmerId={swimmerId}
-          instructorId={instructorId}
-          onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['swimmerTargets', swimmerId] })
-            queryClient.invalidateQueries({ queryKey: ['swimmerDetail', swimmerId] })
-          }}
-        />
-      )}
 
-      {/* Footer Note */}
-      <div className="text-center text-gray-500 text-sm">
-        <p>I Can Swim Targets are standard skill progression milestones. Update status as swimmer progresses.</p>
-        <p className="mt-1">Targets marked as "Met" will automatically record the date and instructor ID.</p>
+      {/* Bottom Tips */}
+      <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+        <h4 className="font-medium text-blue-800 text-sm flex items-center gap-2">
+          <CheckCircle className="w-4 h-4" />
+          How to use targets
+        </h4>
+        <ul className="mt-2 text-xs text-blue-700 space-y-1">
+          <li>• Tap status button to cycle through statuses</li>
+          <li>• "Met" targets automatically record date and instructor</li>
+          <li>• All 10 targets fit on iPad screen without scrolling</li>
+          <li>• Large touch targets (48px min height) for poolside use</li>
+        </ul>
       </div>
     </div>
   )

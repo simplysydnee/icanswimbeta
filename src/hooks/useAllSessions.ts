@@ -48,8 +48,15 @@ interface AllSessionsResponse {
   };
 }
 
-async function fetchAllSessions(): Promise<AllSessionsResponse> {
-  const response = await fetch('/api/admin/sessions/all');
+async function fetchAllSessions(month?: number, year?: number): Promise<AllSessionsResponse> {
+  const url = new URL('/api/admin/sessions/all', window.location.origin);
+
+  if (month !== undefined && year !== undefined) {
+    url.searchParams.set('month', month.toString());
+    url.searchParams.set('year', year.toString());
+  }
+
+  const response = await fetch(url.toString());
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Failed to fetch sessions' }));
@@ -59,10 +66,10 @@ async function fetchAllSessions(): Promise<AllSessionsResponse> {
   return response.json();
 }
 
-export function useAllSessions() {
+export function useAllSessions(month?: number, year?: number) {
   return useQuery<AllSessionsResponse, Error>({
-    queryKey: ['all-sessions'],
-    queryFn: fetchAllSessions,
+    queryKey: ['all-sessions', month, year],
+    queryFn: () => fetchAllSessions(month, year),
     staleTime: 30 * 1000, // 30 seconds
   });
 }

@@ -87,28 +87,6 @@ export function SkillChecklist({
       }
 
       const data: SkillsResponse = await response.json();
-      console.log('=== SKILLS API RESPONSE ===');
-      console.log('Skills API response:', data);
-      console.log('Skills array length:', data.skills?.length);
-      console.log('Skills array:', data.skills);
-      console.log('Current level:', data.currentLevel);
-      console.log('Total skills:', data.totalSkills);
-      console.log('Mastered skills:', data.masteredSkills);
-      console.log('In progress skills:', data.inProgressSkills);
-
-      // Debug each skill
-      if (data.skills) {
-        data.skills.forEach((skill, i) => {
-          console.log(`Skill ${i + 1}:`, {
-            id: skill.id,
-            name: skill.name,
-            level: skill.level,
-            levelId: skill.level?.id,
-            levelName: skill.level?.name,
-            status: skill.status
-          });
-        });
-      }
 
       setSkills(data.skills || []);
 
@@ -182,7 +160,6 @@ export function SkillChecklist({
       }
       grouped[levelId].push(skill);
     });
-    console.log('Skills grouped by level:', grouped);
     return grouped;
   }, [skills]);
 
@@ -199,18 +176,9 @@ export function SkillChecklist({
       })
       .filter((level): level is SwimLevel => level !== undefined && level !== null)
       .sort((a, b) => a.sequence - b.sequence);
-    console.log('Levels to render:', levels);
     return levels;
   }, [skillsByLevel]);
 
-  // Debug state changes
-  useEffect(() => {
-    console.log('=== SKILLS STATE UPDATED ===');
-    console.log('Skills count:', skills.length);
-    console.log('Skills:', skills);
-    console.log('SkillsByLevel:', skillsByLevel);
-    console.log('Levels:', levels);
-  }, [skills, skillsByLevel, levels]);
 
   // Handle skill status change
   const handleStatusChange = async (skillId: string, newStatus: 'in_progress' | 'mastered') => {
@@ -377,7 +345,6 @@ export function SkillChecklist({
 
   // Empty state
   if (skills.length === 0) {
-    console.log('No skills found, showing empty state');
     return (
       <Card>
         <CardContent className="py-8 text-center">
@@ -390,7 +357,6 @@ export function SkillChecklist({
     );
   }
 
-  console.log('Rendering SkillChecklist with', skills.length, 'skills');
   return (
     <Card>
       <CardHeader>

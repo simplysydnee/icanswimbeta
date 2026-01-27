@@ -5,15 +5,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
-import { Loader2, Brain, Zap, ChevronDown, ChevronRight, Info, CheckCircle, Sparkles } from 'lucide-react'
+import { Loader2, Brain, ChevronDown, ChevronRight, Info, CheckCircle } from 'lucide-react'
 
 interface SwimmerStrategy {
   id: string
-  strategy: string
+  strategy_name: string
   is_used: boolean
   notes: string | null
   updated_by: string | null
@@ -82,7 +78,7 @@ async function fetchSwimmerStrategies(swimmerId: string): Promise<SwimmerStrateg
       .from('swimmer_strategies')
       .select('*')
       .eq('swimmer_id', swimmerId)
-      .order('created_at')
+      .order('created_at') as { data: SwimmerStrategy[] | null, error: any }
 
     if (strategiesError) {
       console.error('Error fetching swimmer strategies:', strategiesError)
@@ -91,7 +87,7 @@ async function fetchSwimmerStrategies(swimmerId: string): Promise<SwimmerStrateg
 
     // Create a map of existing strategies by name for quick lookup
     const existingStrategiesMap = new Map(
-      existingStrategies?.map(strategy => [strategy.strategy, strategy]) || []
+      existingStrategies?.map(strategy => [strategy.strategy_name, strategy]) || []
     )
 
     // Ensure all standard strategies exist
@@ -104,7 +100,7 @@ async function fetchSwimmerStrategies(swimmerId: string): Promise<SwimmerStrateg
         // Use existing strategy
         allStrategies.push({
           id: existingStrategy.id,
-          strategy: existingStrategy.strategy,
+          strategy_name: existingStrategy.strategy_name,
           is_used: existingStrategy.is_used,
           notes: existingStrategy.notes,
           updated_by: existingStrategy.updated_by,
@@ -114,7 +110,7 @@ async function fetchSwimmerStrategies(swimmerId: string): Promise<SwimmerStrateg
         // Create a placeholder for missing strategy (will be created on first toggle)
         allStrategies.push({
           id: `placeholder-${standardStrategy.name.toLowerCase().replace(/\s+/g, '-')}`,
-          strategy: standardStrategy.name,
+          strategy_name: standardStrategy.name,
           is_used: false,
           notes: null,
           updated_by: null,
@@ -148,41 +144,51 @@ async function toggleStrategy(
       updated_at: now
     }
 
-    // Check if strategy record exists
-    const { data: existing, error: checkError } = await supabase
-      .from('swimmer_strategies')
-      .select('id')
-      .eq('swimmer_id', swimmerId)
-      .eq('id', strategyId)
-      .single()
-
     let result
 
-    if (checkError || strategyId.startsWith('placeholder-')) {
-      // Record doesn't exist or is a placeholder, insert new
+    // First, check if a strategy record exists for this swimmer and strategy name
+    // We need to check by strategy name, not by ID (since placeholder IDs don't exist in DB)
+    const { data: existingStrategies, error: checkError } = await supabase
+      .from('swimmer_strategies')
+      .select('id, strategy_name')
+      .eq('swimmer_id', swimmerId)
+      .eq('strategy_name', strategyName)
+
+    if (checkError) {
+      console.error('Error checking for existing strategy:', checkError)
+      throw new Error(`Failed to check for existing strategy: ${checkError.message}`)
+    }
+
+    const existingStrategy = existingStrategies?.[0]
+
+    if (existingStrategy) {
+      // Strategy exists, update it
+      console.log('Updating existing strategy:', { id: existingStrategy.id, strategyName, isUsed })
+      result = await supabase
+        .from('swimmer_strategies')
+        .update(updateData)
+        .eq('id', existingStrategy.id)
+        .select()
+        .single()
+    } else {
+      // Strategy doesn't exist, insert new
+      console.log('Inserting new strategy:', { swimmerId, strategyName, isUsed })
       result = await supabase
         .from('swimmer_strategies')
         .insert({
           swimmer_id: swimmerId,
-          strategy: strategyName,
+          strategy_name: strategyName,
           ...updateData,
           created_at: now
         })
-        .select()
-        .single()
-    } else {
-      // Record exists, update
-      result = await supabase
-        .from('swimmer_strategies')
-        .update(updateData)
-        .eq('id', strategyId)
         .select()
         .single()
     }
 
     if (result.error) {
       console.error('Error toggling strategy:', result.error)
-      throw new Error('Failed to update strategy')
+      console.error('Full error details:', JSON.stringify(result.error, null, 2))
+      throw new Error(`Failed to update strategy: ${result.error.message}`)
     }
 
     return result.data
@@ -224,7 +230,7 @@ export default function StrategiesTab({
       queryClient.invalidateQueries({ queryKey: ['swimmerDetail', swimmerId] })
       toast({
         title: updatedStrategy.is_used ? 'Strategy activated' : 'Strategy deactivated',
-        description: `${updatedStrategy.strategy} has been ${updatedStrategy.is_used ? 'added to' : 'removed from'} active strategies.`,
+        description: `${updatedStrategy.strategy_name} has been ${updatedStrategy.is_used ? 'added to' : 'removed from'} active strategies.`,
       })
     },
     onError: (error) => {
@@ -239,14 +245,6 @@ export default function StrategiesTab({
     }
   })
 
-  const handleToggleStrategy = (strategyId: string, strategyName: string, currentIsUsed: boolean) => {
-    setTogglingStrategyId(strategyId)
-    toggleMutation.mutate({
-      strategyId,
-      strategyName,
-      isUsed: !currentIsUsed
-    })
-  }
 
   // Calculate stats
   const activeCount = strategies?.filter(strategy => strategy.is_used).length || 0
@@ -268,314 +266,202 @@ export default function StrategiesTab({
 
   if (error) {
     return (
-      <Card className="border-red-200 bg-red-50">
-        <CardContent className="pt-6">
+      <div className="space-y-4 p-4">
+        <div className="bg-red-50 rounded-xl p-4 border border-red-200">
           <div className="text-center">
             <p className="text-red-600 font-medium">Error loading strategies</p>
             <p className="text-red-500 text-sm mt-2">
               {error instanceof Error ? error.message : 'Failed to fetch strategies'}
             </p>
-            <Button
-              variant="outline"
-              className="mt-4"
+            <button
               onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-lg border border-red-300 hover:bg-red-200"
             >
               Try Again
-            </Button>
+            </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-50 rounded-lg">
-                <Brain className="h-8 w-8 text-purple-600" />
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900">⚡ Strategies Used</h3>
-                <p className="text-gray-600">Behavioral supports that help this swimmer</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600">{activeCount}/{totalStrategies}</div>
-                <p className="text-sm text-gray-600">Strategies active</p>
-              </div>
-              <div className="relative h-20 w-20">
-                <svg className="h-20 w-20" viewBox="0 0 36 36">
-                  <path
-                    d="M18 2.0845
-                      a 15.9155 15.9155 0 0 1 0 31.831
-                      a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#e5e7eb"
-                    strokeWidth="3"
-                  />
-                  <path
-                    d="M18 2.0845
-                      a 15.9155 15.9155 0 0 1 0 31.831
-                      a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#7C3AED"
-                    strokeWidth="3"
-                    strokeDasharray={`${Math.round((activeCount / totalStrategies) * 100)}, 100`}
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-bold text-gray-900">
-                    {Math.round((activeCount / totalStrategies) * 100)}%
-                  </span>
-                  <span className="text-xs text-gray-600">Active</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="mt-6">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-purple-500"></div>
-                <span className="text-sm text-gray-700">{activeCount} active</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-gray-300"></div>
-                <span className="text-sm text-gray-700">{totalStrategies - activeCount} available</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Strategy Descriptions Reference */}
-      <Card>
-        <CardContent className="pt-6">
-          <div
-            className="flex items-center justify-between cursor-pointer p-3 -mx-3 rounded-lg hover:bg-gray-50"
-            onClick={() => setShowDescriptions(!showDescriptions)}
-          >
-            <div className="flex items-center gap-3">
-              {showDescriptions ? (
-                <ChevronDown className="h-5 w-5 text-purple-600" />
-              ) : (
-                <ChevronRight className="h-5 w-5 text-purple-600" />
-              )}
-              <div className="flex items-center gap-2">
-                <Info className="h-5 w-5 text-purple-600" />
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Strategy Descriptions Reference
-                </h3>
-              </div>
-            </div>
-            <Badge variant="outline" className="text-purple-600 border-purple-300">
-              {STANDARD_STRATEGIES.length} strategies
-            </Badge>
-          </div>
-
-          {showDescriptions && (
-            <div className="mt-4 space-y-3">
-              {STANDARD_STRATEGIES.map((strategy, index) => (
-                <div
-                  key={strategy.name}
-                  className="p-4 rounded-lg border border-gray-200 bg-gray-50"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="shrink-0">
-                      <div className="h-8 w-8 rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center">
-                        <span className="text-sm font-bold text-purple-700">{index + 1}</span>
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{strategy.name}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{strategy.description}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Strategies Checklist */}
-      <div className="space-y-4">
+    <div className="space-y-4 p-4">
+      {/* Header Stats */}
+      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-100">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900">Active Strategies Checklist</h3>
-          <p className="text-sm text-gray-600">
-            Tap to toggle strategies used with this swimmer
-          </p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+              <Brain className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-900">Behavioral Strategies</h2>
+              <p className="text-xs text-gray-500">Supports that help this swimmer</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-purple-600">
+              {activeCount}<span className="text-gray-400">/{totalStrategies}</span>
+            </div>
+            <div className="text-xs text-gray-500">Active</div>
+          </div>
         </div>
 
-        {strategies?.map((strategy, index) => {
+        {/* Progress Bar */}
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+            <span>Active Strategies</span>
+            <span>{Math.round((activeCount / totalStrategies) * 100)}%</span>
+          </div>
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-purple-500 rounded-full transition-all duration-300"
+              style={{ width: `${Math.round((activeCount / totalStrategies) * 100)}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <div className="text-center p-2 bg-purple-50 rounded-lg border border-purple-200">
+            <div className="text-lg font-bold text-purple-700">{activeCount}</div>
+            <div className="text-xs text-purple-600">Active</div>
+          </div>
+          <div className="text-center p-2 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="text-lg font-bold text-gray-700">{totalStrategies - activeCount}</div>
+            <div className="text-xs text-gray-600">Available</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Helper Text */}
+      <div className="flex items-center gap-2 text-xs text-gray-500 bg-purple-50 p-2 rounded-lg">
+        <Brain className="w-4 h-4 text-purple-500" />
+        <span>Tap any strategy to toggle on/off. Green = active, Gray = available</span>
+      </div>
+
+      {/* 2-Column Checkbox Grid - iPad-friendly touch targets */}
+      <div className="grid grid-cols-2 gap-2">
+        {strategies?.map((strategy) => {
           const isToggling = togglingStrategyId === strategy.id
-          const strategyDescription = STANDARD_STRATEGIES.find(s => s.name === strategy.strategy)?.description
+          const strategyDescription = STANDARD_STRATEGIES.find(s => s.name === strategy.strategy_name)?.description
+
+          const handleTap = () => {
+            if (isToggling) return
+            setTogglingStrategyId(strategy.id)
+            toggleMutation.mutate({
+              strategyId: strategy.id,
+              strategyName: strategy.strategy_name,
+              isUsed: !strategy.is_used
+            })
+          }
 
           return (
-            <Card
+            <button
               key={strategy.id}
-              className={`transition-all duration-200 ${
+              onClick={handleTap}
+              disabled={isToggling}
+              className={`min-h-[44px] p-3 rounded-lg border text-left transition-all active:scale-[0.98] disabled:opacity-50 ${
                 strategy.is_used
-                  ? 'border-purple-300 bg-purple-50 hover:bg-purple-100'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'bg-green-50 border-green-300 text-green-800'
+                  : 'bg-gray-50 border-gray-300 text-gray-700'
               }`}
+              aria-label={`${strategy.is_used ? 'Deactivate' : 'Activate'} ${strategy.strategy_name}`}
             >
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4 flex-1 min-w-0">
-                    {/* Large Checkbox */}
-                    <div className="shrink-0">
-                      <div className="relative">
-                        <Checkbox
-                          id={`strategy-${strategy.id}`}
-                          checked={strategy.is_used}
-                          onCheckedChange={() => handleToggleStrategy(strategy.id, strategy.strategy, strategy.is_used)}
-                          disabled={isToggling}
-                          className="h-8 w-8 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
-                        />
-                        {isToggling && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <Loader2 className="h-4 w-4 animate-spin text-purple-600" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Strategy Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Label
-                          htmlFor={`strategy-${strategy.id}`}
-                          className="text-lg font-semibold text-gray-900 cursor-pointer truncate"
-                        >
-                          {strategy.strategy}
-                        </Label>
-                        {strategy.is_used && (
-                          <Badge className="bg-purple-600 hover:bg-purple-700">
-                            <Sparkles className="h-3 w-3 mr-1" />
-                            Used
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Strategy Description */}
-                      {strategyDescription && (
-                        <p className="text-sm text-gray-600 mb-3">
-                          {strategyDescription}
-                        </p>
-                      )}
-
-                      {/* Notes */}
-                      {strategy.notes && (
-                        <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200">
-                          <p className="text-sm font-medium text-gray-700 mb-1">Notes:</p>
-                          <p className="text-sm text-gray-600">{strategy.notes}</p>
-                        </div>
-                      )}
-
-                      {/* Last Updated */}
-                      {strategy.updated_by && (
-                        <p className="text-xs text-gray-500 mt-2">
-                          Last updated by instructor
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Strategy Number */}
-                  <div className="shrink-0">
-                    <div className="h-10 w-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center">
-                      <span className="font-bold text-gray-700">{index + 1}</span>
-                    </div>
+              <div className="flex items-start gap-2">
+                {/* Checkbox */}
+                <div className="shrink-0 mt-0.5">
+                  <div className={`w-5 h-5 rounded border flex items-center justify-center ${
+                    strategy.is_used
+                      ? 'bg-green-500 border-green-600'
+                      : 'bg-white border-gray-400'
+                  }`}>
+                    {strategy.is_used && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                    {isToggling && (
+                      <Loader2 className="w-3 h-3 animate-spin text-purple-600" />
+                    )}
                   </div>
                 </div>
 
-                {/* Quick Actions */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-purple-600" />
-                      <span className="text-sm text-gray-600">
-                        {strategy.is_used ? 'Active strategy' : 'Not currently used'}
-                      </span>
+                {/* Strategy Name */}
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm truncate">{strategy.strategy_name}</div>
+                  {strategyDescription && (
+                    <div className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                      {strategyDescription}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleToggleStrategy(strategy.id, strategy.strategy, strategy.is_used)}
-                      disabled={isToggling}
-                      className={strategy.is_used ? 'text-purple-600 hover:text-purple-700 hover:bg-purple-50' : ''}
-                    >
-                      {isToggling ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : strategy.is_used ? (
-                        'Deactivate'
-                      ) : (
-                        'Activate'
-                      )}
-                    </Button>
-                  </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </button>
           )
         })}
       </div>
 
       {/* Empty State */}
       {(!strategies || strategies.length === 0) && (
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center">
-              <Brain className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-700">No strategies found</h3>
-              <p className="text-gray-500 mt-2">
-                Strategies data is not available for this swimmer. Please contact an administrator.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="text-center py-8">
+          <Brain className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+          <h3 className="text-lg font-semibold text-gray-700">No strategies found</h3>
+          <p className="text-gray-500 text-sm mt-1">
+            Strategies data is not available for this swimmer.
+          </p>
+        </div>
       )}
 
-      {/* Usage Tips */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-3 mb-4">
-            <CheckCircle className="h-5 w-5 text-green-600" />
-            <h4 className="font-semibold text-gray-900">How to use strategies effectively</h4>
+      {/* Strategy Descriptions Reference */}
+      <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
+        <div
+          className="flex items-center justify-between cursor-pointer"
+          onClick={() => setShowDescriptions(!showDescriptions)}
+        >
+          <div className="flex items-center gap-2">
+            <Info className="h-4 w-4 text-purple-600" />
+            <h4 className="font-medium text-purple-800 text-sm">Strategy Descriptions</h4>
           </div>
-          <ul className="space-y-2 text-sm text-gray-600">
-            <li className="flex items-start gap-2">
-              <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-1.5"></div>
-              <span>Activate strategies that are currently helping this swimmer</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-1.5"></div>
-              <span>Strategies can be toggled on/off as swimmer's needs change</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-1.5"></div>
-              <span>Use the reference section above to understand each strategy</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <div className="h-1.5 w-1.5 rounded-full bg-purple-500 mt-1.5"></div>
-              <span>All updates are tracked with timestamp and instructor ID</span>
-            </li>
-          </ul>
-        </CardContent>
-      </Card>
+          {showDescriptions ? (
+            <ChevronDown className="h-4 w-4 text-purple-600" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-purple-600" />
+          )}
+        </div>
 
-      {/* Footer Note */}
-      <div className="text-center text-gray-500 text-sm">
-        <p>Behavioral strategies help support swimmers with different needs. Toggle strategies as swimmer's needs evolve.</p>
-        <p className="mt-1">Active strategies are visible to all instructors working with this swimmer.</p>
+        {showDescriptions && (
+          <div className="mt-3 space-y-2">
+            {STANDARD_STRATEGIES.map((strategy, index) => (
+              <div key={strategy.name} className="p-3 rounded-lg bg-white border border-purple-200">
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center shrink-0">
+                    <span className="text-xs font-bold text-purple-700">{index + 1}</span>
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900 text-sm">{strategy.name}</div>
+                    <div className="text-xs text-gray-600 mt-0.5">{strategy.description}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Tips */}
+      <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
+        <h4 className="font-medium text-purple-800 text-sm flex items-center gap-2">
+          <CheckCircle className="w-4 h-4" />
+          How to use strategies
+        </h4>
+        <ul className="mt-2 text-xs text-purple-700 space-y-1">
+          <li>• Tap any strategy to toggle on/off</li>
+          <li>• Green = active strategy being used</li>
+          <li>• Gray = available strategy</li>
+          <li>• 2-column grid fits all 11 strategies on iPad screen</li>
+          <li>• Large touch targets (44px min height) for poolside use</li>
+        </ul>
       </div>
     </div>
   )

@@ -50,9 +50,12 @@ interface AllSessionsResponse {
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const supabase = await createClient();
+    const { searchParams } = new URL(request.url);
+    const month = searchParams.get('month');
+    const year = searchParams.get('year');
 
     // ========== STEP 1: Authentication ==========
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -80,53 +83,58 @@ export async function GET() {
       );
     }
 
-    // ========== STEP 3: Fetch Statistics ==========
-    // First, get accurate counts using aggregation query
-    const { count: totalCount, error: countError } = await supabase
-      .from('sessions')
-      .select('*', { count: 'exact', head: true });
+    // ========== STEP 3: Parse Month/Year Parameters ==========
+    let monthNum: number | null = null;
+    let yearNum: number | null = null;
 
-    if (countError) {
-      console.error('Error fetching total session count:', countError);
-      return NextResponse.json(
-        { error: `Failed to fetch session count: ${countError.message}` },
-        { status: 500 }
-      );
+    if (month && year) {
+      monthNum = parseInt(month);
+      yearNum = parseInt(year);
     }
 
-    // Get counts by status using separate queries
-    const { count: draftCount } = await supabase
-      .from('sessions')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', SESSION_STATUS.DRAFT);
+    // ========== STEP 4: Fetch Statistics ==========
+    // Helper function to get count with optional date filter
+    const getCountByStatus = async (status: string | null = null) => {
+      let query = supabase
+        .from('sessions')
+        .select('*', { count: 'exact', head: true });
 
-    const { count: availableCount } = await supabase
-      .from('sessions')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', SESSION_STATUS.AVAILABLE);
+      // Apply date filter if provided
+      if (monthNum !== null && yearNum !== null) {
+        const startDate = new Date(yearNum, monthNum - 1, 1).toISOString();
+        const endDate = new Date(yearNum, monthNum, 1).toISOString();
 
-    const { count: bookedCount } = await supabase
-      .from('sessions')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', SESSION_STATUS.BOOKED);
+        query = query
+          .gte('start_time', startDate)
+          .lt('start_time', endDate);
+      }
 
-    const { count: completedCount } = await supabase
-      .from('sessions')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', SESSION_STATUS.COMPLETED);
+      // Apply status filter if provided
+      if (status) {
+        query = query.eq('status', status);
+      }
 
-    const { count: cancelledCount } = await supabase
-      .from('sessions')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', SESSION_STATUS.CANCELLED);
+      const { count, error } = await query;
 
-    const { count: noShowCount } = await supabase
-      .from('sessions')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'no_show');
+      if (error) {
+        console.error(`Error fetching count for status ${status}:`, error);
+        return 0;
+      }
 
-    // ========== STEP 4: Fetch All Sessions ==========
-    const { data: sessions, error: sessionsError } = await supabase
+      return count || 0;
+    };
+
+    // Get all counts
+    const totalCount = await getCountByStatus();
+    const draftCount = await getCountByStatus(SESSION_STATUS.DRAFT);
+    const availableCount = await getCountByStatus(SESSION_STATUS.AVAILABLE);
+    const bookedCount = await getCountByStatus(SESSION_STATUS.BOOKED);
+    const completedCount = await getCountByStatus(SESSION_STATUS.COMPLETED);
+    const cancelledCount = await getCountByStatus(SESSION_STATUS.CANCELLED);
+    const noShowCount = await getCountByStatus('no_show');
+
+    // ========== STEP 5: Fetch Sessions ==========
+    let sessionsQuery = supabase
       .from('sessions')
       .select(`
         *,
@@ -139,6 +147,18 @@ export async function GET() {
       `)
       .order('start_time', { ascending: false });
 
+    // Apply date filter if provided
+    if (monthNum !== null && yearNum !== null) {
+      const startDate = new Date(yearNum, monthNum - 1, 1).toISOString();
+      const endDate = new Date(yearNum, monthNum, 1).toISOString();
+
+      sessionsQuery = sessionsQuery
+        .gte('start_time', startDate)
+        .lt('start_time', endDate);
+    }
+
+    const { data: sessions, error: sessionsError } = await sessionsQuery;
+
     if (sessionsError) {
       console.error('Error fetching sessions:', sessionsError);
       return NextResponse.json(
@@ -147,7 +167,7 @@ export async function GET() {
       );
     }
 
-    // ========== STEP 4: Get Instructor Information ==========
+    // ========== STEP 6: Get Instructor Information ==========
     // Get unique instructor IDs from sessions
     const instructorIds = Array.from(new Set(sessions.map(s => s.instructor_id).filter(Boolean)));
 
@@ -172,7 +192,7 @@ export async function GET() {
       }
     }
 
-    // ========== STEP 5: Process Sessions ==========
+    // ========== STEP 7: Process Sessions ==========
     const processedSessions: SessionWithBookings[] = sessions.map(session => {
       const instructor = instructorsMap.get(session.instructor_id) || {
         id: session.instructor_id,
@@ -191,7 +211,7 @@ export async function GET() {
       };
     });
 
-    // ========== STEP 6: Calculate Statistics ==========
+    // ========== STEP 8: Calculate Statistics ==========
     const stats = {
       total: totalCount || 0,
       draft: draftCount || 0,
@@ -202,13 +222,13 @@ export async function GET() {
       no_shows: noShowCount || 0,
     };
 
-    // ========== STEP 7: Return Response ==========
+    // ========== STEP 9: Return Response ==========
     const response: AllSessionsResponse = {
       sessions: processedSessions,
       stats
     };
 
-    console.log(`✅ Fetched ${processedSessions.length} sessions with statistics`);
+    console.log(`✅ Fetched ${processedSessions.length} sessions with statistics${monthNum !== null && yearNum !== null ? ` for ${monthNum}/${yearNum}` : ''}`);
 
     return NextResponse.json(response);
 

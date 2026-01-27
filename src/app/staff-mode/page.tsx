@@ -1,12 +1,12 @@
 'use client'
 
 import { StaffModeProvider } from '@/components/staff-mode/StaffModeContext'
-import { StaffInstructorSelect } from '@/components/staff-mode'
+import StaffInstructorSelectFiltered from '@/components/staff-mode/StaffInstructorSelectFiltered'
 
 export default function StaffModePage() {
   return (
     <StaffModeProvider>
-      <StaffInstructorSelect />
+      <StaffInstructorSelectFiltered />
     </StaffModeProvider>
   )
 }

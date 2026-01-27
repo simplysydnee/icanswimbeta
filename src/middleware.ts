@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Protected routes
-  const protectedRoutes = ['/dashboard', '/settings', '/profile', '/parent', '/admin', '/instructor', '/coordinator']
+  const protectedRoutes = ['/dashboard', '/settings', '/profile', '/parent', '/admin', '/instructor', '/coordinator', '/staff-mode']
   const isProtectedRoute = protectedRoutes.some(route =>
     pathname.startsWith(route)
   )
@@ -73,6 +73,7 @@ export async function middleware(request: NextRequest) {
                 !pathname.startsWith('/admin') &&
                 !pathname.startsWith('/instructor') &&
                 !pathname.startsWith('/coordinator') &&
+                !pathname.startsWith('/staff-mode') &&
                 pathname !== '/dashboard')) {
     return response
   }
@@ -85,6 +86,7 @@ export async function middleware(request: NextRequest) {
                pathname.startsWith('/admin') ||
                pathname.startsWith('/instructor') ||
                pathname.startsWith('/coordinator') ||
+               pathname.startsWith('/staff-mode') ||
                pathname === '/dashboard')) {
 
     if (process.env.NODE_ENV === 'development') {
@@ -147,6 +149,17 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Check role-based access for staff mode routes
+  if (pathname.startsWith('/staff-mode')) {
+    const hasStaffModeRole = userRoles.includes('instructor') || userRoles.includes('admin')
+    if (!hasStaffModeRole) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Middleware: user does not have instructor or admin role, redirecting to unauthorized')
+      }
+      return NextResponse.redirect(new URL('/unauthorized', request.url))
+    }
+  }
+
   // Check role-based access for dashboard route
   if (pathname === '/dashboard') {
     const hasValidRole = userRoles.some(role =>
@@ -175,6 +188,7 @@ export const config = {
     '/admin/:path*',
     '/instructor/:path*',
     '/coordinator/:path*',
+    '/staff-mode/:path*',
     '/login',
     '/signup',
   ],

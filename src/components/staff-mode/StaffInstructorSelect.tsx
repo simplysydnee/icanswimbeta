@@ -24,25 +24,14 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
   const supabase = createClient()
 
   try {
-    // Get today's date in YYYY-MM-DD format
-    const todayUTC = new Date().toISOString().split('T')[0]
-    // Also get local date to debug timezone issues
-    const todayLocal = new Date().toLocaleDateString('en-CA') // Returns YYYY-MM-DD in local timezone
-    console.log('=== DEBUG: Date strings ===')
-    console.log('UTC date (toISOString):', todayUTC)
-    console.log('Local date (toLocaleDateString):', todayLocal)
-    console.log('Current time:', new Date().toString())
+    // Get today's date in local timezone (YYYY-MM-DD format)
+    const today = new Date().toLocaleDateString('en-CA') // Returns YYYY-MM-DD in local timezone
 
-    // Use UTC date for query (database stores timestamps in UTC)
-    // DATE(start_time) extracts UTC date, so we need to use UTC date for comparison
-    const today = todayUTC
-    console.log('=== DEBUG: Using date for query ===', today)
-
-    // First, fetch all active instructors with display_on_team = true
+    // First, fetch all active instructors
+    // For staff mode, we show all active instructors, not just those with display_on_team = true
     const { data: instructors, error: instructorsError } = await supabase
       .from('profiles')
       .select('id, full_name, avatar_url, email')
-      .eq('display_on_team', true)
       .eq('is_active', true)
       .order('full_name')
 
@@ -52,25 +41,22 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
     }
 
     if (!instructors || instructors.length === 0) {
-      console.log('=== DEBUG: No instructors found with display_on_team = true and is_active = true')
+      console.log('=== DEBUG: No active instructors found')
       return []
     }
 
     // Get instructor IDs
     const instructorIds = instructors.map(instructor => instructor.id)
-    console.log('=== DEBUG: Instructor IDs ===')
-    console.log('Instructor IDs:', instructorIds)
-    console.log('Number of instructors:', instructors.length)
 
-    // Fetch today's sessions for these instructors
-    // Use timestamp range: from midnight to 11:59:59 PM on today's date (UTC)
-    console.log('=== DEBUG: Querying sessions ===')
-    console.log('Date range (UTC):', `${today}T00:00:00Z to ${today}T23:59:59Z`)
-    console.log('Status filter:', ['booked', 'open', 'available'])
-
+    // Query sessions with bookings and status filter
     const { data: sessions, error: sessionsError } = await supabase
       .from('sessions')
-      .select('instructor_id')
+      .select(`
+        instructor_id,
+        bookings!inner (
+          id
+        )
+      `)
       .gte('start_time', `${today}T00:00:00Z`)
       .lt('start_time', `${today}T23:59:59Z`)
       .in('instructor_id', instructorIds)
@@ -102,8 +88,8 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
       sessionCount: sessionCounts[instructor.id] || 0
     }))
 
-    // Filter to only show instructors with sessions today
-    return instructorsWithSessions.filter(instructor => instructor.sessionCount > 0)
+    // Show all active instructors, not just those with sessions
+    return instructorsWithSessions
 
   } catch (error) {
     console.error('Error in fetchInstructorsWithTodaySessions:', error)
@@ -160,7 +146,7 @@ export default function StaffInstructorSelect() {
   }
 
   const getSessionText = (count: number) => {
-    if (count === 0) return 'No sessions today'
+    if (count === 0) return 'No sessions scheduled'
     if (count === 1) return '1 swimmer today'
     return `${count} swimmers today`
   }
@@ -286,9 +272,9 @@ export default function StaffInstructorSelect() {
             <CardContent className="pt-6">
               <div className="text-center py-12">
                 <Users className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700">No instructors with sessions today</h3>
+                <h3 className="text-xl font-semibold text-gray-700">No active instructors found</h3>
                 <p className="text-gray-500 mt-2">
-                  There are no scheduled sessions for today. Please check back later or contact an administrator.
+                  There are no active instructors. Please contact an administrator.
                 </p>
                 <Button
                   variant="outline"

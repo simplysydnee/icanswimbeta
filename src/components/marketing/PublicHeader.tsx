@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Menu, X } from 'lucide-react';
 import { MobileNav } from './MobileNav';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 const navLinks = [
   { name: 'Home', href: '/' },
@@ -19,6 +21,7 @@ const navLinks = [
 
 export function PublicHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, loading, signOut } = useAuth();
 
   return (
     <>
@@ -69,14 +72,36 @@ export function PublicHeader() {
               ))}
             </nav>
 
-            {/* Login Button & Mobile Menu */}
+            {/* Login/Logout Button & Mobile Menu */}
             <div className="flex items-center space-x-4">
-              <Link
-                href="/login"
-                className="hidden lg:inline-flex items-center justify-center rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 transition-colors"
-              >
-                Login
-              </Link>
+              {loading ? (
+                <div className="hidden lg:flex w-20 h-10 items-center justify-center">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-cyan-600" />
+                </div>
+              ) : user ? (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => signOut()}
+                    className="hidden lg:inline-flex"
+                  >
+                    Sign Out
+                  </Button>
+                  <Link
+                    href="/dashboard"
+                    className="hidden lg:inline-flex items-center justify-center rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="hidden lg:inline-flex items-center justify-center rounded-lg bg-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-cyan-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-600 transition-colors"
+                >
+                  Login
+                </Link>
+              )}
 
               {/* Mobile Menu Button */}
               <button

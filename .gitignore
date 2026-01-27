@@ -29,3 +29,6 @@ dist-ssr
 
 # TypeScript build info
 tsconfig.tsbuildinfo
+
+# Migration configuration with secrets
+.env.migration

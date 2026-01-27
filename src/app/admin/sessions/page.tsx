@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, Suspense } from 'react';
+import { useState, useMemo, Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Button } from '@/components/ui/button';
@@ -14,10 +14,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertCircle, Loader2, Calendar, FilterX, Plus, MoreHorizontal, Eye, Edit, UserPlus, Users, XCircle, CheckCircle, Trash2, Download, X, CalendarCheck } from 'lucide-react';
+import { AlertCircle, Loader2, Calendar, FilterX, Plus, MoreHorizontal, Eye, Edit, UserPlus, Users, XCircle, CheckCircle, Trash2, Download, X, CalendarCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAllSessions, useOpenSessions, useDeleteSessions, useInstructors } from '@/hooks';
-import { format, parseISO, startOfDay, endOfDay } from 'date-fns';
+import { format, parseISO, startOfDay, endOfDay, startOfMonth, endOfMonth, addMonths, subMonths, format as dateFnsFormat } from 'date-fns';
 
 
 // Status color helper
@@ -40,9 +40,33 @@ function AdminSessionsContent() {
   const { toast } = useToast();
 
   const statusFilter = searchParams.get('status') || 'all';
+  const monthParam = searchParams.get('month');
+  const yearParam = searchParams.get('year');
 
-  // Fetch data
-  const { data, isLoading, error, refetch } = useAllSessions();
+  // Get current month/year or use params
+  const getCurrentMonthYear = () => {
+    const now = new Date();
+    return {
+      month: monthParam ? parseInt(monthParam) : now.getMonth() + 1,
+      year: yearParam ? parseInt(yearParam) : now.getFullYear()
+    };
+  };
+
+  const [currentMonthYear, setCurrentMonthYear] = useState(getCurrentMonthYear());
+
+  // Update month/year when params change and clear date filters
+  useEffect(() => {
+    setCurrentMonthYear(getCurrentMonthYear());
+    // Clear date filters when month changes
+    setFilters(prev => ({
+      ...prev,
+      startDate: '',
+      endDate: ''
+    }));
+  }, [monthParam, yearParam]);
+
+  // Fetch data with month/year filter
+  const { data, isLoading, error, refetch } = useAllSessions(currentMonthYear.month, currentMonthYear.year);
   const { data: instructorsData } = useInstructors();
   const { mutate: openSessions, isPending: isOpening } = useOpenSessions();
   const { mutate: deleteSessions, isPending: isDeleting } = useDeleteSessions();
@@ -67,6 +91,43 @@ function AdminSessionsContent() {
   const [bookingSession, setBookingSession] = useState<any>(null);
   const [bulkChangingInstructor, setBulkChangingInstructor] = useState(false);
   const [openDraftsModal, setOpenDraftsModal] = useState(false);
+
+  // Month navigation functions
+  const navigateToMonth = (month: number, year: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('month', month.toString());
+    params.set('year', year.toString());
+    router.push(`/admin/sessions?${params.toString()}`);
+  };
+
+  const goToPreviousMonth = () => {
+    const prevMonth = currentMonthYear.month === 1 ? 12 : currentMonthYear.month - 1;
+    const prevYear = currentMonthYear.month === 1 ? currentMonthYear.year - 1 : currentMonthYear.year;
+    navigateToMonth(prevMonth, prevYear);
+  };
+
+  const goToNextMonth = () => {
+    const nextMonth = currentMonthYear.month === 12 ? 1 : currentMonthYear.month + 1;
+    const nextYear = currentMonthYear.month === 12 ? currentMonthYear.year + 1 : currentMonthYear.year;
+    navigateToMonth(nextMonth, nextYear);
+  };
+
+  const goToThisMonth = () => {
+    const now = new Date();
+    navigateToMonth(now.getMonth() + 1, now.getFullYear());
+  };
+
+  const goToNextMonthFromNow = () => {
+    const now = new Date();
+    const nextMonth = now.getMonth() + 2; // +2 because getMonth() is 0-indexed
+    const year = now.getFullYear();
+
+    if (nextMonth > 12) {
+      navigateToMonth(1, year + 1);
+    } else {
+      navigateToMonth(nextMonth, year);
+    }
+  };
 
   // Get all sessions
   const allSessions = useMemo(() => data?.sessions || [], [data]);
@@ -341,6 +402,11 @@ function AdminSessionsContent() {
     } else {
       params.set('status', status);
     }
+    // Preserve month/year params
+    if (currentMonthYear.month && currentMonthYear.year) {
+      params.set('month', currentMonthYear.month.toString());
+      params.set('year', currentMonthYear.year.toString());
+    }
     router.push(`/admin/sessions?${params.toString()}`);
   };
 
@@ -457,85 +523,159 @@ function AdminSessionsContent() {
           </div>
         </div>
 
-        {/* Summary Statistics Cards - Clickable */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-          <Card
-            className={`cursor-pointer hover:shadow-md transition-all ${
-              statusFilter === 'all' ? 'ring-2 ring-primary' : ''
-            }`}
-            onClick={() => handleStatusChange('all')}
-          >
-            <CardContent className="p-3">
-              <p className="text-xs text-muted-foreground">Total</p>
-              <p className="text-xl font-bold">{stats.total}</p>
-            </CardContent>
-          </Card>
-          <Card
-            className={`cursor-pointer hover:shadow-md transition-all ${
-              statusFilter === 'draft' ? 'ring-2 ring-yellow-500' : ''
-            }`}
-            onClick={() => handleStatusChange('draft')}
-          >
-            <CardContent className="p-3">
-              <p className="text-xs text-muted-foreground">Drafts</p>
-              <p className="text-xl font-bold text-yellow-600">{stats.draft}</p>
-            </CardContent>
-          </Card>
-          <Card
-            className={`cursor-pointer hover:shadow-md transition-all ${
-              statusFilter === 'open' ? 'ring-2 ring-green-500' : ''
-            }`}
-            onClick={() => handleStatusChange('open')}
-          >
-            <CardContent className="p-3">
-              <p className="text-xs text-muted-foreground">Open</p>
-              <p className="text-xl font-bold text-green-600">{stats.open}</p>
-            </CardContent>
-          </Card>
-          <Card
-            className={`cursor-pointer hover:shadow-md transition-all ${
-              statusFilter === 'booked' ? 'ring-2 ring-blue-500' : ''
-            }`}
-            onClick={() => handleStatusChange('booked')}
-          >
-            <CardContent className="p-3">
-              <p className="text-xs text-muted-foreground">Booked</p>
-              <p className="text-xl font-bold text-blue-600">{stats.booked}</p>
-            </CardContent>
-          </Card>
-          <Card
-            className={`cursor-pointer hover:shadow-md transition-all ${
-              statusFilter === 'completed' ? 'ring-2 ring-gray-500' : ''
-            }`}
-            onClick={() => handleStatusChange('completed')}
-          >
-            <CardContent className="p-3">
-              <p className="text-xs text-muted-foreground">Completed</p>
-              <p className="text-xl font-bold text-gray-600">{stats.completed}</p>
-            </CardContent>
-          </Card>
-          <Card
-            className={`cursor-pointer hover:shadow-md transition-all ${
-              statusFilter === 'cancelled' ? 'ring-2 ring-orange-500' : ''
-            }`}
-            onClick={() => handleStatusChange('cancelled')}
-          >
-            <CardContent className="p-3">
-              <p className="text-xs text-muted-foreground">Cancelled</p>
-              <p className="text-xl font-bold text-orange-600">{stats.cancelled}</p>
-            </CardContent>
-          </Card>
-          <Card
-            className={`cursor-pointer hover:shadow-md transition-all ${
-              statusFilter === 'no_show' ? 'ring-2 ring-red-500' : ''
-            }`}
-            onClick={() => handleStatusChange('no_show')}
-          >
-            <CardContent className="p-3">
-              <p className="text-xs text-muted-foreground">No-Shows</p>
-              <p className="text-xl font-bold text-red-600">{stats.no_shows}</p>
-            </CardContent>
-          </Card>
+        {/* Month Navigation Bar */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToPreviousMonth}
+                className="h-9 w-9 p-0"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              <div className="text-center">
+                <h2 className="text-xl font-bold">
+                  {dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month - 1, 1), 'MMMM yyyy')}
+                </h2>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToNextMonth}
+                className="h-9 w-9 p-0"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToThisMonth}
+              >
+                This Month
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={goToNextMonthFromNow}
+              >
+                Next Month
+              </Button>
+            </div>
+          </div>
+
+          {/* Compact Stats Row */}
+          <div className="text-sm text-muted-foreground mb-4">
+            {dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month - 1, 1), 'MMMM yyyy')}:{' '}
+            {stats.total} total sessions | {stats.open} open | {stats.booked} booked | {stats.completed} completed
+          </div>
+
+          {/* Status Tabs */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            <Button
+              variant={statusFilter === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleStatusChange('all')}
+              className="relative"
+            >
+              All
+              {stats.total > 0 && (
+                <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1">
+                  {stats.total}
+                </Badge>
+              )}
+            </Button>
+
+            <Button
+              variant={statusFilter === 'draft' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleStatusChange('draft')}
+              className="relative"
+            >
+              Drafts
+              {stats.draft > 0 && (
+                <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1">
+                  {stats.draft}
+                </Badge>
+              )}
+            </Button>
+
+            <Button
+              variant={statusFilter === 'open' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleStatusChange('open')}
+              className="relative"
+            >
+              Open
+              {stats.open > 0 && (
+                <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1">
+                  {stats.open}
+                </Badge>
+              )}
+            </Button>
+
+            <Button
+              variant={statusFilter === 'booked' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleStatusChange('booked')}
+              className="relative"
+            >
+              Booked
+              {stats.booked > 0 && (
+                <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1">
+                  {stats.booked}
+                </Badge>
+              )}
+            </Button>
+
+            <Button
+              variant={statusFilter === 'completed' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleStatusChange('completed')}
+              className="relative"
+            >
+              Completed
+              {stats.completed > 0 && (
+                <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1">
+                  {stats.completed}
+                </Badge>
+              )}
+            </Button>
+
+            <Button
+              variant={statusFilter === 'cancelled' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleStatusChange('cancelled')}
+              className="relative"
+            >
+              Cancelled
+              {stats.cancelled > 0 && (
+                <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1">
+                  {stats.cancelled}
+                </Badge>
+              )}
+            </Button>
+
+            <Button
+              variant={statusFilter === 'no_show' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleStatusChange('no_show')}
+              className="relative"
+            >
+              No-Shows
+              {stats.no_shows > 0 && (
+                <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1">
+                  {stats.no_shows}
+                </Badge>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Active Filter Indicator */}
@@ -554,19 +694,23 @@ function AdminSessionsContent() {
         <Card className="mb-6">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">Filters</CardTitle>
-            <p className="text-sm text-muted-foreground">Filter sessions by date, time, instructor, location, or search</p>
+            <p className="text-sm text-muted-foreground">
+              Filter sessions within {dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month - 1, 1), 'MMMM yyyy')} by date, time, instructor, location, or search
+            </p>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-              {/* Date Range */}
+              {/* Date Range (within month) */}
               <div className="sm:col-span-2">
-                <Label className="text-sm text-muted-foreground mb-2 block">Date Range</Label>
+                <Label className="text-sm text-muted-foreground mb-2 block">Date Range (within month)</Label>
                 <div className="flex gap-2 items-center">
                   <Input
                     type="date"
                     value={filters.startDate}
                     onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
                     className="flex-1"
+                    min={dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month - 1, 1), 'yyyy-MM-dd')}
+                    max={dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month, 0), 'yyyy-MM-dd')}
                   />
                   <span className="text-muted-foreground text-sm">to</span>
                   <Input
@@ -574,6 +718,8 @@ function AdminSessionsContent() {
                     value={filters.endDate}
                     onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
                     className="flex-1"
+                    min={dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month - 1, 1), 'yyyy-MM-dd')}
+                    max={dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month, 0), 'yyyy-MM-dd')}
                   />
                 </div>
               </div>
