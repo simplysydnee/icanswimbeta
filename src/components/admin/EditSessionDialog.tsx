@@ -62,8 +62,8 @@ export function EditSessionDialog({
   const [submitting, setSubmitting] = useState(false)
 
   // Form state
-  const [instructorId, setInstructorId] = useState<string>('')
-  const [location, setLocation] = useState<string>('')
+  const [instructorId, setInstructorId] = useState<string>('unassigned')
+  const [location, setLocation] = useState<string>('none')
   const [status, setStatus] = useState<string>('')
   const [maxCapacity, setMaxCapacity] = useState<number>(1)
 
@@ -108,8 +108,8 @@ export function EditSessionDialog({
   // Populate form when session changes
   useEffect(() => {
     if (session) {
-      setInstructorId(session.instructor_id || '')
-      setLocation(session.location || '')
+      setInstructorId(session.instructor_id || 'unassigned')
+      setLocation(session.location || 'none')
       setStatus(session.status)
       setMaxCapacity(session.max_capacity)
     }
@@ -146,8 +146,8 @@ export function EditSessionDialog({
       const { error } = await supabase
         .from('sessions')
         .update({
-          instructor_id: instructorId || null,
-          location: location || null,
+          instructor_id: instructorId === 'unassigned' ? null : instructorId,
+          location: location === 'none' ? null : location,
           status: status,
           max_capacity: maxCapacity,
           updated_at: new Date().toISOString(),
@@ -206,7 +206,7 @@ export function EditSessionDialog({
                 <SelectValue placeholder={loading ? "Loading instructors..." : "Select instructor"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Unassigned</SelectItem>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
                 {instructors.map((instructor) => (
                   <SelectItem key={instructor.id} value={instructor.id}>
                     {instructor.full_name}
@@ -224,7 +224,7 @@ export function EditSessionDialog({
                 <SelectValue placeholder="Select location" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No location</SelectItem>
+                <SelectItem value="none">No location</SelectItem>
                 <SelectItem value="Modesto">Modesto</SelectItem>
                 <SelectItem value="Turlock">Turlock</SelectItem>
                 <SelectItem value="Modesto: 1212 Kansas Ave">Modesto: 1212 Kansas Ave</SelectItem>

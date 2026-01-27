@@ -1031,12 +1031,24 @@ function AdminSessionsContent() {
 
                           {/* Actions */}
                           <TableCell className="px-2 py-2 text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                                  <MoreHorizontal className="h-3.5 w-3.5" />
+                            <div className="flex items-center justify-end gap-1">
+                              {(session.status === 'open' || session.status === 'available') && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleAddSwimmer(session)}
+                                  className="h-7 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  title="Add swimmer to this session"
+                                >
+                                  <UserPlus className="h-3.5 w-3.5" />
                                 </Button>
-                              </DropdownMenuTrigger>
+                              )}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                    <MoreHorizontal className="h-3.5 w-3.5" />
+                                  </Button>
+                                </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuItem onClick={() => setViewingSession(session)}>
                                   <Eye className="h-4 w-4 mr-2" /> View Details
@@ -1121,6 +1133,7 @@ function AdminSessionsContent() {
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                            </div>
                           </TableCell>
                         </TableRow>
                       )
