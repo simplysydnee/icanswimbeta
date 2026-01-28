@@ -25,10 +25,9 @@ import {
   ClipboardList,
   UserCog
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, addDays, startOfMonth } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import NeedsProgressUpdateCard from '@/components/dashboard/NeedsProgressUpdateCard';
-import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
 import { ToDoWidget } from '@/components/dashboard/ToDoWidget';
 
 interface DashboardStats {
@@ -71,15 +70,6 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [todaysSessions, setTodaysSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedBooking, setSelectedBooking] = useState<{
-    bookingId: string;
-    sessionId: string;
-    swimmerId: string;
-    swimmerName: string;
-    swimmerPhotoUrl?: string;
-    sessionTime: string;
-  } | null>(null);
-  const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
 
   const fetchStats = useCallback(async () => {
     setLoading(true);
@@ -117,10 +107,20 @@ export default function AdminDashboard() {
         .select('id')
         .in('status', ['pending', 'approved_pending_auth']);
 
-      // Fetch sessions for the last 48 hours
-      // More inclusive to catch test data
-      const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
-      const now = new Date().toISOString();
+      // Fetch today's sessions with timezone-aware query
+      // Midnight Pacific = 8 AM UTC
+      const today = new Date();
+      const dateStr = format(today, 'yyyy-MM-dd');
+      const startOfDayUTC = `${dateStr}T08:00:00.000Z`;
+      const endOfDayUTC = `${format(addDays(today, 1), 'yyyy-MM-dd')}T08:00:00.000Z`;
+
+      // Get count of sessions today
+      const { count: sessionsTodayCount } = await supabase
+        .from('sessions')
+        .select('*', { count: 'exact', head: true })
+        .gte('start_time', startOfDayUTC)
+        .lt('start_time', endOfDayUTC)
+        .neq('status', 'cancelled');
 
       const { data: sessions } = await supabase
         .from('sessions')
@@ -137,76 +137,66 @@ export default function AdminDashboard() {
           ),
           progress_notes(id)
         `)
-        .gte('start_time', fortyEightHoursAgo)
-        .lte('start_time', now)
-        .order('start_time');
+        .gte('start_time', startOfDayUTC)
+        .lt('start_time', endOfDayUTC)
+        .neq('status', 'cancelled')
+        .order('start_time', { ascending: true });
 
-      // Get accurate count of bookings needing progress updates from the API
+      // Calculate bookings needing progress updates from session data
       let bookingsNeedingProgress = 0;
-      try {
-        const response = await fetch('/api/swimmers/needs-progress-update');
-        if (response.ok) {
-          const bookings = await response.json();
-          bookingsNeedingProgress = bookings.length || 0;
-        } else {
-          console.error('Failed to fetch bookings needing progress update:', response.status);
-          // Fallback to approximate calculation
-          sessions?.forEach(s => {
-            const sessionTime = new Date(s.start_time);
-            const now = new Date();
-            const isPastOrCurrent = sessionTime <= now;
+      sessions?.forEach(s => {
+        const sessionTime = new Date(s.start_time);
+        const now = new Date();
+        const isPastOrCurrent = sessionTime <= now;
 
-            if (isPastOrCurrent && s.bookings && s.bookings.length > 0) {
-              if (!s.progress_notes || s.progress_notes.length === 0) {
-                bookingsNeedingProgress += s.bookings.length;
-              } else if (s.progress_notes.length < s.bookings.length) {
-                bookingsNeedingProgress += (s.bookings.length - s.progress_notes.length);
-              }
-            }
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching bookings needing progress update:', error);
-        // Fallback to approximate calculation
-        sessions?.forEach(s => {
-          const sessionTime = new Date(s.start_time);
-          const now = new Date();
-          const isPastOrCurrent = sessionTime <= now;
-
-          if (isPastOrCurrent && s.bookings && s.bookings.length > 0) {
-            if (!s.progress_notes || s.progress_notes.length === 0) {
-              bookingsNeedingProgress += s.bookings.length;
-            } else if (s.progress_notes.length < s.bookings.length) {
-              bookingsNeedingProgress += (s.bookings.length - s.progress_notes.length);
-            }
+        if (isPastOrCurrent && s.bookings && s.bookings.length > 0) {
+          if (!s.progress_notes || s.progress_notes.length === 0) {
+            bookingsNeedingProgress += s.bookings.length;
+          } else if (s.progress_notes.length < s.bookings.length) {
+            bookingsNeedingProgress += (s.bookings.length - s.progress_notes.length);
           }
-        });
-      }
+        }
+      });
 
-      // Get revenue this month from bookings
-      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+      // Get revenue month-to-date from bookings
+      const startOfMonthUTC = startOfMonth(new Date()).toISOString();
+      const nowUTC = new Date().toISOString();
 
-      const { data: revenueBookings } = await supabase
+      // Private Pay - Month to Date
+      const { data: privatePayMTD } = await supabase
         .from('bookings')
         .select(`
-          id,
-          status,
-          swimmer:swimmers(payment_type),
-          session:sessions(price_cents)
+          session:sessions(price_cents, start_time),
+          swimmer:swimmers(payment_type)
         `)
-        .gte('created_at', startOfMonth)
-        .in('status', ['confirmed', 'completed']);
+        .eq('swimmer.payment_type', 'private_pay')
+        .eq('status', 'completed')
+        .gte('session.start_time', startOfMonthUTC)
+        .lt('session.start_time', nowUTC);
+
+      // VMRC/Funded - Month to Date
+      const { data: vmrcMTD } = await supabase
+        .from('bookings')
+        .select(`
+          session:sessions(price_cents, start_time),
+          swimmer:swimmers(payment_type)
+        `)
+        .eq('swimmer.payment_type', 'vmrc')
+        .eq('status', 'completed')
+        .gte('session.start_time', startOfMonthUTC)
+        .lt('session.start_time', nowUTC);
 
       let privatePayRevenue = 0;
       let fundedRevenue = 0;
 
-      revenueBookings?.forEach(booking => {
+      privatePayMTD?.forEach(booking => {
         const price = booking.session?.price_cents || 9000; // Default $90
-        if (booking.swimmer?.payment_type === 'private_pay') {
-          privatePayRevenue += price;
-        } else {
-          fundedRevenue += price;
-        }
+        privatePayRevenue += price;
+      });
+
+      vmrcMTD?.forEach(booking => {
+        const price = booking.session?.price_cents || 9000; // Default $90
+        fundedRevenue += price;
       });
 
       setTodaysSessions(sessions || []);
@@ -216,7 +206,7 @@ export default function AdminDashboard() {
         waitlistedSwimmers: waitlistedSwimmers ?? 0,
         privatePayCount: privatePayCount ?? 0,
         fundedCount: fundedCount ?? 0,
-        sessionsToday: sessions?.length ?? 0,
+        sessionsToday: sessionsTodayCount ?? 0,
         pendingReferrals: 0, // Placeholder - referral_requests table might not exist
         pendingPOs: pos?.length ?? 0,
         sessionsNeedingProgress: bookingsNeedingProgress ?? 0,
@@ -238,22 +228,8 @@ export default function AdminDashboard() {
     swimmerPhotoUrl: string | undefined,
     sessionTime: string
   ) => {
-    setSelectedBooking({
-      bookingId,
-      sessionId,
-      swimmerId,
-      swimmerName,
-      swimmerPhotoUrl,
-      sessionTime,
-    });
-    setIsProgressModalOpen(true);
-  };
-
-  const handleProgressSubmitted = () => {
-    setIsProgressModalOpen(false);
-    setSelectedBooking(null);
-    // Refresh the data
-    fetchStats();
+    // Navigate to the staff mode swimmer page instead of opening a modal
+    router.push(`/staff-mode/swimmer/${swimmerId}`);
   };
 
   useEffect(() => {
@@ -405,7 +381,7 @@ export default function AdminDashboard() {
                   <p className="text-sm text-muted-foreground">Needs Attention</p>
                   <p className="text-3xl font-bold">{pendingCount}</p>
                   <p className="text-xs text-muted-foreground mt-1 truncate">
-                    {stats?.pendingReferrals} ref • {stats?.pendingPOs} POs • {stats?.sessionsNeedingProgress} upd
+                    Progress updates needed
                   </p>
                 </div>
                 <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ml-4 ${pendingCount > 0 ? 'bg-orange-200' : 'bg-gray-100'}`}>
@@ -440,13 +416,16 @@ export default function AdminDashboard() {
       {/* Revenue Breakdown Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <Card>
-          <CardContent className="p-4">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Private Pay Revenue</CardTitle>
+            <p className="text-xs text-muted-foreground">Month to Date ({format(new Date(), 'MMMM yyyy')})</p>
+          </CardHeader>
+          <CardContent className="pt-0">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-emerald-100 rounded-lg">
                 <CreditCard className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Private Pay Revenue</p>
                 <p className="text-xl font-bold text-emerald-600">
                   {formatCurrency(stats?.privatePayRevenue || 0)}
                 </p>
@@ -456,13 +435,16 @@ export default function AdminDashboard() {
         </Card>
 
         <Card>
-          <CardContent className="p-4">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Funded (Billed)</CardTitle>
+            <p className="text-xs text-muted-foreground">Month to Date ({format(new Date(), 'MMMM yyyy')})</p>
+          </CardHeader>
+          <CardContent className="pt-0">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-lg">
                 <Building2 className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Funded (Billed)</p>
                 <p className="text-xl font-bold text-blue-600">
                   {formatCurrency(stats?.fundedRevenue || 0)}
                 </p>
@@ -472,13 +454,16 @@ export default function AdminDashboard() {
         </Card>
 
         <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-          <CardContent className="p-4">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-green-700">Total Combined</CardTitle>
+            <p className="text-xs text-green-600">Month to Date ({format(new Date(), 'MMMM yyyy')})</p>
+          </CardHeader>
+          <CardContent className="pt-0">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-200 rounded-lg">
                 <TrendingUp className="h-5 w-5 text-green-700" />
               </div>
               <div>
-                <p className="text-sm text-green-700">Total Combined</p>
                 <p className="text-xl font-bold text-green-700">
                   {formatCurrency((stats?.privatePayRevenue || 0) + (stats?.fundedRevenue || 0))}
                 </p>
@@ -739,20 +724,6 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* Progress Update Modal */}
-      {selectedBooking && (
-        <ProgressUpdateModal
-          open={isProgressModalOpen}
-          onOpenChange={setIsProgressModalOpen}
-          bookingId={selectedBooking.bookingId}
-          sessionId={selectedBooking.sessionId}
-          swimmerId={selectedBooking.swimmerId}
-          swimmerName={selectedBooking.swimmerName}
-          swimmerPhotoUrl={selectedBooking.swimmerPhotoUrl}
-          sessionTime={selectedBooking.sessionTime}
-          onSuccess={handleProgressSubmitted}
-        />
-      )}
     </div>
   );
 }
