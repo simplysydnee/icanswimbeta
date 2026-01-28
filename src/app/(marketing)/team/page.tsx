@@ -56,8 +56,8 @@ export default async function TeamPage() {
       </div>
 
       {/* Team Members */}
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {team.map((member) => {
             const initials = member.full_name
               .split(' ')
@@ -67,8 +67,9 @@ export default async function TeamPage() {
               .slice(0, 2);
 
             return (
-              <div key={member.id} className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border">
-                <div className="aspect-square rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center mb-6 overflow-hidden">
+              <div key={member.id} className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border flex flex-col h-full">
+                {/* Avatar Container - Fixed height instead of aspect-square */}
+                <div className="h-48 md:h-56 rounded-xl bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center mb-6 overflow-hidden">
                   {member.avatar_url ? (
                     <Image
                       src={member.avatar_url}
@@ -81,25 +82,29 @@ export default async function TeamPage() {
                     <span className="text-4xl font-bold text-cyan-700">{initials}</span>
                   )}
                 </div>
-                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">{member.full_name}</h3>
-                {member.title && (
-                  <p className="text-cyan-600 font-medium mb-4">{member.title}</p>
-                )}
-                {member.bio && (
-                  <p className="text-gray-700 mb-4">{member.bio}</p>
-                )}
-                {member.credentials && member.credentials.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {member.credentials.map((credential, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-cyan-50 text-cyan-700 text-sm rounded-full border border-cyan-100"
-                      >
-                        {credential}
-                      </span>
-                    ))}
-                  </div>
-                )}
+
+                {/* Content - Flex-grow to fill remaining space */}
+                <div className="flex flex-col flex-grow">
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">{member.full_name}</h3>
+                  {member.title && (
+                    <p className="text-cyan-600 font-medium mb-3">{member.title}</p>
+                  )}
+                  {member.bio && (
+                    <p className="text-gray-700 mb-4 flex-grow">{member.bio}</p>
+                  )}
+                  {member.credentials && member.credentials.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {member.credentials.map((credential, index) => (
+                        <span
+                          key={index}
+                          className="px-3 py-1 bg-cyan-50 text-cyan-700 text-sm rounded-full border border-cyan-100"
+                        >
+                          {credential}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -108,7 +113,7 @@ export default async function TeamPage() {
         {/* Team Values */}
         <div className="mt-12 md:mt-16 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-2xl p-6 md:p-8 lg:p-12">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Our Team Values</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <div>
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Patience & Understanding</h3>
               <p className="text-gray-700">
