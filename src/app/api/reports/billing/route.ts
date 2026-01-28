@@ -51,7 +51,7 @@ export async function GET(request: Request) {
 
     if (poError) throw poError
 
-    // 2. Get bookings for private pay calculations
+    // 2. Get bookings for revenue calculations
     const { data: bookings, error: bookingsError } = await supabase
       .from('bookings')
       .select(`
@@ -65,8 +65,8 @@ export async function GET(request: Request) {
           start_time
         )
       `)
-      .eq('status', 'completed')
-      .gte('created_at', yearStart.toISOString())
+      .or('status.eq.confirmed,status.eq.completed')
+      .gte('session.start_time', yearStart.toISOString())
 
     if (bookingsError) throw bookingsError
 
@@ -183,24 +183,76 @@ function calculateBillingMetrics(
     }
   })
 
-  // Private Pay from bookings
+  // Revenue from bookings (Private Pay and Funded)
   const privatePay = {
     monthlyRevenue: 0,
     ytdRevenue: 0,
     outstanding: 0
   }
 
-  bookings.forEach(booking => {
-    if (booking.swimmer?.payment_type === 'private_pay') {
-      const amount = (booking.session?.price_cents || 0) / 100
-      const bookingDate = new Date(booking.created_at)
+  const fundedRevenue = {
+    monthlyRevenue: 0,
+    ytdRevenue: 0,
+    outstanding: 0
+  }
 
-      if (bookingDate >= monthStart) {
-        privatePay.monthlyRevenue += amount
+  let privatePayCount = 0;
+  let fundedCount = 0;
+  let skippedCount = 0;
+
+  bookings.forEach(booking => {
+    // Skip if no session or swimmer data
+    if (!booking.session || !booking.swimmer) {
+      skippedCount++;
+      return;
+    }
+
+    const sessionStartTime = new Date(booking.session.start_time);
+
+    // Determine if session should count as attended
+    // Completed bookings always count, confirmed bookings only count if session is in the past
+    const isAttended =
+      booking.status === 'completed' ||
+      (booking.status === 'confirmed' && sessionStartTime < now);
+
+    // Only count attended sessions
+    if (!isAttended) {
+      skippedCount++;
+      return;
+    }
+
+    const amount = (booking.session.price_cents || 0) / 100;
+
+    // Route revenue based on swimmer's payment type
+    // Private Pay: payment_type = 'private_pay'
+    // Funded: payment_type = 'vmrc', 'scholarship', or 'other'
+    if (booking.swimmer.payment_type === 'private_pay') {
+      if (sessionStartTime >= monthStart) {
+        privatePay.monthlyRevenue += amount;
+        privatePayCount++;
       }
-      privatePay.ytdRevenue += amount
+      if (sessionStartTime >= yearStart) {
+        privatePay.ytdRevenue += amount;
+      }
+    } else if (['vmrc', 'scholarship', 'other'].includes(booking.swimmer.payment_type)) {
+      if (sessionStartTime >= monthStart) {
+        fundedRevenue.monthlyRevenue += amount;
+        fundedCount++;
+      }
+      if (sessionStartTime >= yearStart) {
+        fundedRevenue.ytdRevenue += amount;
+      }
+    } else {
+      // Unknown payment type
+      console.warn(`Unknown payment type: ${booking.swimmer.payment_type} for booking ${booking.id}`);
+      skippedCount++;
     }
   })
+
+  console.log(`Billing report revenue calculation:
+    Private Pay: ${privatePayCount} bookings, $${privatePay.monthlyRevenue.toFixed(2)} monthly, $${privatePay.ytdRevenue.toFixed(2)} YTD
+    Funded: ${fundedCount} bookings, $${fundedRevenue.monthlyRevenue.toFixed(2)} monthly, $${fundedRevenue.ytdRevenue.toFixed(2)} YTD
+    Skipped: ${skippedCount} bookings`);
 
   // Weekly billing (last 4 weeks)
   const weeklyBilling = []
@@ -274,6 +326,7 @@ function calculateBillingMetrics(
     byFundingSource: Object.values(byFundingSource),
     byCoordinator: Object.values(byCoordinator).filter(c => c.pendingAuth > 0 || c.overduePOs > 0),
     privatePay,
+    fundedRevenue,
     weeklyBilling: weeklyBilling.reverse(),
     byInstructor: Object.values(byInstructor),
     aging,

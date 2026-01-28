@@ -42,6 +42,13 @@ interface DashboardStats {
   sessionsNeedingProgress: number;
   privatePayRevenue: number;
   fundedRevenue: number;
+  // Waitlist breakdown
+  waitlistBreakdown: {
+    waitlist: number;
+    pending_enrollment: number;
+    pending_approval: number;
+    pending_assessment: number;
+  };
 }
 
 interface Session {
@@ -99,7 +106,7 @@ export default function AdminDashboard() {
       const { count: fundedCount, error: fundedError } = await supabase
         .from('swimmers')
         .select('*', { count: 'exact', head: true })
-        .in('payment_type', ['funded', 'scholarship', 'other']);
+        .in('payment_type', ['vmrc', 'scholarship', 'other']);
 
       // Fetch pending purchase orders
       const { data: pos } = await supabase
@@ -159,45 +166,111 @@ export default function AdminDashboard() {
       });
 
       // Get revenue month-to-date from bookings
-      const startOfMonthUTC = startOfMonth(new Date()).toISOString();
-      const nowUTC = new Date().toISOString();
+      // Use start of month in local time, then convert to UTC for database query
+      const now = new Date();
+      const startOfMonthLocal = startOfMonth(now);
+      // Convert to UTC by using toISOString() - this handles timezone correctly
+      const startOfMonthUTC = startOfMonthLocal.toISOString();
+      const nowUTC = now.toISOString();
 
-      // Private Pay - Month to Date
-      const { data: privatePayMTD } = await supabase
+      console.log('Revenue calculation - Date range:', { startOfMonthUTC, nowUTC });
+
+      // Fetch all bookings for the current month with session and swimmer data
+      const { data: bookingsMTD, error: bookingsError } = await supabase
         .from('bookings')
         .select(`
-          session:sessions(price_cents, start_time),
-          swimmer:swimmers(payment_type)
+          id,
+          status,
+          session:sessions(
+            price_cents,
+            start_time
+          ),
+          swimmer:swimmers(
+            payment_type
+          )
         `)
-        .eq('swimmer.payment_type', 'private_pay')
-        .eq('status', 'completed')
+        .or('status.eq.confirmed,status.eq.completed')
         .gte('session.start_time', startOfMonthUTC)
         .lt('session.start_time', nowUTC);
 
-      // VMRC/Funded - Month to Date
-      const { data: vmrcMTD } = await supabase
-        .from('bookings')
-        .select(`
-          session:sessions(price_cents, start_time),
-          swimmer:swimmers(payment_type)
-        `)
-        .eq('swimmer.payment_type', 'vmrc')
-        .eq('status', 'completed')
-        .gte('session.start_time', startOfMonthUTC)
-        .lt('session.start_time', nowUTC);
+      if (bookingsError) {
+        console.error('Error fetching bookings for revenue calculation:', bookingsError);
+      }
+
+      console.log(`Found ${bookingsMTD?.length || 0} bookings for revenue calculation`);
 
       let privatePayRevenue = 0;
       let fundedRevenue = 0;
+      let privatePayBookingCount = 0;
+      let fundedBookingCount = 0;
+      let skippedBookingCount = 0;
 
-      privatePayMTD?.forEach(booking => {
-        const price = booking.session?.price_cents || 9000; // Default $90
-        privatePayRevenue += price;
+      // Calculate revenue based on correct business rules
+      bookingsMTD?.forEach(booking => {
+        // Skip if no session or swimmer data
+        if (!booking.session || !booking.swimmer) {
+          skippedBookingCount++;
+          return;
+        }
+
+        const sessionStartTime = new Date(booking.session.start_time);
+        const now = new Date();
+
+        // Determine if session should count as attended
+        // Completed bookings always count, confirmed bookings only count if session is in the past
+        const isAttended =
+          booking.status === 'completed' ||
+          (booking.status === 'confirmed' && sessionStartTime < now);
+
+        // Only count attended sessions
+        if (!isAttended) {
+          skippedBookingCount++;
+          return;
+        }
+
+        const priceCents = booking.session.price_cents || 0;
+        const priceDollars = priceCents / 100;
+
+        // Route revenue based on swimmer's payment type
+        // Private Pay: payment_type = 'private_pay'
+        // Funded: payment_type = 'vmrc', 'scholarship', or 'other'
+        if (booking.swimmer.payment_type === 'private_pay') {
+          privatePayRevenue += priceDollars;
+          privatePayBookingCount++;
+        } else if (['vmrc', 'scholarship', 'other'].includes(booking.swimmer.payment_type)) {
+          fundedRevenue += priceDollars;
+          fundedBookingCount++;
+        } else {
+          // Unknown payment type - log for debugging
+          console.warn(`Unknown payment type: ${booking.swimmer.payment_type} for booking ${booking.id}`);
+          skippedBookingCount++;
+        }
       });
 
-      vmrcMTD?.forEach(booking => {
-        const price = booking.session?.price_cents || 9000; // Default $90
-        fundedRevenue += price;
-      });
+      console.log(`Revenue calculation results:
+        Private Pay: ${privatePayBookingCount} bookings, $${privatePayRevenue.toFixed(2)}
+        Funded: ${fundedBookingCount} bookings, $${fundedRevenue.toFixed(2)}
+        Skipped: ${skippedBookingCount} bookings`);
+
+      // Convert to cents for backward compatibility with existing formatCurrency function
+      privatePayRevenue = privatePayRevenue * 100;
+      fundedRevenue = fundedRevenue * 100;
+
+      // Fetch waitlist breakdown
+      const { count: pendingEnrollmentCount } = await supabase
+        .from('swimmers')
+        .select('*', { count: 'exact', head: true })
+        .eq('enrollment_status', 'pending_enrollment');
+
+      const { count: pendingApprovalCount } = await supabase
+        .from('swimmers')
+        .select('*', { count: 'exact', head: true })
+        .eq('enrollment_status', 'pending_approval');
+
+      const { count: pendingAssessmentCount } = await supabase
+        .from('swimmers')
+        .select('*', { count: 'exact', head: true })
+        .eq('enrollment_status', 'pending_assessment');
 
       setTodaysSessions(sessions || []);
       setStats({
@@ -211,7 +284,13 @@ export default function AdminDashboard() {
         pendingPOs: pos?.length ?? 0,
         sessionsNeedingProgress: bookingsNeedingProgress ?? 0,
         privatePayRevenue: privatePayRevenue ?? 0,
-        fundedRevenue: fundedRevenue ?? 0
+        fundedRevenue: fundedRevenue ?? 0,
+        waitlistBreakdown: {
+          waitlist: waitlistedSwimmers ?? 0,
+          pending_enrollment: pendingEnrollmentCount ?? 0,
+          pending_approval: pendingApprovalCount ?? 0,
+          pending_assessment: pendingAssessmentCount ?? 0
+        }
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -403,6 +482,28 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground mt-1 truncate">
                     Pending Assessment
                   </p>
+                  {stats?.waitlistBreakdown && (
+                    <div className="mt-1 pt-1 border-t border-gray-100">
+                      <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground">Waitlist:</span>
+                          <span className="text-[10px] font-medium">{stats.waitlistBreakdown.waitlist}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground">Pend Enroll:</span>
+                          <span className="text-[10px] font-medium">{stats.waitlistBreakdown.pending_enrollment}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground">Pend Approval:</span>
+                          <span className="text-[10px] font-medium">{stats.waitlistBreakdown.pending_approval}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground">Pend Assess:</span>
+                          <span className="text-[10px] font-medium">{stats.waitlistBreakdown.pending_assessment}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0 ml-4">
                   <Clock className="h-6 w-6 text-yellow-600" />
@@ -718,6 +819,28 @@ export default function AdminDashboard() {
                   <span className="text-sm text-yellow-700">Waitlisted</span>
                 </div>
                 <p className="text-2xl font-bold text-yellow-800">{stats?.waitlistedSwimmers || 0}</p>
+                {stats?.waitlistBreakdown && (
+                  <div className="mt-1 pt-1 border-t border-yellow-200">
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] text-yellow-600">Waitlist:</span>
+                        <span className="text-[9px] font-medium">{stats.waitlistBreakdown.waitlist}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] text-yellow-600">Pend Enroll:</span>
+                        <span className="text-[9px] font-medium">{stats.waitlistBreakdown.pending_enrollment}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] text-yellow-600">Pend Approval:</span>
+                        <span className="text-[9px] font-medium">{stats.waitlistBreakdown.pending_approval}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] text-yellow-600">Pend Assess:</span>
+                        <span className="text-[9px] font-medium">{stats.waitlistBreakdown.pending_assessment}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </Link>
           </div>
