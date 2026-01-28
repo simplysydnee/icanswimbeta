@@ -103,7 +103,7 @@ export function AssessmentTab({ selectedSwimmerId, onBookingComplete }: Assessme
     fetchSessions()
   }, [supabase, toast])
 
-  // Fetch parent's swimmers who need assessment
+  // Fetch parent's approved swimmers
   useEffect(() => {
     const fetchSwimmers = async () => {
       if (!user) return
@@ -112,8 +112,8 @@ export function AssessmentTab({ selectedSwimmerId, onBookingComplete }: Assessme
         .from('swimmers')
         .select('id, first_name, last_name, funding_source_id, assessment_status, parent_id')
         .eq('parent_id', user.id)
-        .in('assessment_status', ['not_scheduled', 'needs_assessment', null])
         .eq('approval_status', 'approved')
+        .order('first_name', { ascending: true })
 
       if (error) {
         console.error('Error fetching swimmers:', error)
@@ -261,15 +261,15 @@ export function AssessmentTab({ selectedSwimmerId, onBookingComplete }: Assessme
     )
   }
 
-  // No swimmers need assessment
+  // No approved swimmers
   if (swimmers.length === 0) {
     return (
       <Card>
         <CardContent className="pt-6 text-center">
           <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold">All Set!</h3>
+          <h3 className="text-lg font-semibold">No Approved Swimmers</h3>
           <p className="text-gray-600 mt-2">
-            All your swimmers have assessments scheduled or completed.
+            You don't have any approved swimmers yet.
           </p>
         </CardContent>
       </Card>
