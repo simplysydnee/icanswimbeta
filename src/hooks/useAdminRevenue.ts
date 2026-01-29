@@ -65,8 +65,8 @@ export const useAdminRevenue = (options: UseAdminRevenueOptions = {}) => {
 
       // Calculate revenue based on correct business rules
       const now = new Date();
-      let privatePayRevenue = 0;
-      let fundedRevenue = 0;
+      let privatePayRevenueCents = 0;
+      let fundedRevenueCents = 0;
       let privatePayCount = 0;
       let fundedCount = 0;
       let skippedCount = 0;
@@ -93,16 +93,15 @@ export const useAdminRevenue = (options: UseAdminRevenueOptions = {}) => {
         }
 
         const priceCents = booking.session.price_cents || 0;
-        const priceDollars = priceCents / 100;
 
         // Route revenue based on swimmer's payment type
         // Private Pay: payment_type = 'private_pay'
-        // Funded: payment_type = 'vmrc', 'scholarship', or 'other'
+        // Funded: payment_type = 'funding_source', 'scholarship', or 'other'
         if (booking.swimmer.payment_type === 'private_pay') {
-          privatePayRevenue += priceDollars;
+          privatePayRevenueCents += priceCents;
           privatePayCount++;
-        } else if (['vmrc', 'scholarship', 'other'].includes(booking.swimmer.payment_type)) {
-          fundedRevenue += priceDollars;
+        } else if (['funding_source', 'scholarship', 'other'].includes(booking.swimmer.payment_type)) {
+          fundedRevenueCents += priceCents;
           fundedCount++;
         } else {
           // Unknown payment type
@@ -111,9 +110,13 @@ export const useAdminRevenue = (options: UseAdminRevenueOptions = {}) => {
         }
       });
 
+      // Convert to dollars for return value
+      const privatePayRevenue = privatePayRevenueCents / 100;
+      const fundedRevenue = fundedRevenueCents / 100;
+
       console.log(`useAdminRevenue calculation:
-        Private Pay: ${privatePayCount} bookings, $${privatePayRevenue.toFixed(2)}
-        Funded: ${fundedCount} bookings, $${fundedRevenue.toFixed(2)}
+        Private Pay: ${privatePayCount} bookings, $${privatePayRevenue.toFixed(2)} (${privatePayRevenueCents} cents)
+        Funded: ${fundedCount} bookings, $${fundedRevenue.toFixed(2)} (${fundedRevenueCents} cents)
         Skipped: ${skippedCount} bookings`);
 
       return {
