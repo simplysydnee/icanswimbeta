@@ -23,15 +23,12 @@ import {
   Settings,
   LayoutDashboard,
   ClipboardList,
-  UserCog,
-  UserCheck
+  UserCog
 } from 'lucide-react';
 import { format, addDays, startOfMonth } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import NeedsProgressUpdateCard from '@/components/dashboard/NeedsProgressUpdateCard';
 import { ToDoWidget } from '@/components/dashboard/ToDoWidget';
-import { useAdminSwimmers } from '@/hooks/useAdminSwimmers';
-import { calculateSwimmerKPIs } from '@/lib/admin-utils';
 
 interface DashboardStats {
   totalSwimmers: number;
@@ -45,22 +42,6 @@ interface DashboardStats {
   sessionsNeedingProgress: number;
   privatePayRevenue: number;
   fundedRevenue: number;
-  // Waitlist breakdown
-  waitlistBreakdown: {
-    waitlist: number;
-    pending: number;
-    expired: number;
-    dropped: number;
-    declined: number;
-  };
-  // Funding source breakdown
-  revenueBySource: Record<string, {
-    name: string;
-    shortName: string | null;
-    type: string;
-    revenue: number;
-    bookings: number;
-  }>;
 }
 
 interface Session {
@@ -90,21 +71,35 @@ export default function AdminDashboard() {
   const [todaysSessions, setTodaysSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Use the new admin swimmers hook
-  const { data: swimmers, isLoading: swimmersLoading, error: swimmersError } = useAdminSwimmers();
-  const metrics = swimmers ? calculateSwimmerKPIs(swimmers) : null;
-
   const fetchStats = useCallback(async () => {
     setLoading(true);
     const supabase = createClient();
 
     try {
-      // Use metrics from the hook for swimmer data
-      const totalSwimmers = metrics?.total ?? 0;
-      const activeSwimmers = metrics?.enrolled ?? 0;
-      const waitlistedSwimmers = metrics?.waitlist ?? 0;
-      const privatePayCount = metrics?.privatePayClients ?? 0;
-      const fundedCount = metrics?.vmrcClients ?? 0;
+      // Use count queries instead of fetching all records
+      const { count: totalSwimmers, error: totalError } = await supabase
+        .from('swimmers')
+        .select('*', { count: 'exact', head: true });
+
+      const { count: activeSwimmers, error: activeError } = await supabase
+        .from('swimmers')
+        .select('*', { count: 'exact', head: true })
+        .eq('enrollment_status', 'enrolled');
+
+      const { count: waitlistedSwimmers, error: waitlistError } = await supabase
+        .from('swimmers')
+        .select('*', { count: 'exact', head: true })
+        .eq('enrollment_status', 'waitlist');
+
+      const { count: privatePayCount, error: privateError } = await supabase
+        .from('swimmers')
+        .select('*', { count: 'exact', head: true })
+        .eq('payment_type', 'private_pay');
+
+      const { count: fundedCount, error: fundedError } = await supabase
+        .from('swimmers')
+        .select('*', { count: 'exact', head: true })
+        .in('payment_type', ['funded', 'scholarship', 'other']);
 
       // Fetch pending purchase orders
       const { data: pos } = await supabase
@@ -164,193 +159,75 @@ export default function AdminDashboard() {
       });
 
       // Get revenue month-to-date from bookings
-      // Use start of month in local time, then convert to UTC for database query
-      const now = new Date();
-      const startOfMonthLocal = startOfMonth(now);
-      // Convert to UTC by using toISOString() - this handles timezone correctly
-      const startOfMonthUTC = startOfMonthLocal.toISOString();
-      const nowUTC = now.toISOString();
+      const startOfMonthUTC = startOfMonth(new Date()).toISOString();
+      const nowUTC = new Date().toISOString();
 
-      console.log('Revenue calculation - Date range:', { startOfMonthUTC, nowUTC });
-
-      // Fetch all bookings for the current month with session and swimmer data
-      const { data: bookingsMTD, error: bookingsError } = await supabase
+      // Private Pay - Month to Date
+      const { data: privatePayMTD } = await supabase
         .from('bookings')
         .select(`
-          id,
-          status,
-          session:sessions(
-            price_cents,
-            start_time
-          ),
-          swimmer:swimmers(
-            id,
-            first_name,
-            last_name,
-            funding_source:funding_sources(
-              id,
-              name,
-              short_name,
-              type,
-              price_cents
-            )
-          )
+          session:sessions(price_cents, start_time),
+          swimmer:swimmers(payment_type)
         `)
-        .or('status.eq.confirmed,status.eq.completed')
+        .eq('swimmer.payment_type', 'private_pay')
+        .eq('status', 'completed')
         .gte('session.start_time', startOfMonthUTC)
         .lt('session.start_time', nowUTC);
 
-      if (bookingsError) {
-        console.error('Error fetching bookings for revenue calculation:', bookingsError);
-      }
+      // VMRC/Funded - Month to Date
+      const { data: vmrcMTD } = await supabase
+        .from('bookings')
+        .select(`
+          session:sessions(price_cents, start_time),
+          swimmer:swimmers(payment_type)
+        `)
+        .eq('swimmer.payment_type', 'vmrc')
+        .eq('status', 'completed')
+        .gte('session.start_time', startOfMonthUTC)
+        .lt('session.start_time', nowUTC);
 
-      console.log(`Found ${bookingsMTD?.length || 0} bookings for revenue calculation`);
+      let privatePayRevenue = 0;
+      let fundedRevenue = 0;
 
-      let privatePayRevenueCents = 0;
-      let fundedRevenueCents = 0;
-      let privatePayBookingCount = 0;
-      let fundedBookingCount = 0;
-      let skippedBookingCount = 0;
-
-      // Track revenue by individual funding sources
-      const revenueBySource: Record<string, {
-        name: string;
-        shortName: string | null;
-        type: string;
-        revenue: number;
-        bookings: number;
-      }> = {};
-
-      // Calculate revenue based on correct business rules
-      bookingsMTD?.forEach(booking => {
-        // Skip if no session or swimmer data
-        if (!booking.session || !booking.swimmer) {
-          skippedBookingCount++;
-          return;
-        }
-
-        const sessionStartTime = new Date(booking.session.start_time);
-        const now = new Date();
-
-        // Determine if session should count as attended
-        // Completed bookings always count, confirmed bookings only count if session is in the past
-        const isAttended =
-          booking.status === 'completed' ||
-          (booking.status === 'confirmed' && sessionStartTime < now);
-
-        // Only count attended sessions
-        if (!isAttended) {
-          skippedBookingCount++;
-          return;
-        }
-
-        const priceCents = booking.session.price_cents || 0;
-        const fundingSource = booking.swimmer.funding_source;
-
-        // Skip if no funding source
-        if (!fundingSource) {
-          console.warn(`Booking ${booking.id} missing funding source for swimmer ${booking.swimmer.id}`);
-          skippedBookingCount++;
-          return;
-        }
-
-        // Route revenue based on funding source type
-        // Private Pay: type = 'private_pay'
-        // Funded: type = 'regional_center', 'scholarship', or other funded types
-        if (fundingSource.type === 'private_pay') {
-          privatePayRevenueCents += priceCents;
-          privatePayBookingCount++;
-        } else {
-          // regional_center, scholarship, etc.
-          fundedRevenueCents += priceCents;
-          fundedBookingCount++;
-        }
-
-        // Track individual sources for breakdown
-        const sourceName = fundingSource.name || 'Unknown';
-        if (!revenueBySource[sourceName]) {
-          revenueBySource[sourceName] = {
-            name: sourceName,
-            shortName: fundingSource.short_name,
-            type: fundingSource.type,
-            revenue: 0,
-            bookings: 0
-          };
-        }
-        revenueBySource[sourceName].revenue += priceCents;
-        revenueBySource[sourceName].bookings++;
+      privatePayMTD?.forEach(booking => {
+        const price = booking.session?.price_cents || 9000; // Default $90
+        privatePayRevenue += price;
       });
 
-      // Convert to dollars for logging
-      const privatePayRevenueDollars = privatePayRevenueCents / 100;
-      const fundedRevenueDollars = fundedRevenueCents / 100;
-
-      console.log(`Revenue calculation results:
-        Private Pay: ${privatePayBookingCount} bookings, $${privatePayRevenueDollars.toFixed(2)} (${privatePayRevenueCents} cents)
-        Funded: ${fundedBookingCount} bookings, $${fundedRevenueDollars.toFixed(2)} (${fundedRevenueCents} cents)
-        Skipped: ${skippedBookingCount} bookings
-        Date range: ${startOfMonthUTC} to ${nowUTC}
-        Total bookings fetched: ${bookingsMTD?.length || 0}`);
-
-      // Log funding source breakdown
-      console.log('Funding source breakdown:');
-      Object.values(revenueBySource).forEach(source => {
-        console.log(`  ${source.name} (${source.type}): ${source.bookings} bookings, $${(source.revenue / 100).toFixed(2)}`);
+      vmrcMTD?.forEach(booking => {
+        const price = booking.session?.price_cents || 9000; // Default $90
+        fundedRevenue += price;
       });
-
-      // Log sample data for debugging
-      if (bookingsMTD && bookingsMTD.length > 0) {
-        console.log('Sample booking data (first 3):');
-        bookingsMTD.slice(0, 3).forEach((booking, i) => {
-          console.log(`  Booking ${i + 1}:`, {
-            id: booking.id,
-            status: booking.status,
-            funding_source: booking.swimmer?.funding_source,
-            price_cents: booking.session?.price_cents,
-            start_time: booking.session?.start_time,
-            has_session: !!booking.session,
-            has_swimmer: !!booking.swimmer,
-            session_past: new Date(booking.session?.start_time || 0) < new Date(),
-            should_count: booking.status === 'completed' ||
-                         (booking.status === 'confirmed' && new Date(booking.session?.start_time || 0) < new Date())
-          });
-        });
-      }
-
-      // Store in cents for formatCurrency function
-      const privatePayRevenue = privatePayRevenueCents;
-      const fundedRevenue = fundedRevenueCents;
 
       setTodaysSessions(sessions || []);
       setStats({
-        totalSwimmers,
-        activeSwimmers,
-        waitlistedSwimmers,
-        privatePayCount,
-        fundedCount,
+        totalSwimmers: totalSwimmers ?? 0,
+        activeSwimmers: activeSwimmers ?? 0,
+        waitlistedSwimmers: waitlistedSwimmers ?? 0,
+        privatePayCount: privatePayCount ?? 0,
+        fundedCount: fundedCount ?? 0,
         sessionsToday: sessionsTodayCount ?? 0,
         pendingReferrals: 0, // Placeholder - referral_requests table might not exist
         pendingPOs: pos?.length ?? 0,
         sessionsNeedingProgress: bookingsNeedingProgress ?? 0,
         privatePayRevenue: privatePayRevenue ?? 0,
-        fundedRevenue: fundedRevenue ?? 0,
-        waitlistBreakdown: {
-          waitlist: metrics?.waitlist ?? 0,
-          pending: metrics?.pendingEnrollment ?? 0,
-          expired: metrics?.enrollmentExpired ?? 0,
-          dropped: metrics?.dropped ?? 0,
-          declined: metrics?.declined ?? 0
-        },
-        revenueBySource
+        fundedRevenue: fundedRevenue ?? 0
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
     } finally {
       setLoading(false);
     }
-  }, [metrics]);
+  }, []);
 
-  const handleUpdateProgress = (swimmerId: string) => {
+  const handleUpdateProgress = (
+    bookingId: string,
+    sessionId: string,
+    swimmerId: string,
+    swimmerName: string,
+    swimmerPhotoUrl: string | undefined,
+    sessionTime: string
+  ) => {
     // Navigate to the staff mode swimmer page instead of opening a modal
     router.push(`/staff-mode/swimmer/${swimmerId}`);
   };
@@ -358,10 +235,10 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (role && role !== 'admin') {
       router.push('/dashboard');
-    } else if (user && metrics) {
+    } else if (user) {
       fetchStats();
     }
-  }, [role, user, fetchStats, router, metrics]);
+  }, [role, user, fetchStats, router]);
 
   const pendingCount = (stats?.pendingReferrals || 0) + (stats?.pendingPOs || 0) + (stats?.sessionsNeedingProgress || 0);
 
@@ -372,9 +249,7 @@ export default function AdminDashboard() {
     }).format(cents / 100);
   };
 
-  const isLoading = loading || swimmersLoading || !metrics;
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="w-full px-6 py-6 space-y-6">
         {/* Header skeleton */}
@@ -413,8 +288,8 @@ export default function AdminDashboard() {
     );
   }
 
-  // If stats is still null after loading or there's an error, show error state
-  if (!stats || swimmersError) {
+  // If stats is still null after loading, show error state
+  if (!stats) {
     return (
       <div className="w-full px-6 py-6">
         <div className="text-center py-12">
@@ -457,16 +332,16 @@ export default function AdminDashboard() {
 
       {/* Clickable KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {/* Total Swimmers - Links to Swimmer Management */}
+        {/* Active Swimmers - Links to Swimmer Management */}
         <Link href="/admin/swimmers" className="block">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-cyan-300 min-h-[136px]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between h-full">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-muted-foreground">Total Swimmers</p>
-                  <p className="text-3xl font-bold">{metrics?.total.toLocaleString() || '0'}</p>
+                  <p className="text-sm text-muted-foreground">Active Swimmers</p>
+                  <p className="text-3xl font-bold">{stats?.activeSwimmers || 0}</p>
                   <p className="text-xs text-muted-foreground mt-1 truncate">
-                    {metrics?.vmrcClients} VMRC • {metrics?.privatePayClients} Private
+                    {stats?.totalSwimmers} total • {stats?.waitlistedSwimmers} waitlisted
                   </p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-cyan-100 flex items-center justify-center flex-shrink-0 ml-4">
@@ -477,20 +352,20 @@ export default function AdminDashboard() {
           </Card>
         </Link>
 
-        {/* Active Enrolled - Links to Swimmer Management */}
-        <Link href="/admin/swimmers?filter=enrolled" className="block">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-green-300 min-h-[136px]">
+        {/* Sessions Today - Links to Schedule */}
+        <Link href="/admin/schedule" className="block">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-blue-300 min-h-[136px]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between h-full">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-muted-foreground">Active Enrolled</p>
-                  <p className="text-3xl font-bold">{metrics?.enrolled.toLocaleString() || '0'}</p>
+                  <p className="text-sm text-muted-foreground">Sessions Today</p>
+                  <p className="text-3xl font-bold">{stats?.sessionsToday || 0}</p>
                   <p className="text-xs text-muted-foreground mt-1 truncate">
-                    {metrics ? `${Math.round((metrics.enrolled / metrics.total) * 100)}% of total` : 'Actively enrolled'}
+                    Scheduled lessons
                   </p>
                 </div>
-                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 ml-4">
-                  <UserCheck className="h-6 w-6 text-green-600" />
+                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 ml-4">
+                  <Calendar className="h-6 w-6 text-blue-600" />
                 </div>
               </div>
             </CardContent>
@@ -524,32 +399,10 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between h-full">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-muted-foreground">Waitlisted</p>
-                  <p className="text-3xl font-bold">{metrics?.waitlist.toLocaleString() || '0'}</p>
+                  <p className="text-3xl font-bold">{stats?.waitlistedSwimmers || 0}</p>
                   <p className="text-xs text-muted-foreground mt-1 truncate">
-                    {metrics ? `${Math.round((metrics.waitlist / metrics.total) * 100)}% of total` : 'Pending Assessment'}
+                    Pending Assessment
                   </p>
-                  {metrics && (
-                    <div className="mt-2 pt-2 border-t border-gray-100">
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        <div className="flex justify-between">
-                          <span>Waitlist:</span>
-                          <span className="font-medium">{metrics.waitlist}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Pending Enrollment:</span>
-                          <span className="font-medium">{metrics.pendingEnrollment}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Pending Approval:</span>
-                          <span className="font-medium">{metrics.pendingApprovalEnrollment}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Enrollment Expired:</span>
-                          <span className="font-medium">{metrics.enrollmentExpired}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
                 <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0 ml-4">
                   <Clock className="h-6 w-6 text-yellow-600" />
@@ -583,7 +436,7 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Regional Center Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Funded (Billed)</CardTitle>
             <p className="text-xs text-muted-foreground">Month to Date ({format(new Date(), 'MMMM yyyy')})</p>
           </CardHeader>
           <CardContent className="pt-0">
@@ -619,108 +472,6 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Funding Source Breakdown */}
-      <Card className="mb-6">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Funding Source Breakdown</CardTitle>
-          <p className="text-xs text-muted-foreground">Month to Date ({format(new Date(), 'MMMM yyyy')})</p>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Valley Mountain Regional Center (VMRC) */}
-              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <Building2 className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-700">Valley Mountain Regional Center (VMRC)</span>
-                </div>
-                <p className="text-lg font-bold text-blue-800">
-                  {formatCurrency(
-                    Object.values(stats?.revenueBySource || {}).reduce((total, source) => {
-                      if (source.name.toLowerCase().includes('valley mountain') ||
-                          source.name.toLowerCase().includes('vmrc') ||
-                          source.shortName?.toLowerCase().includes('vmrc')) {
-                        return total + source.revenue;
-                      }
-                      return total;
-                    }, 0)
-                  )}
-                </p>
-                <p className="text-xs text-blue-600 mt-1">Regional Center</p>
-              </div>
-
-              {/* Central Valley Regional Center (CVRC) */}
-              <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <Building2 className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm font-medium text-purple-700">Central Valley Regional Center (CVRC)</span>
-                </div>
-                <p className="text-lg font-bold text-purple-800">
-                  {formatCurrency(
-                    Object.values(stats?.revenueBySource || {}).reduce((total, source) => {
-                      if (source.name.toLowerCase().includes('central valley') ||
-                          source.name.toLowerCase().includes('cvrc') ||
-                          source.shortName?.toLowerCase().includes('cvrc')) {
-                        return total + source.revenue;
-                      }
-                      return total;
-                    }, 0)
-                  )}
-                </p>
-                <p className="text-xs text-purple-600 mt-1">Regional Center</p>
-              </div>
-
-              {/* Private Pay */}
-              <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <CreditCard className="h-4 w-4 text-emerald-600" />
-                  <span className="text-sm font-medium text-emerald-700">Private Pay</span>
-                </div>
-                <p className="text-lg font-bold text-emerald-800">
-                  {formatCurrency(stats?.privatePayRevenue || 0)}
-                </p>
-                <p className="text-xs text-emerald-600 mt-1">Private Pay</p>
-              </div>
-
-              {/* Scholarship */}
-              <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                <div className="flex items-center gap-2 mb-1">
-                  <Building2 className="h-4 w-4 text-amber-600" />
-                  <span className="text-sm font-medium text-amber-700">Scholarship</span>
-                </div>
-                <p className="text-lg font-bold text-amber-800">
-                  {formatCurrency(
-                    Object.values(stats?.revenueBySource || {}).reduce((total, source) => {
-                      if (source.type === 'scholarship' ||
-                          source.name.toLowerCase().includes('scholarship')) {
-                        return total + source.revenue;
-                      }
-                      return total;
-                    }, 0)
-                  )}
-                </p>
-                <p className="text-xs text-amber-600 mt-1">Scholarship</p>
-              </div>
-            </div>
-
-            {/* Additional funding sources */}
-            {stats?.revenueBySource && Object.keys(stats.revenueBySource).length > 0 && (
-              <div className="pt-3 border-t border-gray-200">
-                <p className="text-xs font-medium text-gray-700 mb-2">All Funding Sources:</p>
-                <div className="space-y-2">
-                  {Object.values(stats.revenueBySource).map((source, index) => (
-                    <div key={index} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-700">{source.name}</span>
-                      <span className="font-medium">{formatCurrency(source.revenue)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Main Content - Three Columns */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -887,7 +638,14 @@ export default function AdminDashboard() {
                               size="sm"
                               variant="outline"
                               className="text-orange-600 border-orange-300 hover:bg-orange-50 w-full justify-start"
-                              onClick={() => handleUpdateProgress(booking.swimmer!.id)}
+                              onClick={() => handleUpdateProgress(
+                                booking.id,
+                                session.id,
+                                booking.swimmer!.id,
+                                `${booking.swimmer!.first_name} ${booking.swimmer!.last_name}`,
+                                undefined, // admin page doesn't have swimmer photo_url
+                                session.start_time
+                              )}
                             >
                               <FileText className="h-4 w-4 mr-1" />
                               Update {booking.swimmer!.first_name}'s Progress
@@ -929,7 +687,7 @@ export default function AdminDashboard() {
                   <CreditCard className="h-4 w-4 text-emerald-600" />
                   <span className="text-sm text-emerald-700">Private Pay</span>
                 </div>
-                <p className="text-2xl font-bold text-emerald-800">{metrics?.privatePayClients.toLocaleString() || '0'}</p>
+                <p className="text-2xl font-bold text-emerald-800">{stats?.privatePayCount || 0}</p>
               </div>
             </Link>
 
@@ -937,9 +695,9 @@ export default function AdminDashboard() {
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 cursor-pointer transition-colors">
                 <div className="flex items-center gap-2 mb-1">
                   <Building2 className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm text-blue-700">Funded (VMRC)</span>
+                  <span className="text-sm text-blue-700">Funded</span>
                 </div>
-                <p className="text-2xl font-bold text-blue-800">{metrics?.vmrcClients.toLocaleString() || '0'}</p>
+                <p className="text-2xl font-bold text-blue-800">{stats?.fundedCount || 0}</p>
               </div>
             </Link>
 
@@ -949,7 +707,7 @@ export default function AdminDashboard() {
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   <span className="text-sm text-green-700">Enrolled</span>
                 </div>
-                <p className="text-2xl font-bold text-green-800">{metrics?.enrolled.toLocaleString() || '0'}</p>
+                <p className="text-2xl font-bold text-green-800">{stats?.activeSwimmers || 0}</p>
               </div>
             </Link>
 
@@ -959,29 +717,7 @@ export default function AdminDashboard() {
                   <Clock className="h-4 w-4 text-yellow-600" />
                   <span className="text-sm text-yellow-700">Waitlisted</span>
                 </div>
-                <p className="text-2xl font-bold text-yellow-800">{metrics?.waitlist.toLocaleString() || '0'}</p>
-                {metrics && (
-                  <div className="mt-1 pt-1 border-t border-yellow-200">
-                    <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[9px] text-yellow-600">Waitlist:</span>
-                        <span className="text-[9px] font-medium">{metrics.waitlist}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[9px] text-yellow-600">Pending Enroll:</span>
-                        <span className="text-[9px] font-medium">{metrics.pendingEnrollment}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[9px] text-yellow-600">Expired:</span>
-                        <span className="text-[9px] font-medium">{metrics.enrollmentExpired}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[9px] text-yellow-600">Declined:</span>
-                        <span className="text-[9px] font-medium">{metrics.declined}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <p className="text-2xl font-bold text-yellow-800">{stats?.waitlistedSwimmers || 0}</p>
               </div>
             </Link>
           </div>
