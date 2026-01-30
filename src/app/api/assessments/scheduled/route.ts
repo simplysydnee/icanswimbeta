@@ -120,8 +120,9 @@ export async function GET() {
       .eq('sessions.session_type', 'assessment')
       .eq('status', 'confirmed')
       .gte('sessions.start_time', `${todayString}T00:00:00`)
-      .lt('sessions.start_time', `${todayString}T23:59:59`)
-      .order('sessions.start_time', { ascending: true });
+      .lt('sessions.start_time', `${todayString}T23:59:59`);
+      // Note: Ordering removed due to Supabase nested table ordering issue
+      // .order('start_time', { foreignTable: 'sessions', ascending: true });
 
     // Filter by instructor if user is instructor (not admin)
     if (isInstructor && !isAdmin) {

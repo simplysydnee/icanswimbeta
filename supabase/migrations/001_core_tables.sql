@@ -196,7 +196,7 @@ CREATE TABLE public.sessions (
 
   -- Assignment
   instructor_id UUID REFERENCES public.profiles(id),
-  location TEXT, -- 'Turlock', 'Modesto'
+  location TEXT, -- 'Modesto', 'Merced'
 
   -- Capacity
   max_capacity INTEGER DEFAULT 1,

@@ -7,6 +7,13 @@ export interface SwimmerMetrics {
   averageLessons: number;
   regionalCenterClients: number;
   lastUpdated: string;
+  // Waitlist breakdown
+  waitlistBreakdown: {
+    waitlist: number;
+    pending_enrollment: number;
+    pending_approval: number;
+    pending_assessment: number;
+  };
 }
 
 async function fetchSwimmerMetrics(): Promise<SwimmerMetrics> {

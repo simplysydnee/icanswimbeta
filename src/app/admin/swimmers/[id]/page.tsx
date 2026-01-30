@@ -1828,7 +1828,7 @@ function AdminSwimmerDetailContent() {
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <h4 className="font-medium">Monday, Dec 23, 2024</h4>
-                        <p className="text-sm text-muted-foreground">3:00 PM - 3:30 PM • Turlock Location</p>
+                        <p className="text-sm text-muted-foreground">3:00 PM - 3:30 PM • Modesto Location</p>
                       </div>
                       <Badge variant="outline">Booked</Badge>
                     </div>
@@ -1850,7 +1850,7 @@ function AdminSwimmerDetailContent() {
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <h4 className="font-medium">Monday, Dec 30, 2024</h4>
-                        <p className="text-sm text-muted-foreground">3:00 PM - 3:30 PM • Turlock Location</p>
+                        <p className="text-sm text-muted-foreground">3:00 PM - 3:30 PM • Modesto Location</p>
                       </div>
                       <Badge variant="outline">Booked</Badge>
                     </div>

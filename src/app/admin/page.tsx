@@ -30,6 +30,10 @@ import { createClient } from '@/lib/supabase/client';
 import NeedsProgressUpdateCard from '@/components/dashboard/NeedsProgressUpdateCard';
 import { ToDoWidget } from '@/components/dashboard/ToDoWidget';
 
+// Funding source UUIDs (from database)
+const PRIVATE_PAY_FUNDING_SOURCE_ID = '5be04fb2-39e9-4764-8cd8-2ab03ad491b6';
+const VMRC_FUNDING_SOURCE_ID = 'de392da6-2f26-46a8-9fc1-075e8e973d61';
+
 interface DashboardStats {
   totalSwimmers: number;
   activeSwimmers: number;
@@ -94,12 +98,13 @@ export default function AdminDashboard() {
       const { count: privatePayCount, error: privateError } = await supabase
         .from('swimmers')
         .select('*', { count: 'exact', head: true })
-        .eq('payment_type', 'private_pay');
+        .eq('funding_source_id', PRIVATE_PAY_FUNDING_SOURCE_ID);
 
       const { count: fundedCount, error: fundedError } = await supabase
         .from('swimmers')
         .select('*', { count: 'exact', head: true })
-        .in('payment_type', ['funded', 'scholarship', 'other']);
+        .not('funding_source_id', 'is', null)
+        .neq('funding_source_id', PRIVATE_PAY_FUNDING_SOURCE_ID);
 
       // Fetch pending purchase orders
       const { data: pos } = await supabase
@@ -162,26 +167,13 @@ export default function AdminDashboard() {
       const startOfMonthUTC = startOfMonth(new Date()).toISOString();
       const nowUTC = new Date().toISOString();
 
-      // Private Pay - Month to Date
-      const { data: privatePayMTD } = await supabase
+      // Fetch all completed bookings month-to-date with swimmer's funding source
+      const { data: bookingsMTD } = await supabase
         .from('bookings')
         .select(`
           session:sessions(price_cents, start_time),
-          swimmer:swimmers(payment_type)
+          swimmer:swimmers(funding_source_id, payment_type)
         `)
-        .eq('swimmer.payment_type', 'private_pay')
-        .eq('status', 'completed')
-        .gte('session.start_time', startOfMonthUTC)
-        .lt('session.start_time', nowUTC);
-
-      // VMRC/Funded - Month to Date
-      const { data: vmrcMTD } = await supabase
-        .from('bookings')
-        .select(`
-          session:sessions(price_cents, start_time),
-          swimmer:swimmers(payment_type)
-        `)
-        .eq('swimmer.payment_type', 'vmrc')
         .eq('status', 'completed')
         .gte('session.start_time', startOfMonthUTC)
         .lt('session.start_time', nowUTC);
@@ -189,14 +181,17 @@ export default function AdminDashboard() {
       let privatePayRevenue = 0;
       let fundedRevenue = 0;
 
-      privatePayMTD?.forEach(booking => {
+      bookingsMTD?.forEach(booking => {
         const price = booking.session?.price_cents || 9000; // Default $90
-        privatePayRevenue += price;
-      });
+        const fundingSourceId = booking.swimmer?.funding_source_id;
+        const paymentType = booking.swimmer?.payment_type;
 
-      vmrcMTD?.forEach(booking => {
-        const price = booking.session?.price_cents || 9000; // Default $90
-        fundedRevenue += price;
+        if (fundingSourceId === PRIVATE_PAY_FUNDING_SOURCE_ID || paymentType === 'private_pay') {
+          privatePayRevenue += price;
+        } else {
+          // Any other funding source (including VMRC, CVRC, etc.) is considered funded
+          fundedRevenue += price;
+        }
       });
 
       setTodaysSessions(sessions || []);

@@ -6,12 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { AlertCircle, FileText, ChevronRight, User, Clock, CheckCircle, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
-import QuickProgressUpdateModal from '@/components/progress/QuickProgressUpdateModal';
-import CompactQuickActions from './CompactQuickActions';
 
 interface SwimmerNeedingUpdate {
   id: string;
@@ -43,23 +40,26 @@ interface NeedsProgressUpdateCardProps {
 export default function NeedsProgressUpdateCard({ className }: NeedsProgressUpdateCardProps) {
   const [swimmers, setSwimmers] = useState<SwimmerNeedingUpdate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSwimmer, setSelectedSwimmer] = useState<SwimmerNeedingUpdate | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchSwimmersNeedingUpdate = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     try {
       const response = await fetch('/api/swimmers/needs-progress-update', { signal });
       if (!response.ok) {
-        throw new Error('Failed to fetch swimmers needing update');
+        // API endpoint not available - show empty state
+        console.warn('Progress update API not available, showing empty state');
+        setSwimmers([]);
+        return;
       }
       const data = await response.json();
       setSwimmers(data);
     } catch (error) {
       // Only log error if it's not an abort error
       if (error instanceof Error && error.name !== 'AbortError') {
-        console.error('Error fetching swimmers needing update:', error);
+        console.warn('Error fetching swimmers needing update:', error.message);
       }
+      // Set empty array to show "no swimmers" state
+      setSwimmers([]);
     } finally {
       setLoading(false);
     }
@@ -76,15 +76,8 @@ export default function NeedsProgressUpdateCard({ className }: NeedsProgressUpda
   }, [fetchSwimmersNeedingUpdate]);
 
   const handleUpdateProgress = (swimmer: SwimmerNeedingUpdate) => {
-    setSelectedSwimmer(swimmer);
-    setIsModalOpen(true);
-  };
-
-  const handleProgressSubmitted = () => {
-    setIsModalOpen(false);
-    setSelectedSwimmer(null);
-    // Refresh the list
-    fetchSwimmersNeedingUpdate();
+    // Navigate to the staff mode swimmer page instead of opening a modal
+    window.location.href = `/staff-mode/swimmer/${swimmer.swimmer.id}`;
   };
 
   if (loading) {
@@ -214,20 +207,6 @@ export default function NeedsProgressUpdateCard({ className }: NeedsProgressUpda
           )}
         </CardContent>
       </Card>
-
-      {selectedSwimmer && (
-        <QuickProgressUpdateModal
-          open={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          bookingId={selectedSwimmer.id}
-          sessionId={selectedSwimmer.session_id}
-          swimmerId={selectedSwimmer.swimmer.id}
-          swimmerName={`${selectedSwimmer.swimmer.first_name} ${selectedSwimmer.swimmer.last_name}`}
-          swimmerPhotoUrl={selectedSwimmer.swimmer.photo_url}
-          sessionTime={selectedSwimmer.session.start_time}
-          onSuccess={handleProgressSubmitted}
-        />
-      )}
     </>
   );
 }

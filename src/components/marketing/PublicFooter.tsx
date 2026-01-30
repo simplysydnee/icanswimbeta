@@ -66,8 +66,8 @@ export function PublicFooter() {
               <div className="flex items-center justify-center md:justify-start gap-3 text-slate-300">
                 <MapPin className="h-5 w-5 text-slate-400 flex-shrink-0" />
                 <div>
-                  <p>Modesto, CA</p>
-                  <p className="text-sm text-slate-400">Serving the Central Valley</p>
+                  <p>Serving Modesto & Merced</p>
+                  <p className="text-sm text-slate-400">Central Valley, California</p>
                 </div>
               </div>
             </div>

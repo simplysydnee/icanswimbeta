@@ -23,6 +23,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { Loader2 } from 'lucide-react'
 import { format } from 'date-fns'
+import { LOCATIONS } from '@/config/constants'
 
 interface Session {
   id: string
@@ -250,10 +251,11 @@ export function EditSessionDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">No location</SelectItem>
-                <SelectItem value="Modesto">Modesto</SelectItem>
-                <SelectItem value="Turlock">Turlock</SelectItem>
-                <SelectItem value="Modesto: 1212 Kansas Ave">Modesto: 1212 Kansas Ave</SelectItem>
-                <SelectItem value="Turlock: 123 Main St">Turlock: 123 Main St</SelectItem>
+                {LOCATIONS.map((loc) => (
+                  <SelectItem key={loc.value} value={loc.value}>
+                    {loc.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

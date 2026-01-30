@@ -103,16 +103,17 @@ export function AssessmentTab({ selectedSwimmerId, onBookingComplete }: Assessme
     fetchSessions()
   }, [supabase, toast])
 
-  // Fetch parent's approved swimmers
+  // Fetch parent's approved waitlist swimmers
   useEffect(() => {
     const fetchSwimmers = async () => {
       if (!user) return
 
       const { data, error } = await supabase
         .from('swimmers')
-        .select('id, first_name, last_name, funding_source_id, assessment_status, parent_id')
+        .select('id, first_name, last_name, funding_source_id, assessment_status, parent_id, enrollment_status')
         .eq('parent_id', user.id)
         .eq('approval_status', 'approved')
+        .eq('enrollment_status', 'waitlist')
         .order('first_name', { ascending: true })
 
       if (error) {
@@ -261,15 +262,15 @@ export function AssessmentTab({ selectedSwimmerId, onBookingComplete }: Assessme
     )
   }
 
-  // No approved swimmers
+  // No waitlist swimmers needing assessments
   if (swimmers.length === 0) {
     return (
       <Card>
         <CardContent className="pt-6 text-center">
           <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold">No Approved Swimmers</h3>
+          <h3 className="text-lg font-semibold">All Set!</h3>
           <p className="text-gray-600 mt-2">
-            You don't have any approved swimmers yet.
+            You don't have any waitlist swimmers needing assessments.
           </p>
         </CardContent>
       </Card>

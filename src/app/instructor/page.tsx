@@ -121,37 +121,16 @@ export default function InstructorDashboard() {
       acc + (s.bookings?.filter((b: any) => b.status === 'confirmed').length || 0), 0
     );
 
-    // Get accurate count of bookings needing progress updates from the API
+    // Calculate bookings needing progress updates from session data
     let needsProgressUpdate = 0;
-    try {
-      const response = await fetch('/api/swimmers/needs-progress-update');
-      if (response.ok) {
-        const bookings = await response.json();
-        needsProgressUpdate = bookings.length || 0;
-      } else {
-        console.error('Failed to fetch bookings needing progress update:', response.status);
-        // Fallback to approximate calculation (session-level check)
-        needsProgressUpdate = todaySessions.filter(s => {
-          const sessionTime = new Date(s.start_time);
-          const now = new Date();
-          const isPast = sessionTime < now;
-          const hasProgress = s.progress_notes && s.progress_notes.length > 0;
-          const hasBookings = s.bookings && s.bookings.filter((b: any) => b.status === 'confirmed').length > 0;
-          return isPast && !hasProgress && hasBookings;
-        }).length;
-      }
-    } catch (error) {
-      console.error('Error fetching bookings needing progress update:', error);
-      // Fallback to approximate calculation (session-level check)
-      needsProgressUpdate = todaySessions.filter(s => {
-        const sessionTime = new Date(s.start_time);
-        const now = new Date();
-        const isPast = sessionTime < now;
-        const hasProgress = s.progress_notes && s.progress_notes.length > 0;
-        const hasBookings = s.bookings && s.bookings.filter((b: any) => b.status === 'confirmed').length > 0;
-        return isPast && !hasProgress && hasBookings;
-      }).length;
-    }
+    needsProgressUpdate = todaySessions.filter(s => {
+      const sessionTime = new Date(s.start_time);
+      const now = new Date();
+      const isPast = sessionTime < now;
+      const hasProgress = s.progress_notes && s.progress_notes.length > 0;
+      const hasBookings = s.bookings && s.bookings.filter((b: any) => b.status === 'confirmed').length > 0;
+      return isPast && !hasProgress && hasBookings;
+    }).length;
 
     // Get completed sessions this week
     const startOfWeek = new Date();

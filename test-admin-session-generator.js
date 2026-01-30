@@ -120,8 +120,8 @@ async function testAdminSessionGenerator() {
     // Try to fill location
     const locationInput = await page.locator('input[name="location"], [placeholder*="location"], text=Location + input').first();
     if (await locationInput.count() > 0) {
-      await locationInput.fill('Turlock');
-      console.log('✅ Filled location: Turlock');
+      await locationInput.fill('Modesto');
+      console.log('✅ Filled location: Modesto');
     }
 
     // Try to set max capacity

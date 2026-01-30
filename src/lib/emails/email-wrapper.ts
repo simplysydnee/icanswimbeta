@@ -24,7 +24,7 @@ export function wrapEmailWithHeader(content: string): string {
       <div style="padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center; font-size: 14px; color: #64748b;">
         <p style="margin: 0 0 10px 0;">
           <strong>I Can Swim</strong><br>
-          Modesto, CA
+          Serving Modesto & Merced, CA
         </p>
         <p style="margin: 0; line-height: 1.8;">
           Email: <a href="mailto:info@icanswim209.com" style="color: #2a5e84;">info@icanswim209.com</a><br>

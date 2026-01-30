@@ -16,6 +16,10 @@ export const APP_CONFIG = {
       name: 'Modesto',
       address: '1212 Kansas Ave, Modesto, CA 95351',
     },
+    merced: {
+      name: 'Merced',
+      address: '750 Motel Dr, Merced, CA 95340',
+    },
   },
   social: {
     facebook: 'https://facebook.com/icanswim209',
@@ -313,7 +317,7 @@ IN CONSIDERATION OF my desire to participate in said Activity and being given th
 
 I HEREBY, for myself, my heirs, executors, administrators, assigns, or personal representatives (hereinafter collectively, "Releasor", "I", or "me", which terms shall also include Releasor's parents or guardian if Releasor is under 18 years of age), knowingly and voluntarily enter into this WAIVER AND RELEASE OF LIABILITY and hereby waive any and all rights, claims or causes of action of any kind arising out of my participation in the Activity; and
 
-I HEREBY, release and forever discharge I CAN SWIM, LLC, located at 2705 Sebastian Drive, Turlock, California 95382, their affiliates, managers, members, agents, attorneys, staff, volunteers, heirs, representatives, predecessors, successors and assigns (collectively "Releasee's), from any physical or psychological injury that I may suffer as a direct result of my participation in the aforementioned Activity.
+I HEREBY, release and forever discharge I CAN SWIM, LLC, located at 1212 Kansas Ave, Modesto, California 95351, their affiliates, managers, members, agents, attorneys, staff, volunteers, heirs, representatives, predecessors, successors and assigns (collectively "Releasee's), from any physical or psychological injury that I may suffer as a direct result of my participation in the aforementioned Activity.
 
 I AM VOLUNTARILY PARTICIPATING IN THE AFOREMENTIONED ACTIVITY AND I AM PARTICIPATING IN THE ACTIVITY ENTIRELY AT MY OWN RISK. I AM AWARE OF THE RISKS ASSOCIATED WITH PARTICIPATING IN THIS ACTIVITY, WHICH MAY INCLUDE, BUT ARE NOT LIMITED TO: PHYSICAL OR PSYCHOLOGICAL INJURY, PAIN, SUFFERING, ILLNESS, DISFIGUREMENT, TEMPORARY OR PERMANENT DISABILITY (INCLUDING PARALYSIS), ECONOMIC OR EMOTIONAL LOSS, AND DEATH. I UNDERSTAND THAT THESE INJURIES OR OUTCOMES MAY ARISE FROM MY OWN OR OTHERS' NEGLIGENCE, CONDITIONS RELATED TO TRAVEL TO AND FROM THE ACTIVITY, OR FROM CONDITIONS AT THE ACTIVITY LOCATION(S). NONETHELESS, I ASSUME ALL RELATED RISKS, BOTH KNOWN AND UNKNOWN TO ME, OF MY PARTICIPATION IN THIS ACTIVITY.
 

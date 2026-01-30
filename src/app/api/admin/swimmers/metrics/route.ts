@@ -9,6 +9,13 @@ interface SwimmerMetricsResponse {
   averageLessons: number;
   regionalCenterClients: number;
   lastUpdated: string;
+  // Waitlist breakdown
+  waitlistBreakdown: {
+    waitlist: number;
+    pending_enrollment: number;
+    pending_approval: number;
+    pending_assessment: number;
+  };
 }
 
 export async function GET() {
@@ -62,6 +69,37 @@ export async function GET() {
     if (waitlistedError) {
       console.error('Error fetching waitlisted swimmers:', waitlistedError);
       throw waitlistedError;
+    }
+
+    // Query 2a: Waitlist breakdown by enrollment status
+    const { count: pendingEnrollmentCount, error: pendingEnrollmentError } = await supabase
+      .from('swimmers')
+      .select('*', { count: 'exact', head: true })
+      .eq('enrollment_status', 'pending_enrollment');
+
+    if (pendingEnrollmentError) {
+      console.error('Error fetching pending enrollment swimmers:', pendingEnrollmentError);
+      throw pendingEnrollmentError;
+    }
+
+    const { count: pendingApprovalCount, error: pendingApprovalError } = await supabase
+      .from('swimmers')
+      .select('*', { count: 'exact', head: true })
+      .eq('enrollment_status', 'pending_approval');
+
+    if (pendingApprovalError) {
+      console.error('Error fetching pending approval swimmers:', pendingApprovalError);
+      throw pendingApprovalError;
+    }
+
+    const { count: pendingAssessmentCount, error: pendingAssessmentError } = await supabase
+      .from('swimmers')
+      .select('*', { count: 'exact', head: true })
+      .eq('enrollment_status', 'pending_assessment');
+
+    if (pendingAssessmentError) {
+      console.error('Error fetching pending assessment swimmers:', pendingAssessmentError);
+      throw pendingAssessmentError;
     }
 
     // Query 3: Active enrolled swimmers (all funding sources)
@@ -136,7 +174,13 @@ export async function GET() {
       activeEnrolledSwimmers: activeEnrolledSwimmers || 0,
       averageLessons: parseFloat(averageLessons.toFixed(1)), // Round to 1 decimal place
       regionalCenterClients: regionalCenterClients || 0,
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      waitlistBreakdown: {
+        waitlist: waitlistedSwimmers || 0,
+        pending_enrollment: pendingEnrollmentCount || 0,
+        pending_approval: pendingApprovalCount || 0,
+        pending_assessment: pendingAssessmentCount || 0
+      }
     };
 
     console.log(`✅ Admin fetched swimmer metrics:`, {

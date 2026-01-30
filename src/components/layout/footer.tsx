@@ -94,8 +94,8 @@ export function Footer() {
               <li className="flex items-center gap-3 justify-center md:justify-start">
                 <MapPin className="h-4 w-4 shrink-0" />
                 <div>
-                  <p>Modesto, CA</p>
-                  <p className="text-xs text-slate-400">Serving the Central Valley</p>
+                  <p>Serving Modesto & Merced</p>
+                  <p className="text-xs text-slate-400">Central Valley, California</p>
                 </div>
               </li>
             </ul>

@@ -24,6 +24,7 @@ import { format } from 'date-fns'
 import { CalendarIcon, Filter, X, Search, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BookingFilters as BookingFiltersType } from './types'
+import { LOCATIONS } from '@/config/constants'
 
 interface BookingFiltersProps {
   onFilterChange: (filters: BookingFiltersType) => void
@@ -370,20 +371,16 @@ export function BookingFilters({
               >
                 All Locations
               </Badge>
-              <Badge
-                variant={location === 'Turlock' ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => setLocation('Turlock')}
-              >
-                Turlock
-              </Badge>
-              <Badge
-                variant={location === 'Modesto' ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => setLocation('Modesto')}
-              >
-                Modesto
-              </Badge>
+              {LOCATIONS.map((loc) => (
+                <Badge
+                  key={loc.value}
+                  variant={location === loc.value ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => setLocation(loc.value)}
+                >
+                  {loc.label}
+                </Badge>
+              ))}
             </div>
           </div>
         </div>

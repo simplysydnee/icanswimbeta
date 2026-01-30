@@ -51,6 +51,16 @@ function getPacificOffsetMs(date: Date): number {
     timeZoneName: 'longOffset'
   });
   const parts = formatter.formatToParts(date);
+
+  if (DEBUG_TIMES) {
+    console.log('getPacificOffsetMs debug:', {
+      dateUTC: date.toISOString(),
+      dateLocal: date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
+      parts: parts.map(p => ({ type: p.type, value: p.value })),
+      browserTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
+  }
+
   const offsetPart = parts.find(part => part.type === 'timeZoneName');
   if (offsetPart) {
     // Parse offset like "GMT-8" or "GMT-7"
@@ -58,17 +68,50 @@ function getPacificOffsetMs(date: Date): number {
     if (match) {
       const sign = match[1] === '-' ? -1 : 1;
       const hours = parseInt(match[2], 10);
-      return sign * hours * 60 * 60 * 1000;
+      const offset = sign * hours * 60 * 60 * 1000;
+
+      if (DEBUG_TIMES) {
+        console.log('getPacificOffsetMs parsed:', {
+          offsetPart: offsetPart.value,
+          sign: match[1],
+          hours,
+          offsetMs: offset,
+          offsetHours: offset / (60 * 60 * 1000)
+        });
+      }
+
+      return offset;
     }
   }
   // Fallback to UTC-8 (standard time)
-  return -8 * 60 * 60 * 1000;
+  const fallbackOffset = -8 * 60 * 60 * 1000;
+  if (DEBUG_TIMES) {
+    console.log('getPacificOffsetMs using fallback:', {
+      fallbackOffsetMs: fallbackOffset,
+      fallbackHours: fallbackOffset / (60 * 60 * 1000)
+    });
+  }
+  return fallbackOffset;
 }
 
 // Convert UTC date to Pacific time
 function toPacificTime(date: Date): Date {
   const offset = getPacificOffsetMs(date);
-  return new Date(date.getTime() + offset); // UTC + offset = Pacific time
+  const pacificDate = new Date(date.getTime() + offset); // UTC + offset = Pacific time
+
+  if (DEBUG_TIMES) {
+    console.log('toPacificTime debug:', {
+      dateUTC: date.toISOString(),
+      dateLocal: date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
+      offsetMs: offset,
+      offsetHours: offset / (60 * 60 * 1000),
+      pacificDateUTC: pacificDate.toISOString(),
+      pacificDateLocal: pacificDate.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
+      browserTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
+  }
+
+  return pacificDate;
 }
 
 // Format a UTC date string in Pacific time

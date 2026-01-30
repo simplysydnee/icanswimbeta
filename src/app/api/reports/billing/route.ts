@@ -183,18 +183,11 @@ function calculateBillingMetrics(
     }
   })
 
-  // Revenue from bookings (Private Pay and Funded)
-  const privatePay = {
-    monthlyRevenue: 0,
-    ytdRevenue: 0,
-    outstanding: 0
-  }
-
-  const fundedRevenue = {
-    monthlyRevenue: 0,
-    ytdRevenue: 0,
-    outstanding: 0
-  }
+  // Revenue from bookings (Private Pay and Funded) - calculate in cents to avoid floating point errors
+  let privatePayMonthlyCents = 0;
+  let privatePayYTDCents = 0;
+  let fundedMonthlyCents = 0;
+  let fundedYTDCents = 0;
 
   let privatePayCount = 0;
   let fundedCount = 0;
@@ -221,26 +214,26 @@ function calculateBillingMetrics(
       return;
     }
 
-    const amount = (booking.session.price_cents || 0) / 100;
+    const amountCents = booking.session.price_cents || 0;
 
     // Route revenue based on swimmer's payment type
     // Private Pay: payment_type = 'private_pay'
-    // Funded: payment_type = 'vmrc', 'scholarship', or 'other'
+    // Funded: payment_type = 'funding_source', 'scholarship', or 'other'
     if (booking.swimmer.payment_type === 'private_pay') {
       if (sessionStartTime >= monthStart) {
-        privatePay.monthlyRevenue += amount;
+        privatePayMonthlyCents += amountCents;
         privatePayCount++;
       }
       if (sessionStartTime >= yearStart) {
-        privatePay.ytdRevenue += amount;
+        privatePayYTDCents += amountCents;
       }
-    } else if (['vmrc', 'scholarship', 'other'].includes(booking.swimmer.payment_type)) {
+    } else if (['funding_source', 'scholarship', 'other'].includes(booking.swimmer.payment_type)) {
       if (sessionStartTime >= monthStart) {
-        fundedRevenue.monthlyRevenue += amount;
+        fundedMonthlyCents += amountCents;
         fundedCount++;
       }
       if (sessionStartTime >= yearStart) {
-        fundedRevenue.ytdRevenue += amount;
+        fundedYTDCents += amountCents;
       }
     } else {
       // Unknown payment type
@@ -249,9 +242,22 @@ function calculateBillingMetrics(
     }
   })
 
+  // Convert to dollars for the response
+  const privatePay = {
+    monthlyRevenue: privatePayMonthlyCents / 100,
+    ytdRevenue: privatePayYTDCents / 100,
+    outstanding: 0
+  };
+
+  const fundedRevenue = {
+    monthlyRevenue: fundedMonthlyCents / 100,
+    ytdRevenue: fundedYTDCents / 100,
+    outstanding: 0
+  };
+
   console.log(`Billing report revenue calculation:
-    Private Pay: ${privatePayCount} bookings, $${privatePay.monthlyRevenue.toFixed(2)} monthly, $${privatePay.ytdRevenue.toFixed(2)} YTD
-    Funded: ${fundedCount} bookings, $${fundedRevenue.monthlyRevenue.toFixed(2)} monthly, $${fundedRevenue.ytdRevenue.toFixed(2)} YTD
+    Private Pay: ${privatePayCount} bookings, $${privatePay.monthlyRevenue.toFixed(2)} monthly (${privatePayMonthlyCents} cents), $${privatePay.ytdRevenue.toFixed(2)} YTD (${privatePayYTDCents} cents)
+    Funded: ${fundedCount} bookings, $${fundedRevenue.monthlyRevenue.toFixed(2)} monthly (${fundedMonthlyCents} cents), $${fundedRevenue.ytdRevenue.toFixed(2)} YTD (${fundedYTDCents} cents)
     Skipped: ${skippedCount} bookings`);
 
   // Weekly billing (last 4 weeks)

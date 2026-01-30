@@ -4,7 +4,7 @@ import { Star } from 'lucide-react';
 const testimonials = [
   {
     name: 'Sarah J.',
-    location: 'Turlock',
+    location: 'Merced',
     rating: 5,
     text: 'The progress tracking has been amazing for my son with autism. We can see exactly how he\'s improving each week.',
     swimmer: 'Age 8, Autism',
@@ -18,7 +18,7 @@ const testimonials = [
   },
   {
     name: 'Jennifer L.',
-    location: 'Turlock',
+    location: 'Merced',
     rating: 5,
     text: 'Booking lessons is so easy now. I can schedule around my work and see all available time slots instantly.',
     swimmer: 'Age 7, Sensory Processing',

@@ -2,8 +2,8 @@
 
 ## Current Business Context
 I Can Swim currently operates two locations:
-1. **Turlock**: 2705 Sebastian Drive, Turlock, CA 95382
-2. **Modesto**: 1212 Kansas Ave, Modesto, CA 95351
+1. **Modesto**: 1212 Kansas Ave, Modesto, CA 95351
+2. **Merced**: 750 Motel Dr, Merced, CA 95340
 
 ## Phase 1: Database Schema Updates
 
@@ -11,7 +11,7 @@ I Can Swim currently operates two locations:
 ```sql
 CREATE TABLE locations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL, -- e.g., "Turlock", "Modesto"
+  name TEXT NOT NULL, -- e.g., "Modesto", "Merced"
   address TEXT NOT NULL,
   city TEXT NOT NULL,
   state TEXT NOT NULL,
@@ -25,8 +25,8 @@ CREATE TABLE locations (
 
 -- Insert initial locations
 INSERT INTO locations (name, address, city, state, zip_code) VALUES
-  ('Turlock', '2705 Sebastian Drive', 'Turlock', 'CA', '95382'),
-  ('Modesto', '1212 Kansas Ave', 'Modesto', 'CA', '95351');
+  ('Modesto', '1212 Kansas Ave', 'Modesto', 'CA', '95351'),
+  ('Merced', '750 Motel Dr', 'Merced', 'CA', '95340');
 ```
 
 ### 1.2 Update Sessions Table
@@ -34,8 +34,8 @@ INSERT INTO locations (name, address, city, state, zip_code) VALUES
 -- Add location_id to sessions table
 ALTER TABLE sessions ADD COLUMN location_id UUID REFERENCES locations(id);
 
--- Update existing sessions (assign to Turlock as default)
-UPDATE sessions SET location_id = (SELECT id FROM locations WHERE name = 'Turlock' LIMIT 1);
+-- Update existing sessions (assign to Modesto as default)
+UPDATE sessions SET location_id = (SELECT id FROM locations WHERE name = 'Modesto' LIMIT 1);
 ```
 
 ### 1.3 Update Swimmers Table
@@ -212,8 +212,8 @@ interface SwimmerWithLocation extends Swimmer {
   "end_time": "2024-01-15T10:30:00Z",
   "location": {
     "id": "location-uuid",
-    "name": "Turlock",
-    "address": "2705 Sebastian Drive"
+    "name": "Modesto",
+    "address": "1212 Kansas Ave"
   },
   // ... other session fields
 }

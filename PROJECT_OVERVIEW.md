@@ -10,8 +10,8 @@
 - **Email**: sutton@icanswim209.com
 - **Website**: icanswim209.com
 - **Locations**:
-  - Turlock: 2705 Sebastian Drive, Turlock, CA 95382
   - Modesto: 1212 Kansas Ave, Modesto, CA 95351
+  - Merced: 750 Motel Dr, Merced, CA 95340
 
 ## Technology Stack
 

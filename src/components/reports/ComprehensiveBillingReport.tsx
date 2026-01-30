@@ -32,6 +32,11 @@ interface BillingData {
     ytdRevenue: number
     outstanding: number
   }
+  fundedRevenue: {
+    monthlyRevenue: number
+    ytdRevenue: number
+    outstanding: number
+  }
   weeklyBilling: Array<{ week: string; amount: number }>
   byInstructor: Array<{ name: string; revenue: number; sessions: number }>
   aging: {

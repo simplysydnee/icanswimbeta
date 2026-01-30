@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { SwimmerManagementTable } from '@/components/swimmers/SwimmerManagementTable';
 import { SwimmerCard } from '@/components/swimmers/SwimmerCard';
@@ -9,43 +9,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Download, Filter, BarChart3, Clock, UserCheck, UserX, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useSwimmerMetrics } from '@/hooks/useSwimmerMetrics';
+import { useAdminSwimmers } from '@/hooks/useAdminSwimmers';
+import { calculateSwimmerKPIs } from '@/lib/admin-utils';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { Swimmer } from '@/types/swimmer';
 
 export default function AdminSwimmersPage() {
-  const { data: metrics, isLoading: metricsLoading, error: metricsError } = useSwimmerMetrics();
-  const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
-  const [swimmersLoading, setSwimmersLoading] = useState(true);
-  const [swimmersError, setSwimmersError] = useState<string | null>(null);
+  const { data: swimmers, isLoading: swimmersLoading, error: swimmersError } = useAdminSwimmers();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
 
-  const fetchSwimmers = useCallback(async () => {
-    setSwimmersLoading(true);
-    setSwimmersError(null);
-
-    try {
-      const response = await fetch('/api/admin/swimmers?limit=50');
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch swimmers: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      setSwimmers(data.swimmers || []);
-    } catch (err) {
-      console.error('Error fetching swimmers:', err);
-      setSwimmersError(err instanceof Error ? err.message : 'Failed to fetch swimmers');
-      setSwimmers([]);
-    } finally {
-      setSwimmersLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchSwimmers();
-  }, [fetchSwimmers]);
+  // Calculate metrics from swimmers data
+  const metrics = swimmers ? calculateSwimmerKPIs(swimmers) : null;
+  const metricsLoading = swimmersLoading;
+  const metricsError = swimmersError;
 
   return (
     <RoleGuard allowedRoles={['admin']}>
@@ -81,10 +58,10 @@ export default function AdminSwimmersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.totalSwimmers.toLocaleString()}
+                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.total.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                All clients
+                {metrics && !metricsLoading && !metricsError ? `${metrics.vmrcClients} VMRC, ${metrics.privatePayClients} Private` : 'All clients'}
               </div>
             </CardContent>
           </Card>
@@ -97,11 +74,33 @@ export default function AdminSwimmersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.waitlistedSwimmers.toLocaleString()}
+                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.waitlist.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                {metricsLoading || metricsError ? <Skeleton className="h-4 w-20" /> : `${Math.round((metrics!.waitlistedSwimmers / metrics!.totalSwimmers) * 100)}% of total`}
+                {metricsLoading || metricsError ? <Skeleton className="h-4 w-20" /> : `${Math.round((metrics!.waitlist / metrics!.total) * 100)}% of total`}
               </div>
+              {!metricsLoading && !metricsError && metrics && (
+                <div className="mt-2 pt-2 border-t border-gray-100">
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div className="flex justify-between">
+                      <span>Waitlist:</span>
+                      <span className="font-medium">{metrics.waitlist}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Pending Enrollment:</span>
+                      <span className="font-medium">{metrics.pendingEnrollment}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Pending Approval:</span>
+                      <span className="font-medium">{metrics.pendingApprovalEnrollment}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Enrollment Expired:</span>
+                      <span className="font-medium">{metrics.enrollmentExpired}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -113,10 +112,10 @@ export default function AdminSwimmersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.activeEnrolledSwimmers.toLocaleString()}
+                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.enrolled.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                {metricsLoading || metricsError ? <Skeleton className="h-4 w-20" /> : `${Math.round((metrics!.activeEnrolledSwimmers / metrics!.totalSwimmers) * 100)}% of total`}
+                {metricsLoading || metricsError ? <Skeleton className="h-4 w-20" /> : `${Math.round((metrics!.enrolled / metrics!.total) * 100)}% of total`}
               </div>
             </CardContent>
           </Card>
@@ -129,10 +128,10 @@ export default function AdminSwimmersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.averageLessons.toFixed(1)}
+                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.activeSwimmers.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                per swimmer
+                {metrics && !metricsLoading && !metricsError ? `active in last 30 days` : 'Active swimmers'}
               </div>
             </CardContent>
           </Card>
@@ -178,7 +177,7 @@ export default function AdminSwimmersPage() {
                   Try Again
                 </Button>
               </div>
-            ) : swimmers.length === 0 ? (
+            ) : !swimmers || swimmers.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <p>No swimmers found</p>
                 <p className="text-sm mt-2">Add swimmers to see them here</p>
@@ -190,12 +189,12 @@ export default function AdminSwimmersPage() {
                     key={swimmer.id}
                     swimmer={{
                       id: swimmer.id,
-                      first_name: swimmer.firstName || swimmer.first_name,
-                      last_name: swimmer.lastName || swimmer.last_name,
-                      photo_url: swimmer.photoUrl || swimmer.photo_url,
-                      enrollment_status: swimmer.enrollmentStatus || swimmer.enrollment_status,
-                      current_level: swimmer.currentLevel || swimmer.current_level,
-                      payment_type: swimmer.paymentType || swimmer.payment_type
+                      first_name: swimmer.first_name,
+                      last_name: swimmer.last_name,
+                      photo_url: swimmer.photo_url,
+                      enrollment_status: swimmer.enrollment_status,
+                      current_level: swimmer.current_level?.display_name || swimmer.current_level?.name,
+                      payment_type: swimmer.is_vmrc_client ? 'funding_source' : 'private_pay'
                     }}
                     onClick={() => {
                       // Navigate to swimmer detail page
@@ -207,7 +206,7 @@ export default function AdminSwimmersPage() {
             )}
           </div>
         ) : (
-          <SwimmerManagementTable role="admin" />
+          <SwimmerManagementTable role="admin" swimmers={swimmers} isLoading={swimmersLoading} error={swimmersError} />
         )}
 
         {/* Quick Actions */}

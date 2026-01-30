@@ -78,8 +78,8 @@ const getEmailTemplate = (type: string, data: any): { subject: string; html: str
 
                   <div class="footer">
                     <p><strong>I Can Swim</strong></p>
-                    <p>📍 Turlock: 2705 Sebastian Drive, Turlock, CA 95382</p>
                     <p>📍 Modesto: 1212 Kansas Ave, Modesto, CA 95351</p>
+                    <p>📍 Merced: 750 Motel Dr, Merced, CA 95340</p>
                     <p>📞 (209) 778-7877 | ✉️ info@icanswim209.com</p>
                   </div>
                 </div>
@@ -127,8 +127,8 @@ const getEmailTemplate = (type: string, data: any): { subject: string; html: str
 
                   <div class="footer">
                     <p><strong>I Can Swim</strong></p>
-                    <p>📍 Turlock: 2705 Sebastian Drive, Turlock, CA 95382</p>
                     <p>📍 Modesto: 1212 Kansas Ave, Modesto, CA 95351</p>
+                    <p>📍 Merced: 750 Motel Dr, Merced, CA 95340</p>
                     <p>📞 (209) 778-7877 | ✉️ info@icanswim209.com</p>
                   </div>
                 </div>
@@ -175,8 +175,8 @@ const getEmailTemplate = (type: string, data: any): { subject: string; html: str
 
                   <div class="footer">
                     <p><strong>I Can Swim</strong></p>
-                    <p>📍 Turlock: 2705 Sebastian Drive, Turlock, CA 95382</p>
                     <p>📍 Modesto: 1212 Kansas Ave, Modesto, CA 95351</p>
+                    <p>📍 Merced: 750 Motel Dr, Merced, CA 95340</p>
                     <p>📞 (209) 778-7877 | ✉️ info@icanswim209.com</p>
                   </div>
                 </div>
@@ -240,8 +240,8 @@ const getEmailTemplate = (type: string, data: any): { subject: string; html: str
                   <p><strong>Sutton Lucas</strong><br/>I Can Swim</p>
 
                   <div class="footer">
-                    <p>📍 Turlock: 2705 Sebastian Drive, Turlock, CA 95382</p>
                     <p>📍 Modesto: 1212 Kansas Ave, Modesto, CA 95351</p>
+                    <p>📍 Merced: 750 Motel Dr, Merced, CA 95340</p>
                     <p>📞 (209) 778-7877 | ✉️ info@icanswim209.com</p>
                   </div>
                 </div>
@@ -297,8 +297,8 @@ const getEmailTemplate = (type: string, data: any): { subject: string; html: str
                   <p><strong>Sutton Lucas</strong><br/>I Can Swim</p>
 
                   <div class="footer">
-                    <p>📍 Turlock: 2705 Sebastian Drive, Turlock, CA 95382</p>
                     <p>📍 Modesto: 1212 Kansas Ave, Modesto, CA 95351</p>
+                    <p>📍 Merced: 750 Motel Dr, Merced, CA 95340</p>
                     <p>📞 (209) 778-7877 | ✉️ info@icanswim209.com</p>
                   </div>
                 </div>
@@ -345,8 +345,8 @@ const getEmailTemplate = (type: string, data: any): { subject: string; html: str
                   <p><strong>Sutton Lucas</strong><br/>I Can Swim</p>
 
                   <div class="footer">
-                    <p>📍 Turlock: 2705 Sebastian Drive, Turlock, CA 95382</p>
                     <p>📍 Modesto: 1212 Kansas Ave, Modesto, CA 95351</p>
+                    <p>📍 Merced: 750 Motel Dr, Merced, CA 95340</p>
                     <p>📞 (209) 778-7877 | ✉️ info@icanswim209.com</p>
                   </div>
                 </div>
