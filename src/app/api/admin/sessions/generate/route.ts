@@ -18,15 +18,54 @@ import { ZodError } from 'zod';
 // HELPER FUNCTIONS
 // ============================================
 
+// Timezone helper for Pacific time (America/Los_Angeles)
+function getPacificOffsetMs(date: Date): number {
+  // Use Intl.DateTimeFormat to get the offset for America/Los_Angeles
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    timeZoneName: 'longOffset'
+  });
+  const parts = formatter.formatToParts(date);
+  const offsetPart = parts.find(part => part.type === 'timeZoneName');
+  if (offsetPart) {
+    // Parse offset like "GMT-8" or "GMT-7"
+    const match = offsetPart.value.match(/GMT([+-])(\d+)/);
+    if (match) {
+      const sign = match[1] === '-' ? -1 : 1;
+      const hours = parseInt(match[2], 10);
+      return sign * hours * 60 * 60 * 1000;
+    }
+  }
+  // Fallback to UTC-8 (standard time)
+  return -8 * 60 * 60 * 1000;
+}
+
 /**
- * Combine a date and time string into an ISO datetime
- * Example: date=2024-12-10, time="15:00" → "2024-12-10T15:00:00.000Z"
+ * Combine a date and time string into an ISO datetime in Pacific timezone
+ * Example: date=2024-12-10, time="15:00" → "2024-12-10T23:00:00.000Z" (15:00 PST = 23:00 UTC)
  */
 function combineDateAndTime(date: Date, time: string): string {
   const [hours, minutes] = time.split(':').map(Number);
-  const combined = new Date(date);
-  combined.setHours(hours, minutes, 0, 0);
-  return combined.toISOString();
+
+  // Create a copy of the date at midnight UTC
+  const dateCopy = new Date(date);
+  dateCopy.setUTCHours(0, 0, 0, 0);
+
+  // Get Pacific offset for this date (in ms, negative for Pacific time)
+  const offsetMs = getPacificOffsetMs(dateCopy);
+
+  // Calculate UTC time: Pacific time - offset
+  // Example: 14:00 Pacific with offset -8 hours
+  // offsetMs = -8 * 60 * 60 * 1000 = -28800000
+  // Pacific time in ms = dateCopy.getTime() + (-offsetMs) + (hours*60*60*1000) + (minutes*60*1000)
+  // Wait, need to think...
+  // Actually: UTC = Pacific - offset
+  // offset is -8 hours, so UTC = Pacific - (-8) = Pacific + 8
+  // So: UTC ms = dateCopy.getTime() + (-offsetMs) + (hours*60*60*1000) + (minutes*60*1000)
+  // -offsetMs = 28800000 (positive 8 hours)
+
+  const utcTime = dateCopy.getTime() + (-offsetMs) + (hours * 60 * 60 * 1000) + (minutes * 60 * 1000);
+  return new Date(utcTime).toISOString();
 }
 
 /**

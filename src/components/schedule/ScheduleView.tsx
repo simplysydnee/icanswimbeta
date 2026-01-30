@@ -25,7 +25,6 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import { useMediaQuery } from '@/hooks/useMediaQuery'
 import { LOCATIONS } from '@/config/constants'
 import {
   ChevronLeft,
@@ -94,7 +93,7 @@ function getPacificOffsetMs(date: Date): number {
   return fallbackOffset;
 }
 
-// Convert UTC date to Pacific time
+// Convert UTC date to Pacific time (returns Date object with Pacific time)
 function toPacificTime(date: Date): Date {
   const offset = getPacificOffsetMs(date);
   const pacificDate = new Date(date.getTime() + offset); // UTC + offset = Pacific time
@@ -114,10 +113,25 @@ function toPacificTime(date: Date): Date {
   return pacificDate;
 }
 
+// Get Pacific hour and minute from UTC date
+function getPacificHourMinute(date: Date): { hour: number, minute: number } {
+  const offset = getPacificOffsetMs(date);
+  const offsetHours = offset / (60 * 60 * 1000);
+
+  // Calculate Pacific hour: UTC hour + offset (offset is negative for Pacific)
+  let hour = date.getUTCHours() + offsetHours;
+  const minute = date.getUTCMinutes();
+
+  // Handle day wrap-around
+  if (hour < 0) hour += 24;
+  if (hour >= 24) hour -= 24;
+
+  return { hour: Math.floor(hour), minute };
+}
+
 // Format a UTC date string in Pacific time
 function formatInPacificTime(utcDateString: string, formatStr: string): string {
   const date = parseISO(utcDateString);
-  const pacificDate = toPacificTime(date);
 
   if (DEBUG_TIMES) {
     console.log('formatInPacificTime debug:', {
@@ -125,22 +139,20 @@ function formatInPacificTime(utcDateString: string, formatStr: string): string {
       formatStr,
       dateUTC: date.toISOString(),
       dateLocal: date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
-      pacificDateISO: pacificDate.toISOString(),
-      pacificDateLocal: pacificDate.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
-      result: format(pacificDate, formatStr),
+      result: formatLocalDateInPacific(date, formatStr),
       offset: getPacificOffsetMs(date),
       browserTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
     });
   }
 
-  return format(pacificDate, formatStr);
+  return formatLocalDateInPacific(date, formatStr);
 }
 
 // Check if a UTC session time is on a specific Pacific date
 function isSessionOnPacificDate(sessionStartTimeUTC: string, pacificDate: Date): boolean {
-  const sessionPacific = toPacificTime(parseISO(sessionStartTimeUTC));
-  const sessionDateStr = format(sessionPacific, 'yyyy-MM-dd');
-  const targetDateStr = format(pacificDate, 'yyyy-MM-dd');
+  const sessionDate = parseISO(sessionStartTimeUTC);
+  const sessionDateStr = formatLocalDateInPacific(sessionDate, 'yyyy-MM-dd');
+  const targetDateStr = formatLocalDateInPacific(pacificDate, 'yyyy-MM-dd');
   return sessionDateStr === targetDateStr;
 }
 
@@ -265,7 +277,6 @@ interface ScheduleViewProps {
 export function ScheduleView({ role, userId }: ScheduleViewProps) {
   const { toast } = useToast()
   const supabase = createClient()
-  const isMobile = useMediaQuery('(max-width: 768px)')
 
   const [view, setView] = useState<'day' | 'week'>('day')
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -544,9 +555,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
 
       // Convert UTC session time to Pacific time for comparison
       const sessionStartUTC = parseISO(session.start_time)
-      const sessionStartPacific = toPacificTime(sessionStartUTC)
-      const sessionStartHour = sessionStartPacific.getHours()
-      const sessionStartMinute = sessionStartPacific.getMinutes()
+      const { hour: sessionStartHour, minute: sessionStartMinute } = getPacificHourMinute(sessionStartUTC)
 
       // Check if session starts in this 30-minute slot
       // Slot represents the start of a 30-minute period (e.g., "13:00" means 1:00-1:30 PM)
@@ -555,16 +564,17 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
              sessionStartMinute < slotMinute + 30
 
       if (DEBUG_TIMES && matches) {
+        const sessionStartPacificDate = toPacificTime(sessionStartUTC);
         console.log('getSessionsForSlot match found:', {
           timeSlot,
           slotHour,
           slotMinute,
           sessionId: session.id,
           sessionStartUTC: session.start_time,
-          sessionStartPacific: sessionStartPacific.toISOString(),
+          sessionStartPacific: sessionStartPacificDate.toISOString(),
           sessionStartHour,
           sessionStartMinute,
-          sessionStartLocal: sessionStartPacific.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
+          sessionStartLocal: sessionStartPacificDate.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
           slotStartLocal: `${slotHour}:${slotMinute.toString().padStart(2, '0')}`,
           matches
         });
@@ -953,10 +963,10 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                       if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
 
                       const sessionStartUTC = parseISO(session.start_time)
-                      const sessionStartPacific = toPacificTime(sessionStartUTC)
-                      return sessionStartPacific.getHours() === slotHour &&
-                             sessionStartPacific.getMinutes() >= slotMinute &&
-                             sessionStartPacific.getMinutes() < slotMinute + 30
+                      const { hour: sessionStartHour, minute: sessionStartMinute } = getPacificHourMinute(sessionStartUTC)
+                      return sessionStartHour === slotHour &&
+                             sessionStartMinute >= slotMinute &&
+                             sessionStartMinute < slotMinute + 30
                     })
                   })
 
@@ -979,10 +989,10 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                       if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
 
                       const sessionStartUTC = parseISO(session.start_time)
-                      const sessionStartPacific = toPacificTime(sessionStartUTC)
-                      return sessionStartPacific.getHours() === slotHour &&
-                             sessionStartPacific.getMinutes() >= slotMinute &&
-                             sessionStartPacific.getMinutes() < slotMinute + 30
+                      const { hour: sessionStartHour, minute: sessionStartMinute } = getPacificHourMinute(sessionStartUTC)
+                      return sessionStartHour === slotHour &&
+                             sessionStartMinute >= slotMinute &&
+                             sessionStartMinute < slotMinute + 30
                     })
 
                     if (slotSessions.length === 0) return null
@@ -1047,7 +1057,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                       </div>
                     </div>
                   )
-                })}
+                }).filter(Boolean)}
                 )}
               </div>
 
