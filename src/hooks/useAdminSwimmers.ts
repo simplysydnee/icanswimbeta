@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/client';
 
 // Type-safe status values matching your Supabase enums
 export type EnrollmentStatus =
@@ -36,7 +36,7 @@ export const useAdminSwimmers = (filters?: AdminSwimmersFilters) => {
   return useQuery({
     queryKey: ['admin-swimmers', filters],
     queryFn: async () => {
-      const supabase = await createClient();
+      const supabase = createClient();
 
       // Base query - get ALL swimmers
       let query = supabase
