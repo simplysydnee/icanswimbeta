@@ -106,6 +106,57 @@ function isPacificToday(date: Date): boolean {
   return todayPacific === datePacific;
 }
 
+// Format a time slot string (e.g., "06:00") to human readable format (e.g., "6:00 AM")
+function formatSlotTime(slot: string): string {
+  const [hourStr, minuteStr] = slot.split(':');
+  const hour = parseInt(hourStr, 10);
+
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour % 12 || 12; // Convert 0, 12, 13, etc. to 12, 1, etc.
+
+  return `${displayHour}:${minuteStr} ${period}`;
+}
+
+// Format a local Date in Pacific timezone
+function formatLocalDateInPacific(localDate: Date, formatStr: string): string {
+  // Map date-fns format tokens to Intl.DateTimeFormat options
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: 'America/Los_Angeles',
+  };
+
+  if (formatStr.includes('EEEE')) {
+    options.weekday = 'long';
+  } else if (formatStr.includes('EEE')) {
+    options.weekday = 'short';
+  }
+
+  if (formatStr.includes('MMMM')) {
+    options.month = 'long';
+  } else if (formatStr.includes('MMM')) {
+    options.month = 'short';
+  } else if (formatStr.includes('MM')) {
+    options.month = '2-digit';
+  } else if (formatStr.includes('M')) {
+    options.month = 'numeric';
+  }
+
+  if (formatStr.includes('dd')) {
+    options.day = '2-digit';
+  } else if (formatStr.includes('d')) {
+    options.day = 'numeric';
+  }
+
+  if (formatStr.includes('yyyy')) {
+    options.year = 'numeric';
+  } else if (formatStr.includes('yy')) {
+    options.year = '2-digit';
+  }
+
+  // Use Intl.DateTimeFormat to format in Pacific timezone
+  const formatter = new Intl.DateTimeFormat('en-US', options);
+  return formatter.format(localDate);
+}
+
 // Instructor color palette - visually distinct, accessible colors
 const INSTRUCTOR_COLORS = [
   { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-800' },
@@ -566,7 +617,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
           body: JSON.stringify({
             parentEmails,
             instructorName: selectedInstructorForCancel.full_name,
-            date: format(currentDate, 'EEEE, MMMM d, yyyy'),
+            date: formatLocalDateInPacific(currentDate, 'EEEE, MMMM d, yyyy'),
             reason: cancelReason,
             swimmerNames
           })
@@ -710,8 +761,8 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
         <h1>I Can Swim - {role === 'admin' ? 'Staff' : 'My'} Schedule</h1>
         <p>
           {view === 'day'
-            ? format(currentDate, 'EEEE, MMMM d, yyyy')
-            : `Week of ${format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'MMM d')} - ${format(addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), 6), 'MMM d, yyyy')}`
+            ? formatLocalDateInPacific(currentDate, 'EEEE, MMMM d, yyyy')
+            : `Week of ${formatLocalDateInPacific(startOfWeek(currentDate, { weekStartsOn: 1 }), 'MMM d')} - ${formatLocalDateInPacific(addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), 6), 'MMM d, yyyy')}`
           }
         </p>
         {selectedInstructorFilter !== 'all' && (
@@ -738,8 +789,8 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
           <Calendar className="h-5 w-5 text-gray-500" />
           <span className="text-lg font-semibold">
             {view === 'day'
-              ? format(currentDate, 'EEEE, MMMM d, yyyy')
-              : `Week of ${format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'MMM d')} - ${format(addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), 6), 'MMM d, yyyy')}`
+              ? formatLocalDateInPacific(currentDate, 'EEEE, MMMM d, yyyy')
+              : `Week of ${formatLocalDateInPacific(startOfWeek(currentDate, { weekStartsOn: 1 }), 'MMM d')} - ${formatLocalDateInPacific(addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), 6), 'MMM d, yyyy')}`
             }
           </span>
         </div>
@@ -854,7 +905,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                     return (
                       <div key={slot} className="border rounded-lg p-4 mb-4">
                         <h3 className="font-semibold text-lg mb-3">
-                          {format(new Date(`2000-01-01T${slot}:00`), 'h:mm a')}
+                          {formatSlotTime(slot)}
                         </h3>
                         <div className="space-y-3">
                           {slotSessions.map((session) => {
@@ -946,7 +997,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                     {timeSlots.map((slot) => (
                       <tr key={slot} className="hover:bg-gray-50">
                         <td className="border p-2 text-sm font-medium text-gray-600 sticky left-0 bg-white">
-                          {format(new Date(`2000-01-01T${slot}:00`), 'h:mm a')}
+                          {formatSlotTime(slot)}
                         </td>
                         {displayedInstructors.map((instructor) => {
                           const slotSessions = getSessionsForSlot(instructor.id, slot)
@@ -1004,8 +1055,8 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
               <div className="md:hidden p-4 space-y-6">
                 {Array.from({ length: 7 }, (_, i) => {
                   const day = addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), i)
-                  const dayName = format(day, 'EEE')
-                  const dayDate = format(day, 'MMM d')
+                  const dayName = formatLocalDateInPacific(day, 'EEE')
+                  const dayDate = formatLocalDateInPacific(day, 'MMM d')
                   const isToday = isPacificToday(day)
 
                   const daySessions = sessions.filter(s => {
@@ -1123,8 +1174,8 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                   <tbody>
                     {Array.from({ length: 7 }, (_, i) => {
                       const day = addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), i)
-                      const dayName = format(day, 'EEE')
-                      const dayDate = format(day, 'MMM d')
+                      const dayName = formatLocalDateInPacific(day, 'EEE')
+                      const dayDate = formatLocalDateInPacific(day, 'MMM d')
                       const isToday = isPacificToday(day)
 
                       const daySessions = sessions.filter(s =>
@@ -1279,9 +1330,9 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
               </DialogTitle>
               <DialogDescription>
                 {isTransferMode ? (
-                  <>Transfer all of {selectedInstructorForCancel?.full_name}&apos;s sessions for {format(currentDate, 'MMMM d, yyyy')} to a substitute instructor.</>
+                  <>Transfer all of {selectedInstructorForCancel?.full_name}&apos;s sessions for {formatLocalDateInPacific(currentDate, 'MMMM d, yyyy')} to a substitute instructor.</>
                 ) : (
-                  <>Cancel all of {selectedInstructorForCancel?.full_name}&apos;s sessions for {format(currentDate, 'MMMM d, yyyy')}. Parents will be notified by email.</>
+                  <>Cancel all of {selectedInstructorForCancel?.full_name}&apos;s sessions for {formatLocalDateInPacific(currentDate, 'MMMM d, yyyy')}. Parents will be notified by email.</>
                 )}
               </DialogDescription>
             </DialogHeader>
