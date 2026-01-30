@@ -40,6 +40,9 @@ import {
 } from 'lucide-react'
 import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, parseISO } from 'date-fns'
 
+// Debug flag for timezone conversion logging
+const DEBUG_TIMES = true;
+
 // Timezone helpers for Pacific time (America/Los_Angeles)
 function getPacificOffsetMs(date: Date): number {
   // Use Intl.DateTimeFormat to get the offset for America/Los_Angeles
@@ -72,6 +75,21 @@ function toPacificTime(date: Date): Date {
 function formatInPacificTime(utcDateString: string, formatStr: string): string {
   const date = parseISO(utcDateString);
   const pacificDate = toPacificTime(date);
+
+  if (DEBUG_TIMES) {
+    console.log('formatInPacificTime debug:', {
+      utcDateString,
+      formatStr,
+      dateUTC: date.toISOString(),
+      dateLocal: date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
+      pacificDateISO: pacificDate.toISOString(),
+      pacificDateLocal: pacificDate.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
+      result: format(pacificDate, formatStr),
+      offset: getPacificOffsetMs(date),
+      browserTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    });
+  }
+
   return format(pacificDate, formatStr);
 }
 
@@ -474,7 +492,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
   const getSessionsForSlot = (instructorId: string, timeSlot: string) => {
     const [slotHour, slotMinute] = timeSlot.split(':').map(Number)
 
-    return sessions.filter(session => {
+    const filteredSessions = sessions.filter(session => {
       if (session.instructor_id !== instructorId) return false
 
       // Apply filters
@@ -489,10 +507,34 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
 
       // Check if session starts in this 30-minute slot
       // Slot represents the start of a 30-minute period (e.g., "13:00" means 1:00-1:30 PM)
-      return sessionStartHour === slotHour &&
+      const matches = sessionStartHour === slotHour &&
              sessionStartMinute >= slotMinute &&
              sessionStartMinute < slotMinute + 30
-    })
+
+      if (DEBUG_TIMES && matches) {
+        console.log('getSessionsForSlot match found:', {
+          timeSlot,
+          slotHour,
+          slotMinute,
+          sessionId: session.id,
+          sessionStartUTC: session.start_time,
+          sessionStartPacific: sessionStartPacific.toISOString(),
+          sessionStartHour,
+          sessionStartMinute,
+          sessionStartLocal: sessionStartPacific.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
+          slotStartLocal: `${slotHour}:${slotMinute.toString().padStart(2, '0')}`,
+          matches
+        });
+      }
+
+      return matches
+    });
+
+    if (DEBUG_TIMES && filteredSessions.length > 0) {
+      console.log(`getSessionsForSlot: ${filteredSessions.length} sessions for ${timeSlot} (${slotHour}:${slotMinute})`);
+    }
+
+    return filteredSessions;
   }
 
   // Get displayed instructors based on sessions and filters
