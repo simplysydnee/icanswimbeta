@@ -39,20 +39,20 @@ import {
 } from 'lucide-react'
 import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, parseISO, isSameDay } from 'date-fns'
 
-// Instructor color palette - visually distinct, accessible colors
+// Instructor color palette - maximally distinct hues for easy differentiation
 const INSTRUCTOR_COLORS = [
-  { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-800' },
-  { bg: 'bg-green-100', border: 'border-green-400', text: 'text-green-800' },
-  { bg: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-800' },
-  { bg: 'bg-orange-100', border: 'border-orange-400', text: 'text-orange-800' },
-  { bg: 'bg-pink-100', border: 'border-pink-400', text: 'text-pink-800' },
-  { bg: 'bg-teal-100', border: 'border-teal-400', text: 'text-teal-800' },
-  { bg: 'bg-yellow-100', border: 'border-yellow-500', text: 'text-yellow-800' },
-  { bg: 'bg-indigo-100', border: 'border-indigo-400', text: 'text-indigo-800' },
-  { bg: 'bg-red-100', border: 'border-red-400', text: 'text-red-800' },
-  { bg: 'bg-cyan-100', border: 'border-cyan-400', text: 'text-cyan-800' },
-  { bg: 'bg-emerald-100', border: 'border-emerald-400', text: 'text-emerald-800' },
-  { bg: 'bg-rose-100', border: 'border-rose-400', text: 'text-rose-800' },
+  { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800' },
+  { bg: 'bg-orange-100', border: 'border-orange-500', text: 'text-orange-800' },
+  { bg: 'bg-amber-100', border: 'border-amber-500', text: 'text-amber-800' },
+  { bg: 'bg-lime-100', border: 'border-lime-500', text: 'text-lime-800' },
+  { bg: 'bg-green-100', border: 'border-green-500', text: 'text-green-800' },
+  { bg: 'bg-teal-100', border: 'border-teal-500', text: 'text-teal-800' },
+  { bg: 'bg-cyan-100', border: 'border-cyan-500', text: 'text-cyan-800' },
+  { bg: 'bg-sky-100', border: 'border-sky-500', text: 'text-sky-800' },
+  { bg: 'bg-blue-100', border: 'border-blue-500', text: 'text-blue-800' },
+  { bg: 'bg-indigo-100', border: 'border-indigo-500', text: 'text-indigo-800' },
+  { bg: 'bg-violet-100', border: 'border-violet-500', text: 'text-violet-800' },
+  { bg: 'bg-pink-100', border: 'border-pink-500', text: 'text-pink-800' },
 ]
 
 interface Session {
