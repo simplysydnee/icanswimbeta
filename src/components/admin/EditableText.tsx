@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEditMode } from '@/contexts/EditModeContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 
@@ -30,6 +31,7 @@ export function EditableText({
   children
 }: EditableTextProps) {
   const { user, role } = useAuth();
+  const { editMode } = useEditMode();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const supabase = createClient();
@@ -37,7 +39,7 @@ export function EditableText({
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(defaultContent);
 
-  const isAdmin = role === 'admin';
+  const isAdmin = role === 'admin' && editMode;
 
   // Mutation to save content
   const updateContent = useMutation({
@@ -49,7 +51,7 @@ export function EditableText({
           section_key: sectionKey,
           content_type: contentType,
           content: newContent,
-          updated_by: user?.id,
+          updated_by: user?.id || null,
           updated_at: new Date().toISOString()
         }, {
           onConflict: 'page_slug,section_key'

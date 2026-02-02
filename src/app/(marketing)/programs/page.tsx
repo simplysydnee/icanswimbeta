@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button'
 import { CheckCircle } from 'lucide-react'
 import { EditableText } from '@/components/admin/EditableText';
 import { usePageContent, getContent } from '@/hooks/usePageContent';
+import { useEditMode } from '@/contexts/EditModeContext';
 
 export default function ProgramsPage() {
-  const { data: content, isLoading } = usePageContent('programs');
+  const { editMode } = useEditMode();
+  const { data: content, isLoading } = usePageContent('programs', editMode);
 
   if (isLoading) {
     return (

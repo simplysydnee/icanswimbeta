@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -25,7 +25,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import { LOCATIONS } from '@/config/constants'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
 import {
   ChevronLeft,
   ChevronRight,
@@ -37,198 +37,7 @@ import {
   AlertTriangle,
   RefreshCw
 } from 'lucide-react'
-import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, parseISO } from 'date-fns'
-
-// Debug flag for timezone conversion logging
-const DEBUG_TIMES = true;
-
-// Timezone helpers for Pacific time (America/Los_Angeles)
-function getPacificOffsetMs(date: Date): number {
-  // Use Intl.DateTimeFormat to get the offset for America/Los_Angeles
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Los_Angeles',
-    timeZoneName: 'longOffset'
-  });
-  const parts = formatter.formatToParts(date);
-
-  if (DEBUG_TIMES) {
-    console.log('getPacificOffsetMs debug:', {
-      dateUTC: date.toISOString(),
-      dateLocal: date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
-      parts: parts.map(p => ({ type: p.type, value: p.value })),
-      browserTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-    });
-  }
-
-  const offsetPart = parts.find(part => part.type === 'timeZoneName');
-  if (offsetPart) {
-    // Parse offset like "GMT-8" or "GMT-7"
-    const match = offsetPart.value.match(/GMT([+-])(\d+)/);
-    if (match) {
-      const sign = match[1] === '-' ? -1 : 1;
-      const hours = parseInt(match[2], 10);
-      const offset = sign * hours * 60 * 60 * 1000;
-
-      if (DEBUG_TIMES) {
-        console.log('getPacificOffsetMs parsed:', {
-          offsetPart: offsetPart.value,
-          sign: match[1],
-          hours,
-          offsetMs: offset,
-          offsetHours: offset / (60 * 60 * 1000)
-        });
-      }
-
-      return offset;
-    }
-  }
-  // Fallback to UTC-8 (standard time)
-  const fallbackOffset = -8 * 60 * 60 * 1000;
-  if (DEBUG_TIMES) {
-    console.log('getPacificOffsetMs using fallback:', {
-      fallbackOffsetMs: fallbackOffset,
-      fallbackHours: fallbackOffset / (60 * 60 * 1000)
-    });
-  }
-  return fallbackOffset;
-}
-
-// Convert UTC date to Pacific time (returns Date object with Pacific time)
-function toPacificTime(date: Date): Date {
-  const offset = getPacificOffsetMs(date);
-  const pacificDate = new Date(date.getTime() + offset); // UTC + offset = Pacific time
-
-  if (DEBUG_TIMES) {
-    console.log('toPacificTime debug:', {
-      dateUTC: date.toISOString(),
-      dateLocal: date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
-      offsetMs: offset,
-      offsetHours: offset / (60 * 60 * 1000),
-      pacificDateUTC: pacificDate.toISOString(),
-      pacificDateLocal: pacificDate.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
-      browserTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-    });
-  }
-
-  return pacificDate;
-}
-
-// Get Pacific hour and minute from UTC date
-function getPacificHourMinute(date: Date): { hour: number, minute: number } {
-  const offset = getPacificOffsetMs(date);
-  const offsetHours = offset / (60 * 60 * 1000);
-
-  // Calculate Pacific hour: UTC hour + offset (offset is negative for Pacific)
-  let hour = date.getUTCHours() + offsetHours;
-  const minute = date.getUTCMinutes();
-
-  // Handle day wrap-around
-  if (hour < 0) hour += 24;
-  if (hour >= 24) hour -= 24;
-
-  return { hour: Math.floor(hour), minute };
-}
-
-// Format a UTC date string in Pacific time
-function formatInPacificTime(utcDateString: string, formatStr: string): string {
-  const date = parseISO(utcDateString);
-
-  if (DEBUG_TIMES) {
-    console.log('formatInPacificTime debug:', {
-      utcDateString,
-      formatStr,
-      dateUTC: date.toISOString(),
-      dateLocal: date.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
-      result: formatLocalDateInPacific(date, formatStr),
-      offset: getPacificOffsetMs(date),
-      browserTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-    });
-  }
-
-  return formatLocalDateInPacific(date, formatStr);
-}
-
-// Check if a UTC session time is on a specific Pacific date
-function isSessionOnPacificDate(sessionStartTimeUTC: string, pacificDate: Date): boolean {
-  const sessionDate = parseISO(sessionStartTimeUTC);
-  const sessionDateStr = formatLocalDateInPacific(sessionDate, 'yyyy-MM-dd');
-  const targetDateStr = formatLocalDateInPacific(pacificDate, 'yyyy-MM-dd');
-  return sessionDateStr === targetDateStr;
-}
-
-// Get Pacific date string from a local Date
-function getPacificDateString(date: Date): string {
-  // Convert local date to Pacific by formatting with Pacific timezone
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Los_Angeles',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  });
-  const parts = formatter.formatToParts(date);
-  const year = parts.find(p => p.type === 'year')?.value || '2024';
-  const month = parts.find(p => p.type === 'month')?.value || '01';
-  const day = parts.find(p => p.type === 'day')?.value || '01';
-  return `${year}-${month}-${day}`;
-}
-
-// Check if a date represents today in Pacific time
-function isPacificToday(date: Date): boolean {
-  const todayPacific = getPacificDateString(new Date());
-  const datePacific = getPacificDateString(date);
-  return todayPacific === datePacific;
-}
-
-// Format a time slot string (e.g., "06:00") to human readable format (e.g., "6:00 AM")
-function formatSlotTime(slot: string): string {
-  const [hourStr, minuteStr] = slot.split(':');
-  const hour = parseInt(hourStr, 10);
-
-  const period = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour % 12 || 12; // Convert 0, 12, 13, etc. to 12, 1, etc.
-
-  return `${displayHour}:${minuteStr} ${period}`;
-}
-
-// Format a local Date in Pacific timezone
-function formatLocalDateInPacific(localDate: Date, formatStr: string): string {
-  // Map date-fns format tokens to Intl.DateTimeFormat options
-  const options: Intl.DateTimeFormatOptions = {
-    timeZone: 'America/Los_Angeles',
-  };
-
-  if (formatStr.includes('EEEE')) {
-    options.weekday = 'long';
-  } else if (formatStr.includes('EEE')) {
-    options.weekday = 'short';
-  }
-
-  if (formatStr.includes('MMMM')) {
-    options.month = 'long';
-  } else if (formatStr.includes('MMM')) {
-    options.month = 'short';
-  } else if (formatStr.includes('MM')) {
-    options.month = '2-digit';
-  } else if (formatStr.includes('M')) {
-    options.month = 'numeric';
-  }
-
-  if (formatStr.includes('dd')) {
-    options.day = '2-digit';
-  } else if (formatStr.includes('d')) {
-    options.day = 'numeric';
-  }
-
-  if (formatStr.includes('yyyy')) {
-    options.year = 'numeric';
-  } else if (formatStr.includes('yy')) {
-    options.year = '2-digit';
-  }
-
-  // Use Intl.DateTimeFormat to format in Pacific timezone
-  const formatter = new Intl.DateTimeFormat('en-US', options);
-  return formatter.format(localDate);
-}
+import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, parseISO, isSameDay } from 'date-fns'
 
 // Instructor color palette - visually distinct, accessible colors
 const INSTRUCTOR_COLORS = [
@@ -277,6 +86,7 @@ interface ScheduleViewProps {
 export function ScheduleView({ role, userId }: ScheduleViewProps) {
   const { toast } = useToast()
   const supabase = createClient()
+  const isMobile = useMediaQuery('(max-width: 768px)')
 
   const [view, setView] = useState<'day' | 'week'>('day')
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -313,18 +123,94 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
   // Filter states
   const [selectedInstructorFilter, setSelectedInstructorFilter] = useState<string>('all')
   const [selectedLocationFilter, setSelectedLocationFilter] = useState<string>('all')
-  const [availableLocations] = useState<string[]>(LOCATIONS.map(loc => loc.value))
+  const [availableLocations] = useState<string[]>(['Modesto', 'Turlock'])
   const [isTransferMode, setIsTransferMode] = useState(false)
 
-  // Time slots (6 AM to 8 PM)
+  // Helper to get Pacific hour/minute from UTC time
+  const getPacificHourMinute = (utcTimeString: string) => {
+    const sessionStartUTC = parseISO(utcTimeString)
+    // Use Intl.DateTimeFormat for proper Pacific timezone conversion
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Los_Angeles',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    })
+    const parts = formatter.formatToParts(sessionStartUTC)
+    const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10)
+    const minute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10)
+    return { hour, minute }
+  }
+
+  // Dynamic time slots based on session times
   const timeSlots = useMemo(() => {
-    const slots = []
-    for (let hour = 6; hour <= 20; hour++) {
-      slots.push(`${hour.toString().padStart(2, '0')}:00`)
-      slots.push(`${hour.toString().padStart(2, '0')}:30`)
+    if (sessions.length === 0) {
+      // Default to 6 AM - 8 PM if no sessions
+      const slots = []
+      for (let hour = 6; hour <= 20; hour++) {
+        slots.push(`${hour.toString().padStart(2, '0')}:00`)
+        slots.push(`${hour.toString().padStart(2, '0')}:30`)
+      }
+      return slots
     }
-    return slots
-  }, [])
+
+    // Find the earliest and latest session times
+    let earliestHour = 20;
+    let latestHour = 6;
+
+    sessions.forEach(session => {
+      const start = getPacificHourMinute(session.start_time);
+      const end = getPacificHourMinute(session.end_time);
+
+      earliestHour = Math.min(earliestHour, start.hour);
+      latestHour = Math.max(latestHour, end.hour);
+    });
+
+    // Add 1 hour buffer before first session, extend 1 hour after last
+    const startHour = Math.max(6, earliestHour - 1); // Don't start before 6 AM
+    const endHour = Math.min(20, latestHour + 1); // Don't go past 8 PM
+
+    // Generate time slots from earliest to latest
+    const slots = [];
+    for (let hour = startHour; hour <= endHour; hour++) {
+      slots.push(`${hour.toString().padStart(2, '0')}:00`);
+      slots.push(`${hour.toString().padStart(2, '0')}:30`);
+    }
+
+    return slots;
+  }, [sessions])
+
+  const formatSlotTime = (slot: string) => {
+    const [hourStr, minuteStr] = slot.split(':');
+    const hour = parseInt(hourStr, 10);
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minuteStr} ${period}`;
+  };
+
+  const formatPacificTime = (utcTimeString: string, formatStr: string) => {
+    const date = parseISO(utcTimeString);
+    // Use Intl.DateTimeFormat for proper timezone conversion
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    const parts = formatter.formatToParts(date);
+    const year = parts.find(p => p.type === 'year')?.value || '';
+    const month = parts.find(p => p.type === 'month')?.value || '';
+    const day = parts.find(p => p.type === 'day')?.value || '';
+    const hour = parts.find(p => p.type === 'hour')?.value || '';
+    const minute = parts.find(p => p.type === 'minute')?.value || '';
+    const second = parts.find(p => p.type === 'second')?.value || '';
+    const pacificDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`);
+    return format(pacificDate, formatStr);
+  };
 
   // Fetch instructors
   const fetchInstructors = useCallback(async () => {
@@ -437,23 +323,13 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
     }
 
     // Convert to UTC for database query (database stores timestamps in UTC)
-    // Sessions are stored in UTC relative to Pacific time (UTC-8/-7 depending on DST)
-    // So we need to convert Pacific time to UTC using the appropriate offset
-    const pacificOffsetMs = getPacificOffsetMs(startDate);
-    const startDateUTC = new Date(startDate.getTime() - pacificOffsetMs);
-    const endDateUTC = new Date(endDate.getTime() - pacificOffsetMs);
+    // Sessions are stored in UTC relative to Pacific time (UTC-8)
+    // So we need to convert Pacific time to UTC
+    const PACIFIC_OFFSET_MS = -8 * 60 * 60 * 1000; // UTC-8 in milliseconds
 
-    console.log('Fetching sessions for Pacific date range:', {
-      pacificDate: format(currentDate, 'yyyy-MM-dd'),
-      pacificStart: startDate.toISOString(),
-      pacificEnd: endDate.toISOString(),
-      utcStart: startDateUTC.toISOString(),
-      utcEnd: endDateUTC.toISOString(),
-      currentDate: currentDate.toISOString(),
-      view,
-      browserTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      pacificOffset: pacificOffsetMs / (60 * 60 * 1000)
-    })
+    const startDateUTC = new Date(startDate.getTime() - PACIFIC_OFFSET_MS)
+    const endDateUTC = new Date(endDate.getTime() - PACIFIC_OFFSET_MS)
+
 
     let query = supabase
       .from('sessions')
@@ -488,15 +364,6 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
       toast({ title: 'Error', description: 'Failed to load sessions', variant: 'destructive' })
       console.error(error)
     } else if (data) {
-      console.log(`Fetched ${data.length} sessions:`, data.map(s => ({
-        id: s.id,
-        start_time: s.start_time,
-        start_time_local: new Date(s.start_time).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
-        instructor_id: s.instructor_id,
-        instructor_name: Array.isArray(s.instructor) ? s.instructor[0]?.full_name : s.instructor?.full_name,
-        status: s.status,
-        bookings_count: s.bookings?.length || 0
-      })))
 
       const formatted: Session[] = data.map((s) => {
         // Handle instructor data which might be an array or object
@@ -524,7 +391,6 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
       })
       setSessions(formatted)
     } else {
-      console.log('No sessions data returned')
     }
     setLoading(false)
   }, [supabase, currentDate, view, role, userId, toast])
@@ -546,7 +412,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
   const getSessionsForSlot = (instructorId: string, timeSlot: string) => {
     const [slotHour, slotMinute] = timeSlot.split(':').map(Number)
 
-    const filteredSessions = sessions.filter(session => {
+    return sessions.filter(session => {
       if (session.instructor_id !== instructorId) return false
 
       // Apply filters
@@ -554,40 +420,14 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
       if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
 
       // Convert UTC session time to Pacific time for comparison
-      const sessionStartUTC = parseISO(session.start_time)
-      const { hour: sessionStartHour, minute: sessionStartMinute } = getPacificHourMinute(sessionStartUTC)
+      const { hour: sessionStartHour, minute: sessionStartMinute } = getPacificHourMinute(session.start_time)
 
       // Check if session starts in this 30-minute slot
       // Slot represents the start of a 30-minute period (e.g., "13:00" means 1:00-1:30 PM)
-      const matches = sessionStartHour === slotHour &&
+      return sessionStartHour === slotHour &&
              sessionStartMinute >= slotMinute &&
              sessionStartMinute < slotMinute + 30
-
-      if (DEBUG_TIMES && matches) {
-        const sessionStartPacificDate = toPacificTime(sessionStartUTC);
-        console.log('getSessionsForSlot match found:', {
-          timeSlot,
-          slotHour,
-          slotMinute,
-          sessionId: session.id,
-          sessionStartUTC: session.start_time,
-          sessionStartPacific: sessionStartPacificDate.toISOString(),
-          sessionStartHour,
-          sessionStartMinute,
-          sessionStartLocal: sessionStartPacificDate.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
-          slotStartLocal: `${slotHour}:${slotMinute.toString().padStart(2, '0')}`,
-          matches
-        });
-      }
-
-      return matches
-    });
-
-    if (DEBUG_TIMES && filteredSessions.length > 0) {
-      console.log(`getSessionsForSlot: ${filteredSessions.length} sessions for ${timeSlot} (${slotHour}:${slotMinute})`);
-    }
-
-    return filteredSessions;
+    })
   }
 
   // Get displayed instructors based on sessions and filters
@@ -712,7 +552,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
           body: JSON.stringify({
             parentEmails,
             instructorName: selectedInstructorForCancel.full_name,
-            date: formatLocalDateInPacific(currentDate, 'EEEE, MMMM d, yyyy'),
+            date: format(currentDate, 'EEEE, MMMM d, yyyy'),
             reason: cancelReason,
             swimmerNames
           })
@@ -761,8 +601,8 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
               swimmerName: session.swimmer_name,
               oldInstructorName: selectedInstructorForCancel.full_name,
               newInstructorName: instructors.find(i => i.id === newInstructorId)?.full_name || 'Substitute Instructor',
-              date: formatInPacificTime(session.start_time, 'EEEE, MMMM d, yyyy'),
-              time: formatInPacificTime(session.start_time, 'h:mm a'),
+              date: format(parseISO(session.start_time), 'EEEE, MMMM d, yyyy'),
+              time: format(parseISO(session.start_time), 'h:mm a'),
               reason: cancelReason
             })
           })
@@ -856,8 +696,8 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
         <h1>I Can Swim - {role === 'admin' ? 'Staff' : 'My'} Schedule</h1>
         <p>
           {view === 'day'
-            ? formatLocalDateInPacific(currentDate, 'EEEE, MMMM d, yyyy')
-            : `Week of ${formatLocalDateInPacific(startOfWeek(currentDate, { weekStartsOn: 1 }), 'MMM d')} - ${formatLocalDateInPacific(addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), 6), 'MMM d, yyyy')}`
+            ? format(currentDate, 'EEEE, MMMM d, yyyy')
+            : `Week of ${format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'MMM d')} - ${format(addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), 6), 'MMM d, yyyy')}`
           }
         </p>
         {selectedInstructorFilter !== 'all' && (
@@ -884,8 +724,8 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
           <Calendar className="h-5 w-5 text-gray-500" />
           <span className="text-lg font-semibold">
             {view === 'day'
-              ? formatLocalDateInPacific(currentDate, 'EEEE, MMMM d, yyyy')
-              : `Week of ${formatLocalDateInPacific(startOfWeek(currentDate, { weekStartsOn: 1 }), 'MMM d')} - ${formatLocalDateInPacific(addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), 6), 'MMM d, yyyy')}`
+              ? format(currentDate, 'EEEE, MMMM d, yyyy')
+              : `Week of ${format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'MMM d')} - ${format(addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), 6), 'MMM d, yyyy')}`
             }
           </span>
         </div>
@@ -963,10 +803,19 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                       if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
 
                       const sessionStartUTC = parseISO(session.start_time)
-                      const { hour: sessionStartHour, minute: sessionStartMinute } = getPacificHourMinute(sessionStartUTC)
-                      return sessionStartHour === slotHour &&
-                             sessionStartMinute >= slotMinute &&
-                             sessionStartMinute < slotMinute + 30
+                      // Use Intl.DateTimeFormat for proper Pacific timezone conversion
+                      const formatter = new Intl.DateTimeFormat('en-US', {
+                        timeZone: 'America/Los_Angeles',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      });
+                      const parts = formatter.formatToParts(sessionStartUTC);
+                      const sessionHour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
+                      const sessionMinute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
+                      return sessionHour === slotHour &&
+                             sessionMinute >= slotMinute &&
+                             sessionMinute < slotMinute + 30
                     })
                   })
 
@@ -989,10 +838,19 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                       if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
 
                       const sessionStartUTC = parseISO(session.start_time)
-                      const { hour: sessionStartHour, minute: sessionStartMinute } = getPacificHourMinute(sessionStartUTC)
-                      return sessionStartHour === slotHour &&
-                             sessionStartMinute >= slotMinute &&
-                             sessionStartMinute < slotMinute + 30
+                      // Use Intl.DateTimeFormat for proper Pacific timezone conversion
+                      const formatter = new Intl.DateTimeFormat('en-US', {
+                        timeZone: 'America/Los_Angeles',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      });
+                      const parts = formatter.formatToParts(sessionStartUTC);
+                      const sessionHour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
+                      const sessionMinute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
+                      return sessionHour === slotHour &&
+                             sessionMinute >= slotMinute &&
+                             sessionMinute < slotMinute + 30
                     })
 
                     if (slotSessions.length === 0) return null
@@ -1015,7 +873,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                     {session.swimmer_name || 'Open Slot'}
                                   </p>
                                   <p className="text-sm text-gray-600">
-                                    {formatInPacificTime(session.start_time, 'h:mm')} - {formatInPacificTime(session.end_time, 'h:mm a')}
+                                    {format(parseISO(session.start_time), 'h:mm')} - {format(parseISO(session.end_time), 'h:mm a')}
                                   </p>
                                   <div className="flex items-center gap-2 mt-1">
                                     <Avatar className="h-6 w-6">
@@ -1057,7 +915,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                       </div>
                     </div>
                   )
-                }).filter(Boolean)}
+                })}
                 )}
               </div>
 
@@ -1109,7 +967,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                     {session.swimmer_name || 'Open Slot'}
                                   </p>
                                   <p className="text-xs text-gray-600">
-                                    {formatInPacificTime(session.start_time, 'h:mm')} - {formatInPacificTime(session.end_time, 'h:mm a')}
+                                    {format(parseISO(session.start_time), 'h:mm')} - {format(parseISO(session.end_time), 'h:mm a')}
                                   </p>
                                   <div className="flex gap-1 mt-1 flex-wrap">
                                     <Badge variant="outline" className="text-xs">
@@ -1150,17 +1008,17 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
               <div className="md:hidden p-4 space-y-6">
                 {Array.from({ length: 7 }, (_, i) => {
                   const day = addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), i)
-                  const dayName = formatLocalDateInPacific(day, 'EEE')
-                  const dayDate = formatLocalDateInPacific(day, 'MMM d')
-                  const isToday = isPacificToday(day)
+                  const dayName = format(day, 'EEE')
+                  const dayDate = format(day, 'MMM d')
+                  const isToday = isSameDay(day, new Date())
 
                   const daySessions = sessions.filter(s => {
                     // Apply instructor filter
                     if (selectedInstructorFilter !== 'all' && s.instructor_id !== selectedInstructorFilter) return false
                     // Apply location filter
                     if (selectedLocationFilter !== 'all' && s.location !== selectedLocationFilter) return false
-                    // Check if session is on this day (Pacific time)
-                    return isSessionOnPacificDate(s.start_time, day)
+                    // Check if session is on this day
+                    return isSameDay(parseISO(s.start_time), day)
                   })
 
                   if (daySessions.length === 0) return null
@@ -1191,7 +1049,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                               <div className="flex justify-between items-start">
                                 <div>
                                   <p className={`font-semibold ${color.text}`}>
-                                    {formatInPacificTime(session.start_time, 'h:mm a')}
+                                    {format(parseISO(session.start_time), 'h:mm a')}
                                   </p>
                                   <p className="text-gray-700 font-medium mt-1">
                                     {session.swimmer_name || 'Open'}
@@ -1269,12 +1127,12 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                   <tbody>
                     {Array.from({ length: 7 }, (_, i) => {
                       const day = addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), i)
-                      const dayName = formatLocalDateInPacific(day, 'EEE')
-                      const dayDate = formatLocalDateInPacific(day, 'MMM d')
-                      const isToday = isPacificToday(day)
+                      const dayName = format(day, 'EEE')
+                      const dayDate = format(day, 'MMM d')
+                      const isToday = isSameDay(day, new Date())
 
                       const daySessions = sessions.filter(s =>
-                        isSessionOnPacificDate(s.start_time, day)
+                        isSameDay(parseISO(s.start_time), day)
                       )
 
                       return (
@@ -1289,7 +1147,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                           {displayedInstructors.map((instructor) => {
                             const instructorDaySessions = daySessions
                               .filter(s => s.instructor_id === instructor.id)
-                              .sort((a, b) => toPacificTime(parseISO(a.start_time)).getTime() - toPacificTime(parseISO(b.start_time)).getTime())
+                              .sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime())
                             const color = INSTRUCTOR_COLORS[instructor.colorIndex]
 
                             return (
@@ -1305,7 +1163,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                       >
                                         <div className="flex justify-between items-start">
                                           <span className={`font-semibold ${color.text}`}>
-                                            {formatInPacificTime(session.start_time, 'h:mm a')}
+                                            {format(parseISO(session.start_time), 'h:mm a')}
                                           </span>
                                           {role === 'admin' && (
                                             <Button
@@ -1365,7 +1223,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <p className="font-medium">{selectedSession.swimmer_name || 'Open Slot'}</p>
                   <p className="text-sm text-gray-600">
-                    {formatInPacificTime(selectedSession.start_time, 'h:mm a')} - {formatInPacificTime(selectedSession.end_time, 'h:mm a')}
+                    {format(parseISO(selectedSession.start_time), 'h:mm a')} - {format(parseISO(selectedSession.end_time), 'h:mm a')}
                   </p>
                   <p className="text-sm text-gray-500">Currently: {selectedSession.instructor_name}</p>
                 </div>
@@ -1425,9 +1283,9 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
               </DialogTitle>
               <DialogDescription>
                 {isTransferMode ? (
-                  <>Transfer all of {selectedInstructorForCancel?.full_name}&apos;s sessions for {formatLocalDateInPacific(currentDate, 'MMMM d, yyyy')} to a substitute instructor.</>
+                  <>Transfer all of {selectedInstructorForCancel?.full_name}&apos;s sessions for {format(currentDate, 'MMMM d, yyyy')} to a substitute instructor.</>
                 ) : (
-                  <>Cancel all of {selectedInstructorForCancel?.full_name}&apos;s sessions for {formatLocalDateInPacific(currentDate, 'MMMM d, yyyy')}. Parents will be notified by email.</>
+                  <>Cancel all of {selectedInstructorForCancel?.full_name}&apos;s sessions for {format(currentDate, 'MMMM d, yyyy')}. Parents will be notified by email.</>
                 )}
               </DialogDescription>
             </DialogHeader>

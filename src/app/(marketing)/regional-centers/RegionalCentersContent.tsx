@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Check, Phone, Mail } from 'lucide-react';
 import { EditableText } from '@/components/admin/EditableText';
 import { usePageContent, getContent } from '@/hooks/usePageContent';
+import { useEditMode } from '@/contexts/EditModeContext';
 
 interface FundingSource {
   id: string;
@@ -21,7 +22,8 @@ interface RegionalCentersContentProps {
 }
 
 export default function RegionalCentersContent({ regionalCenters }: RegionalCentersContentProps) {
-  const { data: content, isLoading } = usePageContent('regional-centers');
+  const { editMode } = useEditMode();
+  const { data: content, isLoading } = usePageContent('regional-centers', editMode);
 
   if (isLoading) {
     return (

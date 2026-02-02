@@ -3,9 +3,11 @@
 import Image from 'next/image';
 import { EditableText } from '@/components/admin/EditableText';
 import { usePageContent, getContent } from '@/hooks/usePageContent';
+import { useEditMode } from '@/contexts/EditModeContext';
 
 export default function AboutPage() {
-  const { data: content, isLoading } = usePageContent('about');
+  const { editMode } = useEditMode();
+  const { data: content, isLoading } = usePageContent('about', editMode);
 
   if (isLoading) {
     return (

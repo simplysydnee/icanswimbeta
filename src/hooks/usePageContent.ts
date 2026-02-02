@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { createClient } from '@/lib/supabase/client';
 
-export function usePageContent(pageSlug: string) {
+export function usePageContent(pageSlug: string, enabled = true) {
   const supabase = createClient();
 
   return useQuery({
@@ -23,6 +23,8 @@ export function usePageContent(pageSlug: string) {
       }, {} as Record<string, string>);
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled,
+    retry: false, // Don't retry on error (e.g., 404)
   });
 }
 

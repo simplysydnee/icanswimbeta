@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Navigation } from './navigation';
 import { UserMenu } from '@/components/auth/UserMenu';
 import { useAuth } from '@/contexts/AuthContext';
-import { Menu, Loader2 } from 'lucide-react';
+import { useEditMode } from '@/contexts/EditModeContext';
+import { Menu, Loader2, Edit, Check } from 'lucide-react';
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,7 +19,8 @@ export function Header() {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { user, loading, signOut, signIn, signInWithGoogle } = useAuth();
+  const { user, loading, signOut, signIn, signInWithGoogle, role } = useAuth();
+  const { editMode, toggleEditMode } = useEditMode();
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +64,11 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      {editMode && (
+        <div className="bg-yellow-400 text-black py-2 px-4 text-center text-sm font-medium">
+          🖊️ Edit Mode Active - Click on any text to edit • Click "Done Editing" when finished
+        </div>
+      )}
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center space-x-4">
           <Link href="/" className="flex flex-col items-center">
@@ -112,6 +119,26 @@ export function Header() {
             </div>
           ) : user ? (
             <>
+              {role === 'admin' && (
+                <Button
+                  onClick={toggleEditMode}
+                  variant={editMode ? 'default' : 'outline'}
+                  size="sm"
+                  className={editMode ? 'bg-yellow-500 hover:bg-yellow-600' : ''}
+                >
+                  {editMode ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Done Editing
+                    </>
+                  ) : (
+                    <>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Pages
+                    </>
+                  )}
+                </Button>
+              )}
               <Button variant="outline" onClick={() => signOut()}>
                 Sign Out
               </Button>
@@ -244,6 +271,25 @@ export function Header() {
                         <Button variant="ghost" className="w-full justify-start" asChild>
                           <Link href="/settings">Settings</Link>
                         </Button>
+                        {role === 'admin' && (
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start"
+                            onClick={toggleEditMode}
+                          >
+                            {editMode ? (
+                              <>
+                                <Check className="w-4 h-4 mr-2" />
+                                Done Editing
+                              </>
+                            ) : (
+                              <>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit Pages
+                              </>
+                            )}
+                          </Button>
+                        )}
                       </div>
                       <div className="border-t pt-4">
                         <Button variant="outline" className="w-full" onClick={() => signOut()}>

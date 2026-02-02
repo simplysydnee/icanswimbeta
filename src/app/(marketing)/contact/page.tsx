@@ -3,9 +3,11 @@
 import { Phone, Mail, MapPin, Clock, MessageSquare } from 'lucide-react';
 import { EditableText } from '@/components/admin/EditableText';
 import { usePageContent, getContent } from '@/hooks/usePageContent';
+import { useEditMode } from '@/contexts/EditModeContext';
 
 export default function ContactPage() {
-  const { data: content, isLoading } = usePageContent('contact');
+  const { editMode } = useEditMode();
+  const { data: content, isLoading } = usePageContent('contact', editMode);
 
   if (isLoading) {
     return (

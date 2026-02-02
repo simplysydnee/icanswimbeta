@@ -2,9 +2,11 @@
 
 import { EditableText } from '@/components/admin/EditableText';
 import { usePageContent, getContent } from '@/hooks/usePageContent';
+import { useEditMode } from '@/contexts/EditModeContext';
 
 export default function Home() {
-  const { data: content, isLoading } = usePageContent('home');
+  const { editMode } = useEditMode();
+  const { data: content, isLoading } = usePageContent('home', editMode);
 
   if (isLoading) {
     return (

@@ -6,13 +6,15 @@ import { Card } from '@/components/ui/card';
 import { Check, CreditCard, Shield } from 'lucide-react';
 import { EditableText } from '@/components/admin/EditableText';
 import { usePageContent, getContent } from '@/hooks/usePageContent';
+import { useEditMode } from '@/contexts/EditModeContext';
 
 interface PricingContentProps {
   regionalCenterNames: string[];
 }
 
 export default function PricingContent({ regionalCenterNames }: PricingContentProps) {
-  const { data: content, isLoading } = usePageContent('pricing');
+  const { editMode } = useEditMode();
+  const { data: content, isLoading } = usePageContent('pricing', editMode);
 
   if (isLoading) {
     return (

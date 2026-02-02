@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { EditableText } from '@/components/admin/EditableText';
 import { usePageContent, getContent } from '@/hooks/usePageContent';
+import { useEditMode } from '@/contexts/EditModeContext';
 import { TeamMember } from './page';
 
 interface TeamContentProps {
@@ -10,7 +11,8 @@ interface TeamContentProps {
 }
 
 export default function TeamContent({ team }: TeamContentProps) {
-  const { data: content, isLoading } = usePageContent('team');
+  const { editMode } = useEditMode();
+  const { data: content, isLoading } = usePageContent('team', editMode);
 
   if (isLoading) {
     return (

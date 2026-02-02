@@ -3,6 +3,7 @@ import { Montserrat, Quicksand } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/common/theme-provider";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { EditModeProvider } from "@/contexts/EditModeContext";
 import { NavigationProvider } from "@/contexts/NavigationContext";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import { Footer } from "@/components/layout/footer";
@@ -86,7 +87,8 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <NavigationProvider>
+            <EditModeProvider>
+              <NavigationProvider>
               <ToastProvider>
                 <Providers>
                   <div className="relative flex min-h-screen flex-col">
@@ -96,6 +98,7 @@ export default function RootLayout({
                 </Providers>
               </ToastProvider>
             </NavigationProvider>
+            </EditModeProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
