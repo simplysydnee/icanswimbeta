@@ -87,7 +87,7 @@ export function PublicHeader() {
                       onClick={toggleEditMode}
                       variant={editMode ? 'default' : 'outline'}
                       size="sm"
-                      className={editMode ? 'bg-yellow-500 hover:bg-yellow-600 hidden lg:inline-flex flex-shrink-0 ml-2' : 'hidden lg:inline-flex flex-shrink-0 ml-2'}
+                      className={editMode ? 'bg-yellow-500 hover:bg-yellow-600 hidden lg:inline-flex flex-shrink-0 ml-2 mt-1' : 'hidden lg:inline-flex flex-shrink-0 ml-2 mt-1'}
                     >
                       {editMode ? (
                         <>

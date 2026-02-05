@@ -137,7 +137,7 @@ export function Header() {
                   onClick={toggleEditMode}
                   variant={editMode ? 'default' : 'outline'}
                   size="sm"
-                  className={editMode ? 'bg-yellow-500 hover:bg-yellow-600 flex-shrink-0 ml-2' : 'flex-shrink-0 ml-2'}
+                  className={editMode ? 'bg-yellow-500 hover:bg-yellow-600 flex-shrink-0 ml-2 mt-1' : 'flex-shrink-0 ml-2 mt-1'}
                 >
                   {editMode ? (
                     <>
