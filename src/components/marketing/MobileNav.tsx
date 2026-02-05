@@ -2,8 +2,9 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { X } from 'lucide-react';
+import { X, Edit, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEditMode } from '@/contexts/EditModeContext';
 import { Button } from '@/components/ui/button';
 
 interface NavLink {
@@ -18,7 +19,8 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ isOpen, onClose, navLinks }: MobileNavProps) {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, role } = useAuth();
+  const { editMode, toggleEditMode } = useEditMode();
 
   // Close menu when clicking Escape key
   useEffect(() => {
@@ -115,6 +117,28 @@ export function MobileNav({ isOpen, onClose, navLinks }: MobileNavProps) {
                   <p className="text-sm text-gray-600">Logged in as</p>
                   <p className="font-medium text-gray-900">{user.email}</p>
                 </div>
+                {(role === 'admin' || (Array.isArray(role) && role.includes('admin'))) && (
+                  <Button
+                    onClick={() => {
+                      toggleEditMode();
+                      onClose();
+                    }}
+                    variant={editMode ? 'default' : 'outline'}
+                    className={`w-full ${editMode ? 'bg-yellow-500 hover:bg-yellow-600' : ''}`}
+                  >
+                    {editMode ? (
+                      <>
+                        <Check className="w-4 h-4 mr-2" />
+                        Done Editing
+                      </>
+                    ) : (
+                      <>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Edit Pages
+                      </>
+                    )}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   className="w-full"

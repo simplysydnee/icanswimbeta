@@ -6,8 +6,8 @@
 
 - **Company**: I Can Swim, LLC
 - **Owner**: Sutton Lucas
-- **Phone**: 209-985-1538
-- **Email**: sutton@icanswim209.com
+- **Phone**: 209-778-7877
+- **Email**: info@icanswim209.com
 - **Website**: icanswim209.com
 - **Locations**:
   - Modesto: 1212 Kansas Ave, Modesto, CA 95351
@@ -480,8 +480,8 @@ export const APP_CONFIG = {
   description: 'Simply Better Swim Software',
   url: process.env.NEXT_PUBLIC_APP_URL,
   owner: 'Sutton Lucas',
-  email: 'sutton@icanswim209.com',
-  phone: '209-985-1538',
+  email: 'info@icanswim209.com',
+  phone: '209-778-7877',
 };
 
 export const PRICING = {

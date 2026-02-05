@@ -13,3 +13,5 @@ export { useOpenSessions } from './useOpenSessions';
 export { useDeleteSessions } from './useDeleteSessions';
 export { useUpdateSession } from './useUpdateSession';
 export { useAllSessions } from './useAllSessions';
+export { useWaiverToken } from './useWaiverToken';
+export { useSwimmersNeedingWaivers } from './useSwimmersNeedingWaivers';

@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X } from 'lucide-react';
+import { Menu, Edit, Check } from 'lucide-react';
 import { MobileNav } from './MobileNav';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEditMode } from '@/contexts/EditModeContext';
 import { Button } from '@/components/ui/button';
 
 const navLinks = [
@@ -21,7 +22,8 @@ const navLinks = [
 
 export function PublicHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, role } = useAuth();
+  const { editMode, toggleEditMode } = useEditMode();
 
   return (
     <>
@@ -80,6 +82,26 @@ export function PublicHeader() {
                 </div>
               ) : user ? (
                 <>
+                  {(role === 'admin' || (Array.isArray(role) && role.includes('admin'))) && (
+                    <Button
+                      onClick={toggleEditMode}
+                      variant={editMode ? 'default' : 'outline'}
+                      size="sm"
+                      className={editMode ? 'bg-yellow-500 hover:bg-yellow-600 hidden lg:inline-flex flex-shrink-0 ml-2' : 'hidden lg:inline-flex flex-shrink-0 ml-2'}
+                    >
+                      {editMode ? (
+                        <>
+                          <Check className="w-4 h-4 mr-2" />
+                          Done Editing
+                        </>
+                      ) : (
+                        <>
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit Pages
+                        </>
+                      )}
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     onClick={() => signOut()}

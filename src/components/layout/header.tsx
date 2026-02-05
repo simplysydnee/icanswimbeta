@@ -22,6 +22,19 @@ export function Header() {
   const { user, loading, signOut, signIn, signInWithGoogle, role } = useAuth();
   const { editMode, toggleEditMode } = useEditMode();
 
+  console.log('[Header Debug] Auth state:', {
+    user: !!user,
+    userObject: user,
+    role: role,
+    roleType: typeof role,
+    roleRaw: role,
+    editMode: editMode,
+    loading: loading,
+    isAdmin: role === 'admin',
+    isAdminArray: Array.isArray(role) && role.includes('admin'),
+    isAdminCombined: role === 'admin' || (Array.isArray(role) && role.includes('admin'))
+  });
+
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError(null);
@@ -119,12 +132,12 @@ export function Header() {
             </div>
           ) : user ? (
             <>
-              {role === 'admin' && (
+              {(role === 'admin' || (Array.isArray(role) && role.includes('admin'))) && (
                 <Button
                   onClick={toggleEditMode}
                   variant={editMode ? 'default' : 'outline'}
                   size="sm"
-                  className={editMode ? 'bg-yellow-500 hover:bg-yellow-600' : ''}
+                  className={editMode ? 'bg-yellow-500 hover:bg-yellow-600 flex-shrink-0 ml-2' : 'flex-shrink-0 ml-2'}
                 >
                   {editMode ? (
                     <>
@@ -271,7 +284,7 @@ export function Header() {
                         <Button variant="ghost" className="w-full justify-start" asChild>
                           <Link href="/settings">Settings</Link>
                         </Button>
-                        {role === 'admin' && (
+                        {(role === 'admin' || (Array.isArray(role) && role.includes('admin'))) && (
                           <Button
                             variant="ghost"
                             className="w-full justify-start"
