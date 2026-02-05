@@ -10,13 +10,145 @@ const corsHeaders = {
 };
 
 interface EmailRequest {
-  parentIds?: string[]; // Optional: specific parents, or send to all
+  parentIds?: string[]; // Optional: specific parents by ID, or send to all
+  parentEmails?: string[]; // Optional: specific parents by email
 }
 
 interface EmailResult {
   emailsSent: number;
   failed: number;
   errors: string[];
+  details?: {
+    sent: Array<{
+      parentId: string | null;
+      parentEmail: string;
+      parentName: string;
+      swimmerCount: number;
+      token: string;
+    }>;
+    failed: Array<{
+      email: string;
+      error: string;
+    }>;
+  };
+}
+
+// Helper function: Extract name from email
+function extractNameFromEmail(email: string): string {
+  if (!email) return 'Parent';
+
+  const localPart = email.split('@')[0];
+  const cleaned = localPart
+    .replace(/\d+/g, '')
+    .replace(/[_.-]/g, ' ')
+    .trim();
+
+  const words = cleaned.split(' ')
+    .filter(word => word.length > 0)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+
+  return words.length > 0 ? words.join(' ') : 'Parent';
+}
+
+// Helper function: Get parent name from profile
+async function getParentNameFromProfile(supabaseClient: any, parentId: string): Promise<string> {
+  const { data } = await supabaseClient
+    .from('profiles')
+    .select('full_name')
+    .eq('id', parentId)
+    .single();
+
+  return data?.full_name || 'Parent';
+}
+
+// Main function: Get parents with incomplete waivers (CORRECTED VERSION)
+async function getParentsWithIncompleteWaivers(supabaseClient: any) {
+  // Get all enrolled swimmers with parent info
+  const { data: swimmers, error } = await supabaseClient
+    .from('swimmers')
+    .select(`
+      id,
+      parent_id,
+      parent_email,
+      first_name,
+      last_name,
+      signed_waiver,
+      liability_waiver_signature,
+      photo_video_permission,
+      photo_video_signature,
+      cancellation_policy_signature
+    `)
+    .eq('enrollment_status', 'enrolled')
+    .not('parent_email', 'is', null);
+
+  if (error) {
+    console.error('[getParentsWithIncompleteWaivers] Query error:', error);
+    throw error;
+  }
+
+  if (!swimmers || swimmers.length === 0) {
+    return [];
+  }
+
+  console.log(`[getParentsWithIncompleteWaivers] Found ${swimmers.length} enrolled swimmers with parent emails`);
+
+  // Group swimmers by parent (use parent_id if exists, otherwise parent_email)
+  const parentMap = new Map();
+
+  for (const swimmer of swimmers) {
+    const parentKey = swimmer.parent_id || swimmer.parent_email;
+
+    if (!parentKey) {
+      console.warn('[getParentsWithIncompleteWaivers] Skipping swimmer with no parent info:', swimmer.id);
+      continue;
+    }
+
+    // Check if swimmer has complete waivers
+    const hasLiability = !!(swimmer.signed_waiver && swimmer.liability_waiver_signature);
+    const hasPhotoRelease = !!(swimmer.photo_video_permission && swimmer.photo_video_signature);
+    const hasCancellationPolicy = !!swimmer.cancellation_policy_signature;
+    const isComplete = hasLiability && hasPhotoRelease && hasCancellationPolicy;
+
+    // Skip if already complete
+    if (isComplete) {
+      continue;
+    }
+
+    // Initialize parent entry if not exists
+    if (!parentMap.has(parentKey)) {
+      parentMap.set(parentKey, {
+        parentId: swimmer.parent_id,
+        parentEmail: swimmer.parent_email,
+        parentName: 'Parent', // Will be set later
+        swimmers: []
+      });
+    }
+
+    // Add swimmer to parent's list
+    const parent = parentMap.get(parentKey);
+    parent.swimmers.push({
+      id: swimmer.id,
+      firstName: swimmer.first_name,
+      lastName: swimmer.last_name
+    });
+  }
+
+  // Now set parent names (async for those with profiles)
+  const parentArray = Array.from(parentMap.values());
+
+  for (const parent of parentArray) {
+    if (parent.parentId) {
+      // Parent has an account - get name from profile
+      parent.parentName = await getParentNameFromProfile(supabaseClient, parent.parentId);
+    } else {
+      // Parent doesn't have an account - extract name from email
+      parent.parentName = extractNameFromEmail(parent.parentEmail);
+    }
+  }
+
+  console.log(`[getParentsWithIncompleteWaivers] Found ${parentArray.length} parents with incomplete waivers`);
+
+  return parentArray;
 }
 
 serve(async (req: Request) => {
@@ -37,54 +169,37 @@ serve(async (req: Request) => {
 
     const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-    const { parentIds }: EmailRequest = await req.json();
+    const { parentIds, parentEmails }: EmailRequest = await req.json().catch(() => ({}));
 
-    // Get parents needing waiver updates
-    let query = supabaseClient
-      .from('profiles')
-      .select(`
-        id,
-        email,
-        full_name,
-        swimmers!inner(
-          id,
-          first_name,
-          last_name,
-          enrollment_status,
-          liability_waiver_signature,
-          photo_video_signature,
-          cancellation_policy_signature
-        )
-      `)
-      .eq('swimmers.enrollment_status', 'enrolled');
+    console.log('[send-waiver-update-emails] Starting email campaign');
 
-    if (parentIds && parentIds.length > 0) {
-      query = query.in('id', parentIds);
+    // Get all parents with incomplete waivers (CORRECTED LOGIC)
+    let allParents = await getParentsWithIncompleteWaivers(supabaseClient);
+
+    console.log(`[send-waiver-update-emails] Found ${allParents.length} parents with incomplete waivers`);
+
+    // Filter by specific parents if requested
+    if (parentIds && Array.isArray(parentIds) && parentIds.length > 0) {
+      allParents = allParents.filter(p => p.parentId && parentIds.includes(p.parentId));
+      console.log(`[send-waiver-update-emails] Filtered to ${allParents.length} specific parents by ID`);
+    } else if (parentEmails && Array.isArray(parentEmails) && parentEmails.length > 0) {
+      allParents = allParents.filter(p => parentEmails.includes(p.parentEmail));
+      console.log(`[send-waiver-update-emails] Filtered to ${allParents.length} specific parents by email`);
     }
-
-    const { data: parents, error: fetchError } = await query;
-
-    if (fetchError) throw fetchError;
 
     const result: EmailResult = {
       emailsSent: 0,
       failed: 0,
-      errors: []
+      errors: [],
+      details: {
+        sent: [],
+        failed: []
+      }
     };
 
     // Process each parent
-    for (const parent of parents || []) {
+    for (const parent of allParents) {
       try {
-        // Filter swimmers needing waivers
-        const swimmersNeedingWaivers = parent.swimmers.filter(
-          (s: any) =>
-            !s.liability_waiver_signature ||
-            !s.photo_video_signature ||
-            !s.cancellation_policy_signature
-        );
-
-        if (swimmersNeedingWaivers.length === 0) continue;
-
         // Generate secure token
         const token = generateSecureToken();
         const expiresAt = new Date();
@@ -94,8 +209,8 @@ serve(async (req: Request) => {
         const { error: tokenError } = await supabaseClient
           .from('waiver_update_tokens')
           .insert({
-            parent_id: parent.id,
-            parent_email: parent.email,
+            parent_id: parent.parentId,
+            parent_email: parent.parentEmail,
             token,
             expires_at: expiresAt.toISOString(),
             used: false,
@@ -104,23 +219,42 @@ serve(async (req: Request) => {
 
         if (tokenError) throw tokenError;
 
-        // Send email (using Resend or your email service)
+        // Get swimmer names for email
+        const swimmerNames = parent.swimmers.map((s: any) =>
+          `${s.firstName} ${s.lastName}`
+        );
+
+        // Send email using Resend
         await sendEmail({
-          to: parent.email,
-          parentName: parent.full_name || 'Parent',
-          swimmers: swimmersNeedingWaivers.map((s: any) =>
-            `${s.first_name} ${s.last_name}`
-          ),
+          to: parent.parentEmail,
+          parentName: parent.parentName,
+          swimmers: swimmerNames,
           link: `${baseUrl}/update-waivers/${token}`
         });
 
         result.emailsSent++;
+        result.details!.sent.push({
+          parentId: parent.parentId,
+          parentEmail: parent.parentEmail,
+          parentName: parent.parentName,
+          swimmerCount: parent.swimmers.length,
+          token
+        });
+
+        console.log(`[send-waiver-update-emails] Sent email to ${parent.parentEmail} for ${parent.swimmers.length} swimmers`);
       } catch (error) {
         result.failed++;
-        result.errors.push(`${parent.email}: ${error instanceof Error ? error.message : String(error)}`);
-        console.error(`Failed to send to ${parent.email}:`, error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        result.errors.push(`${parent.parentEmail}: ${errorMessage}`);
+        result.details!.failed.push({
+          email: parent.parentEmail,
+          error: errorMessage
+        });
+        console.error(`[send-waiver-update-emails] Failed to send to ${parent.parentEmail}:`, error);
       }
     }
+
+    console.log(`[send-waiver-update-emails] Completed: ${result.emailsSent} emails sent, ${result.failed} errors`);
 
     return new Response(
       JSON.stringify(result),
@@ -130,7 +264,7 @@ serve(async (req: Request) => {
       }
     );
   } catch (error) {
-    console.error('Send emails error:', error);
+    console.error('[send-waiver-update-emails] Fatal error:', error);
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : 'Unknown error occurred'

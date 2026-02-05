@@ -25,9 +25,17 @@ export function WaiverUpdateForm({
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
+    // Liability Waiver
     liabilitySignature: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    emergencyContactRelationship: '',
+
+    // Photo Release
     photoPermission: false,
     photoSignature: '',
+
+    // Cancellation Policy
     cancellationSignature: ''
   });
 
@@ -39,7 +47,13 @@ export function WaiverUpdateForm({
         body: JSON.stringify({
           token,
           swimmerId,
-          ...formData
+          liabilitySignature: formData.liabilitySignature,
+          emergencyContactName: formData.emergencyContactName,
+          emergencyContactPhone: formData.emergencyContactPhone,
+          emergencyContactRelationship: formData.emergencyContactRelationship,
+          photoPermission: formData.photoPermission,
+          photoSignature: formData.photoPermission ? formData.photoSignature : undefined,
+          cancellationSignature: formData.cancellationSignature
         })
       });
 
@@ -67,9 +81,25 @@ export function WaiverUpdateForm({
     }
   });
 
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCheckboxChange = (field: string, checked: boolean) => {
+    setFormData(prev => ({ ...prev, [field]: checked }));
+  };
+
   const isValid =
+    // Liability Waiver: signature + all emergency contact fields
     formData.liabilitySignature.length > 0 &&
+    formData.emergencyContactName.length > 0 &&
+    formData.emergencyContactPhone.length > 0 &&
+    formData.emergencyContactRelationship.length > 0 &&
+
+    // Cancellation Policy: signature required
     formData.cancellationSignature.length > 0 &&
+
+    // Photo Release: if permission granted, signature required
     (!formData.photoPermission || formData.photoSignature.length > 0);
 
   return (
@@ -78,11 +108,12 @@ export function WaiverUpdateForm({
         <h3 className="text-lg font-semibold mb-4">Section 1 of 3: Liability Waiver</h3>
         <LiabilityWaiverSection
           formData={{
-            liabilityWaiverSignature: formData.liabilitySignature
+            liabilitySignature: formData.liabilitySignature,
+            emergencyContactName: formData.emergencyContactName,
+            emergencyContactPhone: formData.emergencyContactPhone,
+            emergencyContactRelationship: formData.emergencyContactRelationship
           }}
-          handleChange={(field, value) =>
-            setFormData(prev => ({ ...prev, liabilitySignature: value }))
-          }
+          handleChange={handleChange}
         />
       </Card>
 
@@ -90,18 +121,11 @@ export function WaiverUpdateForm({
         <h3 className="text-lg font-semibold mb-4">Section 2 of 3: Photo/Video Permission</h3>
         <PhotoPermissionSection
           formData={{
-            photoVideoPermission: formData.photoPermission,
-            photoVideoSignature: formData.photoSignature
+            photoPermission: formData.photoPermission,
+            photoSignature: formData.photoSignature
           }}
-          handleChange={(field, value) =>
-            setFormData(prev => ({
-              ...prev,
-              [field === 'photoVideoPermission' ? 'photoPermission' : 'photoSignature']: value
-            }))
-          }
-          handleCheckboxChange={(field, checked) =>
-            setFormData(prev => ({ ...prev, photoPermission: checked }))
-          }
+          handleChange={handleChange}
+          handleCheckboxChange={handleCheckboxChange}
         />
       </Card>
 
@@ -109,11 +133,9 @@ export function WaiverUpdateForm({
         <h3 className="text-lg font-semibold mb-4">Section 3 of 3: Cancellation Policy</h3>
         <CancellationPolicySection
           formData={{
-            cancellationPolicySignature: formData.cancellationSignature
+            cancellationSignature: formData.cancellationSignature
           }}
-          handleChange={(field, value) =>
-            setFormData(prev => ({ ...prev, cancellationSignature: value }))
-          }
+          handleChange={handleChange}
         />
       </Card>
 

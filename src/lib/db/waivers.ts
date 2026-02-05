@@ -250,6 +250,9 @@ export async function updateSwimmerWaivers(
   swimmerId: string,
   waivers: {
     liabilitySignature?: string;
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
+    emergencyContactRelationship?: string;
     photoPermission: boolean;
     photoSignature?: string;
     cancellationSignature?: string;
@@ -308,6 +311,17 @@ export async function updateSwimmerWaivers(
       updateData.signed_waiver = true;
       updateData.liability_waiver_signature = waivers.liabilitySignature;
       updatedFields.push('liability_waiver');
+    }
+
+    // Emergency contact information
+    if (waivers.emergencyContactName) {
+      updateData.emergency_contact_name = waivers.emergencyContactName;
+    }
+    if (waivers.emergencyContactPhone) {
+      updateData.emergency_contact_phone = waivers.emergencyContactPhone;
+    }
+    if (waivers.emergencyContactRelationship) {
+      updateData.emergency_contact_relationship = waivers.emergencyContactRelationship;
     }
 
     if (waivers.photoPermission && waivers.photoSignature) {

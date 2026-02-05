@@ -5,6 +5,9 @@ const schema = z.object({
   token: z.string().min(32),
   swimmerId: z.string().uuid(),
   liabilitySignature: z.string().min(10),
+  emergencyContactName: z.string().min(2),
+  emergencyContactPhone: z.string().min(10),
+  emergencyContactRelationship: z.string().min(2),
   photoPermission: z.boolean(),
   photoSignature: z.string().optional(),
   cancellationSignature: z.string().min(10)
@@ -44,6 +47,9 @@ export async function POST(request: Request) {
       data.swimmerId,
       {
         liabilitySignature: data.liabilitySignature,
+        emergencyContactName: data.emergencyContactName,
+        emergencyContactPhone: data.emergencyContactPhone,
+        emergencyContactRelationship: data.emergencyContactRelationship,
         photoPermission: data.photoPermission,
         photoSignature: data.photoSignature,
         cancellationSignature: data.cancellationSignature
