@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { LEGAL_DOCUMENTS } from '@/constants/legal-text';
 
 // Create a service client that bypasses RLS for public operations
 function createServiceClient() {
@@ -253,9 +254,12 @@ export async function updateSwimmerWaivers(
     emergencyContactName?: string;
     emergencyContactPhone?: string;
     emergencyContactRelationship?: string;
+    liabilityConsent?: boolean;
     photoPermission: boolean;
     photoSignature?: string;
+    photoSignatureConsent?: boolean;
     cancellationSignature?: string;
+    cancellationAgreed?: boolean;
   },
   metadata: {
     parentId: string | null;
@@ -304,6 +308,62 @@ export async function updateSwimmerWaivers(
     const updateData: any = {
       updated_at: new Date().toISOString()
     };
+
+    // Build signature metadata with document versions and consent information
+    const signatureMetadata: any = {};
+    const now = new Date().toISOString();
+
+    // Electronic consent tracking
+    if (waivers.liabilityConsent || waivers.photoSignatureConsent || waivers.cancellationAgreed) {
+      updateData.electronic_consent_given = true;
+      updateData.electronic_consent_timestamp = now;
+      signatureMetadata.electronic_consent = {
+        liabilityConsent: waivers.liabilityConsent || false,
+        photoSignatureConsent: waivers.photoSignatureConsent || false,
+        cancellationAgreed: waivers.cancellationAgreed || false,
+        timestamp: now
+      };
+    }
+
+    // Liability waiver timestamp and version
+    if (waivers.liabilitySignature) {
+      updateData.liability_waiver_signed_at = now;
+      signatureMetadata.liability_waiver = {
+        version: LEGAL_DOCUMENTS.LIABILITY_WAIVER.version,
+        signed_at: now
+      };
+    }
+
+    // Cancellation policy timestamp and version
+    if (waivers.cancellationSignature) {
+      updateData.cancellation_policy_signed_at = now;
+      signatureMetadata.cancellation_policy = {
+        version: LEGAL_DOCUMENTS.CANCELLATION_POLICY.version,
+        signed_at: now
+      };
+    }
+
+    // Photo release timestamp and version
+    if (waivers.photoPermission && waivers.photoSignature) {
+      updateData.photo_release_signed_at = now;
+      signatureMetadata.photo_release = {
+        version: LEGAL_DOCUMENTS.PHOTO_RELEASE.version,
+        signed_at: now
+      };
+    }
+
+    // IP address and user agent for audit trail
+    if (metadata.ipAddress) {
+      updateData.signature_ip_address = metadata.ipAddress;
+    }
+    if (metadata.userAgent) {
+      updateData.signature_user_agent = metadata.userAgent;
+    }
+
+    // Store signature metadata if we have any
+    if (Object.keys(signatureMetadata).length > 0) {
+      updateData.signature_metadata = signatureMetadata;
+    }
 
     const updatedFields: string[] = [];
 

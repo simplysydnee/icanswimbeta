@@ -10,6 +10,7 @@ interface PhotoPermissionSectionProps {
   formData: {
     photoPermission: boolean;
     photoSignature: string;
+    photoSignatureConsent?: boolean;
   };
   handleChange: (field: string, value: string) => void;
   handleCheckboxChange: (field: string, checked: boolean) => void;
@@ -36,7 +37,11 @@ export function PhotoPermissionSection({
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium text-gray-900">Photo/Video Release</h3>
           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-            {formData.photoPermission ? 'Granted - Needs Signature' : 'Not Granted'}
+            {formData.photoPermission
+              ? (formData.photoSignature
+                  ? 'Granted and Signed'
+                  : 'Granted - Needs Signature')
+              : 'Not Granted'}
           </span>
         </div>
 
@@ -94,6 +99,24 @@ export function PhotoPermissionSection({
         {/* Signature Field (only shown when permission is granted) */}
         {formData.photoPermission && (
           <div>
+            <div className="mb-4">
+              <p className="text-sm text-gray-700 bg-blue-50 p-3 rounded-md">
+                <strong>Signature Required:</strong> By granting permission, you must provide your electronic signature below to make this authorization legally binding.
+              </p>
+            </div>
+            <div className="mb-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.photoSignatureConsent || false}
+                  onChange={(e) => handleCheckboxChange('photoSignatureConsent', e.target.checked)}
+                  className="h-4 w-4 text-blue-600"
+                />
+                <span className="ml-2 text-sm text-gray-700">
+                  I consent to use electronic signatures under the California Uniform Electronic Transactions Act (UETA) and understand that typing my name below creates a legally binding electronic signature.
+                </span>
+              </label>
+            </div>
             <label htmlFor="photoSignature" className="block text-sm font-medium text-gray-700 mb-2">
               Your Full Name (Electronic Signature) *
             </label>

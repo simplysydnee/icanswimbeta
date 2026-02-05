@@ -12,11 +12,13 @@ interface LiabilityWaiverSectionProps {
     emergencyContactName: string;
     emergencyContactPhone: string;
     emergencyContactRelationship: string;
+    liabilityConsent?: boolean;
   };
   handleChange: (field: string, value: string) => void;
+  handleCheckboxChange?: (field: string, checked: boolean) => void;
 }
 
-export function LiabilityWaiverSection({ formData, handleChange }: LiabilityWaiverSectionProps) {
+export function LiabilityWaiverSection({ formData, handleChange, handleCheckboxChange }: LiabilityWaiverSectionProps) {
   const [viewerOpen, setViewerOpen] = useState(false);
 
   return (
@@ -24,8 +26,11 @@ export function LiabilityWaiverSection({ formData, handleChange }: LiabilityWaiv
       <div className="border border-gray-200 rounded-lg p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium text-gray-900">Liability Waiver</h3>
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-            Not Signed
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+            ${formData.liabilitySignature
+              ? 'bg-green-100 text-green-800'
+              : 'bg-red-100 text-red-800'}`}>
+            {formData.liabilitySignature ? 'Signed' : 'Not Signed'}
           </span>
         </div>
 
@@ -104,10 +109,26 @@ export function LiabilityWaiverSection({ formData, handleChange }: LiabilityWaiv
           </div>
         </div>
 
+        <div className="mb-4">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={formData.liabilityConsent || false}
+              onChange={(e) => handleCheckboxChange ? handleCheckboxChange('liabilityConsent', e.target.checked) : handleChange('liabilityConsent', e.target.checked.toString())}
+              className="h-4 w-4 text-blue-600"
+              required
+            />
+            <span className="ml-2 text-sm text-gray-700">
+              I consent to use electronic signatures under the California Uniform Electronic Transactions Act (UETA)
+              and understand this creates a legally binding waiver of liability.
+            </span>
+          </label>
+        </div>
+
         {/* Signature Field */}
         <div>
           <label htmlFor="liabilitySignature" className="block text-sm font-medium text-gray-700 mb-2">
-            Your Full Name (Electronic Signature) *
+            Your Full Name (California Electronic Signature) *
           </label>
           <input
             type="text"

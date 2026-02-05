@@ -8,12 +8,24 @@ const schema = z.object({
   emergencyContactName: z.string().min(2),
   emergencyContactPhone: z.string().min(10),
   emergencyContactRelationship: z.string().min(2),
+  liabilityConsent: z.boolean().default(false),
   photoPermission: z.boolean(),
   photoSignature: z.string().optional(),
-  cancellationSignature: z.string().min(10)
+  photoSignatureConsent: z.boolean().optional().default(false),
+  cancellationSignature: z.string().min(10),
+  cancellationAgreed: z.boolean().default(false)
 }).refine(
   data => !data.photoPermission || data.photoSignature,
   { message: 'Photo signature required when permission is granted' }
+).refine(
+  data => !data.photoPermission || data.photoSignatureConsent === true,
+  { message: 'You must consent to electronic signatures for the photo release', path: ['photoSignatureConsent'] }
+).refine(
+  data => data.liabilityConsent === true,
+  { message: 'You must consent to electronic signatures for the liability waiver', path: ['liabilityConsent'] }
+).refine(
+  data => data.cancellationAgreed === true,
+  { message: 'You must agree to the cancellation policy', path: ['cancellationAgreed'] }
 );
 
 export async function POST(request: Request) {
@@ -50,9 +62,12 @@ export async function POST(request: Request) {
         emergencyContactName: data.emergencyContactName,
         emergencyContactPhone: data.emergencyContactPhone,
         emergencyContactRelationship: data.emergencyContactRelationship,
+        liabilityConsent: data.liabilityConsent,
         photoPermission: data.photoPermission,
         photoSignature: data.photoSignature,
-        cancellationSignature: data.cancellationSignature
+        photoSignatureConsent: data.photoSignatureConsent,
+        cancellationSignature: data.cancellationSignature,
+        cancellationAgreed: data.cancellationAgreed
       },
       {
         parentId: validation.parentId || null,

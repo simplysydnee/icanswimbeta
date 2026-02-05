@@ -9,11 +9,13 @@ import { LEGAL_DOCUMENTS } from '@/constants/legal-text';
 interface CancellationPolicySectionProps {
   formData: {
     cancellationSignature: string;
+    cancellationAgreed?: boolean;
   };
   handleChange: (field: string, value: string) => void;
+  handleCheckboxChange?: (field: string, checked: boolean) => void;
 }
 
-export function CancellationPolicySection({ formData, handleChange }: CancellationPolicySectionProps) {
+export function CancellationPolicySection({ formData, handleChange, handleCheckboxChange }: CancellationPolicySectionProps) {
   const [viewerOpen, setViewerOpen] = useState(false);
 
   return (
@@ -21,8 +23,11 @@ export function CancellationPolicySection({ formData, handleChange }: Cancellati
       <div className="border border-gray-200 rounded-lg p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium text-gray-900">Cancellation Policy</h3>
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-            Not Agreed
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+            ${formData.cancellationSignature
+              ? 'bg-green-100 text-green-800'
+              : 'bg-yellow-100 text-yellow-800'}`}>
+            {formData.cancellationSignature ? 'Agreed' : 'Review Required'}
           </span>
         </div>
 
@@ -41,6 +46,21 @@ export function CancellationPolicySection({ formData, handleChange }: Cancellati
             cancellations must be made at least 24 hours in advance through the parent portal or online.
             Cancellations with less than 24 hours' notice will result in my swimmer being moved to Flexible Swimmer status.
           </p>
+        </div>
+
+        <div className="mb-4">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              checked={formData.cancellationAgreed || false}
+              onChange={(e) => handleCheckboxChange ? handleCheckboxChange('cancellationAgreed', e.target.checked) : handleChange('cancellationAgreed', e.target.checked.toString())}
+              className="h-4 w-4 text-blue-600"
+              required
+            />
+            <span className="ml-2 text-sm text-gray-700">
+              I consent to use electronic signatures under the California Uniform Electronic Transactions Act (UETA) and agree to the Cancellation Policy terms above.
+            </span>
+          </label>
         </div>
 
         <div>

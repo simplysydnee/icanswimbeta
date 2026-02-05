@@ -30,13 +30,16 @@ export function WaiverUpdateForm({
     emergencyContactName: '',
     emergencyContactPhone: '',
     emergencyContactRelationship: '',
+    liabilityConsent: false,
 
     // Photo Release
     photoPermission: false,
     photoSignature: '',
+    photoSignatureConsent: false,
 
     // Cancellation Policy
-    cancellationSignature: ''
+    cancellationSignature: '',
+    cancellationAgreed: false
   });
 
   const updateMutation = useMutation({
@@ -51,9 +54,12 @@ export function WaiverUpdateForm({
           emergencyContactName: formData.emergencyContactName,
           emergencyContactPhone: formData.emergencyContactPhone,
           emergencyContactRelationship: formData.emergencyContactRelationship,
+          liabilityConsent: formData.liabilityConsent,
           photoPermission: formData.photoPermission,
           photoSignature: formData.photoPermission ? formData.photoSignature : undefined,
-          cancellationSignature: formData.cancellationSignature
+          photoSignatureConsent: formData.photoSignatureConsent,
+          cancellationSignature: formData.cancellationSignature,
+          cancellationAgreed: formData.cancellationAgreed
         })
       });
 
@@ -90,17 +96,19 @@ export function WaiverUpdateForm({
   };
 
   const isValid =
-    // Liability Waiver: signature + all emergency contact fields
+    // Liability Waiver: signature + all emergency contact fields + consent
     formData.liabilitySignature.length > 0 &&
     formData.emergencyContactName.length > 0 &&
     formData.emergencyContactPhone.length > 0 &&
     formData.emergencyContactRelationship.length > 0 &&
+    formData.liabilityConsent === true &&
 
-    // Cancellation Policy: signature required
+    // Cancellation Policy: signature required + agreement
     formData.cancellationSignature.length > 0 &&
+    formData.cancellationAgreed === true &&
 
-    // Photo Release: if permission granted, signature required
-    (!formData.photoPermission || formData.photoSignature.length > 0);
+    // Photo Release: if permission granted, signature required + consent required
+    (!formData.photoPermission || (formData.photoSignature.length > 0 && formData.photoSignatureConsent === true));
 
   return (
     <div className="space-y-6">
@@ -111,9 +119,11 @@ export function WaiverUpdateForm({
             liabilitySignature: formData.liabilitySignature,
             emergencyContactName: formData.emergencyContactName,
             emergencyContactPhone: formData.emergencyContactPhone,
-            emergencyContactRelationship: formData.emergencyContactRelationship
+            emergencyContactRelationship: formData.emergencyContactRelationship,
+            liabilityConsent: formData.liabilityConsent
           }}
           handleChange={handleChange}
+          handleCheckboxChange={handleCheckboxChange}
         />
       </Card>
 
@@ -122,7 +132,8 @@ export function WaiverUpdateForm({
         <PhotoPermissionSection
           formData={{
             photoPermission: formData.photoPermission,
-            photoSignature: formData.photoSignature
+            photoSignature: formData.photoSignature,
+            photoSignatureConsent: formData.photoSignatureConsent
           }}
           handleChange={handleChange}
           handleCheckboxChange={handleCheckboxChange}
@@ -133,18 +144,26 @@ export function WaiverUpdateForm({
         <h3 className="text-lg font-semibold mb-4">Section 3 of 3: Cancellation Policy</h3>
         <CancellationPolicySection
           formData={{
-            cancellationSignature: formData.cancellationSignature
+            cancellationSignature: formData.cancellationSignature,
+            cancellationAgreed: formData.cancellationAgreed
           }}
           handleChange={handleChange}
+          handleCheckboxChange={handleCheckboxChange}
         />
       </Card>
 
       <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-        <p className="text-sm text-blue-800">
-          <strong>Electronic Signature Consent:</strong> By typing your name in the signature fields,
-          you consent to using electronic signatures in lieu of handwritten signatures,
-          in accordance with the ESIGN Act and applicable state laws.
+        <p className="text-sm text-blue-800 mb-2">
+          <strong>California Electronic Signature Consent:</strong>
         </p>
+        <ul className="text-xs text-blue-800 list-disc pl-4 space-y-1">
+          <li>By typing your name, you consent to electronic signatures under California UETA</li>
+          <li>Your electronic signature is legally equivalent to a handwritten signature</li>
+          <li>You may request paper copies at any time by contacting (209) 778-7877</li>
+          <li>You may withdraw consent to electronic records by contacting us in writing</li>
+          <li>Signed documents will be retained in our secure electronic records</li>
+          <li>To sign electronically, you need a device with a web browser and internet connection</li>
+        </ul>
       </div>
 
       <Button
