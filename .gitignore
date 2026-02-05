@@ -39,3 +39,4 @@ tsconfig.tsbuildinfo
 .env.migration
 .env.migrate_*
 
+supabase/.temp
