@@ -22,7 +22,7 @@ const schema = z.object({
   { message: 'You must consent to electronic signatures for the photo release', path: ['photoSignatureConsent'] }
 ).refine(
   data => data.liabilityConsent === true,
-  { message: 'You must consent to electronic signatures for the liability waiver', path: ['liabilityConsent'] }
+  { message: 'You must consent to electronic signatures and agree to the liability waiver terms', path: ['liabilityConsent'] }
 ).refine(
   data => data.cancellationAgreed === true,
   { message: 'You must agree to the cancellation policy', path: ['cancellationAgreed'] }

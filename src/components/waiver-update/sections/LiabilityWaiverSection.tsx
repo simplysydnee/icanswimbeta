@@ -120,7 +120,7 @@ export function LiabilityWaiverSection({ formData, handleChange, handleCheckboxC
             />
             <span className="ml-2 text-sm text-gray-700">
               I consent to use electronic signatures under the California Uniform Electronic Transactions Act (UETA)
-              and understand this creates a legally binding waiver of liability.
+              and agree to the Liability Waiver terms above.
             </span>
           </label>
         </div>
