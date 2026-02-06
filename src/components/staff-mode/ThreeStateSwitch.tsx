@@ -19,6 +19,7 @@ const ThreeStateSwitch: React.FC<ThreeStateSwitchProps> = ({
   size = 'md',
 }) => {
   const handleClick = (newValue: ThreeStateValue) => {
+    console.log('ThreeStateSwitch clicked:', { newValue, disabled, currentValue: value })
     if (!disabled) {
       onChange(newValue);
     }

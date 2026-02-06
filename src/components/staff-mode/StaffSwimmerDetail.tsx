@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useStaffMode } from './StaffModeContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { format, parseISO, differenceInYears } from 'date-fns'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -15,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, ArrowLeft, Phone, Mail, User, AlertTriangle, FileText, Target, Brain, MessageSquare, Stethoscope, Users, Calendar, Award, CheckCircle, LogOut } from 'lucide-react'
 import { AssessmentTab, ProgressTab, TargetsTab, StrategiesTab, NotesTab } from './tabs'
 import ImportantNoticeHeader from './ImportantNoticeHeader'
+import EditImportantNotesModal from './modals/EditImportantNotesModal'
 
 interface SwimmerDetail {
   id: string
@@ -201,7 +203,10 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
   const router = useRouter()
   const { selectedInstructor, clearInstructor } = useStaffMode()
   const { toast } = useToast()
+  const { role } = useAuth()
+  const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('progress')
+  const [showEditNotesModal, setShowEditNotesModal] = useState(false)
 
   const { data: swimmer, isLoading, error } = useQuery({
     queryKey: ['swimmerDetail', swimmerId],
@@ -501,11 +506,8 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
             {/* Important Notice Header */}
             <ImportantNoticeHeader
               importantNotes={swimmer.important_notes || []}
-              isAdmin={false} // TODO: Get actual admin status from auth context
-              onEdit={() => {
-                // TODO: Implement edit modal for important notes
-                console.log('Edit important notes')
-              }}
+              isAdmin={role === 'admin'}
+              onEdit={() => setShowEditNotesModal(true)}
             />
           </div>
         </div>
@@ -765,6 +767,18 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
           <p className="mt-1">Use the tabs above to view and manage different aspects of this swimmer's profile.</p>
         </div>
       </div>
+
+      {/* Edit Important Notes Modal */}
+      <EditImportantNotesModal
+        open={showEditNotesModal}
+        onOpenChange={setShowEditNotesModal}
+        swimmerId={swimmerId}
+        importantNotes={swimmer.important_notes || []}
+        onSuccess={() => {
+          // Invalidate query to refresh data
+          queryClient.invalidateQueries({ queryKey: ['swimmerDetail', swimmerId] })
+        }}
+      />
     </div>
   )
 }

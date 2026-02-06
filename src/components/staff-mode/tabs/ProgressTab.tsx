@@ -141,17 +141,21 @@ async function updateSkillStatus(
   instructorId: string
 ) {
   const supabase = createClient()
+  console.log('updateSkillStatus called:', { swimmerId, skillId, status, instructorId })
 
   try {
+    // Get current authenticated user
+    const { data: { user } } = await supabase.auth.getUser()
+    const updatedBy = user?.id || null
+    console.log('Authenticated user:', { userId: updatedBy })
+
     const now = new Date().toISOString()
     const updateData: any = {
       status,
       updated_at: now,
+      updated_by: updatedBy,
       ...(status === 'mastered' ? { date_mastered: now.split('T')[0] } : { date_mastered: null }) // Clear date_mastered if not mastered
     }
-
-    // Note: updated_by column doesn't exist in the database schema
-    // If we need to track who made the update, we should add this column first
 
     // Check if skill record exists
     const { error: checkError } = await supabase
@@ -192,6 +196,7 @@ async function updateSkillStatus(
       throw new Error(`Failed to update skill status: ${result.error.message || 'Unknown error'}`)
     }
 
+    console.log('Skill status updated successfully')
     return { success: true }
   } catch (error) {
     console.error('Error in updateSkillStatus:', {
@@ -212,12 +217,19 @@ async function updateSkillNote(
   instructorId: string
 ) {
   const supabase = createClient()
+  console.log('updateSkillNote called:', { swimmerId, skillId, instructor_notes, instructorId })
 
   try {
+    // Get current authenticated user
+    const { data: { user } } = await supabase.auth.getUser()
+    const updatedBy = user?.id || null
+    console.log('Authenticated user for note update:', { userId: updatedBy })
+
     const now = new Date().toISOString()
     const updateData = {
       instructor_notes: instructor_notes.trim() || null,
-      updated_at: now
+      updated_at: now,
+      updated_by: updatedBy
     }
 
     // Check if skill record exists
@@ -260,6 +272,7 @@ async function updateSkillNote(
       throw new Error(`Failed to update skill note: ${result.error.message || 'Unknown error'}`)
     }
 
+    console.log('Skill note updated successfully')
     return { success: true }
   } catch (error) {
     console.error('Error in updateSkillNote:', {
@@ -332,6 +345,7 @@ export default function ProgressTab({
   })
 
   const handleUpdateSkill = (skillId: string, newStatus: 'not_started' | 'in_progress' | 'mastered') => {
+    console.log('handleUpdateSkill called:', { skillId, newStatus })
     setUpdatingSkillId(skillId)
     updateMutation.mutate({ skillId, status: newStatus })
   }

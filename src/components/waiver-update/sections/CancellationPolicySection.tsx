@@ -44,7 +44,7 @@ export function CancellationPolicySection({ formData, handleChange, handleCheckb
           <p className="text-gray-600 mb-4">
             <strong>Summary:</strong> I understand and agree to the cancellation policy. I acknowledge that
             cancellations must be made at least 24 hours in advance through the parent portal or online.
-            Cancellations with less than 24 hours' notice will result in my swimmer being moved to Flexible Swimmer status.
+            Late cancellations or no-calls/no-shows may result in drop of services.
           </p>
         </div>
 
