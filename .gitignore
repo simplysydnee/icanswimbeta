@@ -40,3 +40,14 @@ tsconfig.tsbuildinfo
 .env.migrate_*
 
 supabase/.temp
+
+# Backup files
+*.backup
+*backup*
+backup_*.sql
+index-*.ts
+*-minimal.ts
+*-new.ts
+*-simple.ts
+*-test.ts
+*-waiver-v2.ts
