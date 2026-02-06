@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -12,12 +13,39 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import { CheckCircle, AlertCircle, Mail, Loader2 } from 'lucide-react';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 
 export default function WaiversAdminPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Selection state
+  const [selectedParentIds, setSelectedParentIds] = useState<Set<string>>(new Set());
+
+  // Selection handlers
+  const handleSelectParent = (parentId: string, selected: boolean) => {
+    setSelectedParentIds(prev => {
+      const next = new Set(prev);
+      if (selected) {
+        next.add(parentId);
+      } else {
+        next.delete(parentId);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedParentIds.size === stats?.parents?.length) {
+      setSelectedParentIds(new Set());
+    } else {
+      const allIds = stats?.parents?.map((p: any) => p.id) || [];
+      setSelectedParentIds(new Set(allIds));
+    }
+  };
 
   // Fetch completion status
   const { data: stats, isLoading } = useQuery({
@@ -79,8 +107,16 @@ export default function WaiversAdminPage() {
 
             <Button
               onClick={() => {
-                if (confirm(`Send waiver update emails to ${stats?.needingWaivers} parents?`)) {
-                  sendEmailsMutation.mutate(undefined);
+                const hasSelection = selectedParentIds.size > 0;
+                const targetCount = hasSelection ? selectedParentIds.size : stats?.needingWaivers;
+                const targetText = hasSelection ? 'selected' : 'all';
+
+                if (confirm(`Send waiver update emails to ${targetCount} ${targetText} parents?`)) {
+                  if (hasSelection) {
+                    sendEmailsMutation.mutate(Array.from(selectedParentIds));
+                  } else {
+                    sendEmailsMutation.mutate(undefined);
+                  }
                 }
               }}
               disabled={sendEmailsMutation.isPending || !stats?.needingWaivers}
@@ -93,12 +129,39 @@ export default function WaiversAdminPage() {
               ) : (
                 <>
                   <Mail className="w-4 h-4 mr-2" />
-                  Send to All
+                  {selectedParentIds.size > 0 ? `Send to Selected (${selectedParentIds.size})` : 'Send to All'}
                 </>
               )}
             </Button>
           </div>
         </Card>
+
+        {/* Bulk Actions Bar (shown when items are selected) */}
+        {selectedParentIds.size > 0 && (
+          <div className="flex flex-wrap items-center gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={selectedParentIds.size === stats?.parents?.length && stats?.parents?.length > 0}
+                onCheckedChange={handleSelectAll}
+                aria-label="Select all parents"
+              />
+              <span className="text-sm font-medium">
+                {selectedParentIds.size === stats?.parents?.length ? 'Deselect All' : 'Select All'}
+              </span>
+            </div>
+
+            <Separator orientation="vertical" className="h-6" />
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setSelectedParentIds(new Set())}
+              >
+                Clear Selection
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Completion Status Table */}
         <Card>
@@ -114,6 +177,14 @@ export default function WaiversAdminPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10 px-2">
+                    <Checkbox
+                      checked={selectedParentIds.size === stats?.parents?.length && stats?.parents?.length > 0}
+                      onCheckedChange={handleSelectAll}
+                      aria-label="Select all parents"
+                      className="h-4 w-4"
+                    />
+                  </TableHead>
                   <TableHead>Parent Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Swimmers</TableHead>
@@ -125,7 +196,15 @@ export default function WaiversAdminPage() {
               </TableHeader>
               <TableBody>
                 {stats?.parents?.map((parent: any) => (
-                  <TableRow key={parent.id}>
+                  <TableRow key={parent.id} className={selectedParentIds.has(parent.id) ? 'bg-muted/50' : ''}>
+                    <TableCell className="px-2 py-2">
+                      <Checkbox
+                        checked={selectedParentIds.has(parent.id)}
+                        onCheckedChange={(checked) => handleSelectParent(parent.id, !!checked)}
+                        aria-label={`Select parent ${parent.name}`}
+                        className="h-4 w-4"
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{parent.name}</TableCell>
                     <TableCell>{parent.email}</TableCell>
                     <TableCell>{parent.swimmerCount}</TableCell>
