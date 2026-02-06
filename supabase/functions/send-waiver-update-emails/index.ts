@@ -180,8 +180,11 @@ serve(async (req: Request) => {
 
     // Filter by specific parents if requested
     if (parentIds && Array.isArray(parentIds) && parentIds.length > 0) {
-      allParents = allParents.filter(p => p.parentId && parentIds.includes(p.parentId));
-      console.log(`[send-waiver-update-emails] Filtered to ${allParents.length} specific parents by ID`);
+      allParents = allParents.filter(p =>
+        (p.parentId && parentIds.includes(p.parentId)) ||
+        parentIds.includes(p.parentEmail)
+      );
+      console.log(`[send-waiver-update-emails] Filtered to ${allParents.length} specific parents by ID/email`);
     } else if (parentEmails && Array.isArray(parentEmails) && parentEmails.length > 0) {
       allParents = allParents.filter(p => parentEmails.includes(p.parentEmail));
       console.log(`[send-waiver-update-emails] Filtered to ${allParents.length} specific parents by email`);

@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 
 const schema = z.object({
-  parentIds: z.array(z.string().uuid()).optional()
+  parentIds: z.array(z.string()).optional()
 });
 
 export async function POST(request: Request) {
