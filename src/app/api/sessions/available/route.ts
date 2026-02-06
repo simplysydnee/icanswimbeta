@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
         )
       `)
       .or('status.eq.available,status.eq.open')
+      .neq('status', 'closed')
       .eq('is_full', false)
       .order('start_time', { ascending: true })
 

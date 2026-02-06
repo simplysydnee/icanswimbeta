@@ -50,6 +50,7 @@ export const SESSION_STATUSES = {
   BOOKED: 'booked',
   CANCELLED: 'cancelled',
   COMPLETED: 'completed',
+  CLOSED: 'closed',
 } as const;
 
 // Enrollment statuses
@@ -356,10 +357,7 @@ Cancellations can be made through your parent portal on the app or online.
 
 We understand that life happens—illness, emergencies, and unexpected changes are part of life. But when we don't receive notice in time, the session goes unused, and another swimmer misses the opportunity to take that spot.
 
-If a session is canceled with less than 24 hours' notice, your swimmer will be moved to Flexible Swimmer status:
-
-- No recurring weekly sessions
-- Only eligible to book single open sessions as available
+Late cancellations or no-calls/no-shows may result in drop of services.
 
 We appreciate your understanding and support as we work to keep the pool full and every swimmer progressing.
 

@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { CloseSessionModal } from '@/components/admin/CloseSessionModal'
 import {
   Select,
   SelectContent,
@@ -24,6 +25,7 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/hooks/use-toast'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 import {
@@ -69,6 +71,7 @@ interface Session {
   swimmer_id: string | null
   parent_email: string | null
   booking_id: string | null
+  bookings_count: number
 }
 
 interface Instructor {
@@ -94,6 +97,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
   const [instructors, setInstructors] = useState<Instructor[]>([])
   const [loading, setLoading] = useState(true)
 
+
   // Filter instructors to only those with sessions for the current view
   const instructorsWithSessions = useMemo(() => {
     if (sessions.length === 0) return instructors; // Show all if no sessions loaded yet
@@ -114,6 +118,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
   // Admin action states
   const [showReassignDialog, setShowReassignDialog] = useState(false)
   const [showCancelDayDialog, setShowCancelDayDialog] = useState(false)
+  const [showCloseSessionDialog, setShowCloseSessionDialog] = useState(false)
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
   const [selectedInstructorForCancel, setSelectedInstructorForCancel] = useState<Instructor | null>(null)
   const [newInstructorId, setNewInstructorId] = useState<string>('')
@@ -123,8 +128,17 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
   // Filter states
   const [selectedInstructorFilter, setSelectedInstructorFilter] = useState<string>('all')
   const [selectedLocationFilter, setSelectedLocationFilter] = useState<string>('all')
+  const [showClosedSessions, setShowClosedSessions] = useState(role === 'admin')
   const [availableLocations] = useState<string[]>(['Modesto', 'Turlock'])
   const [isTransferMode, setIsTransferMode] = useState(false)
+
+  // Filter sessions based on closed sessions toggle
+  const filteredSessions = useMemo(() => {
+    if (showClosedSessions) {
+      return sessions;
+    }
+    return sessions.filter(session => session.status !== 'closed');
+  }, [sessions, showClosedSessions])
 
   // Helper to get Pacific hour/minute from UTC time
   const getPacificHourMinute = (utcTimeString: string) => {
@@ -387,6 +401,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
           swimmer_id: firstBooking?.swimmer?.id || null,
           parent_email: firstBooking?.parent?.email || null,
           booking_id: firstBooking?.id || null,
+          bookings_count: bookings.length,
         }
       })
       setSessions(formatted)
@@ -460,6 +475,11 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
     setSelectedSession(session)
     setNewInstructorId('')
     setShowReassignDialog(true)
+  }
+
+  const handleCloseSession = (session: Session) => {
+    setSelectedSession(session)
+    setShowCloseSessionDialog(true)
   }
 
   const handleCancelInstructorDay = (instructor: Instructor) => {
@@ -688,6 +708,17 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
               </SelectContent>
             </Select>
           </div>
+
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="show-closed-sessions"
+              checked={showClosedSessions}
+              onCheckedChange={(checked) => setShowClosedSessions(checked === true)}
+            />
+            <Label htmlFor="show-closed-sessions" className="text-sm font-medium cursor-pointer">
+              Show closed sessions
+            </Label>
+          </div>
         </div>
       )}
 
@@ -897,17 +928,28 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                 </div>
                               </div>
 
-                              {/* Admin: Reassign button */}
+                              {/* Admin: Actions */}
                               {role === 'admin' && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="mt-2 w-full"
-                                  onClick={() => handleReassignSession(session)}
-                                >
-                                  <RefreshCw className="h-3 w-3 mr-2" />
-                                  Reassign
-                                </Button>
+                                <div className="flex flex-col gap-2 mt-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => handleReassignSession(session)}
+                                  >
+                                    <RefreshCw className="h-3 w-3 mr-2" />
+                                    Reassign
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => handleCloseSession(session)}
+                                  >
+                                    <AlertTriangle className="h-3 w-3 mr-2" />
+                                    Close Session
+                                  </Button>
+                                </div>
                               )}
                             </div>
                           )
@@ -980,16 +1022,28 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                     )}
                                   </div>
 
-                                  {/* Admin: Reassign button */}
+                                  {/* Admin: Actions */}
                                   {role === 'admin' && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity print:hidden"
-                                      onClick={() => handleReassignSession(session)}
-                                    >
-                                      <RefreshCw className="h-3 w-3" />
-                                    </Button>
+                                    <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity print:hidden">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 w-6 p-0"
+                                        onClick={() => handleReassignSession(session)}
+                                        title="Reassign session"
+                                      >
+                                        <RefreshCw className="h-3 w-3" />
+                                      </Button>
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        className="h-6 w-6 p-0"
+                                        onClick={() => handleCloseSession(session)}
+                                        title="Close session"
+                                      >
+                                        <AlertTriangle className="h-3 w-3" />
+                                      </Button>
+                                    </div>
                                   )}
                                 </div>
                               ))}
@@ -1076,17 +1130,28 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                 </div>
                               </div>
 
-                              {/* Admin: Reassign button */}
+                              {/* Admin: Actions */}
                               {role === 'admin' && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="mt-2 w-full"
-                                  onClick={() => handleReassignSession(session)}
-                                >
-                                  <RefreshCw className="h-3 w-3 mr-2" />
-                                  Reassign
-                                </Button>
+                                <div className="flex flex-col gap-2 mt-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => handleReassignSession(session)}
+                                  >
+                                    <RefreshCw className="h-3 w-3 mr-2" />
+                                    Reassign
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => handleCloseSession(session)}
+                                  >
+                                    <AlertTriangle className="h-3 w-3 mr-2" />
+                                    Close Session
+                                  </Button>
+                                </div>
                               )}
                             </div>
                           )
@@ -1350,6 +1415,22 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* Close Session Dialog (Admin only) */}
+      {role === 'admin' && (
+        <CloseSessionModal
+          open={showCloseSessionDialog}
+          onOpenChange={setShowCloseSessionDialog}
+          session={{
+            id: selectedSession?.id || '',
+            start_time: selectedSession?.start_time || '',
+            instructor_name: selectedSession?.instructor_name || null,
+            location: selectedSession?.location || null,
+            bookings_count: selectedSession?.bookings_count || 0,
+          }}
+          onSuccess={fetchSessions}
+        />
       )}
 
       {/* Print Styles for One-Page Laminated Schedule */}
