@@ -144,10 +144,9 @@ async function updateSkillStatus(
   console.log('updateSkillStatus called:', { swimmerId, skillId, status, instructorId })
 
   try {
-    // Get current authenticated user
-    const { data: { user } } = await supabase.auth.getUser()
-    const updatedBy = user?.id || null
-    console.log('Authenticated user:', { userId: updatedBy })
+    // Use the passed instructorId for staff mode (selected instructor in staff mode)
+    const updatedBy = instructorId
+    console.log('Using instructorId for updated_by:', { instructorId: updatedBy })
 
     const now = new Date().toISOString()
     const updateData: any = {
@@ -220,10 +219,9 @@ async function updateSkillNote(
   console.log('updateSkillNote called:', { swimmerId, skillId, instructor_notes, instructorId })
 
   try {
-    // Get current authenticated user
-    const { data: { user } } = await supabase.auth.getUser()
-    const updatedBy = user?.id || null
-    console.log('Authenticated user for note update:', { userId: updatedBy })
+    // Use the passed instructorId for staff mode (selected instructor in staff mode)
+    const updatedBy = instructorId
+    console.log('Using instructorId for note update:', { instructorId: updatedBy })
 
     const now = new Date().toISOString()
     const updateData = {

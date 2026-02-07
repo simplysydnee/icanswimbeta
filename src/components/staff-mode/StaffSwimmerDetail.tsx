@@ -13,7 +13,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Loader2, ArrowLeft, Phone, Mail, User, AlertTriangle, FileText, Target, Brain, MessageSquare, Stethoscope, Users, Calendar, Award, CheckCircle, LogOut } from 'lucide-react'
+import { Loader2, ArrowLeft, Phone, Mail, User, AlertTriangle, Target, Brain, MessageSquare, Stethoscope, Users, Calendar, Award, CheckCircle, LogOut, FileCheck } from 'lucide-react'
 import { AssessmentTab, ProgressTab, TargetsTab, StrategiesTab, NotesTab } from './tabs'
 import ImportantNoticeHeader from './ImportantNoticeHeader'
 import EditImportantNotesModal from './modals/EditImportantNotesModal'
@@ -54,6 +54,14 @@ interface SwimmerDetail {
   parent_phone: string | null
   parent_email: string | null
 
+  // Waiver status
+  signed_waiver: boolean | null
+  liability_waiver_signature: string | null
+  photo_video_permission: boolean | null
+  photo_video_signature: string | null
+  cancellation_policy_signature: string | null
+  waiver_complete: boolean
+
   // Skills and progress
   mastered_skills_count: number
   total_skills_count: number
@@ -68,7 +76,7 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
   const supabase = createClient()
 
   try {
-    // Fetch swimmer with level and parent info
+    // Fetch swimmer with level, parent info, and waiver fields
     const { data: swimmer, error: swimmerError } = await supabase
       .from('swimmers')
       .select(`
@@ -143,6 +151,12 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
     // Transform the data
     const parentProfile = swimmer.profiles?.[0] || {}
 
+    // Calculate waiver completion status
+    const hasLiability = !!(swimmer.signed_waiver && swimmer.liability_waiver_signature)
+    const hasPhotoRelease = !!(swimmer.photo_video_permission && swimmer.photo_video_signature)
+    const hasCancellationPolicy = !!swimmer.cancellation_policy_signature
+    const waiver_complete = hasLiability && hasPhotoRelease && hasCancellationPolicy
+
     return {
       id: swimmer.id,
       first_name: swimmer.first_name,
@@ -179,6 +193,14 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
       parent_phone: parentProfile.phone || null,
       parent_email: parentProfile.email || null,
 
+      // Waiver status
+      signed_waiver: swimmer.signed_waiver,
+      liability_waiver_signature: swimmer.liability_waiver_signature,
+      photo_video_permission: swimmer.photo_video_permission,
+      photo_video_signature: swimmer.photo_video_signature,
+      cancellation_policy_signature: swimmer.cancellation_policy_signature,
+      waiver_complete,
+
       // Skills and progress
       mastered_skills_count: masteredSkills,
       total_skills_count: totalSkills,
@@ -207,6 +229,7 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('progress')
   const [showEditNotesModal, setShowEditNotesModal] = useState(false)
+  const [sendingWaiverEmail, setSendingWaiverEmail] = useState(false)
 
   const { data: swimmer, isLoading, error } = useQuery({
     queryKey: ['swimmerDetail', swimmerId],
@@ -266,6 +289,48 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
       return format(parseISO(dateString), 'MMM d, yyyy')
     } catch {
       return dateString
+    }
+  }
+
+  const handleSendWaiverEmail = async () => {
+    if (!swimmer?.parent_email) {
+      toast({
+        title: 'No email available',
+        description: 'This swimmer does not have a parent email address.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setSendingWaiverEmail(true)
+    try {
+      const response = await fetch('/api/staff/waivers/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          swimmerId: swimmer.id
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send waiver email')
+      }
+
+      toast({
+        title: 'Waiver email sent',
+        description: result.message || `Email has been sent to ${swimmer.parent_email}`,
+      })
+    } catch (error) {
+      console.error('Error sending waiver email:', error)
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to send waiver email',
+        variant: 'destructive',
+      })
+    } finally {
+      setSendingWaiverEmail(false)
     }
   }
 
@@ -350,7 +415,6 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
     swimmer.level_sequence
   )
   const isAssessment = swimmer.assessment_status === 'scheduled'
-  const hasImportantNotes = swimmer.important_notes && swimmer.important_notes.length > 0
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#e8f4f8] to-white">
@@ -413,14 +477,24 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
                       <div className="flex items-center gap-2 text-gray-600">
                         <Calendar className="h-4 w-4" />
                         <span>{age !== null ? `${age} years old` : 'Age not available'}</span>
-                        <span className="text-gray-400">•</span>
-                        <span>Born {formatDate(swimmer.date_of_birth)}</span>
+                        {swimmer.diagnosis && (
+                          <>
+                            <span className="text-gray-400">•</span>
+                            <span className="text-gray-600">{swimmer.diagnosis}</span>
+                          </>
+                        )}
                       </div>
 
                       {swimmer.gender && (
                         <>
                           <span className="text-gray-400">•</span>
                           <span className="text-gray-600 capitalize">{swimmer.gender}</span>
+                          {swimmer.parent_name && (
+                            <>
+                              <span className="text-gray-400">•</span>
+                              <span className="text-gray-600">{swimmer.parent_name}</span>
+                            </>
+                          )}
                         </>
                       )}
                     </div>
@@ -455,6 +529,41 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
                           </a>
                         )}
                       </div>
+                    )}
+                  </div>
+
+                  {/* Waiver status */}
+                  <div className="shrink-0 flex flex-col items-center gap-2">
+                    {swimmer.waiver_complete ? (
+                      <Badge className="bg-green-500 hover:bg-green-600">
+                        <FileCheck className="h-3 w-3 mr-1" />
+                        Waivers Complete
+                      </Badge>
+                    ) : (
+                      <>
+                        <Badge variant="destructive" className="bg-red-500 hover:bg-red-600">
+                          <FileCheck className="h-3 w-3 mr-1" />
+                          Waivers Incomplete
+                        </Badge>
+                        <Button
+                          size="sm"
+                          onClick={handleSendWaiverEmail}
+                          disabled={sendingWaiverEmail || !swimmer.parent_email}
+                          className="whitespace-nowrap"
+                        >
+                          {sendingWaiverEmail ? (
+                            <>
+                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                              Sending...
+                            </>
+                          ) : (
+                            <>
+                              <Mail className="h-3 w-3 mr-1" />
+                              Complete Waivers
+                            </>
+                          )}
+                        </Button>
+                      </>
                     )}
                   </div>
 
@@ -727,8 +836,6 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
           <TabsContent value="progress" className="mt-0">
             <ProgressTab
               swimmerId={swimmerId}
-              currentLevelId={swimmer.current_level_id}
-              levelSequence={swimmer.level_sequence}
               levelName={swimmer.level_name}
               instructorId={selectedInstructor?.id || ''}
             />

@@ -95,10 +95,6 @@ async function createProgressNote(
   try {
     const now = new Date().toISOString()
 
-    // Get current authenticated user for updated_by tracking
-    const { data: { user } } = await supabase.auth.getUser()
-    const updatedBy = user?.id || null
-    console.log('Authenticated user for note creation:', { userId: updatedBy })
 
     // Create the progress note
     const { data: note, error: noteError } = await supabase
@@ -129,6 +125,7 @@ async function createProgressNote(
             status: 'mastered',
             date_mastered: now.split('T')[0], // Store date only
             updated_at: now,
+            updated_by: instructorId,
             created_at: now
           }, {
             onConflict: 'swimmer_id,skill_id'

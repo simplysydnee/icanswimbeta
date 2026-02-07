@@ -14,12 +14,12 @@ const InlineNote: React.FC<InlineNoteProps> = ({
   value,
   onSave,
   placeholder = 'Add note...',
-  maxLength = 200,
+  maxLength = 500,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputValue, setInputValue] = useState(value || '');
   const [originalValue, setOriginalValue] = useState(value || '');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-focus when expanded
   useEffect(() => {
@@ -72,26 +72,24 @@ const InlineNote: React.FC<InlineNoteProps> = ({
   if (isExpanded) {
     return (
       <div className="relative w-full">
-        <input
+        <textarea
           ref={inputRef}
-          type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value.slice(0, maxLength))}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
           placeholder={placeholder}
           maxLength={maxLength}
-          className="w-full h-9 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y min-h-[80px]"
         />
-        {inputValue.length > 150 && (
-          <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-500">
-            {inputValue.length}/{maxLength}
-          </div>
-        )}
+        <div className="absolute right-10 top-2 text-xs text-gray-500">
+          {inputValue.length}/{maxLength}
+        </div>
         <button
           type="button"
           onClick={handleSave}
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-900"
+          className="absolute right-2 top-2 text-gray-600 hover:text-gray-900"
           aria-label="Save note"
         >
           <Check size={16} />

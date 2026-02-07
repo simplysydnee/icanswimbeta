@@ -113,6 +113,7 @@ async function updateTargetStatus(
     const updateData = {
       status,
       updated_at: now,
+      updated_by: instructorId,
       notes: notes || null,
       ...(status === 'mastered' ? { date_met: now } : { date_met: null })
     }
