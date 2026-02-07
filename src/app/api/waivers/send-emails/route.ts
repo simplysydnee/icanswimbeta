@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     const { parentIds } = schema.parse(body);
 
     // Call Edge Function to send emails
-    const { data, error } = await supabase.functions.invoke('waiver-emails-v2', {
+    const { data, error } = await supabase.functions.invoke('send-waiver-update-emails', {
       body: { parentIds }
     });
 

@@ -85,22 +85,41 @@ async function fetchSwimmerStrategies(swimmerId: string): Promise<SwimmerStrateg
       throw new Error('Failed to fetch swimmer strategies')
     }
 
-    // Create a map of existing strategies by name for quick lookup
-    const existingStrategiesMap = new Map(
-      existingStrategies?.map(strategy => [strategy.strategy_name, strategy]) || []
-    )
+    // Helper function to normalize strategy names for matching
+    const normalizeStrategyName = (name: string): string => {
+      return name
+        .toLowerCase()
+        .replace(/\s+/g, ' ') // normalize spaces
+        .replace(/[^\w\s/]/g, '') // remove punctuation except forward slash
+        .replace(/\s+/g, ' ') // normalize spaces again
+        .trim()
+    }
+
+    // Create a map of existing strategies by normalized name for flexible lookup
+    const existingStrategiesMap = new Map<string, SwimmerStrategy>()
+
+    existingStrategies?.forEach(strategy => {
+      const normalized = normalizeStrategyName(strategy.strategy_name)
+      // Only keep the first occurrence if there are duplicates
+      if (!existingStrategiesMap.has(normalized)) {
+        existingStrategiesMap.set(normalized, strategy)
+      } else {
+        console.warn(`Duplicate strategy name found (normalized): ${normalized}`, strategy)
+      }
+    })
 
     // Ensure all standard strategies exist
     const allStrategies: SwimmerStrategy[] = []
 
     for (const standardStrategy of STANDARD_STRATEGIES) {
-      const existingStrategy = existingStrategiesMap.get(standardStrategy.name)
+      const normalizedStandardName = normalizeStrategyName(standardStrategy.name)
+      const existingStrategy = existingStrategiesMap.get(normalizedStandardName)
 
       if (existingStrategy) {
-        // Use existing strategy
+        // Use existing strategy with its original name
         allStrategies.push({
           id: existingStrategy.id,
-          strategy_name: existingStrategy.strategy_name,
+          strategy_name: standardStrategy.name, // Use standard name for consistency
           is_used: existingStrategy.is_used,
           notes: existingStrategy.notes,
           updated_by: existingStrategy.updated_by,
@@ -144,34 +163,63 @@ async function toggleStrategy(
       updated_at: now
     }
 
-    let result
+    // Helper function to normalize strategy names for matching (same as in fetchSwimmerStrategies)
+    const normalizeStrategyName = (name: string): string => {
+      return name
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .replace(/[^\w\s/]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+    }
 
-    // First, check if a strategy record exists for this swimmer and strategy name
-    // We need to check by strategy name, not by ID (since placeholder IDs don't exist in DB)
-    const { data: existingStrategies, error: checkError } = await supabase
+    const normalizedTargetName = normalizeStrategyName(strategyName)
+
+    // Fetch all strategies for this swimmer to find matching normalized name
+    const { data: allSwimmerStrategies, error: fetchError } = await supabase
       .from('swimmer_strategies')
       .select('id, strategy_name')
       .eq('swimmer_id', swimmerId)
-      .eq('strategy_name', strategyName)
 
-    if (checkError) {
-      console.error('Error checking for existing strategy:', checkError)
-      throw new Error(`Failed to check for existing strategy: ${checkError.message}`)
+    if (fetchError) {
+      console.error('Error fetching swimmer strategies for toggle:', fetchError)
+      throw new Error(`Failed to fetch swimmer strategies: ${fetchError.message}`)
     }
 
-    const existingStrategy = existingStrategies?.[0]
+    // Find existing strategy with matching normalized name
+    let existingStrategy = null
+    if (allSwimmerStrategies) {
+      for (const strategy of allSwimmerStrategies) {
+        if (normalizeStrategyName(strategy.strategy_name) === normalizedTargetName) {
+          existingStrategy = strategy
+          break
+        }
+      }
+    }
+
+    let result
 
     if (existingStrategy) {
-      // Strategy exists, update it
-      console.log('Updating existing strategy:', { id: existingStrategy.id, strategyName, isUsed })
+      // Strategy exists (may have old name), update it
+      console.log('Updating existing strategy:', {
+        id: existingStrategy.id,
+        oldName: existingStrategy.strategy_name,
+        newName: strategyName, // standard name
+        isUsed
+      })
+
+      // Update with standard strategy name to normalize data
       result = await supabase
         .from('swimmer_strategies')
-        .update(updateData)
+        .update({
+          ...updateData,
+          strategy_name: strategyName // Update to standard name
+        })
         .eq('id', existingStrategy.id)
         .select()
         .single()
     } else {
-      // Strategy doesn't exist, insert new
+      // Strategy doesn't exist, insert new with standard name
       console.log('Inserting new strategy:', { swimmerId, strategyName, isUsed })
       result = await supabase
         .from('swimmer_strategies')

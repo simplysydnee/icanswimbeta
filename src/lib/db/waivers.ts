@@ -8,8 +8,11 @@ function createServiceClient() {
   const supabaseKey = process.env.SUPABASE_SECRET_KEY; // Service role key
 
   if (!supabaseUrl || !supabaseKey) {
-    console.error('Missing Supabase service role configuration');
-    throw new Error('Supabase service role configuration missing');
+    console.error('Missing Supabase service role configuration:', {
+      hasSupabaseUrl: !!supabaseUrl,
+      hasSupabaseKey: !!supabaseKey
+    });
+    throw new Error(`Supabase service role configuration missing: ${!supabaseUrl ? 'NEXT_PUBLIC_SUPABASE_URL' : ''} ${!supabaseKey ? 'SUPABASE_SECRET_KEY' : ''}`.trim());
   }
 
   return createSupabaseClient(supabaseUrl, supabaseKey);
@@ -393,6 +396,8 @@ export async function updateSwimmerWaivers(
     }
 
     // Update swimmer record with appropriate parent check
+    console.log('Updating swimmer waivers for parent:', { parentId: metadata.parentId, parentEmail: metadata.parentEmail });
+    console.log('Update data fields:', Object.keys(updateData).filter(key => !key.includes('signature')));
     let updateQuery = supabase
       .from('swimmers')
       .update(updateData)
@@ -410,6 +415,12 @@ export async function updateSwimmerWaivers(
 
     if (updateError) {
       console.error('Error updating swimmer waivers:', updateError);
+      console.error('Update error details:', {
+        message: updateError.message,
+        details: updateError.details,
+        hint: updateError.hint,
+        code: updateError.code
+      });
       return { success: false, error: 'Failed to update waiver information' };
     }
 

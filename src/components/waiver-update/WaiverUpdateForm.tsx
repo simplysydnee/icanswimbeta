@@ -44,6 +44,21 @@ export function WaiverUpdateForm({
 
   const updateMutation = useMutation({
     mutationFn: async () => {
+      const requestBody = {
+        token,
+        swimmerId,
+        liabilitySignature: formData.liabilitySignature,
+        emergencyContactName: formData.emergencyContactName,
+        emergencyContactPhone: formData.emergencyContactPhone,
+        emergencyContactRelationship: formData.emergencyContactRelationship,
+        liabilityConsent: formData.liabilityConsent,
+        photoPermission: formData.photoPermission,
+        photoSignature: formData.photoPermission ? formData.photoSignature : undefined,
+        photoSignatureConsent: formData.photoSignatureConsent,
+        cancellationSignature: formData.cancellationSignature,
+        cancellationAgreed: formData.cancellationAgreed
+      };
+      console.log('Sending waiver update request:', { ...requestBody, liabilitySignature: '[REDACTED]', photoSignature: '[REDACTED]', cancellationSignature: '[REDACTED]' });
       const response = await fetch('/api/waivers/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -63,8 +78,10 @@ export function WaiverUpdateForm({
         })
       });
 
+      console.log('Waiver update response status:', response.status, response.statusText);
       if (!response.ok) {
         const error = await response.json();
+        console.error('Waiver update error response:', error);
         throw new Error(error.error || 'Update failed');
       }
 
@@ -97,18 +114,18 @@ export function WaiverUpdateForm({
 
   const isValid =
     // Liability Waiver: signature + all emergency contact fields + consent
-    formData.liabilitySignature.length > 0 &&
-    formData.emergencyContactName.length > 0 &&
-    formData.emergencyContactPhone.length > 0 &&
-    formData.emergencyContactRelationship.length > 0 &&
+    formData.liabilitySignature.length >= 3 &&
+    formData.emergencyContactName.length >= 2 &&
+    formData.emergencyContactPhone.length >= 10 &&
+    formData.emergencyContactRelationship.length >= 2 &&
     formData.liabilityConsent === true &&
 
     // Cancellation Policy: signature required + agreement
-    formData.cancellationSignature.length > 0 &&
+    formData.cancellationSignature.length >= 3 &&
     formData.cancellationAgreed === true &&
 
     // Photo Release: if permission granted, signature required + consent required
-    (!formData.photoPermission || (formData.photoSignature.length > 0 && formData.photoSignatureConsent === true));
+    (!formData.photoPermission || (formData.photoSignature && formData.photoSignature.length >= 3 && formData.photoSignatureConsent === true));
 
   return (
     <div className="space-y-6">

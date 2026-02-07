@@ -18,12 +18,13 @@ export async function POST(request: Request) {
     // For now, we'll trust the staff mode context and validate the swimmer exists
     // and that the parent has an email
 
-    // Fetch swimmer with parent info
+    // Fetch swimmer with parent info including parent_email for parents without accounts
     const { data: swimmer, error: swimmerError } = await supabase
       .from('swimmers')
       .select(`
         id,
         parent_id,
+        parent_email,
         profiles!swimmers_parent_id_fkey (
           id,
           email
@@ -40,24 +41,38 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!swimmer.parent_id) {
-      return Response.json(
-        { error: 'Swimmer does not have a parent assigned' },
-        { status: 400 }
-      );
+    // Determine parent email and identifier for edge function
+    let parentEmail: string | null = null;
+    let parentIdentifier: string | null = null;
+    let useParentEmails = false;
+
+    if (swimmer.parent_id) {
+      // Parent has an account - get email from profile
+      const parentProfile = swimmer.profiles?.[0];
+      parentEmail = parentProfile?.email || null;
+      parentIdentifier = swimmer.parent_id;
+      useParentEmails = false; // Use parentIds for edge function
+    } else {
+      // Parent doesn't have an account - use parent_email from swimmers table
+      parentEmail = swimmer.parent_email || null;
+      parentIdentifier = swimmer.parent_email;
+      useParentEmails = true; // Use parentEmails for edge function
     }
 
-    const parentProfile = swimmer.profiles?.[0];
-    if (!parentProfile?.email) {
+    if (!parentEmail || !parentIdentifier) {
       return Response.json(
         { error: 'Parent does not have an email address' },
         { status: 400 }
       );
     }
 
-    // Call Edge Function to send email
-    const { data, error } = await supabase.functions.invoke('waiver-emails-v2', {
-      body: { parentIds: [swimmer.parent_id] }
+    // Call Edge Function to send email with appropriate parameters
+    const edgeFunctionBody = useParentEmails
+      ? { parentEmails: [parentIdentifier] }
+      : { parentIds: [parentIdentifier] };
+
+    const { data, error } = await supabase.functions.invoke('send-waiver-update-emails', {
+      body: edgeFunctionBody
     });
 
     if (error) {
@@ -67,7 +82,7 @@ export async function POST(request: Request) {
 
     return Response.json({
       success: true,
-      message: `Waiver email sent to ${parentProfile.email}`,
+      message: `Waiver email sent to ${parentEmail}`,
       data
     });
   } catch (error) {

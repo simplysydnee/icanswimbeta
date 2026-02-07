@@ -149,17 +149,18 @@ async function updateSkillStatus(
     console.log('Using instructorId for updated_by:', { instructorId: updatedBy })
 
     const now = new Date().toISOString()
+    const today = now.split('T')[0]
     const updateData: any = {
       status,
       updated_at: now,
       updated_by: updatedBy,
-      ...(status === 'mastered' ? { date_mastered: now.split('T')[0] } : { date_mastered: null }) // Clear date_mastered if not mastered
+      ...(status === 'mastered' ? { date_mastered: today } : { date_mastered: null }) // Clear date_mastered if not mastered
     }
 
     // Check if skill record exists
     const { error: checkError } = await supabase
       .from('swimmer_skills')
-      .select('id')
+      .select('id, status, date_started')
       .eq('swimmer_id', swimmerId)
       .eq('skill_id', skillId)
       .single()
@@ -168,16 +169,20 @@ async function updateSkillStatus(
 
     if (checkError && checkError.code === 'PGRST116') {
       // Record doesn't exist, insert new
+      const insertData = {
+        swimmer_id: swimmerId,
+        skill_id: skillId,
+        ...updateData,
+        created_at: now,
+        // Set date_started if status is in_progress
+        ...(status === 'in_progress' ? { date_started: today } : {})
+      }
       result = await supabase
         .from('swimmer_skills')
-        .insert({
-          swimmer_id: swimmerId,
-          skill_id: skillId,
-          ...updateData,
-          created_at: now
-        })
+        .insert(insertData)
     } else {
       // Record exists, update
+      // Note: date_started is handled by trigger when status changes to in_progress
       result = await supabase
         .from('swimmer_skills')
         .update(updateData)
@@ -515,7 +520,7 @@ export default function ProgressTab({
                           size="xs"
                           disabled={isUpdating}
                         />
-                        <div className="w-32">
+                        <div className="min-w-48 w-full max-w-xs">
                           <InlineNote
                             value={skill.instructor_notes}
                             onSave={(note) => handleUpdateSkillNote(skill.id, note)}

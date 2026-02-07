@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -127,7 +127,7 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
 
     const { data: strategies, error: strategiesError } = await supabase
       .from('swimmer_strategies')
-      .select('id')
+      .select('strategy_name, is_used')
       .eq('swimmer_id', swimmerId)
       .eq('is_used', true)
 
@@ -135,6 +135,10 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
       console.error('Error fetching strategies:', strategiesError)
       throw new Error('Failed to fetch strategies')
     }
+
+    // Deduplicate by strategy_name in case of duplicates
+    const uniqueStrategyNames = new Set(strategies?.map(s => s.strategy_name) || [])
+    const strategiesCount = uniqueStrategyNames.size
 
     const { data: notes, error: notesError } = await supabase
       .from('progress_notes')
@@ -207,7 +211,7 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
 
       // Counts for tabs
       targets_count: targets?.length || 0,
-      strategies_count: strategies?.length || 0,
+      strategies_count: strategiesCount || 0,
       notes_count: notes?.length || 0
     }
 
@@ -237,6 +241,18 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
     enabled: !!swimmerId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
+
+  // Redirect if no instructor is selected in staff mode
+  useEffect(() => {
+    if (!selectedInstructor) {
+      toast({
+        title: 'No instructor selected',
+        description: 'Please select an instructor to continue in staff mode.',
+        variant: 'destructive',
+      })
+      router.push('/staff-mode')
+    }
+  }, [selectedInstructor, router, toast])
 
   const handleBack = () => {
     router.push('/staff-mode/schedule')
@@ -334,6 +350,16 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
     }
   }
 
+  // Check if instructor is selected - if not, show redirecting state
+  if (!selectedInstructor) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#e8f4f8] to-white flex flex-col items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-[#6abedc] mb-4" />
+        <p className="text-gray-600">Redirecting to instructor selection...</p>
+      </div>
+    )
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#e8f4f8] to-white">
@@ -417,7 +443,7 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
   const isAssessment = swimmer.assessment_status === 'scheduled'
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#e8f4f8] to-white">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full min-h-screen bg-gradient-to-b from-[#e8f4f8] to-white">
       {/* Persistent Header */}
       <div className="sticky top-0 z-20 bg-white border-b shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-4">
@@ -622,69 +648,64 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
         </div>
 
         {/* Tab Navigation */}
-        <div className="max-w-6xl mx-auto px-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-12">
-              <TabsTrigger value="profile" className="flex items-center gap-2 px-4">
-                <User className="h-4 w-4" />
-                <span className="hidden sm:inline">Profile</span>
-              </TabsTrigger>
+        <TabsList className="max-w-6xl mx-auto px-4 w-full justify-start overflow-x-auto flex-nowrap h-12">
+          <TabsTrigger value="profile" className="flex items-center gap-2 px-4">
+            <User className="h-4 w-4" />
+            <span className="hidden sm:inline">Profile</span>
+          </TabsTrigger>
 
-              <TabsTrigger value="assessment" className="flex items-center gap-2 px-4">
-                <Target className="h-4 w-4" />
-                <span className="hidden sm:inline">Assessment</span>
-                {isAssessment && (
-                  <Badge className="ml-1 h-5 w-5 p-0 bg-amber-500 hover:bg-amber-600">
-                    !
-                  </Badge>
-                )}
-              </TabsTrigger>
+          <TabsTrigger value="assessment" className="flex items-center gap-2 px-4">
+            <Target className="h-4 w-4" />
+            <span className="hidden sm:inline">Assessment</span>
+            {isAssessment && (
+              <Badge className="ml-1 h-5 w-5 p-0 bg-amber-500 hover:bg-amber-600">
+                !
+              </Badge>
+            )}
+          </TabsTrigger>
 
-              <TabsTrigger value="progress" className="flex items-center gap-2 px-4">
-                <Award className="h-4 w-4" />
-                <span className="hidden sm:inline">Progress</span>
-                <Badge variant="secondary" className="ml-1 h-5 min-w-5 p-0">
-                  {swimmer.total_skills_count}
-                </Badge>
-              </TabsTrigger>
+          <TabsTrigger value="progress" className="flex items-center gap-2 px-4">
+            <Award className="h-4 w-4" />
+            <span className="hidden sm:inline">Progress</span>
+            <Badge variant="secondary" className="ml-1 h-5 min-w-5 p-0">
+              {swimmer.total_skills_count}
+            </Badge>
+          </TabsTrigger>
 
-              <TabsTrigger value="targets" className="flex items-center gap-2 px-4">
-                <CheckCircle className="h-4 w-4" />
-                <span className="hidden sm:inline">Targets</span>
-                {swimmer.targets_count > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 p-0">
-                    {swimmer.targets_count}
-                  </Badge>
-                )}
-              </TabsTrigger>
+          <TabsTrigger value="targets" className="flex items-center gap-2 px-4">
+            <CheckCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">Targets</span>
+            {swimmer.targets_count > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 min-w-5 p-0">
+                {swimmer.targets_count}
+              </Badge>
+            )}
+          </TabsTrigger>
 
-              <TabsTrigger value="strategies" className="flex items-center gap-2 px-4">
-                <Brain className="h-4 w-4" />
-                <span className="hidden sm:inline">Strategies</span>
-                {swimmer.strategies_count > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 p-0">
-                    {swimmer.strategies_count}
-                  </Badge>
-                )}
-              </TabsTrigger>
+          <TabsTrigger value="strategies" className="flex items-center gap-2 px-4">
+            <Brain className="h-4 w-4" />
+            <span className="hidden sm:inline">Strategies</span>
+            {swimmer.strategies_count > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 min-w-5 p-0">
+                {swimmer.strategies_count}
+              </Badge>
+            )}
+          </TabsTrigger>
 
-              <TabsTrigger value="notes" className="flex items-center gap-2 px-4">
-                <MessageSquare className="h-4 w-4" />
-                <span className="hidden sm:inline">Notes</span>
-                {swimmer.notes_count > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 p-0">
-                    {swimmer.notes_count}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
+          <TabsTrigger value="notes" className="flex items-center gap-2 px-4">
+            <MessageSquare className="h-4 w-4" />
+            <span className="hidden sm:inline">Notes</span>
+            {swimmer.notes_count > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 min-w-5 p-0">
+                {swimmer.notes_count}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
       </div>
 
       {/* Tab Content Area */}
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Profile Tab */}
           <TabsContent value="profile" className="mt-0">
             <Card>
@@ -864,7 +885,6 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
               instructorId={selectedInstructor?.id || ''}
             />
           </TabsContent>
-        </Tabs>
       </div>
 
       {/* Footer */}
@@ -886,6 +906,6 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
           queryClient.invalidateQueries({ queryKey: ['swimmerDetail', swimmerId] })
         }}
       />
-    </div>
+    </Tabs>
   )
 }

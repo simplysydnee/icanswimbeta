@@ -2,17 +2,17 @@ import { updateSwimmerWaivers, validateWaiverToken } from '@/lib/db/waivers';
 import { z } from 'zod';
 
 const schema = z.object({
-  token: z.string().min(32),
-  swimmerId: z.string().uuid(),
-  liabilitySignature: z.string().min(10),
-  emergencyContactName: z.string().min(2),
-  emergencyContactPhone: z.string().min(10),
-  emergencyContactRelationship: z.string().min(2),
+  token: z.string().min(32, { message: 'Invalid token format' }),
+  swimmerId: z.string().uuid({ message: 'Invalid swimmer ID' }),
+  liabilitySignature: z.string().min(3, { message: 'Liability waiver signature must be at least 3 characters (your full name)' }),
+  emergencyContactName: z.string().min(2, { message: 'Emergency contact name must be at least 2 characters' }),
+  emergencyContactPhone: z.string().min(10, { message: 'Emergency contact phone must be at least 10 digits' }),
+  emergencyContactRelationship: z.string().min(2, { message: 'Emergency contact relationship must be at least 2 characters (e.g., Parent, Guardian)' }),
   liabilityConsent: z.boolean().default(false),
   photoPermission: z.boolean(),
   photoSignature: z.string().optional(),
   photoSignatureConsent: z.boolean().optional().default(false),
-  cancellationSignature: z.string().min(10),
+  cancellationSignature: z.string().min(3, { message: 'Cancellation policy signature must be at least 3 characters (your full name)' }),
   cancellationAgreed: z.boolean().default(false)
 }).refine(
   data => !data.photoPermission || data.photoSignature,
@@ -31,10 +31,12 @@ const schema = z.object({
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    console.log('Waiver update request received:', { token: body.token, swimmerId: body.swimmerId });
     const data = schema.parse(body);
 
     // Validate token
     const validation = await validateWaiverToken(data.token);
+    console.log('Token validation result:', { valid: validation.valid, parentEmail: validation.parentEmail, tokenId: validation.tokenId });
     if (!validation.valid) {
       return Response.json(
         { error: 'Invalid or expired token' },
@@ -47,12 +49,20 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    if (!validation.tokenId) {
+      console.error('Token ID missing in validation:', validation);
+      return Response.json(
+        { error: 'Invalid token configuration' },
+        { status: 400 }
+      );
+    }
 
     // Get request metadata
     const ipAddress = request.headers.get('x-forwarded-for') ||
                      request.headers.get('x-real-ip') ||
                      'unknown';
     const userAgent = request.headers.get('user-agent') || 'unknown';
+    const tokenId = validation.tokenId!;
 
     // Update waivers
     const result = await updateSwimmerWaivers(
@@ -72,11 +82,13 @@ export async function POST(request: Request) {
       {
         parentId: validation.parentId || null,
         parentEmail: validation.parentEmail,
-        tokenId: validation.tokenId,
+        tokenId,
         ipAddress,
         userAgent
       }
     );
+
+    console.log('Update result:', result);
 
     if (!result.success) {
       return Response.json(
@@ -88,6 +100,7 @@ export async function POST(request: Request) {
     return Response.json({ success: true });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error('Zod validation error:', error.errors);
       return Response.json(
         { error: 'Invalid request', details: error.errors },
         { status: 400 }

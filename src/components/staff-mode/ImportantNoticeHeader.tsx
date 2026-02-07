@@ -19,7 +19,7 @@ export default function ImportantNoticeHeader({
   }
 
   return (
-    <div className="sticky top-0 z-30 bg-amber-50 border-b border-amber-200 shadow-sm">
+    <div className="bg-amber-50 border-b border-amber-200 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 py-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 flex-1">

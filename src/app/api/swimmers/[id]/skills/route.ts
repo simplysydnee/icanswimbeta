@@ -319,6 +319,7 @@ export async function PATCH(
           status,
           instructor_notes: instructorNotes,
           updated_at: new Date().toISOString(),
+          updated_by: user.id,
         };
 
         // Set date_mastered when status changes to 'mastered'
@@ -355,6 +356,7 @@ export async function PATCH(
           skill_id: skillId,
           status,
           instructor_notes: instructorNotes,
+          updated_by: user.id,
         };
 
         // Set date_mastered if status is 'mastered'

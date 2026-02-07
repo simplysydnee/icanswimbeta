@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { AlertCircle, FileText, ChevronRight, User, Clock, CheckCircle, Zap } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { AlertCircle, FileText, ChevronRight, Clock, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
+import CompactQuickActions from './CompactQuickActions';
 
 interface SwimmerNeedingUpdate {
   id: string;
@@ -47,11 +48,14 @@ export default function NeedsProgressUpdateCard({ className }: NeedsProgressUpda
       const response = await fetch('/api/swimmers/needs-progress-update', { signal });
       if (!response.ok) {
         // API endpoint not available - show empty state
-        console.warn('Progress update API not available, showing empty state');
+        console.warn('Progress update API not available, status:', response.status, response.statusText);
+        const errorText = await response.text().catch(() => '');
+        console.warn('API error response:', errorText);
         setSwimmers([]);
         return;
       }
       const data = await response.json();
+      console.log('Progress update API response:', data.length, 'items');
       setSwimmers(data);
     } catch (error) {
       // Only log error if it's not an abort error
@@ -78,6 +82,11 @@ export default function NeedsProgressUpdateCard({ className }: NeedsProgressUpda
   const handleUpdateProgress = (swimmer: SwimmerNeedingUpdate) => {
     // Navigate to the staff mode swimmer page instead of opening a modal
     window.location.href = `/staff-mode/swimmer/${swimmer.swimmer.id}`;
+  };
+
+  const handleProgressSubmitted = () => {
+    // Refresh the list after a quick action is submitted
+    fetchSwimmersNeedingUpdate();
   };
 
   if (loading) {

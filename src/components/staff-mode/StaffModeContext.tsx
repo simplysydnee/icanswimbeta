@@ -38,7 +38,22 @@ interface StaffModeProviderProps {
 }
 
 export function StaffModeProvider({ children }: StaffModeProviderProps) {
-  const [selectedInstructor, setSelectedInstructorState] = useState<Instructor | null>(null)
+  const [selectedInstructor, setSelectedInstructorState] = useState<Instructor | null>(() => {
+    // Load instructor from localStorage on initial render (client-side only)
+    if (typeof window !== 'undefined') {
+      try {
+        const storedInstructor = localStorage.getItem('staffModeInstructor')
+        if (storedInstructor) {
+          return JSON.parse(storedInstructor)
+        }
+      } catch (err) {
+        console.error('Error loading instructor from localStorage:', err)
+        // Clear invalid storage
+        localStorage.removeItem('staffModeInstructor')
+      }
+    }
+    return null
+  })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -78,20 +93,6 @@ export function StaffModeProvider({ children }: StaffModeProviderProps) {
     }
   }
 
-  // Load instructor from localStorage on mount
-  useState(() => {
-    try {
-      const storedInstructor = localStorage.getItem('staffModeInstructor')
-      if (storedInstructor) {
-        const instructor = JSON.parse(storedInstructor)
-        setSelectedInstructorState(instructor)
-      }
-    } catch (err) {
-      console.error('Error loading instructor from localStorage:', err)
-      // Clear invalid storage
-      localStorage.removeItem('staffModeInstructor')
-    }
-  })
 
   return (
     <StaffModeContext.Provider

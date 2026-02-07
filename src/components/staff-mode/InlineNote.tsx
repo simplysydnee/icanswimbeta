@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Check } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 
 export interface InlineNoteProps {
   value: string | null | undefined;
@@ -51,8 +51,8 @@ const InlineNote: React.FC<InlineNoteProps> = ({
     setIsExpanded(false);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       handleSave();
     } else if (e.key === 'Escape') {
       handleCancel();
@@ -83,17 +83,29 @@ const InlineNote: React.FC<InlineNoteProps> = ({
           rows={3}
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y min-h-[80px]"
         />
-        <div className="absolute right-10 top-2 text-xs text-gray-500">
-          {inputValue.length}/{maxLength}
+        <div className="flex items-center justify-between mt-2">
+          <div className="text-xs text-gray-500">
+            {inputValue.length}/{maxLength} characters
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 text-gray-600"
+              aria-label="Cancel"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+              aria-label="Save note"
+            >
+              Save
+            </button>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={handleSave}
-          className="absolute right-2 top-2 text-gray-600 hover:text-gray-900"
-          aria-label="Save note"
-        >
-          <Check size={16} />
-        </button>
       </div>
     );
   }
