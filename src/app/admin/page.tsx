@@ -23,7 +23,10 @@ import {
   Settings,
   LayoutDashboard,
   ClipboardList,
-  UserCog
+  UserCog,
+  FileCheck,
+  Percent,
+  AlertTriangle
 } from 'lucide-react';
 import { format, addDays, startOfMonth } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
@@ -46,6 +49,15 @@ interface DashboardStats {
   sessionsNeedingProgress: number;
   privatePayRevenue: number;
   fundedRevenue: number;
+  waiverCompletion: {
+    totalSwimmers: number;
+    completedSwimmers: number;
+    completionRate: number;
+    missingLiability: number;
+    missingPhotoRelease: number;
+    missingCancellationPolicy: number;
+    needingWaivers: number;
+  } | null;
 }
 
 interface Session {
@@ -59,6 +71,7 @@ interface Session {
   } | null;
   bookings: Array<{
     id: string;
+    status: string;
     swimmer: {
       id: string;
       first_name: string;
@@ -138,6 +151,7 @@ export default function AdminDashboard() {
           instructor:profiles!instructor_id(full_name),
           bookings(
             id,
+            status,
             swimmer:swimmers(id, first_name, last_name)
           ),
           progress_notes(id)
@@ -155,10 +169,14 @@ export default function AdminDashboard() {
         const isPastOrCurrent = sessionTime <= now;
 
         if (isPastOrCurrent && s.bookings && s.bookings.length > 0) {
+          // Filter out cancelled bookings
+          const activeBookings = s.bookings.filter((b: any) => b.status !== 'cancelled');
+          if (activeBookings.length === 0) return;
+
           if (!s.progress_notes || s.progress_notes.length === 0) {
-            bookingsNeedingProgress += s.bookings.length;
-          } else if (s.progress_notes.length < s.bookings.length) {
-            bookingsNeedingProgress += (s.bookings.length - s.progress_notes.length);
+            bookingsNeedingProgress += activeBookings.length;
+          } else if (s.progress_notes.length < activeBookings.length) {
+            bookingsNeedingProgress += (activeBookings.length - s.progress_notes.length);
           }
         }
       });
@@ -194,6 +212,28 @@ export default function AdminDashboard() {
         }
       });
 
+      // Fetch waiver completion stats
+      let waiverCompletion = null;
+      try {
+        const waiverResponse = await fetch('/api/waivers/completion-status', {
+          headers: { 'Content-Type': 'application/json' }
+        });
+        if (waiverResponse.ok) {
+          const waiverStats = await waiverResponse.json();
+          waiverCompletion = {
+            totalSwimmers: waiverStats.totalSwimmers,
+            completedSwimmers: waiverStats.completedSwimmers,
+            completionRate: waiverStats.completionRate,
+            missingLiability: waiverStats.missingLiability,
+            missingPhotoRelease: waiverStats.missingPhotoRelease,
+            missingCancellationPolicy: waiverStats.missingCancellationPolicy,
+            needingWaivers: waiverStats.needingWaivers
+          };
+        }
+      } catch (error) {
+        console.error('Error fetching waiver completion stats:', error);
+      }
+
       setTodaysSessions(sessions || []);
       setStats({
         totalSwimmers: totalSwimmers ?? 0,
@@ -206,7 +246,8 @@ export default function AdminDashboard() {
         pendingPOs: pos?.length ?? 0,
         sessionsNeedingProgress: bookingsNeedingProgress ?? 0,
         privatePayRevenue: privatePayRevenue ?? 0,
-        fundedRevenue: fundedRevenue ?? 0
+        fundedRevenue: fundedRevenue ?? 0,
+        waiverCompletion
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -216,12 +257,12 @@ export default function AdminDashboard() {
   }, []);
 
   const handleUpdateProgress = (
-    bookingId: string,
-    sessionId: string,
+    _bookingId: string,
+    _sessionId: string,
     swimmerId: string,
-    swimmerName: string,
-    swimmerPhotoUrl: string | undefined,
-    sessionTime: string
+    _swimmerName: string,
+    _swimmerPhotoUrl: string | undefined,
+    _sessionTime: string
   ) => {
     // Navigate to the staff mode swimmer page instead of opening a modal
     router.push(`/staff-mode/swimmer/${swimmerId}`);
@@ -466,6 +507,87 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Waiver Completion Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <Link href="/admin/waivers" className="block">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-blue-300 min-h-[136px]">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between h-full">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-muted-foreground">Waiver Completion</p>
+                  <p className="text-3xl font-bold">
+                    {stats?.waiverCompletion ? `${stats.waiverCompletion.completionRate.toFixed(1)}%` : '0%'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                    {stats?.waiverCompletion ? `${stats.waiverCompletion.completedSwimmers}/${stats.waiverCompletion.totalSwimmers} swimmers` : 'Loading...'}
+                  </p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 ml-4">
+                  <Percent className="h-6 w-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/waivers?filter=missing" className="block">
+          <Card className={`cursor-pointer hover:shadow-lg transition-shadow min-h-[136px] ${(stats?.waiverCompletion?.needingWaivers || 0) > 0 ? 'border-orange-300 bg-orange-50 hover:border-orange-400' : 'hover:border-gray-300'}`}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between h-full">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-muted-foreground">Needs Waivers</p>
+                  <p className="text-3xl font-bold">{stats?.waiverCompletion?.needingWaivers || 0}</p>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                    Parents with incomplete waivers
+                  </p>
+                </div>
+                <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ml-4 ${(stats?.waiverCompletion?.needingWaivers || 0) > 0 ? 'bg-orange-200' : 'bg-gray-100'}`}>
+                  <AlertTriangle className={`h-6 w-6 ${(stats?.waiverCompletion?.needingWaivers || 0) > 0 ? 'text-orange-600' : 'text-gray-400'}`} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/waivers?filter=liability" className="block">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-red-300 min-h-[136px]">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between h-full">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-muted-foreground">Missing Liability</p>
+                  <p className="text-3xl font-bold">{stats?.waiverCompletion?.missingLiability || 0}</p>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                    Liability waivers needed
+                  </p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 ml-4">
+                  <FileCheck className="h-6 w-6 text-red-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/admin/waivers?filter=photo" className="block">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow hover:border-yellow-300 min-h-[136px]">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between h-full">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-muted-foreground">Missing Photo Release</p>
+                  <p className="text-3xl font-bold">{stats?.waiverCompletion?.missingPhotoRelease || 0}</p>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                    Photo releases needed
+                  </p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0 ml-4">
+                  <FileCheck className="h-6 w-6 text-yellow-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Main Content - Three Columns */}

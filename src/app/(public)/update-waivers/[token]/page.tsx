@@ -6,7 +6,8 @@ import { useWaiverToken } from '@/hooks/useWaiverToken';
 import { useSwimmersNeedingWaivers } from '@/hooks/useSwimmersNeedingWaivers';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, AlertCircle, Loader2, PartyPopper } from 'lucide-react';
+import type { SwimmerWaiverStatus } from '@/lib/db/waivers';
 
 export default function WaiverUpdatePage({
   params
@@ -71,40 +72,77 @@ export default function WaiverUpdatePage({
           <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
         </div>
       ) : (
-        <div className="space-y-4">
-          {swimmersQuery.data?.swimmers.map((swimmer: any) => (
-            <Card key={swimmer.id} className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-semibold">
-                    {swimmer.firstName} {swimmer.lastName}
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {swimmer.isComplete ? (
-                      <span className="flex items-center text-green-600">
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        All waivers complete
-                      </span>
-                    ) : (
-                      <span className="flex items-center text-yellow-600">
-                        <AlertCircle className="w-4 h-4 mr-1" />
-                        Needs waiver update
-                      </span>
-                    )}
-                  </p>
-                </div>
+        <>
+          {(() => {
+            const swimmers = swimmersQuery.data?.swimmers || [];
+            const allComplete = swimmers.length > 0 && swimmers.every(swimmer => swimmer.isComplete);
 
-                {!swimmer.isComplete && (
-                  <Button asChild>
-                    <Link href={`/update-waivers/${token}/${swimmer.id}`}>
-                      Complete Waivers
-                    </Link>
-                  </Button>
-                )}
+            if (allComplete) {
+              return (
+                <Card className="p-8 text-center">
+                  <PartyPopper className="w-16 h-16 mx-auto mb-4 text-green-500" />
+                  <h2 className="text-2xl font-bold mb-2">All Waivers Complete!</h2>
+                  <p className="text-gray-600 mb-4">
+                    Thank you for updating all waivers for your swimmers. Your registration is now fully complete.
+                  </p>
+                  <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-6">
+                    <p className="text-green-800 font-medium text-lg">
+                      You have updated all your waivers! Thank you from the I Can Swim team.
+                    </p>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    You can now close this window or return to the main site.
+                  </p>
+                  <div className="mt-6">
+                    <a
+                      href="https://icanswim209.com"
+                      className="inline-flex items-center px-4 py-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-700"
+                    >
+                      Return to I Can Swim Website
+                    </a>
+                  </div>
+                </Card>
+              );
+            }
+
+            return (
+              <div className="space-y-4">
+                {swimmers.map((swimmer: SwimmerWaiverStatus) => (
+                  <Card key={swimmer.id} className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-xl font-semibold">
+                          {swimmer.firstName} {swimmer.lastName}
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {swimmer.isComplete ? (
+                            <span className="flex items-center text-green-600">
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              All waivers complete
+                            </span>
+                          ) : (
+                            <span className="flex items-center text-yellow-600">
+                              <AlertCircle className="w-4 h-4 mr-1" />
+                              Needs waiver update
+                            </span>
+                          )}
+                        </p>
+                      </div>
+
+                      {!swimmer.isComplete && (
+                        <Button asChild>
+                          <Link href={`/update-waivers/${token}/${swimmer.id}`}>
+                            Complete Waivers
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+                ))}
               </div>
-            </Card>
-          ))}
-        </div>
+            );
+          })()}
+        </>
       )}
     </div>
   );

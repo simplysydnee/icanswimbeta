@@ -134,11 +134,6 @@ export async function validateWaiverToken(token: string): Promise<WaiverTokenVal
       return { valid: false, error: 'Token not found' };
     }
 
-    // Check if token is already used
-    if (data.used) {
-      return { valid: false, error: 'This link has already been used' };
-    }
-
     // Check if token is expired
     const expiresAt = new Date(data.expires_at);
     const now = new Date();
@@ -287,9 +282,7 @@ export async function updateSwimmerWaivers(
       return { success: false, error: 'Invalid token' };
     }
 
-    if (tokenData.used) {
-      return { success: false, error: 'Token already used' };
-    }
+    // Token can be reused for multiple swimmers, so we don't check if it's used
 
     // Verify token matches the parent (either by ID or email)
     if (tokenData.parent_id) {
@@ -420,14 +413,14 @@ export async function updateSwimmerWaivers(
       return { success: false, error: 'Failed to update waiver information' };
     }
 
-    // Mark token as used
+    // Update token's updated_at timestamp to track last activity (token not marked as used to allow multiple swimmers)
     const { error: tokenUpdateError } = await supabase
       .from('waiver_update_tokens')
-      .update({ used: true, updated_at: new Date().toISOString() })
+      .update({ updated_at: new Date().toISOString() })
       .eq('id', metadata.tokenId);
 
     if (tokenUpdateError) {
-      console.error('Error marking token as used:', tokenUpdateError);
+      console.error('Error updating token timestamp:', tokenUpdateError);
       // Don't fail the entire operation if token update fails
     }
 
