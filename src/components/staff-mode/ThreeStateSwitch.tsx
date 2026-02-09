@@ -1,114 +1,87 @@
-"use client";
+'use client'
 
-import React from 'react';
+import { cn } from '@/lib/utils'
 
-export type ThreeStateValue = 'not_started' | 'in_progress' | 'mastered';
-export type ThreeStateSize = 'xs' | 'sm' | 'md';
+export type ThreeStateValue = 'not_started' | 'in_progress' | 'mastered'
+export type ThreeStateSize = 'xs' | 'sm' | 'md' | 'lg'
 
-export interface ThreeStateSwitchProps {
-  value: ThreeStateValue;
-  onChange: (newValue: ThreeStateValue) => void;
-  disabled?: boolean;
-  size?: ThreeStateSize;
+interface ThreeStateSwitchProps {
+  value: ThreeStateValue
+  onChange: (value: ThreeStateValue) => void
+  disabled?: boolean
+  size?: ThreeStateSize
 }
 
-const ThreeStateSwitch: React.FC<ThreeStateSwitchProps> = ({
+export function ThreeStateSwitch({
   value,
   onChange,
   disabled = false,
-  size = 'md',
-}) => {
-  const handleClick = (newValue: ThreeStateValue) => {
-    console.log('ThreeStateSwitch clicked:', { newValue, disabled, currentValue: value })
-    if (!disabled) {
-      onChange(newValue);
-    }
-  };
+  size = 'md'
+}: ThreeStateSwitchProps) {
 
   const sizeClasses = {
-    xs: 'text-xs max-w-[120px]',
-    sm: 'text-xs max-w-[140px]',
-    md: 'text-sm max-w-[180px]',
-  };
+    xs: 'h-6 text-xs px-2',
+    sm: 'h-8 text-xs px-3',
+    md: 'h-10 text-sm px-4',
+    lg: 'h-12 text-base px-6'
+  }
 
-  const getSegmentClasses = (segmentValue: ThreeStateValue) => {
-    const baseClasses = `flex-1 text-center font-medium transition-all duration-200 ${
-      size === 'xs' ? 'py-1 px-2 min-h-[32px]' :
-      size === 'sm' ? 'py-2 px-2 min-h-[36px]' :
-      'py-2 px-3 min-h-[44px]'
-    }`;
-
-    if (value === segmentValue) {
-      // Selected segment - colored background
-      switch (segmentValue) {
-        case 'not_started':
-          return `${baseClasses} bg-gray-300 text-gray-700`; // Using darker gray for better visibility
-        case 'in_progress':
-          return `${baseClasses} bg-amber-100 text-amber-700`;
-        case 'mastered':
-          return `${baseClasses} bg-green-100 text-green-700`;
-        default:
-          // This should never happen, but TypeScript needs it
-          return `${baseClasses} bg-white text-gray-400`;
-      }
-    } else {
-      // Unselected segment - white background
-      return `${baseClasses} bg-white text-gray-400`;
-    }
-  };
-
-  const getDisplayText = (segmentValue: ThreeStateValue) => {
-    switch (segmentValue) {
-      case 'not_started':
-        return ''; // Empty for not_started
-      case 'in_progress':
-        return 'Emerging';
-      case 'mastered':
-        return 'Met';
-      default:
-        // This should never happen, but TypeScript needs it
-        return '';
-    }
-  };
+  const buttonClass = sizeClasses[size]
 
   return (
-    <div className={`max-w-[180px] border border-gray-300 rounded-lg overflow-hidden bg-white ${sizeClasses[size]} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
-      <div className="flex gap-px">
-        <button
-          type="button"
-          onClick={() => handleClick('not_started')}
-          className={getSegmentClasses('not_started')}
-          disabled={disabled}
-          aria-label="Not started"
-          aria-pressed={value === 'not_started'}
-        >
-          {getDisplayText('not_started')}
-        </button>
+    <div className="inline-flex rounded-lg border border-gray-300 bg-white shadow-sm">
+      {/* Not Started Button */}
+      <button
+        type="button"
+        onClick={() => !disabled && onChange('not_started')}
+        disabled={disabled}
+        className={cn(
+          'rounded-l-lg font-medium transition-all',
+          buttonClass,
+          value === 'not_started'
+            ? 'bg-gray-200 text-gray-900 border-r border-gray-400'
+            : 'bg-white text-gray-600 hover:bg-gray-50 border-r border-gray-300',
+          disabled && 'opacity-50 cursor-not-allowed'
+        )}
+      >
+        ---
+      </button>
 
-        <button
-          type="button"
-          onClick={() => handleClick('in_progress')}
-          className={getSegmentClasses('in_progress')}
-          disabled={disabled}
-          aria-label="In progress"
-          aria-pressed={value === 'in_progress'}
-        >
-          {getDisplayText('in_progress')}
-        </button>
+      {/* In Progress Button */}
+      <button
+        type="button"
+        onClick={() => !disabled && onChange('in_progress')}
+        disabled={disabled}
+        className={cn(
+          'font-medium transition-all',
+          buttonClass,
+          value === 'in_progress'
+            ? 'bg-amber-100 text-amber-900 border-x border-amber-400'
+            : 'bg-white text-gray-600 hover:bg-gray-50 border-x border-gray-300',
+          disabled && 'opacity-50 cursor-not-allowed'
+        )}
+      >
+        Emerging
+      </button>
 
-        <button
-          type="button"
-          onClick={() => handleClick('mastered')}
-          className={getSegmentClasses('mastered')}
-          disabled={disabled}
-          aria-label="Mastered"
-          aria-pressed={value === 'mastered'}
-        >
-          {getDisplayText('mastered')}
-        </button>
-      </div>
+      {/* Mastered Button */}
+      <button
+        type="button"
+        onClick={() => !disabled && onChange('mastered')}
+        disabled={disabled}
+        className={cn(
+          'rounded-r-lg font-medium transition-all',
+          buttonClass,
+          value === 'mastered'
+            ? 'bg-green-100 text-green-900 border-l border-green-400'
+            : 'bg-white text-gray-600 hover:bg-gray-50 border-l border-gray-300',
+          disabled && 'opacity-50 cursor-not-allowed'
+        )}
+      >
+        Met ✓
+      </button>
     </div>
-  );
-};
+  )
+}
 
-export default ThreeStateSwitch;
+export default ThreeStateSwitch
