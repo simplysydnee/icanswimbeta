@@ -20,10 +20,10 @@ export function ThreeStateSwitch({
 }: ThreeStateSwitchProps) {
 
   const sizeClasses = {
-    xs: 'h-8 text-xs px-2 min-w-[60px]',
-    sm: 'h-10 text-xs px-3 min-w-[70px]',
-    md: 'h-11 text-sm px-4 min-w-[80px]',
-    lg: 'h-12 text-base px-6 min-w-[90px]'
+    xs: 'h-8 text-xs px-2 min-w-[65px]',
+    sm: 'h-10 text-xs px-3 min-w-[75px]',
+    md: 'h-11 text-sm px-4 min-w-[85px]',
+    lg: 'h-12 text-base px-6 min-w-[95px]'
   }
 
   const buttonClass = sizeClasses[size]
@@ -70,7 +70,7 @@ export function ThreeStateSwitch({
         onClick={() => !disabled && onChange('mastered')}
         disabled={disabled}
         className={cn(
-          'rounded-r-lg font-medium transition-all',
+          'rounded-r-lg font-medium transition-all whitespace-nowrap flex items-center justify-center gap-1',
           buttonClass,
           value === 'mastered'
             ? 'bg-green-100 text-green-900 border-l border-green-400'
@@ -78,7 +78,8 @@ export function ThreeStateSwitch({
           disabled && 'opacity-50 cursor-not-allowed'
         )}
       >
-        Met ✓
+        <span>Met</span>
+        <span className="text-base">✓</span>
       </button>
     </div>
   )
