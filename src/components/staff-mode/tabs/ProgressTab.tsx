@@ -141,12 +141,19 @@ async function updateSkillStatus(
   instructorId: string
 ) {
   const supabase = createClient()
-  console.log('updateSkillStatus called:', { swimmerId, skillId, status, instructorId })
+  console.log('updateSkillStatus called:', { swimmerId, skillId, status, instructorId, instructorIdType: typeof instructorId })
 
   try {
-    // Use the passed instructorId for staff mode (selected instructor in staff mode)
-    const updatedBy = instructorId
-    console.log('Using instructorId for updated_by:', { instructorId: updatedBy })
+    // Normalize instructorId - could be string or object with id property
+    const normalizeInstructorId = (id: any): string | null => {
+      if (typeof id === 'string') return id || null;
+      if (id && typeof id === 'object' && 'id' in id) {
+        return typeof id.id === 'string' ? id.id : null;
+      }
+      return null;
+    };
+    const updatedBy = normalizeInstructorId(instructorId);
+    console.log('Using instructorId for updated_by:', { instructorId: updatedBy, original: instructorId })
 
     const now = new Date().toISOString()
     const today = now.split('T')[0]
@@ -221,12 +228,19 @@ async function updateSkillNote(
   instructorId: string
 ) {
   const supabase = createClient()
-  console.log('updateSkillNote called:', { swimmerId, skillId, instructor_notes, instructorId })
+  console.log('updateSkillNote called:', { swimmerId, skillId, instructor_notes, instructorId, instructorIdType: typeof instructorId })
 
   try {
-    // Use the passed instructorId for staff mode (selected instructor in staff mode)
-    const updatedBy = instructorId
-    console.log('Using instructorId for note update:', { instructorId: updatedBy })
+    // Normalize instructorId - could be string or object with id property
+    const normalizeInstructorId = (id: any): string | null => {
+      if (typeof id === 'string') return id || null;
+      if (id && typeof id === 'object' && 'id' in id) {
+        return typeof id.id === 'string' ? id.id : null;
+      }
+      return null;
+    };
+    const updatedBy = normalizeInstructorId(instructorId);
+    console.log('Using instructorId for note update:', { instructorId: updatedBy, original: instructorId })
 
     const now = new Date().toISOString()
     const updateData = {
@@ -294,6 +308,7 @@ export default function ProgressTab({
   levelName,
   instructorId
 }: ProgressTabProps) {
+  console.log('ProgressTab instructorId:', instructorId, typeof instructorId);
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const [updatingSkillId, setUpdatingSkillId] = useState<string | null>(null)
@@ -517,7 +532,7 @@ export default function ProgressTab({
                         <ThreeStateSwitch
                           value={skill.status || 'not_started'}
                           onChange={(newStatus) => handleUpdateSkill(skill.id, newStatus)}
-                          size="xs"
+                          size="sm"
                           disabled={isUpdating}
                         />
                         <div className="min-w-48 w-full max-w-xs">

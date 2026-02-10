@@ -38,7 +38,7 @@ interface AddNoteModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   swimmerId: string
-  instructorId: string
+  instructorId: any
   onSuccess?: () => void
 }
 
@@ -76,7 +76,7 @@ async function fetchAvailableSkills(): Promise<Skill[]> {
 
 async function createProgressNote(
   swimmerId: string,
-  instructorId: string,
+  instructorId: any,
   data: {
     lesson_date: string
     lesson_summary: string
@@ -95,13 +95,23 @@ async function createProgressNote(
   try {
     const now = new Date().toISOString()
 
+    // Normalize instructorId - could be string or object with id property
+    const normalizeInstructorId = (id: any): string | null => {
+      if (typeof id === 'string') return id || null;
+      if (id && typeof id === 'object' && 'id' in id) {
+        return typeof id.id === 'string' ? id.id : null;
+      }
+      return null;
+    };
+    const normalizedInstructorId = normalizeInstructorId(instructorId);
 
     // Create the progress note
     const { data: note, error: noteError } = await supabase
       .from('progress_notes')
       .insert({
         swimmer_id: swimmerId,
-        instructor_id: instructorId,
+        instructor_id: normalizedInstructorId,
+        updated_by: normalizedInstructorId,
         ...data,
         created_at: now,
         updated_at: now
@@ -125,7 +135,7 @@ async function createProgressNote(
             status: 'mastered',
             date_mastered: now.split('T')[0], // Store date only
             updated_at: now,
-            updated_by: instructorId,
+            updated_by: normalizedInstructorId,
             created_at: now
           }, {
             onConflict: 'swimmer_id,skill_id'
@@ -545,6 +555,7 @@ export default function AddNoteModal({
         <DialogFooter className="flex flex-col sm:flex-row gap-3">
           <Button
             variant="outline"
+            size="lg"
             onClick={() => {
               resetForm()
               onOpenChange(false)

@@ -91,7 +91,7 @@ const InlineNote: React.FC<InlineNoteProps> = ({
             <button
               type="button"
               onClick={handleCancel}
-              className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 text-gray-600"
+              className="px-4 py-3 text-sm min-h-[44px] border border-gray-300 rounded hover:bg-gray-50 text-gray-600"
               aria-label="Cancel"
             >
               Cancel
@@ -99,7 +99,7 @@ const InlineNote: React.FC<InlineNoteProps> = ({
             <button
               type="button"
               onClick={handleSave}
-              className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="px-4 py-3 text-sm min-h-[44px] bg-blue-500 text-white rounded hover:bg-blue-600"
               aria-label="Save note"
             >
               Save
@@ -115,9 +115,9 @@ const InlineNote: React.FC<InlineNoteProps> = ({
     <button
       type="button"
       onClick={handleExpand}
-      className="flex items-center gap-2 h-8 px-3 w-full text-left rounded-md hover:bg-gray-50 transition-colors"
+      className="flex items-center gap-2 h-11 min-h-[44px] px-4 w-full text-left rounded-md hover:bg-gray-50 transition-colors"
     >
-      <MessageSquare size={16} className="text-gray-400 flex-shrink-0" />
+      <MessageSquare size={18} className="text-gray-400 flex-shrink-0" />
       {hasNote ? (
         <span className="text-gray-600 text-sm truncate">{truncatedNote}</span>
       ) : (

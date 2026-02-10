@@ -10,10 +10,10 @@ import { useToast } from '@/hooks/use-toast'
 import { format, parseISO, differenceInYears } from 'date-fns'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent } from '@/components/ui/card'
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Loader2, ArrowLeft, Phone, Mail, User, AlertTriangle, Target, Brain, MessageSquare, Stethoscope, Users, Calendar, Award, CheckCircle, LogOut, FileCheck } from 'lucide-react'
+import { Loader2, ArrowLeft, Phone, Mail, User, AlertTriangle, Target, Brain, MessageSquare, Stethoscope, Users, Award, CheckCircle, FileCheck } from 'lucide-react'
 import { AssessmentTab, ProgressTab, TargetsTab, StrategiesTab, NotesTab } from './tabs'
 import ImportantNoticeHeader from './ImportantNoticeHeader'
 import EditImportantNotesModal from './modals/EditImportantNotesModal'
@@ -125,6 +125,31 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
       throw new Error('Failed to fetch targets')
     }
 
+    // Standard 11 Strategies with descriptions (same as in StrategiesTab)
+    const STANDARD_STRATEGIES = [
+      { name: 'Visual Support', description: 'Picture schedules, visual timers, written instructions' },
+      { name: 'AAC (Augmentative and Alternative Communication)', description: 'Communication devices, PECS, sign language support' },
+      { name: 'First/Then', description: 'First [task], then [reward] structure' },
+      { name: 'Processing Time', description: 'Extra time to process instructions' },
+      { name: 'Sensory Breaks', description: 'Breaks for sensory regulation' },
+      { name: 'Heavy Work', description: 'Deep pressure activities for calming' },
+      { name: 'Modeling', description: 'Demonstrating skills before asking swimmer to try' },
+      { name: 'Hands-on Support', description: 'Physical guidance and assistance' },
+      { name: 'Toy Breaks', description: 'Motivational breaks with preferred items' },
+      { name: 'Praise', description: 'Positive reinforcement and encouragement' },
+      { name: 'Rephrasing', description: 'Simplifying or restating instructions' }
+    ]
+
+    // Helper function to normalize strategy names for matching (same as in StrategiesTab)
+    const normalizeStrategyName = (name: string): string => {
+      return name
+        .toLowerCase()
+        .replace(/\\s+/g, ' ') // normalize spaces
+        .replace(/[^\\w\\s/]/g, '') // remove punctuation except forward slash
+        .replace(/\\s+/g, ' ') // normalize spaces again
+        .trim()
+    }
+
     const { data: strategies, error: strategiesError } = await supabase
       .from('swimmer_strategies')
       .select('strategy_name, is_used')
@@ -136,9 +161,18 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
       throw new Error('Failed to fetch strategies')
     }
 
-    // Deduplicate by strategy_name in case of duplicates
-    const uniqueStrategyNames = new Set(strategies?.map(s => s.strategy_name) || [])
-    const strategiesCount = uniqueStrategyNames.size
+    // Create a set of normalized standard strategy names for quick lookup
+    const standardStrategyNames = new Set(STANDARD_STRATEGIES.map(s => normalizeStrategyName(s.name)))
+
+    // Count only active strategies that match standard strategies
+    const activeStandardStrategies = new Set<string>()
+    strategies?.forEach(strategy => {
+      const normalized = normalizeStrategyName(strategy.strategy_name)
+      if (standardStrategyNames.has(normalized)) {
+        activeStandardStrategies.add(normalized)
+      }
+    })
+    const strategiesCount = activeStandardStrategies.size
 
     const { data: notes, error: notesError } = await supabase
       .from('progress_notes')
@@ -227,13 +261,12 @@ interface StaffSwimmerDetailProps {
 
 export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProps) {
   const router = useRouter()
-  const { selectedInstructor, clearInstructor } = useStaffMode()
+  const { selectedInstructor } = useStaffMode()
   const { toast } = useToast()
   const { role } = useAuth()
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('progress')
   const [showEditNotesModal, setShowEditNotesModal] = useState(false)
-  const [sendingWaiverEmail, setSendingWaiverEmail] = useState(false)
 
   const { data: swimmer, isLoading, error } = useQuery({
     queryKey: ['swimmerDetail', swimmerId],
@@ -281,16 +314,6 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
     }
   }
 
-  const calculateProgress = (mastered: number, total: number, levelSequence: number) => {
-    if (total === 0) return 0
-
-    // Red/White group (levels 1-2): 9 total skills
-    // Yellow/Green/Blue group (levels 3-5): 12 total skills
-    const maxSkills = levelSequence <= 2 ? 9 : 12
-    const actualTotal = Math.min(total, maxSkills)
-    const percentage = Math.round((mastered / actualTotal) * 100)
-    return Math.min(percentage, 100)
-  }
 
   const getLevelBadge = (sequence: number) => {
     if (sequence <= 2) {
@@ -305,48 +328,6 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
       return format(parseISO(dateString), 'MMM d, yyyy')
     } catch {
       return dateString
-    }
-  }
-
-  const handleSendWaiverEmail = async () => {
-    if (!swimmer?.parent_email) {
-      toast({
-        title: 'No email available',
-        description: 'This swimmer does not have a parent email address.',
-        variant: 'destructive',
-      })
-      return
-    }
-
-    setSendingWaiverEmail(true)
-    try {
-      const response = await fetch('/api/staff/waivers/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          swimmerId: swimmer.id
-        })
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to send waiver email')
-      }
-
-      toast({
-        title: 'Waiver email sent',
-        description: result.message || `Email has been sent to ${swimmer.parent_email}`,
-      })
-    } catch (error) {
-      console.error('Error sending waiver email:', error)
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to send waiver email',
-        variant: 'destructive',
-      })
-    } finally {
-      setSendingWaiverEmail(false)
     }
   }
 
@@ -366,7 +347,7 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
         <div className="sticky top-0 z-10 bg-white border-b">
           <div className="max-w-6xl mx-auto px-4 py-4">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" disabled>
+              <Button variant="ghost" size="icon" disabled className="h-11 w-11">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="flex items-center gap-4">
@@ -394,7 +375,7 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
         <div className="sticky top-0 z-10 bg-white border-b">
           <div className="max-w-6xl mx-auto px-4 py-4">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={handleBack}>
+              <Button variant="ghost" size="icon" onClick={handleBack} className="h-11 w-11">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
@@ -435,215 +416,127 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
   }
 
   const age = calculateAge(swimmer.date_of_birth)
-  const progress = calculateProgress(
-    swimmer.mastered_skills_count,
-    swimmer.total_skills_count,
-    swimmer.level_sequence
-  )
   const isAssessment = swimmer.assessment_status === 'scheduled'
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full min-h-screen bg-gradient-to-b from-[#e8f4f8] to-white">
-      {/* Persistent Header */}
+      {/* Compact Header - iPad Optimized */}
       <div className="sticky top-0 z-20 bg-white border-b shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex flex-col gap-4">
-            {/* Top row: Back button and basic info */}
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-4 flex-1 min-w-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleBack}
-                  className="h-12 w-12 rounded-full shrink-0"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
+        <div className="max-w-6xl mx-auto px-4 py-2">
+          <div className="flex flex-col gap-2">
+            {/* Line 1: Swimmer name, level, age, diagnosis */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleBack}
+                className="h-11 w-11 rounded-full shrink-0"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
 
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                  {/* Swimmer avatar with level badge */}
-                  <div className="relative shrink-0">
-                    <Avatar className="h-20 w-20 border-4 border-[#6abedc]">
-                      {swimmer.photo_url ? (
-                        <AvatarImage
-                          src={swimmer.photo_url}
-                          alt={`${swimmer.first_name} ${swimmer.last_name}`}
-                          className="object-cover"
-                        />
-                      ) : null}
-                      <AvatarFallback className="bg-[#2a5e84] text-white text-2xl font-semibold">
-                        {getInitials(swimmer.first_name, swimmer.last_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1 border-2 border-white shadow-md">
-                      <div className="text-2xl">
-                        {getLevelBadge(swimmer.level_sequence)}
-                      </div>
-                    </div>
-                  </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Small inline avatar */}
+                <Avatar className="h-10 w-10 border-2 border-[#6abedc] flex-shrink-0">
+                  {swimmer.photo_url ? (
+                    <AvatarImage
+                      src={swimmer.photo_url}
+                      alt={`${swimmer.first_name} ${swimmer.last_name}`}
+                      className="object-cover"
+                    />
+                  ) : null}
+                  <AvatarFallback className="bg-[#2a5e84] text-white text-sm font-semibold">
+                    {getInitials(swimmer.first_name, swimmer.last_name)}
+                  </AvatarFallback>
+                </Avatar>
 
-                  {/* Name and basic info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <h1 className="text-2xl font-bold text-gray-900 truncate">
-                        {swimmer.first_name} {swimmer.last_name}
-                      </h1>
-                      <Badge variant="outline" className="text-[#2a5e84] border-[#2a5e84]">
-                        {swimmer.level_name}
-                      </Badge>
-                      {isAssessment && (
-                        <Badge className="bg-amber-500 hover:bg-amber-600">
-                          <Target className="h-3 w-3 mr-1" />
-                          Assessment
-                        </Badge>
-                      )}
-                    </div>
+                <h1 className="text-lg font-bold text-gray-900 truncate max-w-[250px]">
+                  {swimmer.first_name} {swimmer.last_name}
+                </h1>
 
-                    <div className="flex items-center gap-4 mt-2 flex-wrap">
-                      <div className="flex items-center gap-2 text-gray-600">
-                        <Calendar className="h-4 w-4" />
-                        <span>{age !== null ? `${age} years old` : 'Age not available'}</span>
-                        {swimmer.diagnosis && (
-                          <>
-                            <span className="text-gray-400">•</span>
-                            <span className="text-gray-600">{swimmer.diagnosis}</span>
-                          </>
-                        )}
-                      </div>
+                <Badge variant="outline" className="text-[#2a5e84] border-[#2a5e84] text-xs py-0 px-2">
+                  {getLevelBadge(swimmer.level_sequence)} {swimmer.level_name}
+                </Badge>
 
-                      {swimmer.gender && (
-                        <>
-                          <span className="text-gray-400">•</span>
-                          <span className="text-gray-600 capitalize">{swimmer.gender}</span>
-                          {swimmer.parent_name && (
-                            <>
-                              <span className="text-gray-400">•</span>
-                              <span className="text-gray-600">{swimmer.parent_name}</span>
-                            </>
-                          )}
-                        </>
-                      )}
-                    </div>
+                {age !== null && (
+                  <span className="text-gray-600 text-sm">
+                    {age}y
+                  </span>
+                )}
 
-                    {/* Parent contact */}
-                    {(swimmer.parent_name || swimmer.parent_phone || swimmer.parent_email) && (
-                      <div className="mt-3 flex items-center gap-4 flex-wrap">
-                        {swimmer.parent_name && (
-                          <div className="flex items-center gap-2 text-gray-700">
-                            <User className="h-4 w-4" />
-                            <span className="font-medium">{swimmer.parent_name}</span>
-                          </div>
-                        )}
+                {swimmer.diagnosis && (
+                  <>
+                    <span className="text-gray-400">•</span>
+                    <span className="text-gray-600 text-sm truncate max-w-[120px]">
+                      {swimmer.diagnosis}
+                    </span>
+                  </>
+                )}
 
-                        {swimmer.parent_phone && (
-                          <a
-                            href={`tel:${swimmer.parent_phone}`}
-                            className="flex items-center gap-2 text-[#2a5e84] hover:text-[#1e4565] hover:underline"
-                          >
-                            <Phone className="h-4 w-4" />
-                            <span>{swimmer.parent_phone}</span>
-                          </a>
-                        )}
-
-                        {swimmer.parent_email && (
-                          <a
-                            href={`mailto:${swimmer.parent_email}`}
-                            className="flex items-center gap-2 text-[#2a5e84] hover:text-[#1e4565] hover:underline"
-                          >
-                            <Mail className="h-4 w-4" />
-                            <span className="truncate max-w-[200px]">{swimmer.parent_email}</span>
-                          </a>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Waiver status */}
-                  <div className="shrink-0 flex flex-col items-center gap-2">
-                    {swimmer.waiver_complete ? (
-                      <Badge className="bg-green-500 hover:bg-green-600">
-                        <FileCheck className="h-3 w-3 mr-1" />
-                        Waivers Complete
-                      </Badge>
-                    ) : (
-                      <>
-                        <Badge variant="destructive" className="bg-red-500 hover:bg-red-600">
-                          <FileCheck className="h-3 w-3 mr-1" />
-                          Waivers Incomplete
-                        </Badge>
-                        <Button
-                          size="sm"
-                          onClick={handleSendWaiverEmail}
-                          disabled={sendingWaiverEmail || !swimmer.parent_email}
-                          className="whitespace-nowrap"
-                        >
-                          {sendingWaiverEmail ? (
-                            <>
-                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                              Sending...
-                            </>
-                          ) : (
-                            <>
-                              <Mail className="h-3 w-3 mr-1" />
-                              Complete Waivers
-                            </>
-                          )}
-                        </Button>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Progress ring */}
-                  <div className="shrink-0">
-                    <div className="relative h-20 w-20">
-                      <svg className="h-20 w-20" viewBox="0 0 36 36">
-                        <path
-                          d="M18 2.0845
-                            a 15.9155 15.9155 0 0 1 0 31.831
-                            a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#e5e7eb"
-                          strokeWidth="3"
-                        />
-                        <path
-                          d="M18 2.0845
-                            a 15.9155 15.9155 0 0 1 0 31.831
-                            a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#2a5e84"
-                          strokeWidth="3"
-                          strokeDasharray={`${progress}, 100`}
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-2xl font-bold text-gray-900">{progress}%</span>
-                        <span className="text-xs text-gray-600">Progress</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Logout button */}
-              <div className="flex items-center gap-2 shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={clearInstructor}
-                  className="h-12 w-12 rounded-full text-gray-500 hover:text-red-600 hover:bg-red-50"
-                  title="Log out"
-                >
-                  <LogOut className="h-5 w-5" />
-                </Button>
+                {isAssessment && (
+                  <Badge className="bg-amber-500 hover:bg-amber-600 text-xs py-0 px-2">
+                    <Target className="h-2.5 w-2.5 mr-1" />
+                    Assessment
+                  </Badge>
+                )}
               </div>
             </div>
 
-            {/* Important Notice Header */}
-            <ImportantNoticeHeader
-              importantNotes={swimmer.important_notes || []}
-              isAdmin={role === 'admin'}
-              onEdit={() => setShowEditNotesModal(true)}
-            />
+            {/* Line 2: Parent contact and waiver status */}
+            <div className="flex items-center gap-3 flex-wrap pl-[52px] sm:pl-[100px]"> {/* Offset for back button + avatar */}
+              {swimmer.parent_name && (
+                <div className="flex items-center gap-1.5 text-gray-700">
+                  <User className="h-3.5 w-3.5" />
+                  <span className="text-sm font-medium">{swimmer.parent_name}</span>
+                </div>
+              )}
+
+              {swimmer.parent_phone && (
+                <a
+                  href={`tel:${swimmer.parent_phone}`}
+                  className="inline-flex items-center gap-1.5 py-2 px-2 rounded text-[#2a5e84] hover:text-[#1e4565] hover:bg-gray-100 hover:underline text-sm"
+                >
+                  <Phone className="h-3.5 w-3.5" />
+                  <span>{swimmer.parent_phone}</span>
+                </a>
+              )}
+
+              {swimmer.parent_email && !swimmer.parent_phone && (
+                <a
+                  href={`mailto:${swimmer.parent_email}`}
+                  className="inline-flex items-center gap-1.5 py-2 px-2 rounded text-[#2a5e84] hover:text-[#1e4565] hover:bg-gray-100 hover:underline text-sm truncate max-w-[180px]"
+                >
+                  <Mail className="h-3.5 w-3.5" />
+                  <span>{swimmer.parent_email}</span>
+                </a>
+              )}
+
+              {/* Waiver status badge */}
+              <div className="ml-auto">
+                {swimmer.waiver_complete ? (
+                  <Badge className="bg-green-500 hover:bg-green-600 text-xs py-0 px-2">
+                    <FileCheck className="h-2.5 w-2.5 mr-1" />
+                    Waivers ✓
+                  </Badge>
+                ) : (
+                  <Badge variant="destructive" className="bg-red-500 hover:bg-red-600 text-xs py-0 px-2">
+                    <FileCheck className="h-2.5 w-2.5 mr-1" />
+                    Waivers ✗
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Line 3: Important Safety Notes Banner */}
+            {(role === 'admin' || (swimmer.important_notes && swimmer.important_notes.length > 0)) && (
+              <div className="pt-1">
+                <ImportantNoticeHeader
+                  importantNotes={swimmer.important_notes || []}
+                  isAdmin={role === 'admin'}
+                  onEdit={() => setShowEditNotesModal(true)}
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -858,7 +751,13 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
             <ProgressTab
               swimmerId={swimmerId}
               levelName={swimmer.level_name}
-              instructorId={selectedInstructor?.id || ''}
+              instructorId={(() => {
+                console.log('🔍 selectedInstructor:', selectedInstructor);
+                console.log('🔍 selectedInstructor?.id:', selectedInstructor?.id);
+                const id = selectedInstructor?.id || '';
+                console.log('🔍 Final instructorId being passed:', id, typeof id);
+                return id;
+              })()}
             />
           </TabsContent>
 

@@ -32,7 +32,7 @@ interface ProgressNote {
 
 interface NotesTabProps {
   swimmerId: string
-  instructorId: string
+  instructorId: any
 }
 
 async function fetchProgressNotes(swimmerId: string): Promise<ProgressNote[]> {
@@ -225,6 +225,7 @@ export default function NotesTab({
             </p>
             <Button
               variant="outline"
+              size="lg"
               className="mt-4"
               onClick={() => window.location.reload()}
             >
@@ -258,6 +259,7 @@ export default function NotesTab({
                 <p className="text-sm text-gray-600">Total notes</p>
               </div>
               <Button
+                size="lg"
                 className="bg-[#2a5e84] hover:bg-[#1e4565]"
                 onClick={() => setShowAddModal(true)}
               >
@@ -445,6 +447,7 @@ export default function NotesTab({
                 Start documenting swimmer progress by adding your first lesson note.
               </p>
               <Button
+                size="lg"
                 className="mt-6 bg-[#2a5e84] hover:bg-[#1e4565]"
                 onClick={() => setShowAddModal(true)}
               >

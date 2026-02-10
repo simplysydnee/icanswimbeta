@@ -78,8 +78,13 @@ async function fetchSwimmerTargets(swimmerId: string): Promise<SwimmerTarget[]> 
         })
       } else {
         // Create a placeholder for missing target (will be created on first update)
+        // Sanitize target name for placeholder ID: lowercase, replace spaces and slashes with hyphens
+        const sanitizedTargetName = targetName.toLowerCase()
+          .replace(/\s+/g, '-')
+          .replace(/\//g, '-') // Replace slashes with hyphens
+          .replace(/[^\w-]/g, ''); // Remove any other non-word characters except hyphens
         allTargets.push({
-          id: `placeholder-${targetName.toLowerCase().replace(/\s+/g, '-')}`,
+          id: `placeholder-${sanitizedTargetName}`,
           target_name: targetName,
           status: 'not_started',
           date_met: null,
@@ -107,29 +112,38 @@ async function updateTargetStatus(
   notes?: string
 ) {
   const supabase = createClient()
+  console.log('updateTargetStatus called:', { swimmerId, targetId, targetName, status, instructorId, instructorIdType: typeof instructorId })
 
   try {
+    // Normalize instructorId - could be string or object with id property
+    const normalizeInstructorId = (id: any): string | null => {
+      if (typeof id === 'string') return id || null;
+      if (id && typeof id === 'object' && 'id' in id) {
+        return typeof id.id === 'string' ? id.id : null;
+      }
+      return null;
+    };
+    const updatedBy = normalizeInstructorId(instructorId);
+    console.log('Using instructorId for updated_by:', { instructorId: updatedBy, original: instructorId })
+
     const now = new Date().toISOString()
-    const updateData = {
+    const updateData: any = {
       status,
       updated_at: now,
-      updated_by: instructorId,
+      updated_by: updatedBy,
       notes: notes || null,
-      ...(status === 'mastered' ? { date_met: now } : { date_met: null })
+      ...(status === 'mastered' ? { date_met: now } : { date_met: null }),
+      // date_started is handled by database trigger when status changes to in_progress
     }
 
-    // Check if target record exists
-    const { error: checkError } = await supabase
-      .from('swimmer_targets')
-      .select('id')
-      .eq('swimmer_id', swimmerId)
-      .eq('id', targetId)
-      .single()
+    // If this is a placeholder ID, don't query the database with it
+    const isPlaceholder = targetId.startsWith('placeholder-')
 
     let result
 
-    if (checkError || targetId.startsWith('placeholder-')) {
-      // Record doesn't exist or is a placeholder, insert new
+    if (isPlaceholder) {
+      // Placeholder target - always insert new
+      console.log('Inserting new target for placeholder:', targetName)
       result = await supabase
         .from('swimmer_targets')
         .insert({
@@ -141,24 +155,70 @@ async function updateTargetStatus(
         .select()
         .single()
     } else {
-      // Record exists, update
-      result = await supabase
+      // Check if target record exists
+      const { error: checkError } = await supabase
         .from('swimmer_targets')
-        .update(updateData)
+        .select('id, status')
+        .eq('swimmer_id', swimmerId)
         .eq('id', targetId)
-        .select()
         .single()
+
+      if (checkError && checkError.code === 'PGRST116') {
+        // Record doesn't exist, insert new
+        console.log('Target not found, inserting new:', targetName)
+        result = await supabase
+          .from('swimmer_targets')
+          .insert({
+            swimmer_id: swimmerId,
+            target_name: targetName,
+            ...updateData,
+            created_at: now
+          })
+          .select()
+          .single()
+      } else if (checkError) {
+        // Some other error
+        console.error('Error checking target existence:', {
+          message: checkError.message,
+          code: checkError.code,
+          details: checkError.details,
+          hint: checkError.hint
+        })
+        throw new Error(`Failed to check target: ${checkError.message || 'Unknown error'}`)
+      } else {
+        // Record exists, update
+        console.log('Updating existing target:', targetId)
+        result = await supabase
+          .from('swimmer_targets')
+          .update(updateData)
+          .eq('id', targetId)
+          .select()
+          .single()
+      }
     }
 
     if (result.error) {
-      console.error('Error updating target status:', result.error)
-      throw new Error('Failed to update target status')
+      console.error('Error updating target status:', {
+        message: result.error.message,
+        code: result.error.code,
+        details: result.error.details,
+        hint: result.error.hint
+      })
+      throw new Error(`Failed to update target status: ${result.error.message || 'Unknown error'}`)
     }
 
+    console.log('Target status updated successfully:', result.data)
     return result.data
 
   } catch (error) {
-    console.error('Error in updateTargetStatus:', error)
+    console.error('Error in updateTargetStatus:', {
+      error,
+      swimmerId,
+      targetId,
+      targetName,
+      status,
+      instructorId
+    })
     throw error
   }
 }
@@ -167,6 +227,7 @@ export default function TargetsTab({
   swimmerId,
   instructorId
 }: TargetsTabProps) {
+  console.log('TargetsTab instructorId:', instructorId, typeof instructorId);
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const [updatingTargetId, setUpdatingTargetId] = useState<string | null>(null)
@@ -243,6 +304,7 @@ export default function TargetsTab({
             </p>
             <Button
               variant="outline"
+              size="lg"
               className="mt-4"
               onClick={() => window.location.reload()}
             >
@@ -396,7 +458,7 @@ export default function TargetsTab({
               <button
                 onClick={handleTap}
                 disabled={isUpdating}
-                className={`flex items-center justify-center min-w-[100px] h-10 px-4 rounded-lg font-medium transition-colors ${config.buttonBg} ${config.buttonText} ${config.buttonHover} disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`flex items-center justify-center min-w-[100px] h-11 px-4 rounded-lg font-medium transition-colors ${config.buttonBg} ${config.buttonText} ${config.buttonHover} disabled:opacity-50 disabled:cursor-not-allowed`}
                 aria-label={`Change status from ${config.label}`}
               >
                 {isUpdating ? (

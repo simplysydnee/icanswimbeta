@@ -20,10 +20,10 @@ export function ThreeStateSwitch({
 }: ThreeStateSwitchProps) {
 
   const sizeClasses = {
-    xs: 'h-8 text-xs px-2 min-w-[65px]',
-    sm: 'h-10 text-xs px-3 min-w-[75px]',
-    md: 'h-11 text-sm px-4 min-w-[85px]',
-    lg: 'h-12 text-base px-6 min-w-[95px]'
+    xs: 'h-11 text-xs px-3 min-w-[75px]',
+    sm: 'h-11 text-sm px-4 min-w-[85px]',
+    md: 'h-12 text-sm px-5 min-w-[95px]',
+    lg: 'h-14 text-base px-7 min-w-[110px]'
   }
 
   const buttonClass = sizeClasses[size]

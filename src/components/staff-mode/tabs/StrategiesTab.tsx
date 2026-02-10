@@ -154,12 +154,24 @@ async function toggleStrategy(
   instructorId: string
 ) {
   const supabase = createClient()
+  console.log('toggleStrategy called:', { swimmerId, strategyId, strategyName, isUsed, instructorId, instructorIdType: typeof instructorId })
 
   try {
+    // Normalize instructorId - could be string or object with id property
+    const normalizeInstructorId = (id: any): string | null => {
+      if (typeof id === 'string') return id || null;
+      if (id && typeof id === 'object' && 'id' in id) {
+        return typeof id.id === 'string' ? id.id : null;
+      }
+      return null;
+    };
+    const updatedBy = normalizeInstructorId(instructorId);
+    console.log('Using instructorId for updated_by:', { instructorId: updatedBy, original: instructorId })
+
     const now = new Date().toISOString()
     const updateData = {
       is_used: isUsed,
-      updated_by: instructorId,
+      updated_by: updatedBy,
       updated_at: now
     }
 
@@ -234,15 +246,26 @@ async function toggleStrategy(
     }
 
     if (result.error) {
-      console.error('Error toggling strategy:', result.error)
-      console.error('Full error details:', JSON.stringify(result.error, null, 2))
-      throw new Error(`Failed to update strategy: ${result.error.message}`)
+      console.error('Error toggling strategy:', {
+        message: result.error.message,
+        code: result.error.code,
+        details: result.error.details,
+        hint: result.error.hint
+      })
+      throw new Error(`Failed to update strategy: ${result.error.message || 'Unknown error'}`)
     }
 
     return result.data
 
   } catch (error) {
-    console.error('Error in toggleStrategy:', error)
+    console.error('Error in toggleStrategy:', {
+      error,
+      swimmerId,
+      strategyId,
+      strategyName,
+      isUsed,
+      instructorId
+    })
     throw error
   }
 }
@@ -251,6 +274,7 @@ export default function StrategiesTab({
   swimmerId,
   instructorId
 }: StrategiesTabProps) {
+  console.log('StrategiesTab instructorId:', instructorId, typeof instructorId);
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const [togglingStrategyId, setTogglingStrategyId] = useState<string | null>(null)
@@ -323,7 +347,7 @@ export default function StrategiesTab({
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-lg border border-red-300 hover:bg-red-200"
+              className="mt-4 px-4 py-3 text-sm min-h-[44px] font-medium text-red-700 bg-red-100 rounded-lg border border-red-300 hover:bg-red-200"
             >
               Try Again
             </button>
@@ -464,7 +488,7 @@ export default function StrategiesTab({
       {/* Strategy Descriptions Reference */}
       <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
         <div
-          className="flex items-center justify-between cursor-pointer"
+          className="flex items-center justify-between cursor-pointer min-h-[44px] py-3"
           onClick={() => setShowDescriptions(!showDescriptions)}
         >
           <div className="flex items-center gap-2">

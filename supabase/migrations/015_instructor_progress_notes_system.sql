@@ -131,7 +131,7 @@ CREATE OR REPLACE FUNCTION update_swimmer_level_on_skill_mastery()
 RETURNS TRIGGER AS $$
 DECLARE
   skill_record RECORD;
-  level_id UUID;
+  next_level_id UUID;
   mastered_skills_count INTEGER;
   total_skills_count INTEGER;
 BEGIN
@@ -153,12 +153,12 @@ BEGIN
     -- Count total skills at this level
     SELECT COUNT(*) INTO total_skills_count
     FROM public.skills
-    WHERE level_id = skill_record.level_id;
+    WHERE public.skills.level_id = skill_record.level_id;
 
     -- If swimmer has mastered all skills at current level, promote to next level
     IF mastered_skills_count >= total_skills_count THEN
       -- Get next level
-      SELECT id INTO level_id
+      SELECT id INTO next_level_id
       FROM public.swim_levels
       WHERE sequence = (
         SELECT sequence + 1
@@ -167,9 +167,9 @@ BEGIN
       );
 
       -- Update swimmer's current level
-      IF level_id IS NOT NULL THEN
+      IF next_level_id IS NOT NULL THEN
         UPDATE public.swimmers
-        SET current_level_id = level_id, updated_at = NOW()
+        SET current_level_id = next_level_id, updated_at = NOW()
         WHERE id = NEW.swimmer_id;
       END IF;
     END IF;
