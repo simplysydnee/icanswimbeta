@@ -89,11 +89,13 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
     console.log('=== DEBUG: ALL sessions for instructor ===')
     console.log('Total sessions:', allSessions?.length || 0)
     if (allSessions && allSessions.length > 0) {
-      console.log('All session dates:', allSessions.map(s => ({
+      // Show first 10 sessions for debugging
+      console.log('First 10 session dates:', allSessions.slice(0, 10).map(s => ({
         id: s.id,
         start_time: s.start_time,
+        start_time_iso: new Date(s.start_time).toISOString(),
+        start_time_pst: new Date(s.start_time).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
         status: s.status,
-        local_time: new Date(s.start_time).toLocaleString(),
         has_booking: !!s.bookings?.[0]?.swimmer_id
       })))
     }
@@ -125,7 +127,7 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
       return isToday
     }) || []
 
-    console.log('=== DEBUG: Filtered to today ===')
+    console.log('=== DEBUG: Filtered to today (NEW CODE v2) ===')
     console.log('Today\'s sessions:', sessions.length)
     console.log('Session times (UTC):', sessions.map(s => s.start_time))
     console.log('Session times (PST):', sessions.map(s =>
