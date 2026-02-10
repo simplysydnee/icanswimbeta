@@ -72,8 +72,7 @@ export const useAdminSwimmers = (filters?: AdminSwimmersFilters) => {
           bookings!swimmer_id(
             id,
             status,
-            session_id,
-            sessions(start_time)
+            session_id
           )
         `)
         .order('created_at', { ascending: false });

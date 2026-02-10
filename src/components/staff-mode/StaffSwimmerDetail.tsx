@@ -532,16 +532,16 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
               {/* Waiver status */}
               <div className="ml-auto">
                 {swimmer.waiver_complete ? (
-                  <Badge className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-1 text-xs py-0 px-2 whitespace-nowrap">
+                  <Badge className="bg-green-100 text-green-800 border border-green-300 flex items-center gap-1 text-xs py-0 px-2 whitespace-nowrap">
                     <FileCheck className="h-2.5 w-2.5" />
                     Waivers Complete
                   </Badge>
                 ) : (
                   <Button
                     size="sm"
-                    variant="destructive"
+                    variant="outline"
                     onClick={() => setShowWaiverEmailModal(true)}
-                    className="h-8 text-xs whitespace-nowrap"
+                    className="h-8 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300 whitespace-nowrap"
                   >
                     <Mail className="h-3 w-3 mr-1" />
                     Send Waiver Email

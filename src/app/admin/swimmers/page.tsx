@@ -15,7 +15,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { Swimmer } from '@/types/swimmer';
 
 export default function AdminSwimmersPage() {
-  const { data: swimmers, isLoading: swimmersLoading, error: swimmersError } = useAdminSwimmers();
+  const { data: swimmers, isLoading: swimmersLoading, error: swimmersError, refetch } = useAdminSwimmers();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
 
@@ -173,7 +173,7 @@ export default function AdminSwimmersPage() {
               <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-8 text-center">
                 <div className="text-destructive font-medium mb-2">Error loading swimmers</div>
                 <div className="text-sm text-muted-foreground mb-4">{swimmersError}</div>
-                <Button onClick={fetchSwimmers} variant="outline">
+                <Button onClick={() => refetch()} variant="outline">
                   Try Again
                 </Button>
               </div>

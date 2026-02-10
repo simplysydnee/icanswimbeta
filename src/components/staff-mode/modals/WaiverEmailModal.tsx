@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import {
   Dialog,
@@ -34,6 +34,13 @@ export default function WaiverEmailModal({
   const [email, setEmail] = useState(defaultEmail)
   const [sending, setSending] = useState(false)
   const { toast } = useToast()
+
+  // Sync email state when modal opens
+  useEffect(() => {
+    if (open) {
+      setEmail(defaultEmail)
+    }
+  }, [open, defaultEmail])
 
   const handleSend = async () => {
     const emailRegex = /\S+@\S+\.\S+/

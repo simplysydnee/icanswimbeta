@@ -40,7 +40,7 @@ interface SessionWithSwimmer {
   medical_conditions_description: string | null
   history_of_seizures: boolean
   seizures_description: string | null
-  important_notes: string[] | null
+  important_notes: string[]
   // Parent contact information
   parent_phone: string | null
   parent_email: string | null
@@ -59,9 +59,12 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
 
     console.log('=== DEBUG: Fetching sessions for instructor ===')
     console.log('Instructor ID:', instructorId)
-    console.log('Date range (UTC):', { startOfDayUTC, endOfDayUTC })
+    console.log('Date range (UTC) - startOfDayUTC:', startOfDayUTC)
+    console.log('Date range (UTC) - endOfDayUTC:', endOfDayUTC)
+    console.log('Today date string:', dateStr)
     console.log('Local date:', today.toLocaleDateString())
     console.log('Local time now:', new Date().toLocaleTimeString())
+    console.log('Current UTC time:', new Date().toISOString())
 
     // First, let's debug by fetching ALL sessions for this instructor
     // without date filter to see what we get
@@ -95,23 +98,46 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
       })))
     }
 
-    // Now filter for today's sessions
+    console.log('🔍 UTC date range for filtering:')
+    console.log('startOfDayUTC:', startOfDayUTC)
+    console.log('endOfDayUTC:', endOfDayUTC)
+    console.log('Local date for reference:', dateStr)
+    console.log('🔍 PST date range equivalent:')
+    console.log('Start of day PST:', new Date(startOfDayUTC).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }))
+    console.log('End of day PST:', new Date(endOfDayUTC).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }))
+
+    // Now filter for today's sessions using UTC range (sessions are stored in UTC with 8-hour offset)
     const sessions = allSessions?.filter(session => {
-      const sessionDate = new Date(session.start_time)
-      const sessionDateStr = format(sessionDate, 'yyyy-MM-dd')
-      return sessionDateStr === dateStr
+      const sessionTime = session.start_time
+      const isToday = sessionTime >= startOfDayUTC && sessionTime < endOfDayUTC
+
+      if (!isToday) {
+        console.log('❌ Session filtered out:', {
+          start_time: session.start_time,
+          sessionTime_UTC: sessionTime,
+          startOfDayUTC,
+          endOfDayUTC,
+          sessionDate: new Date(sessionTime).toISOString(),
+          sessionLocal: new Date(sessionTime).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
+        })
+      }
+
+      return isToday
     }) || []
 
     console.log('=== DEBUG: Filtered to today ===')
     console.log('Today\'s sessions:', sessions.length)
-    console.log('Session statuses:', sessions.map(s => s.status))
+    console.log('Session times (UTC):', sessions.map(s => s.start_time))
+    console.log('Session times (PST):', sessions.map(s =>
+      new Date(s.start_time).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
+    ))
 
 
     console.log('=== DEBUG: Sessions found ===')
     console.log('Number of sessions:', sessions?.length || 0)
     if (sessions && sessions.length > 0) {
       console.log('Session times (UTC):', sessions.map(s => s.start_time))
-      console.log('Session times (Local):', sessions.map(s => new Date(s.start_time).toLocaleString()))
+      console.log('Session times (PST):', sessions.map(s => new Date(s.start_time).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })))
     } else {
       console.log('No sessions found for this date range')
     }
@@ -539,7 +565,7 @@ export default function StaffScheduleView() {
                           <h3 className="font-semibold text-gray-900 truncate">
                             {session.first_name} {session.last_name}
                           </h3>
-                          {session.important_notes && session.important_notes.length > 0 && (
+                          {hasSafetyWarning && (
                             <Popover>
                               <PopoverTrigger asChild>
                                 <button
@@ -553,11 +579,11 @@ export default function StaffScheduleView() {
                                 <div className="space-y-2">
                                   <h4 className="font-semibold text-amber-900 flex items-center gap-2">
                                     <AlertTriangle className="h-4 w-4" />
-                                    Important Safety Notes
+                                    Safety Information
                                   </h4>
                                   <ul className="list-disc list-inside text-sm text-amber-800 space-y-1">
-                                    {session.important_notes.map((note, idx) => (
-                                      <li key={idx}>{note}</li>
+                                    {safetyIssues.map((issue, idx) => (
+                                      <li key={idx}>{issue}</li>
                                     ))}
                                   </ul>
                                 </div>
