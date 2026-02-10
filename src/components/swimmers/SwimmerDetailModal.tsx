@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { StatusBadge } from './StatusBadge';
 import { EmailComposerModal } from '@/components/email/EmailComposerModal';
 import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
+import EditImportantNotesModal from '@/components/staff-mode/modals/EditImportantNotesModal';
 import { EnhancedSkillChecklist } from '@/components/instructor/EnhancedSkillChecklist';
 import { LevelSelector } from './LevelSelector';
 import { StatusSelector } from './StatusSelector';
@@ -139,6 +140,7 @@ export interface Swimmer {
   coordinatorEmail?: string;
   coordinatorPhone?: string;
   admin_notes?: string;
+  important_notes?: string[];
   invitedAt?: string;
 }
 
@@ -182,6 +184,7 @@ export function SwimmerDetailModal({
   const [progressModalOpen, setProgressModalOpen] = useState(false);
   const [selectedBookingForProgress, setSelectedBookingForProgress] = useState<any>(null);
   const [invitingParent, setInvitingParent] = useState(false);
+  const [showImportantNotesModal, setShowImportantNotesModal] = useState(false);
 
   const fetchAdditionalData = useCallback(async () => {
     if (!swimmer?.id) return;
@@ -1195,6 +1198,20 @@ export function SwimmerDetailModal({
                       >
                         <Users className="h-4 w-4 mr-2" />
                         Email Coordinator
+                      </Button>
+                    )}
+
+                    {/* Add/Edit Important Notes - Admin only */}
+                    {isAdmin && (
+                      <Button
+                        onClick={() => setShowImportantNotesModal(true)}
+                        variant="outline"
+                        className="w-full justify-start text-amber-700 hover:text-amber-900 hover:bg-amber-50"
+                      >
+                        <AlertTriangle className="h-4 w-4 mr-2 text-amber-500" />
+                        {swimmer.important_notes && swimmer.important_notes.length > 0
+                          ? `Edit Important Notes (${swimmer.important_notes.length})`
+                          : 'Add Important Notes'}
                       </Button>
                     )}
 
@@ -2272,6 +2289,20 @@ export function SwimmerDetailModal({
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Important Notes Modal */}
+        {swimmer && (
+          <EditImportantNotesModal
+            open={showImportantNotesModal}
+            onOpenChange={setShowImportantNotesModal}
+            swimmerId={swimmer.id}
+            importantNotes={swimmer.important_notes || []}
+            onSuccess={() => {
+              fetchAdditionalData();
+            }}
+          />
+        )}
+
       </DialogContent>
     </Dialog>
   );
