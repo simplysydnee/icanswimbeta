@@ -10,7 +10,12 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Loader2, ArrowLeft, Search, Calendar, Users, LogOut } from 'lucide-react'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Loader2, ArrowLeft, Search, Calendar, Users, LogOut, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SessionWithSwimmer {
@@ -141,6 +146,7 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
         medical_conditions_description,
         history_of_seizures,
         seizures_description,
+        important_notes,
         parent_id,
         parent_email,
         profiles!swimmers_parent_id_fkey (
@@ -475,6 +481,22 @@ export default function StaffScheduleView() {
                 ? Math.floor((now.getTime() - new Date(session.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
                 : null
 
+              // Collect safety issues
+              const safetyIssues = []
+              if (session.has_allergies && session.allergies_description) {
+                safetyIssues.push(`Allergies: ${session.allergies_description}`)
+              }
+              if (session.has_medical_conditions && session.medical_conditions_description) {
+                safetyIssues.push(`Medical Conditions: ${session.medical_conditions_description}`)
+              }
+              if (session.history_of_seizures && session.seizures_description) {
+                safetyIssues.push(`Seizures: ${session.seizures_description}`)
+              }
+              if (session.important_notes && session.important_notes.length > 0) {
+                session.important_notes.forEach(note => safetyIssues.push(note))
+              }
+              const hasSafetyWarning = safetyIssues.length > 0
+
               return (
                 <div
                   key={session.id}
@@ -513,9 +535,36 @@ export default function StaffScheduleView() {
 
                       {/* Name & Details */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 truncate">
-                          {session.first_name} {session.last_name}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-gray-900 truncate">
+                            {session.first_name} {session.last_name}
+                          </h3>
+                          {session.important_notes && session.important_notes.length > 0 && (
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button
+                                  className="h-11 w-11 flex items-center justify-center hover:bg-amber-50 rounded-md transition-colors"
+                                  aria-label="View important safety notes"
+                                >
+                                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-80 bg-amber-50 border-amber-200">
+                                <div className="space-y-2">
+                                  <h4 className="font-semibold text-amber-900 flex items-center gap-2">
+                                    <AlertTriangle className="h-4 w-4" />
+                                    Important Safety Notes
+                                  </h4>
+                                  <ul className="list-disc list-inside text-sm text-amber-800 space-y-1">
+                                    {session.important_notes.map((note, idx) => (
+                                      <li key={idx}>{note}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                           {age && <span>{age}y</span>}
                           {session.level_name && (

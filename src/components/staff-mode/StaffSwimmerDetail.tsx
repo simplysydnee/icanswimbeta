@@ -17,6 +17,7 @@ import { Loader2, ArrowLeft, Phone, Mail, User, AlertTriangle, Target, Brain, Me
 import { AssessmentTab, ProgressTab, TargetsTab, StrategiesTab, NotesTab } from './tabs'
 import ImportantNoticeHeader from './ImportantNoticeHeader'
 import EditImportantNotesModal from './modals/EditImportantNotesModal'
+import WaiverEmailModal from './modals/WaiverEmailModal'
 
 interface SwimmerDetail {
   id: string
@@ -152,27 +153,43 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
 
     const { data: strategies, error: strategiesError } = await supabase
       .from('swimmer_strategies')
-      .select('strategy_name, is_used')
+      .select('id, strategy_name, is_used')
       .eq('swimmer_id', swimmerId)
-      .eq('is_used', true)
 
     if (strategiesError) {
       console.error('Error fetching strategies:', strategiesError)
       throw new Error('Failed to fetch strategies')
     }
 
-    // Create a set of normalized standard strategy names for quick lookup
-    const standardStrategyNames = new Set(STANDARD_STRATEGIES.map(s => normalizeStrategyName(s.name)))
+    // Debug logging
+    console.log('🔍 Strategies raw data:', strategies);
+    console.log('🔍 Strategy names:', strategies?.map(s => s.strategy_name));
 
-    // Count only active strategies that match standard strategies
-    const activeStandardStrategies = new Set<string>()
+    // Create a map of existing strategies by normalized name for flexible lookup (matching StrategiesTab logic)
+    const existingStrategiesMap = new Map<string, boolean>()
     strategies?.forEach(strategy => {
       const normalized = normalizeStrategyName(strategy.strategy_name)
-      if (standardStrategyNames.has(normalized)) {
-        activeStandardStrategies.add(normalized)
+      // Only keep the first occurrence if there are duplicates
+      if (!existingStrategiesMap.has(normalized)) {
+        existingStrategiesMap.set(normalized, strategy.is_used)
+      } else {
+        console.warn(`Duplicate strategy name found (normalized): ${normalized}`, strategy)
       }
     })
-    const strategiesCount = activeStandardStrategies.size
+    console.log('🔍 Existing strategies map (normalized -> is_used):', Array.from(existingStrategiesMap.entries()))
+
+    // Count active standard strategies (matching StrategiesTab logic)
+    let strategiesCount = 0
+    for (const standardStrategy of STANDARD_STRATEGIES) {
+      const normalizedStandardName = normalizeStrategyName(standardStrategy.name)
+      const existingIsUsed = existingStrategiesMap.get(normalizedStandardName)
+      if (existingIsUsed === true) {
+        strategiesCount++
+        console.log(`🔍 Counting active standard strategy: ${standardStrategy.name} (normalized: ${normalizedStandardName})`)
+      }
+    }
+
+    console.log('🔍 Final strategies count:', strategiesCount)
 
     const { data: notes, error: notesError } = await supabase
       .from('progress_notes')
@@ -267,6 +284,7 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('progress')
   const [showEditNotesModal, setShowEditNotesModal] = useState(false)
+  const [showWaiverEmailModal, setShowWaiverEmailModal] = useState(false)
 
   const { data: swimmer, isLoading, error } = useQuery({
     queryKey: ['swimmerDetail', swimmerId],
@@ -511,18 +529,23 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
                 </a>
               )}
 
-              {/* Waiver status badge */}
+              {/* Waiver status */}
               <div className="ml-auto">
                 {swimmer.waiver_complete ? (
-                  <Badge className="bg-green-500 hover:bg-green-600 text-xs py-0 px-2">
-                    <FileCheck className="h-2.5 w-2.5 mr-1" />
-                    Waivers ✓
+                  <Badge className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-1 text-xs py-0 px-2 whitespace-nowrap">
+                    <FileCheck className="h-2.5 w-2.5" />
+                    Waivers Complete
                   </Badge>
                 ) : (
-                  <Badge variant="destructive" className="bg-red-500 hover:bg-red-600 text-xs py-0 px-2">
-                    <FileCheck className="h-2.5 w-2.5 mr-1" />
-                    Waivers ✗
-                  </Badge>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setShowWaiverEmailModal(true)}
+                    className="h-8 text-xs whitespace-nowrap"
+                  >
+                    <Mail className="h-3 w-3 mr-1" />
+                    Send Waiver Email
+                  </Button>
                 )}
               </div>
             </div>
@@ -803,6 +826,21 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
         onSuccess={() => {
           // Invalidate query to refresh data
           queryClient.invalidateQueries({ queryKey: ['swimmerDetail', swimmerId] })
+        }}
+      />
+
+      {/* Waiver Email Modal */}
+      <WaiverEmailModal
+        open={showWaiverEmailModal}
+        onOpenChange={setShowWaiverEmailModal}
+        swimmerId={swimmerId}
+        swimmerName={`${swimmer.first_name} ${swimmer.last_name}`}
+        defaultEmail={swimmer.parent_email || ''}
+        onSuccess={(email) => {
+          toast({
+            title: 'Waiver email sent',
+            description: `Email sent to ${email}`,
+          })
         }}
       />
     </Tabs>
