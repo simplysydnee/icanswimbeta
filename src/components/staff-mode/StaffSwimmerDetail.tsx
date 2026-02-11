@@ -214,7 +214,13 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
     }
 
     // Transform the data
+    console.log('🔍 fetchSwimmerDetail: swimmer.parent_email =', swimmer.parent_email);
+    console.log('🔍 fetchSwimmerDetail: swimmer.parent_name =', swimmer.parent_name);
+    console.log('🔍 fetchSwimmerDetail: swimmer.parent_phone =', swimmer.parent_phone);
     const parentProfile = swimmer.profiles?.[0] || {}
+    console.log('🔍 fetchSwimmerDetail: parentProfile.email =', parentProfile.email);
+    console.log('🔍 fetchSwimmerDetail: parentProfile.full_name =', parentProfile.full_name);
+    console.log('🔍 fetchSwimmerDetail: parentProfile.phone =', parentProfile.phone);
 
     // Calculate waiver completion status
     const hasLiability = !!(swimmer.signed_waiver && swimmer.liability_waiver_signature)
@@ -252,11 +258,11 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
       elopement_history: swimmer.elopement_history || false,
       has_behavior_plan: swimmer.has_behavior_plan || false,
 
-      // Parent info
+      // Parent info - prioritize direct columns from swimmers table, fall back to joined profile
       parent_id: swimmer.parent_id,
-      parent_name: parentProfile.full_name || null,
-      parent_phone: parentProfile.phone || null,
-      parent_email: parentProfile.email || null,
+      parent_name: swimmer.parent_name || parentProfile.full_name || null,
+      parent_phone: swimmer.parent_phone || parentProfile.phone || null,
+      parent_email: swimmer.parent_email || parentProfile.email || null,
 
       // Waiver status
       signed_waiver: swimmer.signed_waiver,
