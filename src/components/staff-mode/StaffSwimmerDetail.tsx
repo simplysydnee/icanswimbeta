@@ -115,7 +115,6 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
         has_behavior_plan,
         parent_id,
         parent_name,
-        parent_phone,
         parent_email,
         signed_waiver,
         liability_waiver_signature,
@@ -137,8 +136,14 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
 
     if (swimmerError) {
       console.error('Error fetching swimmer:', swimmerError)
+      console.error('Full error details:', JSON.stringify(swimmerError, null, 2))
+      console.error('Swimmer ID being queried:', swimmerId)
       throw new Error('Failed to fetch swimmer details')
     }
+
+    console.log('✅ Swimmer query successful:', swimmer)
+    console.log('✅ Swimmer keys:', Object.keys(swimmer || {}))
+    console.log('✅ Swimmer parent_email value:', swimmer?.parent_email)
 
     // Fetch skills for progress calculation
     const { data: skills, error: skillsError } = await supabase
