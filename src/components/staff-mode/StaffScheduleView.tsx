@@ -509,21 +509,9 @@ export default function StaffScheduleView() {
                 ? Math.floor((now.getTime() - new Date(session.date_of_birth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
                 : null
 
-              // Collect safety issues
-              const safetyIssues = []
-              if (session.has_allergies && session.allergies_description) {
-                safetyIssues.push(`Allergies: ${session.allergies_description}`)
-              }
-              if (session.has_medical_conditions && session.medical_conditions_description) {
-                safetyIssues.push(`Medical Conditions: ${session.medical_conditions_description}`)
-              }
-              if (session.history_of_seizures && session.seizures_description) {
-                safetyIssues.push(`Seizures: ${session.seizures_description}`)
-              }
-              if (session.important_notes && session.important_notes.length > 0) {
-                session.important_notes.forEach(note => safetyIssues.push(note))
-              }
-              const hasSafetyWarning = safetyIssues.length > 0
+              // Collect important notes
+              const importantNotes: string[] = session.important_notes || []
+              const hasSafetyWarning = importantNotes.length > 0
 
               return (
                 <div
@@ -577,15 +565,16 @@ export default function StaffScheduleView() {
                                   <AlertTriangle className="h-5 w-5 text-amber-500" />
                                 </button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-80 bg-amber-50 border-amber-200">
-                                <div className="space-y-2">
-                                  <h4 className="font-semibold text-amber-900 flex items-center gap-2">
-                                    <AlertTriangle className="h-4 w-4" />
-                                    Safety Information
+                              <PopoverContent className="w-96 bg-amber-50 border-2 border-amber-400">
+                                <div className="space-y-3">
+                                  <h4 className="font-bold text-amber-900">
+                                    ⚠️ SAFETY WARNINGS - READ BEFORE ENTERING POOL
                                   </h4>
-                                  <ul className="list-disc list-inside text-sm text-amber-800 space-y-1">
-                                    {safetyIssues.map((issue, idx) => (
-                                      <li key={idx}>{issue}</li>
+                                  <ul className="space-y-2">
+                                    {importantNotes.map((note, idx) => (
+                                      <li key={idx} className="bg-white p-2 rounded border border-amber-300 text-sm">
+                                        • {note}
+                                      </li>
                                     ))}
                                   </ul>
                                 </div>
