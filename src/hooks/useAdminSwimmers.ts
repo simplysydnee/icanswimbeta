@@ -55,7 +55,9 @@ export const useAdminSwimmers = (filters?: AdminSwimmersFilters) => {
           parent_id,
           current_level_id,
           signed_waiver,
-          photo_release,
+          photo_video_permission,
+          important_notes,
+          admin_notes,
           created_at,
           updated_at,
           parent:profiles!parent_id(
@@ -68,11 +70,6 @@ export const useAdminSwimmers = (filters?: AdminSwimmersFilters) => {
             id,
             name,
             display_name
-          ),
-          bookings!swimmer_id(
-            id,
-            status,
-            session_id
           )
         `)
         .order('created_at', { ascending: false });

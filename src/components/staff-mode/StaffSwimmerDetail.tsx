@@ -71,6 +71,16 @@ interface SwimmerDetail {
   targets_count: number
   strategies_count: number
   notes_count: number
+
+  // Raw data from joins (for debugging)
+  profiles?: Array<{
+    full_name?: string
+    phone?: string
+    email?: string
+  }>
+  parent?: {
+    email?: string
+  }
 }
 
 async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
@@ -831,11 +841,25 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
 
       {/* Waiver Email Modal */}
       <WaiverEmailModal
+        key={`waiver-email-${swimmerId}`}
         open={showWaiverEmailModal}
         onOpenChange={setShowWaiverEmailModal}
         swimmerId={swimmerId}
         swimmerName={`${swimmer.first_name} ${swimmer.last_name}`}
-        defaultEmail={swimmer.parent_email || ''}
+        defaultEmail={(() => {
+          // Debug: log the full swimmer object to see available fields
+          console.log('🔍 StaffSwimmerDetail debug - full swimmer object:', swimmer);
+          console.log('🔍 StaffSwimmerDetail: parent_email=', swimmer.parent_email, 'parent_name=', swimmer.parent_name, 'parent_phone=', swimmer.parent_phone);
+          console.log('🔍 StaffSwimmerDetail: profiles array=', swimmer.profiles);
+
+          // The parent_email field should already be populated from the query
+          // but let's try multiple possible locations for parent email
+          const profilesEmail = swimmer.profiles?.[0]?.email;
+          const email = swimmer.parent_email || profilesEmail || '';
+
+          console.log('🔍 StaffSwimmerDetail: email found=', email, 'swimmerId=', swimmerId);
+          return email;
+        })()}
         onSuccess={(email) => {
           toast({
             title: 'Waiver email sent',

@@ -37,7 +37,9 @@ export default function WaiverEmailModal({
 
   // Sync email state when modal opens
   useEffect(() => {
+    console.log('WaiverEmailModal useEffect: open=', open, 'defaultEmail=', defaultEmail)
     if (open) {
+      console.log('Setting email to:', defaultEmail)
       setEmail(defaultEmail)
     }
   }, [open, defaultEmail])
@@ -83,6 +85,8 @@ export default function WaiverEmailModal({
       setSending(false)
     }
   }
+
+  console.log('WaiverEmailModal render: email=', email, 'defaultEmail=', defaultEmail, 'open=', open)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

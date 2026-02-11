@@ -40,6 +40,9 @@ interface AssessmentData {
 
   // Approval
   approvalStatus: 'approved' | 'dropped' | '';
+
+  // Important Safety Notes
+  importantNotesText: string;
 }
 
 interface AssessmentWizardProps {
@@ -64,6 +67,7 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
     swimSkillsGoals: '',
     safetyGoals: '',
     approvalStatus: '',
+    importantNotesText: '',
     ...initialData,
   }));
 

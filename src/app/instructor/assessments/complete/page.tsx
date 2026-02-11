@@ -21,6 +21,7 @@ interface AssessmentData {
   swimSkillsGoals: string;
   safetyGoals: string;
   approvalStatus: 'approved' | 'dropped' | '';
+  importantNotesText: string;
 }
 
 export default function InstructorCompleteAssessmentPage() {

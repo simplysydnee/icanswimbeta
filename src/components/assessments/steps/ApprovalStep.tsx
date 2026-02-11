@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, AlertCircle, FileText, User, Calendar, Droplets, AlertTriangle, Target } from 'lucide-react';
@@ -20,17 +21,33 @@ interface ApprovalStepProps {
     swimSkillsGoals: string;
     safetyGoals: string;
     approvalStatus: 'approved' | 'dropped' | '';
+    importantNotesText: string;
   };
-  onChange: (data: { approvalStatus: 'approved' | 'dropped' }) => void;
+  onChange: (data: { approvalStatus?: 'approved' | 'dropped'; importantNotesText?: string }) => void;
   onSubmit: () => void;
   isSubmitting: boolean;
 }
 
 export function ApprovalStep({ data, onChange, onSubmit, isSubmitting }: ApprovalStepProps) {
   const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const [hasImportantNotes, setHasImportantNotes] = useState(data.importantNotesText.trim() !== '');
 
   const handleApprovalChange = (value: 'approved' | 'dropped') => {
     onChange({ approvalStatus: value });
+  };
+
+  const handleImportantNotesToggle = (addNotes: boolean) => {
+    if (addNotes) {
+      setHasImportantNotes(true);
+      // Keep existing text
+    } else {
+      setHasImportantNotes(false);
+      onChange({ importantNotesText: '' });
+    }
+  };
+
+  const handleImportantNotesTextChange = (text: string) => {
+    onChange({ importantNotesText: text });
   };
 
   const handleSubmit = () => {
@@ -221,6 +238,54 @@ export function ApprovalStep({ data, onChange, onSubmit, isSubmitting }: Approva
           </div>
         </div>
       )}
+
+      {/* Important Safety Notes */}
+      <div className="space-y-3 border-t border-amber-200 pt-4 mt-6">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5 text-amber-500" />
+          <h3 className="text-base font-semibold text-amber-900">
+            Important Safety Notes (Optional)
+          </h3>
+        </div>
+
+        <p className="text-sm text-gray-600">
+          Did you discover any critical safety information during this assessment?
+          (e.g., behavioral issues, medical concerns, communication needs)
+        </p>
+
+        <div className="flex items-center gap-4">
+          <label className="text-sm font-medium">Add important notes?</label>
+          <Button
+            type="button"
+            variant={hasImportantNotes ? "default" : "outline"}
+            onClick={() => handleImportantNotesToggle(true)}
+            className={hasImportantNotes ? "bg-amber-500 hover:bg-amber-600" : ""}
+          >
+            Yes
+          </Button>
+          <Button
+            type="button"
+            variant={!hasImportantNotes ? "default" : "outline"}
+            onClick={() => handleImportantNotesToggle(false)}
+          >
+            No
+          </Button>
+        </div>
+
+        {hasImportantNotes && (
+          <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+            <Textarea
+              placeholder="Example:&#10;• May bite when frustrated&#10;• Elopement risk&#10;• Severe peanut allergy"
+              value={data.importantNotesText}
+              onChange={(e) => handleImportantNotesTextChange(e.target.value)}
+              rows={5}
+            />
+            <p className="text-xs text-amber-700 mt-2">
+              These notes will be displayed prominently to all instructors in Staff Mode.
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Submit Button */}
       <div className="pt-4 border-t">

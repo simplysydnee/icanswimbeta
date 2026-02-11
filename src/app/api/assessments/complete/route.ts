@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
       swimSkillsGoals,
       safetyGoals,
       approvalStatus,
+      importantNotesText,
     } = body;
 
     // Validate required fields
@@ -68,6 +69,7 @@ export async function POST(request: NextRequest) {
         assessment_status,
         funded_sessions_used,
         funded_sessions_authorized,
+        important_notes,
         parent:profiles!swimmers_parent_id_fkey (
           id,
           email,
@@ -107,11 +109,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Process important safety notes
+    let importantNotesArray: string[] = [];
+    if (importantNotesText && importantNotesText.trim()) {
+      // Parse notes (split by newlines, clean bullets)
+      importantNotesArray = importantNotesText
+        .split('\n')
+        .map((note: string) => note.trim().replace(/^[•\-*]\s*/, ''))
+        .filter((note: string) => note.length > 0);
+    }
+
     // Update swimmer status based on approval
     const swimmerUpdates: any = {
       assessment_status: 'completed',
       updated_at: new Date().toISOString(),
     };
+
+    // Add important notes if provided
+    if (importantNotesArray.length > 0) {
+      // Get existing notes (ensure it's an array)
+      const existingNotes = swimmer.important_notes || [];
+      const mergedNotes = [...existingNotes, ...importantNotesArray];
+      swimmerUpdates.important_notes = mergedNotes;
+    }
 
     if (approvalStatus === 'approved') {
       swimmerUpdates.enrollment_status = 'enrolled';
