@@ -87,11 +87,41 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
   const supabase = createClient()
 
   try {
-    // Fetch swimmer with level, parent info, and waiver fields
+    // Fetch swimmer with level, parent info, and waiver fields (explicit column selection to ensure parent_email is included)
     const { data: swimmer, error: swimmerError } = await supabase
       .from('swimmers')
       .select(`
-        *,
+        id,
+        first_name,
+        last_name,
+        date_of_birth,
+        gender,
+        photo_url,
+        current_level_id,
+        assessment_status,
+        important_notes,
+        diagnosis,
+        has_allergies,
+        allergies_description,
+        has_medical_conditions,
+        medical_conditions_description,
+        history_of_seizures,
+        seizures_description,
+        toilet_trained,
+        non_ambulatory,
+        self_injurious_behavior,
+        aggressive_behavior,
+        elopement_history,
+        has_behavior_plan,
+        parent_id,
+        parent_name,
+        parent_phone,
+        parent_email,
+        signed_waiver,
+        liability_waiver_signature,
+        photo_video_permission,
+        photo_video_signature,
+        cancellation_policy_signature,
         swim_levels!inner (
           name,
           sequence
