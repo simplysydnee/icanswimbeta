@@ -14,7 +14,7 @@ interface EmailRequest {
   coordinatorName?: string
   toName?: string
   html?: string
-  templateType: 'enrollment_invite' | 'approval_notification' | 'booking_confirmation' | 'assessment_booking' | 'recurring_lesson_booking' | 'single_lesson_booking' | 'assessment_completion' | 'welcome_enrollment' | 'account_created' | 'instructor_change' | 'referral_request' | 'custom'
+  templateType: 'enrollment_invite' | 'approval_notification' | 'booking_confirmation' | 'assessment_booking' | 'recurring_lesson_booking' | 'single_lesson_booking' | 'assessment_completion' | 'welcome_enrollment' | 'account_created' | 'instructor_change' | 'referral_request' | 'parent_invitation' | 'custom'
   customData?: Record<string, any>
 }
 
@@ -367,10 +367,14 @@ const getEmailTemplate = (type: string, data: any): { subject: string; html: str
     case 'account_created':
     case 'instructor_change':
     case 'referral_request':
+    case 'parent_invitation':
       // These use pre-generated HTML from TypeScript templates
+      // Check both top-level subject/html and customData subject/html
+      const templateSubject = data.subject || data.customData?.subject || 'I Can Swim Notification'
+      const templateHtml = data.html || data.customData?.html || '<p>No content provided</p>'
       return {
-        subject: data.customData?.subject || 'I Can Swim Notification',
-        html: data.customData?.html || '<p>No content provided</p>'
+        subject: templateSubject,
+        html: templateHtml
       }
 
     case 'custom':

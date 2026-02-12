@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import { generateReferralRequestEmail, generateReferralConfirmationEmail, generateAssessmentBookingEmail, generateLessonBookingEmail, generateRecurringBookingEmail, generateCancellationEmail, generateParentInvitationEmail } from '@/lib/emails'
+import { generateReferralRequestEmail, generateReferralConfirmationEmail, generateAssessmentBookingEmail, generateLessonBookingEmail, generateRecurringBookingEmail, generateCancellationEmail, generateParentInvitationEmail, generateWelcomeEmail, generateAccountCreatedEmail, wrapEmailWithHeader } from '@/lib/emails'
 
 type EmailTemplate =
   | 'enrollment_invite'
@@ -237,14 +237,21 @@ export const emailService = {
     isPrivatePay: boolean
     fundingSourceName?: string
   }) {
+    const { subject, html } = generateWelcomeEmail({
+      parentName: params.parentName,
+      parentEmail: params.parentEmail,
+      swimmerName: params.childName,
+      isPrivatePay: params.isPrivatePay,
+      fundingSourceName: params.fundingSourceName
+    })
     return sendEmail({
       to: params.parentEmail,
       templateType: 'welcome_enrollment',
       parentName: params.parentName,
       childName: params.childName,
       customData: {
-        isPrivatePay: params.isPrivatePay,
-        fundingSourceName: params.fundingSourceName
+        subject,
+        html
       },
     })
   },
@@ -253,10 +260,18 @@ export const emailService = {
     parentEmail: string
     parentName: string
   }) {
+    const { subject, html } = generateAccountCreatedEmail({
+      parentName: params.parentName,
+      parentEmail: params.parentEmail
+    })
     return sendEmail({
       to: params.parentEmail,
       templateType: 'account_created',
       parentName: params.parentName,
+      customData: {
+        subject,
+        html
+      },
     })
   },
 
@@ -270,17 +285,31 @@ export const emailService = {
     previousInstructor: string
     newInstructor: string
   }) {
+    const subject = `Instructor Change for ${params.childName}'s Swim Lesson`;
+    const content = `
+      <h2 style="color: #2a5e84; margin-top: 0;">Instructor Change Notification</h2>
+      <p>Hi ${params.parentName},</p>
+      <p>This is to notify you that there has been a change in instructor for ${params.childName}'s swim lesson.</p>
+      <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2a5e84;">
+        <h3 style="margin-top: 0; color: #2a5e84;">Lesson Details</h3>
+        <p><strong>Date:</strong> ${params.date}</p>
+        <p><strong>Time:</strong> ${params.time}</p>
+        <p><strong>Location:</strong> ${params.location}</p>
+        <p><strong>Previous Instructor:</strong> ${params.previousInstructor}</p>
+        <p><strong>New Instructor:</strong> ${params.newInstructor}</p>
+      </div>
+      <p>If you have any questions about this change, please contact us at info@icanswim209.com.</p>
+      <p>Thank you,<br>The I Can Swim Team</p>
+    `;
+    const html = wrapEmailWithHeader(content);
     return sendEmail({
       to: params.parentEmail,
       templateType: 'instructor_change',
       parentName: params.parentName,
       childName: params.childName,
       customData: {
-        date: params.date,
-        time: params.time,
-        location: params.location,
-        previousInstructor: params.previousInstructor,
-        newInstructor: params.newInstructor,
+        subject,
+        html
       },
     })
   },

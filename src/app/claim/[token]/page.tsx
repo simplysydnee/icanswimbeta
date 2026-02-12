@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Loader2, CheckCircle, XCircle, User, Mail } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -19,6 +21,7 @@ interface Invitation {
     id: string;
     first_name: string;
     last_name: string;
+    date_of_birth: string;
   };
 }
 
@@ -33,6 +36,8 @@ export default function ClaimSwimmerPage() {
   const [claiming, setClaiming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [dobInput, setDobInput] = useState('');
+  const [dobError, setDobError] = useState<string | null>(null);
 
   useEffect(() => {
     if (token) {
@@ -69,6 +74,41 @@ export default function ClaimSwimmerPage() {
     }
   };
 
+  const validateDob = (input: string, expectedDob: string): boolean => {
+    if (!input.trim()) {
+      setDobError('Date of birth is required');
+      return false;
+    }
+
+    // Normalize expected DOB from database (YYYY-MM-DD)
+    const expectedDate = new Date(expectedDob);
+    if (isNaN(expectedDate.getTime())) {
+      console.error('Invalid expected DOB format:', expectedDob);
+      setDobError('System error: invalid swimmer date of birth');
+      return false;
+    }
+
+    // Try parsing input in various formats
+    const parsedDate = new Date(input);
+    if (isNaN(parsedDate.getTime())) {
+      setDobError('Invalid date format. Please use MM/DD/YYYY or YYYY-MM-DD');
+      return false;
+    }
+
+    // Compare year, month, day
+    if (
+      parsedDate.getFullYear() !== expectedDate.getFullYear() ||
+      parsedDate.getMonth() !== expectedDate.getMonth() ||
+      parsedDate.getDate() !== expectedDate.getDate()
+    ) {
+      setDobError('Date of birth does not match our records. Please try again.');
+      return false;
+    }
+
+    setDobError(null);
+    return true;
+  };
+
   const handleClaim = async () => {
     if (!invitation || !user) return;
 
@@ -78,11 +118,17 @@ export default function ClaimSwimmerPage() {
       return;
     }
 
+    // Validate date of birth
+    if (!validateDob(dobInput, invitation.swimmer.date_of_birth)) {
+      return;
+    }
+
     setClaiming(true);
     try {
       const response = await fetch(`/api/invitations/claim/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dob: dobInput }),
       });
 
       const data = await response.json();
@@ -214,9 +260,31 @@ export default function ClaimSwimmerPage() {
             </div>
           )}
 
+          {/* Date of Birth Verification */}
+          <div className="space-y-2">
+            <Label htmlFor="dob">Verify Swimmer's Date of Birth *</Label>
+            <Input
+              id="dob"
+              type="text"
+              placeholder="MM/DD/YYYY or YYYY-MM-DD"
+              value={dobInput}
+              onChange={(e) => {
+                setDobInput(e.target.value);
+                if (dobError) setDobError(null);
+              }}
+              className={dobError ? 'border-red-500' : ''}
+            />
+            {dobError && (
+              <p className="text-sm text-red-600">{dobError}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Enter {invitation?.swimmer.first_name}'s date of birth as it appears in our records.
+            </p>
+          </div>
+
           <Button
             onClick={handleClaim}
-            disabled={claiming || user.email?.toLowerCase() !== invitation?.parent_email.toLowerCase()}
+            disabled={claiming || user.email?.toLowerCase() !== invitation?.parent_email.toLowerCase() || !dobInput.trim()}
             className="w-full"
           >
             {claiming && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
