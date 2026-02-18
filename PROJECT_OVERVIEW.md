@@ -108,7 +108,7 @@ src/
 │   ├── swimmer.ts           # Swimmer types
 │   ├── session.ts           # Session types
 │   ├── booking.ts           # Booking types
-│   └── purchase-order.ts    # Regional Center PO types
+│   └── purchase-order.ts    # Funding Source PO types
 └── middleware.ts            # Route protection middleware
 ```
 
@@ -160,7 +160,7 @@ The public-facing website uses Next.js route groups for clean URL structure:
    - Mark attendance
    - Update swimmer progress and skill tracking
    - Create progress notes
-   - Request POS renewals for Regional Center clients
+   - Request POS renewals for funded clients
    - Protected routes: `/instructor/*`
 
 3. **Admin**
@@ -171,9 +171,9 @@ The public-facing website uses Next.js route groups for clean URL structure:
    - View analytics and KPIs
    - Protected routes: `/admin/*`
 
-4. **Regional Center Coordinator**
-   - Submit referrals for new Regional Center clients
-   - Approve POS (Purchase Order) requests
+4. **Funding Source Coordinator**
+   - Submit referrals for new funded clients (multiple regional centers)
+   - Approve POS (Purchase Order) requests for assigned funding sources
    - View assigned swimmers
    - Review progress update requests
    - Protected routes: `/coordinator/*`
@@ -186,7 +186,7 @@ const protectedRoutes = {
   '/parent': ['parent', 'admin'],
   '/instructor': ['instructor', 'admin'],
   '/admin': ['admin'],
-  '/coordinator': ['vmrc_coordinator', 'admin'],
+  '/coordinator': ['coordinator', 'admin'],
 }
 ```
 
@@ -215,10 +215,50 @@ CREATE TABLE profiles (
 CREATE TABLE user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  role TEXT NOT NULL CHECK (role IN ('parent', 'instructor', 'admin', 'vmrc_coordinator')),
+  role TEXT NOT NULL CHECK (role IN ('parent', 'instructor', 'admin', 'coordinator')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, role)
+);
+
+-- Funding Sources (replaces hardcoded VMRC system)
+CREATE TABLE funding_sources (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  -- Basic Information
+  name TEXT NOT NULL,
+  short_name TEXT,
+  description TEXT,
+  -- Contact Information
+  contact_name TEXT,
+  contact_email TEXT,
+  contact_phone TEXT,
+  website TEXT,
+  -- Configuration
+  allowed_email_domains TEXT[],
+  default_coordinator_role TEXT DEFAULT 'coordinator',
+  assessment_sessions INTEGER DEFAULT 1,
+  lessons_per_po INTEGER DEFAULT 12,
+  po_duration_months INTEGER DEFAULT 3,
+  renewal_alert_threshold INTEGER DEFAULT 11,
+  -- Billing Information
+  billing_contact_name TEXT,
+  billing_contact_email TEXT,
+  billing_contact_phone TEXT,
+  billing_address TEXT,
+  billing_notes TEXT,
+  -- Pricing & Authorization
+  price_cents INTEGER,
+  requires_authorization BOOLEAN DEFAULT false,
+  authorization_label VARCHAR(100) DEFAULT 'Purchase Order',
+  -- Status
+  is_active BOOLEAN DEFAULT true,
+  -- Timestamps
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  created_by UUID REFERENCES profiles(id),
+  -- Constraints
+  UNIQUE(name),
+  UNIQUE(short_name)
 );
 
 -- Swimmers
@@ -251,16 +291,16 @@ CREATE TABLE swimmers (
   comfortable_in_water TEXT,
   swim_goals TEXT[],
   current_level_id UUID REFERENCES swim_levels(id),
-  -- Payment & Regional Center
-  payment_type TEXT DEFAULT 'private_pay' CHECK (payment_type IN ('private_pay', 'vmrc', 'scholarship', 'other')),
-  is_vmrc_client BOOLEAN DEFAULT FALSE,
-  vmrc_coordinator_name TEXT,
-  vmrc_coordinator_email TEXT,
-  vmrc_coordinator_phone TEXT,
-  vmrc_sessions_used INTEGER DEFAULT 0,
-  vmrc_sessions_authorized INTEGER DEFAULT 0,
-  vmrc_current_pos_number TEXT,
-  vmrc_pos_expires_at TIMESTAMPTZ,
+  -- Payment & Funding Source
+  payment_type TEXT DEFAULT 'private_pay' CHECK (payment_type IN ('private_pay', 'funding_source', 'scholarship', 'other')),
+  funding_source_id UUID REFERENCES funding_sources(id),
+  coordinator_name TEXT,
+  coordinator_email TEXT,
+  coordinator_phone TEXT,
+  sessions_used INTEGER DEFAULT 0,
+  sessions_authorized INTEGER DEFAULT 0,
+  current_pos_number TEXT,
+  pos_expires_at TIMESTAMPTZ,
   -- Status
   enrollment_status TEXT DEFAULT 'waitlist',
   assessment_status TEXT DEFAULT 'not_started',
@@ -287,7 +327,7 @@ CREATE TABLE sessions (
   max_capacity INTEGER DEFAULT 1,
   booking_count INTEGER DEFAULT 0,
   is_full BOOLEAN DEFAULT FALSE,
-  price_cents INTEGER DEFAULT 7500, -- $75.00
+  price_cents INTEGER DEFAULT 9000, -- $90.00
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -303,11 +343,12 @@ CREATE TABLE bookings (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Purchase Orders (Regional Center)
+-- Purchase Orders (Funding Source)
 CREATE TABLE purchase_orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   swimmer_id UUID REFERENCES swimmers(id),
   coordinator_id UUID REFERENCES profiles(id),
+  funding_source_id UUID REFERENCES funding_sources(id),
   po_type TEXT CHECK (po_type IN ('assessment', 'lessons')),
   authorization_number TEXT,
   allowed_lessons INTEGER NOT NULL,
@@ -352,6 +393,78 @@ CREATE TABLE progress_notes (
 );
 ```
 
+### Database Functions
+
+**Function**: `claim_parent_invitation`
+
+**Purpose**: Atomically claim a parent invitation
+
+**Parameters**:
+- `p_invitation_id` (uuid) - ID of invitation to claim
+- `p_user_id` (uuid) - ID of authenticated user
+- `p_swimmer_id` (uuid) - ID of swimmer to link
+
+**Returns**: void (raises exception on error)
+
+**Usage**:
+```sql
+SELECT claim_parent_invitation(
+  'invitation-uuid-here',
+  'user-uuid-here',
+  'swimmer-uuid-here'
+);
+```
+
+**Errors**:
+- 'Invitation not found' - Invalid invitation ID
+- 'Invitation has already been claimed' - Already processed
+- 'Invitation has expired' - Expiration date passed
+- 'Invitation does not match the specified swimmer' - Security validation failed
+- Other errors from underlying tables (FK violations, etc.)
+
+**Side Effects**:
+1. Updates `parent_invitations` status to 'claimed'
+2. Sets `swimmers.parent_id` to claiming user
+3. Sets `swimmers.enrollment_status` to 'pending_enrollment'
+4. Adds 'parent' role to `user_roles` if not exists
+
+**Migration**: `20260217010000_add_claim_parent_invitation_function.sql`
+
+## Staff & Operational Features
+
+### Staff Management
+- **Staff profiles**: Pay rates, employment types (hourly, salary, contractor), credentials, display on team page
+- **Staff roles**: Owner, instructor, support, admin with different permissions
+- **Active/inactive status**: Manage staff availability
+- **Team page integration**: Control display order and visibility on public website
+
+### Time-Off Requests
+- **Instructor time-off submission**: Request vacation, sick leave, personal days, family emergencies
+- **Admin review interface**: View pending requests with conflict detection
+- **Conflict resolution**: Automatically detect scheduled sessions during time-off periods
+- **Resolution options**: Cancel sessions or replace instructors with parent notifications
+- **Approval workflow**: Approve/decline with admin notes and email notifications
+
+### Session Management
+- **Month-based navigation**: View sessions by month with status filtering
+- **Bulk operations**: Open draft sessions, change instructors, cancel, delete, mark completed
+- **Individual session actions**: Edit, reschedule, cancel, add swimmer directly
+- **Session status tracking**: Draft → Open/Available → Booked → Completed/Cancelled/No-Show
+- **Export functionality**: Export session data to CSV for reporting
+
+### Cancellation Handling
+- **Admin cancellation**: Cancel sessions with email notifications to parents
+- **Cancellation tracking**: Record cancel reason, source, timestamp, and user
+- **Instructor replacement**: Change instructors for sessions with parent notifications
+- **24-hour policy enforcement**: Parents cannot cancel < 24h before session
+- **Late cancellation penalty**: Sets `flexible_swimmer = true` for scheduling flexibility
+
+### Priority Booking System
+- **Priority swimmer designation**: Mark swimmers as priority with reason and expiration
+- **Instructor assignments**: Assign specific instructors to priority swimmers
+- **Booking restrictions**: Priority swimmers can only book with assigned instructors
+- **Admin management**: View all priority swimmers with assignment details
+
 ## Business Rules
 
 ### Booking Rules
@@ -360,11 +473,12 @@ CREATE TABLE progress_notes (
 - **Capacity limits**: Sessions have `max_capacity`, auto-mark `is_full`
 - **Booking limits**: Swimmers have max 4 bookings per day by default
 
-### Regional Center-Specific Rules
-- **Assessment PO**: 1 session authorized
-- **Lessons PO**: 12 sessions over 3 months
-- **PO renewal alert**: Triggered at lesson 11/12
-- **Coordinator approval**: Required for all POs
+### Funding Source Configuration
+- **Multiple funding sources**: VMRC, CVRC, private_pay, scholarship, self-determination
+- **Configurable settings per funding source**: Assessment sessions, lessons per PO, PO duration, renewal alert threshold
+- **Purchase Order system**: Required for authorized funding sources
+- **Coordinator approval**: Required for all authorized POs
+- **Flexible pricing**: Different rates per funding source (e.g., VMRC: $96.44, private_pay: $90.00)
 
 ### Session Opening Logic
 - Admin creates sessions as `status: 'draft'`
@@ -375,9 +489,11 @@ CREATE TABLE progress_notes (
 
 | Type | Price | Notes |
 |------|-------|-------|
-| Initial Assessment | $65 | One-time, 30 minutes |
-| Regular Lesson (Private Pay) | $75 | Per session |
-| Regional Center Lesson | $0 | Billed to state, tracked against PO |
+| Initial Assessment | $175 | One-time, 60 minutes |
+| Regular Lesson (Private Pay) | $90 | Per session, 30 minutes |
+| VMRC/CVRC Lesson | $96.44 | Billed to state, tracked against PO |
+| Scholarship Lesson | $0 | Scholarship-funded |
+| Other Funding Sources | Configurable | Set per funding source in admin panel |
 
 ## Swim Levels
 
@@ -391,18 +507,18 @@ CREATE TABLE progress_notes (
 
 ## Key Workflows to Implement
 
-### 1. New Regional Center Client Onboarding
+### 1. New Funded Client Onboarding
 ```
-Coordinator submits referral
+Coordinator submits referral for funding source
   → Admin reviews & approves
-  → System creates swimmer record
+  → System creates swimmer record with funding source
   → Parent invitation email sent
   → Parent claims invitation
   → Parent books assessment
-  → Assessment PO created (1 session)
+  → Assessment PO created (configurable sessions)
   → Coordinator approves PO
   → Instructor completes assessment
-  → Lessons PO auto-created (12 sessions)
+  → Lessons PO auto-created (configurable sessions per funding source)
   → Coordinator approves Lessons PO
   → Parent books regular lessons
 ```
@@ -417,19 +533,19 @@ Parent selects swimmer(s)
   → Shows available dates for month
   → Parent confirms selection
   → 5-minute hold on sessions
-  → Payment (private pay) or PO validation (Regional Center)
+  → Payment (private pay) or PO validation (funding source)
   → Bookings created
 ```
 
 ### 3. Progress Update & PO Renewal
 ```
-Swimmer reaches lesson 11/12
+Swimmer reaches renewal threshold (configurable per funding source)
   → instructor_notification created
   → Instructor opens progress update
   → Fills progress summary, skills mastered
   → Sends to coordinator
   → Coordinator reviews & approves new PO
-  → New 12-session PO created
+  → New PO created with configurable session count
 ```
 
 ## Development Guidelines
@@ -485,17 +601,25 @@ export const APP_CONFIG = {
 };
 
 export const PRICING = {
-  ASSESSMENT: 6500, // $65.00 in cents
-  LESSON_PRIVATE_PAY: 7500, // $75.00 in cents
-  VMRC_LESSON: 0, // Billed to state
+  ASSESSMENT: 17500, // $175.00 in cents
+  LESSON_PRIVATE_PAY: 9000, // $90.00 in cents
+  VMRC_LESSON: 9644, // $96.44 in cents (state billing rate)
+  CVRC_LESSON: 9644, // $96.44 in cents
 };
 
-export const VMRC_CONFIG = {
+export const FUNDING_SOURCE_DEFAULTS = {
   ASSESSMENT_SESSIONS: 1,
   LESSONS_PER_PO: 12,
   PO_DURATION_MONTHS: 3,
   RENEWAL_ALERT_THRESHOLD: 11, // Alert at 11/12 sessions
 };
+
+export const PAYMENT_TYPES = {
+  PRIVATE_PAY: 'private_pay',
+  FUNDING_SOURCE: 'funding_source',
+  SCHOLARSHIP: 'scholarship',
+  OTHER: 'other',
+} as const;
 
 export const SESSION_STATUSES = {
   DRAFT: 'draft',
@@ -509,9 +633,15 @@ export const SESSION_STATUSES = {
 
 ## Current Phase
 
-**Public website launch, skills tracking improvements**
+**Production system with ongoing feature enhancements**
 
-The project has successfully launched the public marketing website with dynamic content and is currently focused on improving swimmer skills tracking and progress monitoring features.
+The project has successfully launched the public marketing website and core booking system. Current focus areas include:
+
+- **Funding source system**: Generic multi-agency support (VMRC, CVRC, private_pay, scholarship)
+- **Staff management**: Time-off requests, payroll tracking, team page integration
+- **Session management**: Advanced admin tools for bulk operations and cancellations
+- **Priority booking**: Swimmer-instructor assignment system for specialized scheduling
+- **Skills tracking**: Enhanced progress monitoring and level advancement features
 
 ## Development Best Practices
 
@@ -548,6 +678,6 @@ For detailed React, Next.js, and TypeScript best practices, see [BEST_PRACTICES.
 
 ---
 
-*Last Updated: December 23, 2025*
+*Last Updated: February 12, 2026*
 *Current Version: 2.0.0*
 *Maintainer: Development Team*

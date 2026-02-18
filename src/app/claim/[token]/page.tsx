@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, CheckCircle, XCircle, User, Mail } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import { EmailMismatchError } from '@/components/claim/EmailMismatchError';
 
 interface Invitation {
   id: string;
@@ -25,6 +27,12 @@ interface Invitation {
   };
 }
 
+type ClaimError =
+  | { type: 'EMAIL_MISMATCH'; message: string; invitedEmail: string; currentEmail: string; contactEmail?: string; contactPhone?: string; }
+  | { type: 'EXPIRED' | 'DOB_MISMATCH' | 'INVALID_TOKEN' | 'ALREADY_CLAIMED' | 'NETWORK_ERROR' | 'OTHER'; message: string }
+  | string
+  | null;
+
 export default function ClaimSwimmerPage() {
   const params = useParams();
   const router = useRouter();
@@ -34,7 +42,7 @@ export default function ClaimSwimmerPage() {
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [loading, setLoading] = useState(true);
   const [claiming, setClaiming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ClaimError>(null);
   const [success, setSuccess] = useState(false);
   const [dobInput, setDobInput] = useState('');
   const [dobError, setDobError] = useState<string | null>(null);
@@ -112,9 +120,16 @@ export default function ClaimSwimmerPage() {
   const handleClaim = async () => {
     if (!invitation || !user) return;
 
-    // Check if email matches
+    // Check if email matches - show detailed error if mismatch
     if (user.email?.toLowerCase() !== invitation.parent_email.toLowerCase()) {
-      setError(`Please sign in with ${invitation.parent_email} to claim this swimmer`);
+      setError({
+        type: 'EMAIL_MISMATCH',
+        message: `This invitation was sent to ${invitation.parent_email}, but you are currently signed in as ${user.email}.`,
+        invitedEmail: invitation.parent_email,
+        currentEmail: user.email || '',
+        contactEmail: 'sutton@icanswim209.com',
+        contactPhone: '209-985-1538'
+      });
       return;
     }
 
@@ -134,7 +149,32 @@ export default function ClaimSwimmerPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to claim invitation');
+        // Handle EMAIL_MISMATCH specifically
+        if (data.error === 'EMAIL_MISMATCH') {
+          setError({
+            type: 'EMAIL_MISMATCH',
+            message: data.message,
+            invitedEmail: data.invitedEmail,
+            currentEmail: data.currentEmail,
+            contactEmail: data.resolutionOptions?.[1]?.contactEmail || 'sutton@icanswim209.com',
+            contactPhone: data.resolutionOptions?.[1]?.contactPhone || '209-985-1538'
+          });
+          return;
+        }
+
+        // Handle other known errors
+        if (data.error === 'EXPIRED' || data.error === 'DOB_MISMATCH' ||
+            data.error === 'INVALID_TOKEN' || data.error === 'ALREADY_CLAIMED') {
+          setError({
+            type: data.error,
+            message: data.message
+          });
+          return;
+        }
+
+        // Generic error
+        setError(data.message || data.error || 'Failed to claim invitation');
+        return;
       }
 
       setSuccess(true);
@@ -143,7 +183,10 @@ export default function ClaimSwimmerPage() {
       }, 2000);
     } catch (error) {
       console.error('Error claiming:', error);
-      setError(error instanceof Error ? error.message : 'Failed to claim swimmer');
+      setError({
+        type: 'NETWORK_ERROR',
+        message: 'Failed to claim invitation. Please check your connection and try again.'
+      });
     } finally {
       setClaiming(false);
     }
@@ -158,6 +201,61 @@ export default function ClaimSwimmerPage() {
   }
 
   if (error) {
+    // Handle EMAIL_MISMATCH error with special component
+    if (typeof error === 'object' && error !== null && 'type' in error && error.type === 'EMAIL_MISMATCH') {
+      const emailError = error as Extract<ClaimError, { type: 'EMAIL_MISMATCH' }>;
+      try {
+        return (
+          <EmailMismatchError
+            invitedEmail={emailError.invitedEmail}
+            currentEmail={emailError.currentEmail}
+            contactEmail={emailError.contactEmail || 'sutton@icanswim209.com'}
+            contactPhone={emailError.contactPhone || '209-985-1538'}
+          />
+        );
+      } catch (componentError) {
+        console.error('EmailMismatchError component failed:', componentError);
+        // Fallback to simple error display
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+            <Card className="max-w-md w-full">
+              <CardContent className="pt-6 text-center">
+                <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Email Mismatch</h2>
+                <p className="text-muted-foreground mb-4">{emailError.message}</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Please contact I Can Swim at sutton@icanswim209.com or 209-985-1538
+                </p>
+                <Link href="/login">
+                  <Button>Go to Login</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        );
+      }
+    }
+
+    // Handle other error objects
+    if (typeof error === 'object' && error !== null && 'type' in error) {
+      const err = error as Extract<ClaimError, { type: string }>;
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardContent className="pt-6 text-center">
+              <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Unable to Claim</h2>
+              <p className="text-muted-foreground mb-4">{err.message}</p>
+              <Link href="/login">
+                <Button>Go to Login</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    // Handle string errors (backward compatibility)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <Card className="max-w-md w-full">

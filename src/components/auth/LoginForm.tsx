@@ -9,7 +9,7 @@ import { LoadingButton } from '@/components/ui/loading-button'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Info } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
@@ -21,12 +21,14 @@ export default function LoginForm() {
   })
   const [formError, setFormError] = useState<string | null>(null)
   const [redirectTo, setRedirectTo] = useState<string | null>(null)
+  const [contextMessage, setContextMessage] = useState<string | null>(null)
   const searchParams = useSearchParams()
 
   useEffect(() => {
     // Get redirect parameter from URL
     const redirect = searchParams.get('redirect')
     const email = searchParams.get('email')
+    const message = searchParams.get('message')
 
     if (redirect) {
       setRedirectTo(redirect)
@@ -34,6 +36,10 @@ export default function LoginForm() {
 
     if (email) {
       setFormData(prev => ({ ...prev, email: decodeURIComponent(email) }))
+    }
+
+    if (message === 'signed-out-for-invitation') {
+      setContextMessage('You\'ve been signed out. Please sign up or log in with the email address that received the invitation link.')
     }
   }, [searchParams])
 
@@ -77,6 +83,14 @@ export default function LoginForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {contextMessage && (
+          <Alert className="mb-6">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              {contextMessage}
+            </AlertDescription>
+          </Alert>
+        )}
         {searchParams.get('email') && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <p className="text-sm text-blue-800">

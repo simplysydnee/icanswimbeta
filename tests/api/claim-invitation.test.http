@@ -1,0 +1,85 @@
+### Test Case 1: Valid Email
+POST http://localhost:3000/api/invitations/claim/[valid-token]
+Content-Type: application/json
+Authorization: Bearer [user-token-with-matching-email]
+
+{
+  "dob": "2020-01-01"
+}
+
+### Expected: 200 OK with success response
+
+### Test Case 2: Email Mismatch
+POST http://localhost:3000/api/invitations/claim/[valid-token]
+Content-Type: application/json
+Authorization: Bearer [user-token-with-DIFFERENT-email]
+
+{
+  "dob": "2020-01-01"
+}
+
+### Expected: 403 with EMAIL_MISMATCH error and resolutionOptions
+
+### Test Case 3: Expired Token
+POST http://localhost:3000/api/invitations/claim/[expired-token]
+Content-Type: application/json
+Authorization: Bearer [valid-user-token]
+
+{
+  "dob": "2020-01-01"
+}
+
+### Expected: 410 with EXPIRED error
+
+### Test Case 4: Invalid DOB
+POST http://localhost:3000/api/invitations/claim/[valid-token]
+Content-Type: application/json
+Authorization: Bearer [user-token-with-matching-email]
+
+{
+  "dob": "1999-12-31"
+}
+
+### Expected: 403 with DOB_MISMATCH error
+
+### Test Case 5: Already Claimed
+POST http://localhost:3000/api/invitations/claim/[already-claimed-token]
+Content-Type: application/json
+Authorization: Bearer [valid-user-token]
+
+{
+  "dob": "2020-01-01"
+}
+
+### Expected: 409 with ALREADY_CLAIMED error
+
+### Test Case 6: Invalid Token
+POST http://localhost:3000/api/invitations/claim/[invalid-token]
+Content-Type: application/json
+Authorization: Bearer [valid-user-token]
+
+{
+  "dob": "2020-01-01"
+}
+
+### Expected: 404 with INVALID_TOKEN error
+
+### Test Case 7: Missing DOB
+POST http://localhost:3000/api/invitations/claim/[valid-token]
+Content-Type: application/json
+Authorization: Bearer [user-token-with-matching-email]
+
+{
+}
+
+### Expected: 400 with error
+
+### Test Case 8: Missing Authentication
+POST http://localhost:3000/api/invitations/claim/[valid-token]
+Content-Type: application/json
+
+{
+  "dob": "2020-01-01"
+}
+
+### Expected: 401 UNAUTHENTICATED

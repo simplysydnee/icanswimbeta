@@ -11,7 +11,10 @@ export async function POST(
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'UNAUTHENTICATED', message: 'You must be signed in to claim this invitation.' },
+      { status: 401 }
+    );
   }
 
   try {
@@ -35,78 +38,157 @@ export async function POST(
       .single();
 
     if (fetchError || !invitation) {
-      return NextResponse.json({ error: 'Invitation not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'INVALID_TOKEN', message: 'This invitation link is invalid or has already been used.' },
+        { status: 404 }
+      );
     }
 
     // Verify email matches
-    if (invitation.parent_email.toLowerCase() !== user.email?.toLowerCase()) {
-      return NextResponse.json({
-        error: 'Email does not match invitation',
-        invitation_email: invitation.parent_email,
-        user_email: user.email
-      }, { status: 403 });
+    const invitedEmail = invitation.parent_email?.toLowerCase().trim();
+    const userEmail = user.email?.toLowerCase().trim();
+
+    if (!invitedEmail || !userEmail) {
+      return NextResponse.json(
+        { error: 'INVALID_EMAIL', message: 'Email information is missing.' },
+        { status: 400 }
+      );
+    }
+
+    if (userEmail !== invitedEmail) {
+      // Log the mismatch attempt (non-blocking - don't await)
+      supabase
+        .from('email_mismatch_logs')
+        .insert({
+          invitation_id: invitation.id,
+          invited_email: invitation.parent_email,
+          attempted_email: user.email,
+          swimmer_id: invitation.swimmer_id,
+          user_agent: request.headers.get('user-agent'),
+        })
+        .then(({ error: logError }) => {
+          if (logError) {
+            console.error('Failed to log email mismatch:', logError);
+          }
+        });
+
+      return NextResponse.json(
+        {
+          error: 'EMAIL_MISMATCH',
+          message: `This invitation was sent to ${invitation.parent_email}, but you are currently signed in as ${user.email}.`,
+          invitedEmail: invitation.parent_email,
+          currentEmail: user.email,
+          resolutionOptions: [
+            {
+              action: 'SIGN_OUT_AND_USE_INVITED_EMAIL',
+              title: 'Sign out and create account with invited email',
+              description: `Sign out and create a new account using ${invitation.parent_email}`
+            },
+            {
+              action: 'CONTACT_ADMIN',
+              title: 'Contact I Can Swim to update invitation',
+              description: 'Request that the invitation be resent to your current email address',
+              contactEmail: 'sutton@icanswim209.com',
+              contactPhone: '209-985-1538'
+            }
+          ]
+        },
+        { status: 403 }
+      );
     }
 
     // Check if already claimed
     if (invitation.status === 'claimed') {
-      return NextResponse.json({ error: 'Invitation already claimed' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'ALREADY_CLAIMED', message: 'This invitation has already been claimed.' },
+        { status: 409 }
+      );
     }
 
     // Check if expired
     if (new Date(invitation.expires_at) < new Date()) {
-      return NextResponse.json({ error: 'Invitation expired' }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: 'EXPIRED',
+          message: 'This invitation has expired. Please contact I Can Swim to request a new invitation.',
+          contactEmail: 'sutton@icanswim209.com',
+          contactPhone: '209-985-1538'
+        },
+        { status: 410 }
+      );
     }
 
     // Validate date of birth
     const expectedDob = invitation.swimmer.date_of_birth;
     if (!validateDateOfBirth(dob, expectedDob)) {
       return NextResponse.json({
-        error: 'Date of birth does not match our records. Please try again.'
-      }, { status: 400 });
+        error: 'DOB_MISMATCH',
+        message: 'The date of birth you entered does not match our records.'
+      }, { status: 403 });
     }
 
-    // Update invitation status
-    const { error: updateInviteError } = await supabase
-      .from('parent_invitations')
-      .update({
-        status: 'claimed',
-        claimed_by: user.id,
-        claimed_at: new Date().toISOString(),
-      })
-      .eq('id', invitation.id);
+    // Use atomic database function to claim invitation
+    try {
+      const { error: claimError } = await supabase.rpc('claim_parent_invitation', {
+        p_invitation_id: invitation.id,
+        p_user_id: user.id,
+        p_swimmer_id: invitation.swimmer_id
+      });
 
-    if (updateInviteError) throw updateInviteError;
+      if (claimError) {
+        console.error('Database function error:', claimError);
 
-    // Link swimmer to parent and update enrollment_status
-    const { error: updateSwimmerError } = await supabase
-      .from('swimmers')
-      .update({
-        parent_id: user.id,
-        enrollment_status: 'pending_enrollment' // Move from waitlist to pending enrollment
-      })
-      .eq('id', invitation.swimmer_id);
+        // Check for specific error messages
+        if (claimError.message?.includes('already been claimed')) {
+          return NextResponse.json(
+            {
+              error: 'ALREADY_CLAIMED',
+              message: 'This invitation has already been claimed.'
+            },
+            { status: 409 }
+          );
+        }
 
-    if (updateSwimmerError) throw updateSwimmerError;
+        if (claimError.message?.includes('not found')) {
+          return NextResponse.json(
+            {
+              error: 'INVITATION_NOT_FOUND',
+              message: 'Invitation not found.'
+            },
+            { status: 404 }
+          );
+        }
 
-    // Update user role to parent if not already set
-    const { data: existingRoles } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id);
+        if (claimError.message?.includes('expired')) {
+          return NextResponse.json(
+            {
+              error: 'EXPIRED',
+              message: 'This invitation has expired. Please contact I Can Swim to request a new invitation.',
+              contactEmail: 'sutton@icanswim209.com',
+              contactPhone: '209-985-1538'
+            },
+            { status: 410 }
+          );
+        }
 
-    if (!existingRoles || existingRoles.length === 0) {
-      // Add parent role
-      const { error: addRoleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: user.id,
-          role: 'parent'
-        });
-
-      if (addRoleError) {
-        console.error('Error adding parent role:', addRoleError);
-        // Don't fail the claim if role addition fails
+        // Generic database error
+        return NextResponse.json(
+          {
+            error: 'CLAIM_FAILED',
+            message: 'Failed to claim invitation. Please try again or contact support.'
+          },
+          { status: 500 }
+        );
       }
+    } catch (error) {
+      console.error('Unexpected error during claim:', error);
+      return NextResponse.json(
+        {
+          error: 'INTERNAL_ERROR',
+          message: 'An unexpected error occurred. Please try again.'
+        },
+        { status: 500 }
+      );
     }
 
     // Get parent name from profile
@@ -130,11 +212,16 @@ export async function POST(
     return NextResponse.json({
       success: true,
       swimmer: invitation.swimmer,
-      message: 'Swimmer linked successfully! Welcome email has been sent.'
+      message: 'Swimmer linked successfully! Welcome email has been sent.',
+      swimmerId: invitation.swimmer_id,
+      redirectTo: '/parent/dashboard'
     });
   } catch (error) {
     console.error('Error claiming invitation by token:', error);
-    return NextResponse.json({ error: 'Failed to claim invitation' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'INTERNAL_ERROR', message: 'An unexpected error occurred. Please try again.' },
+      { status: 500 }
+    );
   }
 }
 
