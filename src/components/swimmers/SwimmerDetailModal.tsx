@@ -59,6 +59,10 @@ import {
   Lightbulb,
 } from 'lucide-react';
 
+import { useParentInvitation } from '@/hooks/useParentInvitation';
+import { ParentInfoCard } from './ParentInfoCard';
+import { CoordinatorInfoCard } from './CoordinatorInfoCard';
+
 // Types
 export interface Swimmer {
   id: string;
@@ -183,9 +187,34 @@ export function SwimmerDetailModal({
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [progressModalOpen, setProgressModalOpen] = useState(false);
   const [selectedBookingForProgress, setSelectedBookingForProgress] = useState<any>(null);
-  const [invitingParent, setInvitingParent] = useState(false);
   const [showImportantNotesModal, setShowImportantNotesModal] = useState(false);
 
+  // Parent invitation hook
+  const { inviteParent, isInviting } = useParentInvitation();
+
+  // Helper functions
+  const canInviteParent = (
+    isAdmin: boolean,
+    swimmer: Swimmer | null
+  ): boolean => {
+    if (!isAdmin || !swimmer) return false;
+    if (swimmer.parent?.id || swimmer.parentId) return false;
+    if (!swimmer.parentEmail) return false;
+    return true;
+  };
+
+  const getInviteButtonText = (
+    isInviting: boolean,
+    alreadyInvited: boolean
+  ): string => {
+    if (isInviting) return 'Sending...';
+    if (alreadyInvited) return 'Resend Invite';
+    return 'Invite Parent';
+  };
+
+  const hasCoordinator = (swimmer: Swimmer): boolean => {
+    return !!(swimmer.coordinatorName || swimmer.coordinatorEmail || swimmer.coordinatorPhone);
+  };
   const fetchAdditionalData = useCallback(async () => {
     if (!swimmer?.id) return;
     setLoadingData(true);
@@ -244,13 +273,18 @@ export function SwimmerDetailModal({
         .eq('swimmer_id', swimmer.id)
         .eq('status', 'confirmed')
         .lt('sessions.start_time', new Date().toISOString())
-        .order('sessions.start_time', { ascending: false })
         .limit(10);
 
       if (pastBookingsError) {
         console.error('Error fetching past bookings:', pastBookingsError);
       }
-      setRecentBookings(pastBookings || []);
+      // Sort bookings by start_time manually since ordering through join is complex
+      const sortedPastBookings = (pastBookings || []).sort((a, b) => {
+        const timeA = a.sessions?.start_time ? new Date(a.sessions.start_time).getTime() : 0;
+        const timeB = b.sessions?.start_time ? new Date(b.sessions.start_time).getTime() : 0;
+        return timeB - timeA; // descending (most recent first)
+      });
+      setRecentBookings(sortedPastBookings);
 
       // Fetch swimmer skills - check if table exists first
       try {
@@ -507,51 +541,24 @@ export function SwimmerDetailModal({
   };
 
   const handleInviteParent = async () => {
-    if (!swimmer?.id) return;
+    if (!swimmer?.id || !swimmer.parentEmail) return;
 
-    setInvitingParent(true);
-    try {
-      const response = await fetch(`/api/admin/swimmers/${swimmer.id}/invite-parent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          parent_email: swimmer.parentEmail,
-          parent_name: swimmer.parent?.fullName,
-        }),
-      });
+    const result = await inviteParent(
+      swimmer.id,
+      swimmer.parentEmail,
+      swimmer.parent?.fullName
+    );
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send invitation');
-      }
-
-      if (data.linked) {
-        toast({
-          title: 'Parent account found and linked!',
-          description: 'The swimmer has been automatically linked to the existing parent account.',
-        });
-        // Refresh swimmer data to show updated parent info
-        fetchAdditionalData();
-      } else {
-        toast({
-          title: data.isResend ? 'Invitation resent!' : 'Invitation sent!',
-          description: data.message,
-        });
-        // Refresh swimmer data to update invited_at timestamp
-        fetchAdditionalData();
-      }
-    } catch (error) {
-      console.error('Error inviting parent:', error);
+    if (result.success) {
       toast({
-        title: 'Failed to send invitation',
-        description: error instanceof Error ? error.message : 'Please try again',
-        variant: 'destructive',
+        title: result.linked
+          ? 'Parent account found and linked!'
+          : result.isResend
+            ? 'Invitation resent!'
+            : 'Invitation sent!',
+        description: result.message,
       });
-    } finally {
-      setInvitingParent(false);
+      fetchAdditionalData();
     }
   };
 
@@ -718,114 +725,12 @@ export function SwimmerDetailModal({
                 )}
 
                 {/* Parent Info */}
-                <div className="bg-white border rounded-lg p-4">
-                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Parent/Guardian Information
-                  </h3>
-                  {swimmer.parent && swimmer.parent.id ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <p className="font-medium">{swimmer.parent.fullName || 'Not provided'}</p>
-                            <Badge className="bg-green-100 text-green-800 border-green-200">
-                              <CheckCircle className="h-3 w-3 mr-1" /> Parent Linked
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                            {swimmer.parent.email && (
-                              <div className="flex items-center gap-1">
-                                <Mail className="h-4 w-4" />
-                                <span>{swimmer.parent.email}</span>
-                              </div>
-                            )}
-                            {swimmer.parent.phone && (
-                              <div className="flex items-center gap-1">
-                                <Phone className="h-4 w-4" />
-                                <span>{swimmer.parent.phone}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <Button variant="outline" size="sm">
-                          Contact
-                        </Button>
-                      </div>
-                    </div>
-                  ) : swimmer.parentEmail ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-amber-600">Pending Parent Signup</p>
-                          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Mail className="h-4 w-4" />
-                              <span>{swimmer.parentEmail}</span>
-                            </div>
-                          </div>
-                          <p className="text-xs text-amber-600 mt-2">
-                            Parent has not created an account yet. They will be automatically linked when they sign up.
-                          </p>
-                          {swimmer.invitedAt && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              Invitation sent {differenceInDays(new Date(), new Date(swimmer.invitedAt))} days ago
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          {isAdmin && (
-                            <>
-                              {swimmer.invitedAt ? (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={handleInviteParent}
-                                  disabled={invitingParent}
-                                >
-                                  {invitingParent ? (
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                  ) : (
-                                    <Mail className="h-4 w-4 mr-2" />
-                                  )}
-                                  Resend Invite
-                                </Button>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  onClick={handleInviteParent}
-                                  disabled={invitingParent}
-                                >
-                                  {invitingParent ? (
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                  ) : (
-                                    <UserPlus className="h-4 w-4 mr-2" />
-                                  )}
-                                  Invite Parent
-                                </Button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <p className="text-muted-foreground">No parent information available</p>
-                      {isAdmin && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled
-                          title="Add parent email to swimmer profile first"
-                        >
-                          <UserPlus className="h-4 w-4 mr-2" />
-                          Invite Parent
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <ParentInfoCard
+                  swimmer={swimmer}
+                  isAdmin={isAdmin}
+                  onInviteParent={handleInviteParent}
+                  invitingParent={isInviting}
+                />
 
                 {/* Key Info Section */}
                 <div className="bg-white border rounded-lg p-4">
@@ -988,45 +893,19 @@ export function SwimmerDetailModal({
                   </div>
                 )}
 
-                {/* Coordinator Info (for VMRC/CVRC clients) */}
-                {(swimmer.coordinatorName || swimmer.coordinatorEmail || swimmer.coordinatorPhone) && (
-                  <div className="bg-white border rounded-lg p-4">
-                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Building2 className="h-5 w-5" />
-                      Coordinator Information
-                    </h3>
-                    <div className="space-y-3">
-                      {swimmer.coordinatorName && (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Coordinator Name</p>
-                          <p className="font-medium">{swimmer.coordinatorName}</p>
-                        </div>
-                      )}
-                      {swimmer.coordinatorEmail && (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Coordinator Email</p>
-                          <div className="flex items-center gap-1">
-                            <Mail className="h-4 w-4" />
-                            <a href={`mailto:${swimmer.coordinatorEmail}`} className="font-medium text-blue-600 hover:underline">
-                              {swimmer.coordinatorEmail}
-                            </a>
-                          </div>
-                        </div>
-                      )}
-                      {swimmer.coordinatorPhone && (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Coordinator Phone</p>
-                          <div className="flex items-center gap-1">
-                            <Phone className="h-4 w-4" />
-                            <a href={`tel:${swimmer.coordinatorPhone}`} className="font-medium text-blue-600 hover:underline">
-                              {swimmer.coordinatorPhone}
-                            </a>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                <CoordinatorInfoCard
+                  swimmer={swimmer}
+                  onEmailCoordinator={() => {
+                    if (swimmer.coordinatorEmail) {
+                      setEmailRecipient({
+                        email: swimmer.coordinatorEmail,
+                        name: swimmer.coordinatorName || 'Coordinator',
+                        type: 'coordinator'
+                      });
+                      setEmailModalOpen(true);
+                    }
+                  }}
+                />
               </div>
 
               {/* Right Column - Stats & Actions */}
@@ -1170,30 +1049,18 @@ export function SwimmerDetailModal({
                       Email Parent
                     </Button>
 
-                    {/* Email Coordinator - Funded clients only */}
-                    {swimmer.paymentType !== 'private_pay' && (
+                    {/* Email Coordinator - Only VMRC/CVRC (have coordinators) */}
+                    {swimmer.coordinatorEmail && (
                       <Button
                         variant="outline"
                         className="w-full justify-start"
                         onClick={() => {
-                          console.log('Email Coordinator clicked', { swimmerId: swimmer.id, paymentType: swimmer.paymentType });
-                          const coordEmail = swimmer.coordinatorEmail;
-                          const coordName = swimmer.coordinatorName || 'Coordinator';
-
-                          if (coordEmail) {
-                            setEmailRecipient({
-                              email: coordEmail,
-                              name: coordName,
-                              type: 'coordinator'
-                            });
-                            setEmailModalOpen(true);
-                          } else {
-                            toast({
-                              title: 'No coordinator email',
-                              description: 'This swimmer does not have a coordinator email on file.',
-                              variant: 'destructive'
-                            });
-                          }
+                          setEmailRecipient({
+                            email: swimmer.coordinatorEmail!,
+                            name: swimmer.coordinatorName || 'Coordinator',
+                            type: 'coordinator'
+                          });
+                          setEmailModalOpen(true);
                         }}
                       >
                         <Users className="h-4 w-4 mr-2" />
@@ -1216,21 +1083,21 @@ export function SwimmerDetailModal({
                     )}
 
                     {/* Invite Parent - Admin only, when no parent linked */}
-                    {isAdmin && !swimmer.parent?.id && swimmer.parentEmail && (
+                    {canInviteParent(isAdmin, swimmer) && (
                       <Button
                         variant="outline"
                         className="w-full justify-start"
                         onClick={handleInviteParent}
-                        disabled={invitingParent}
+                        disabled={isInviting}
                       >
-                        {invitingParent ? (
+                        {isInviting ? (
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         ) : swimmer.invitedAt ? (
                           <Mail className="h-4 w-4 mr-2" />
                         ) : (
                           <UserPlus className="h-4 w-4 mr-2" />
                         )}
-                        {invitingParent ? 'Sending...' : swimmer.invitedAt ? 'Resend Invite' : 'Invite Parent'}
+                        {getInviteButtonText(isInviting, !!swimmer.invitedAt)}
                       </Button>
                     )}
                   </div>

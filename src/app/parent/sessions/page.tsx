@@ -674,6 +674,7 @@ export default function ParentSessionsPage() {
                 <AlertTriangle className="h-5 w-5 text-amber-500" />
                 Less Than 24 Hours Notice
               </DialogTitle>
+              <DialogDescription>Information about late cancellation policy</DialogDescription>
             </DialogHeader>
 
             <div className="py-4">

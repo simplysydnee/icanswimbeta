@@ -749,7 +749,7 @@ function AdminSwimmerDetailContent() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {swimmer.parent ? (
+                    {swimmer.parent || swimmer.parent_id ? (
                       <>
                         <div className="flex items-center justify-between">
                           <div>
