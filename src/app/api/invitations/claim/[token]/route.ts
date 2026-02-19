@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { emailService } from '@/lib/email-service';
 
@@ -30,8 +31,18 @@ export async function POST(
       return NextResponse.json({ error: 'Date of birth is required' }, { status: 400 });
     }
 
+    // Create service role client to bypass RLS for invitation lookup
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SECRET_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+
+    const supabaseAdmin = createSupabaseClient(supabaseUrl, supabaseServiceKey);
+
     // Get the invitation by token with swimmer details including payment_type
-    const { data: invitation, error: fetchError } = await supabase
+    const { data: invitation, error: fetchError } = await supabaseAdmin
       .from('parent_invitations')
       .select('*, swimmer:swimmers(id, first_name, last_name, date_of_birth, payment_type, funding_source_id)')
       .eq('invitation_token', token)
@@ -298,7 +309,6 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
-  const supabase = await createClient();
   const { token } = await params;
 
   try {
@@ -306,8 +316,18 @@ export async function GET(
       return NextResponse.json({ error: 'Token required' }, { status: 400 });
     }
 
+    // Create service role client to bypass RLS for public invitation lookup
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SECRET_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+
+    const supabaseAdmin = createSupabaseClient(supabaseUrl, supabaseServiceKey);
+
     // Get the invitation by token
-    const { data: invitation, error: fetchError } = await supabase
+    const { data: invitation, error: fetchError } = await supabaseAdmin
       .from('parent_invitations')
       .select('*, swimmer:swimmers(id, first_name, last_name, date_of_birth, gender, payment_type, funding_source_id)')
       .eq('invitation_token', token)

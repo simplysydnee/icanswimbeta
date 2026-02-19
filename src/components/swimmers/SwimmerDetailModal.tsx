@@ -188,9 +188,19 @@ export function SwimmerDetailModal({
   const [progressModalOpen, setProgressModalOpen] = useState(false);
   const [selectedBookingForProgress, setSelectedBookingForProgress] = useState<any>(null);
   const [showImportantNotesModal, setShowImportantNotesModal] = useState(false);
+  // Local swimmer state to allow updates without prop changes
+  const [localSwimmer, setLocalSwimmer] = useState<Swimmer | null>(swimmer);
 
   // Parent invitation hook
   const { inviteParent, isInviting } = useParentInvitation();
+
+  // Sync localSwimmer when prop changes
+  useEffect(() => {
+    setLocalSwimmer(swimmer);
+  }, [swimmer]);
+
+  // Use localSwimmer if available, otherwise prop (should never be null after mount)
+  const displaySwimmer = localSwimmer || swimmer;
 
   // Helper functions
   const canInviteParent = (
@@ -215,6 +225,43 @@ export function SwimmerDetailModal({
   const hasCoordinator = (swimmer: Swimmer): boolean => {
     return !!(swimmer.coordinatorName || swimmer.coordinatorEmail || swimmer.coordinatorPhone);
   };
+
+  const mapSwimmerResponse = (raw: any): Swimmer => {
+    return {
+      ...raw,
+      invitedAt: raw.invited_at,
+      parentId: raw.parent_id,
+      parentEmail: raw.parent_email,
+      firstName: raw.first_name,
+      lastName: raw.last_name,
+      fullName: raw.full_name || `${raw.first_name} ${raw.last_name}`,
+      dateOfBirth: raw.date_of_birth,
+      enrollmentStatus: raw.enrollment_status,
+      approvalStatus: raw.approval_status,
+      assessmentStatus: raw.assessment_status,
+      currentLevelId: raw.current_level_id,
+      paymentType: raw.payment_type,
+      hasFundingAuthorization: raw.has_funding_authorization,
+      photoUrl: raw.photo_url,
+      fundedSessionsUsed: raw.funded_sessions_used,
+      fundedSessionsAuthorized: raw.funded_sessions_authorized,
+      currentPoNumber: raw.current_po_number,
+      poExpiresAt: raw.po_expires_at,
+      createdAt: raw.created_at,
+      updatedAt: raw.updated_at,
+      lessonsCompleted: raw.lessons_completed,
+      coordinatorName: raw.coordinator_name,
+      coordinatorEmail: raw.coordinator_email,
+      coordinatorPhone: raw.coordinator_phone,
+      parent: raw.parent ? {
+        id: raw.parent.id,
+        fullName: raw.parent.full_name,
+        email: raw.parent.email,
+        phone: raw.parent.phone,
+      } : null,
+    };
+  };
+
   const fetchAdditionalData = useCallback(async () => {
     if (!swimmer?.id) return;
     setLoadingData(true);
@@ -396,6 +443,27 @@ export function SwimmerDetailModal({
     }
   }, [swimmer?.id]);
 
+  // Fetch updated swimmer data (including invited_at)
+  const fetchSwimmer = useCallback(async () => {
+    if (!swimmer?.id) return;
+    try {
+      const apiEndpoint = role === 'admin'
+        ? `/api/admin/swimmers/${swimmer.id}`
+        : `/api/instructor/swimmers/${swimmer.id}`;
+      const response = await fetch(apiEndpoint);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch swimmer: ${response.statusText}`);
+      }
+      const data = await response.json();
+      if (data.success && data.swimmer) {
+        const mapped = mapSwimmerResponse(data.swimmer);
+        setLocalSwimmer(mapped);
+      }
+    } catch (error) {
+      console.error('Error fetching updated swimmer:', error);
+    }
+  }, [swimmer?.id, role]);
+
   useEffect(() => {
     if (isOpen && swimmer?.id) {
       fetchAdditionalData();
@@ -417,7 +485,7 @@ export function SwimmerDetailModal({
   if (!swimmer) return null;
 
   // Safely get payment type with fallback
-  const paymentType = swimmer.paymentType || 'private_pay';
+  const paymentType = displaySwimmer.paymentType || 'private_pay';
 
   // Get initials for avatar
   const getInitials = (firstName: string, lastName: string) => {
@@ -541,12 +609,12 @@ export function SwimmerDetailModal({
   };
 
   const handleInviteParent = async () => {
-    if (!swimmer?.id || !swimmer.parentEmail) return;
+    if (!displaySwimmer?.id || !displaySwimmer.parentEmail) return;
 
     const result = await inviteParent(
-      swimmer.id,
-      swimmer.parentEmail,
-      swimmer.parent?.fullName
+      displaySwimmer.id,
+      displaySwimmer.parentEmail,
+      displaySwimmer.parent?.fullName
     );
 
     if (result.success) {
@@ -558,6 +626,7 @@ export function SwimmerDetailModal({
             : 'Invitation sent!',
         description: result.message,
       });
+      fetchSwimmer();
       fetchAdditionalData();
     }
   };
@@ -726,7 +795,7 @@ export function SwimmerDetailModal({
 
                 {/* Parent Info */}
                 <ParentInfoCard
-                  swimmer={swimmer}
+                  swimmer={displaySwimmer}
                   isAdmin={isAdmin}
                   onInviteParent={handleInviteParent}
                   invitingParent={isInviting}
@@ -894,12 +963,12 @@ export function SwimmerDetailModal({
                 )}
 
                 <CoordinatorInfoCard
-                  swimmer={swimmer}
+                  swimmer={displaySwimmer}
                   onEmailCoordinator={() => {
-                    if (swimmer.coordinatorEmail) {
+                    if (displaySwimmer.coordinatorEmail) {
                       setEmailRecipient({
-                        email: swimmer.coordinatorEmail,
-                        name: swimmer.coordinatorName || 'Coordinator',
+                        email: displaySwimmer.coordinatorEmail,
+                        name: displaySwimmer.coordinatorName || 'Coordinator',
                         type: 'coordinator'
                       });
                       setEmailModalOpen(true);
@@ -1076,14 +1145,14 @@ export function SwimmerDetailModal({
                         className="w-full justify-start text-amber-700 hover:text-amber-900 hover:bg-amber-50"
                       >
                         <AlertTriangle className="h-4 w-4 mr-2 text-amber-500" />
-                        {swimmer.important_notes && swimmer.important_notes.length > 0
-                          ? `Edit Important Notes (${swimmer.important_notes.length})`
+                        {displaySwimmer.important_notes && displaySwimmer.important_notes.length > 0
+                          ? `Edit Important Notes (${displaySwimmer.important_notes.length})`
                           : 'Add Important Notes'}
                       </Button>
                     )}
 
                     {/* Invite Parent - Admin only, when no parent linked */}
-                    {canInviteParent(isAdmin, swimmer) && (
+                    {canInviteParent(isAdmin, displaySwimmer) && (
                       <Button
                         variant="outline"
                         className="w-full justify-start"
@@ -1092,12 +1161,12 @@ export function SwimmerDetailModal({
                       >
                         {isInviting ? (
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        ) : swimmer.invitedAt ? (
+                        ) : displaySwimmer.invitedAt ? (
                           <Mail className="h-4 w-4 mr-2" />
                         ) : (
                           <UserPlus className="h-4 w-4 mr-2" />
                         )}
-                        {getInviteButtonText(isInviting, !!swimmer.invitedAt)}
+                        {getInviteButtonText(isInviting, !!displaySwimmer.invitedAt)}
                       </Button>
                     )}
                   </div>
@@ -2158,12 +2227,12 @@ export function SwimmerDetailModal({
         </Dialog>
 
         {/* Important Notes Modal */}
-        {swimmer && (
+        {displaySwimmer && (
           <EditImportantNotesModal
             open={showImportantNotesModal}
             onOpenChange={setShowImportantNotesModal}
-            swimmerId={swimmer.id}
-            importantNotes={swimmer.important_notes || []}
+            swimmerId={displaySwimmer.id}
+            importantNotes={displaySwimmer.important_notes || []}
             onSuccess={() => {
               fetchAdditionalData();
             }}

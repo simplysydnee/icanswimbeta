@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { emailService } from '@/lib/email-service';
+import { randomBytes } from 'crypto';
 
 export async function POST(
   request: NextRequest,
@@ -157,8 +158,8 @@ export async function POST(
       invitation = newInvitation;
     }
 
-    // Generate a unique token for the invitation
-    const token = crypto.randomUUID();
+    // Generate a unique hex token for the invitation (64 chars)
+    const token = randomBytes(32).toString('hex');
 
     // Update invitation with token
     const { data: updatedInvitation, error: tokenError } = await supabaseAdmin
