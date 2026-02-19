@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { emailService } from '@/lib/email-service';
 
@@ -21,7 +22,7 @@ export async function POST(
     .select('role')
     .eq('user_id', user.id)
     .eq('role', 'admin')
-    .single();
+    .maybeSingle();
 
   if (!userRoles) {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
@@ -31,8 +32,18 @@ export async function POST(
     const body = await request.json();
     const { parent_email, parent_name } = body;
 
+    // Create service role client for admin database operations
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SECRET_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+
+    const supabaseAdmin = createSupabaseClient(supabaseUrl, supabaseServiceKey);
+
     // Get swimmer details
-    const { data: swimmer, error: swimmerError } = await supabase
+    const { data: swimmer, error: swimmerError } = await supabaseAdmin
       .from('swimmers')
       .select('id, first_name, last_name, parent_id, parent_email, invited_at')
       .eq('id', swimmerId)
@@ -57,16 +68,16 @@ export async function POST(
     }
 
     // Check if email already has an account in profiles table
-    const { data: existingProfile } = await supabase
+    const { data: existingProfile } = await supabaseAdmin
       .from('profiles')
-      .select('id, email')
+      .select('id, email, full_name')
       .eq('email', emailToUse.toLowerCase())
-      .single();
+      .maybeSingle();
 
     // If profile exists, auto-link the swimmer
     if (existingProfile) {
       // Update swimmer with parent_id
-      const { error: updateError } = await supabase
+      const { error: updateError } = await supabaseAdmin
         .from('swimmers')
         .update({
           parent_id: existingProfile.id,
@@ -96,14 +107,14 @@ export async function POST(
     }
 
     // Check for existing invitation
-    const { data: existingInvitation } = await supabase
+    const { data: existingInvitation } = await supabaseAdmin
       .from('parent_invitations')
       .select('id, status, created_at')
       .eq('swimmer_id', swimmerId)
       .eq('parent_email', emailToUse.toLowerCase())
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     const isResend = !!existingInvitation;
     const invitationId = existingInvitation?.id;
@@ -121,7 +132,7 @@ export async function POST(
     let invitation;
     if (isResend && invitationId) {
       // Update existing invitation
-      const { data: updatedInvitation, error: updateError } = await supabase
+      const { data: updatedInvitation, error: updateError } = await supabaseAdmin
         .from('parent_invitations')
         .update({
           ...invitationData,
@@ -136,7 +147,7 @@ export async function POST(
       invitation = updatedInvitation;
     } else {
       // Create new invitation
-      const { data: newInvitation, error: createError } = await supabase
+      const { data: newInvitation, error: createError } = await supabaseAdmin
         .from('parent_invitations')
         .insert(invitationData)
         .select()
@@ -150,7 +161,7 @@ export async function POST(
     const token = crypto.randomUUID();
 
     // Update invitation with token
-    const { data: updatedInvitation, error: tokenError } = await supabase
+    const { data: updatedInvitation, error: tokenError } = await supabaseAdmin
       .from('parent_invitations')
       .update({
         invitation_token: token,
@@ -178,7 +189,7 @@ export async function POST(
     }
 
     // Update swimmer's invited_at timestamp
-    await supabase
+    await supabaseAdmin
       .from('swimmers')
       .update({
         invited_at: new Date().toISOString(),
