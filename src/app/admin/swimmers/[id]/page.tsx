@@ -32,7 +32,7 @@ import {
   UserPlus
 } from 'lucide-react'
 import { RoleGuard } from '@/components/auth/RoleGuard'
-import { format, parseISO, differenceInYears, differenceInDays } from 'date-fns'
+import { format, parseISO, differenceInYears, formatDistanceToNow } from 'date-fns'
 import { useToast } from '@/hooks/use-toast'
 import {
   LineChart,
@@ -244,6 +244,11 @@ function AdminSwimmerDetailContent() {
   const [isGeneratingReport, setIsGeneratingReport] = useState(false)
   const [invitingParent, setInvitingParent] = useState(false)
   const { toast } = useToast()
+
+  // Format invitation time display
+  const formatInvitationTime = (invitedAt: string) => {
+    return formatDistanceToNow(new Date(invitedAt), { addSuffix: true })
+  }
 
   useEffect(() => {
     fetchSwimmerData()
@@ -807,7 +812,7 @@ function AdminSwimmerDetailContent() {
                             </p>
                             {swimmer.invited_at && (
                               <p className="text-xs text-gray-500 mt-1">
-                                Invitation sent {differenceInDays(new Date(), new Date(swimmer.invited_at))} days ago
+                                Invitation sent {formatInvitationTime(swimmer.invited_at)}
                               </p>
                             )}
                           </div>

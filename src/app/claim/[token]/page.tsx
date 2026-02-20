@@ -179,7 +179,9 @@ export default function ClaimSwimmerPage() {
 
       setSuccess(true);
       setTimeout(() => {
-        router.push('/parent');
+        // Use redirect from API response, fallback to /parent
+        const redirectPath = data.redirectTo || '/parent';
+        router.push(redirectPath);
       }, 2000);
     } catch (error) {
       console.error('Error claiming:', error);

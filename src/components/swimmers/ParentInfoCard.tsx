@@ -13,7 +13,7 @@ import {
   AlertCircle,
   Users,
 } from 'lucide-react';
-import { differenceInDays } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import type { Swimmer } from './SwimmerDetailModal';
 
 interface ParentInfoCardProps {
@@ -31,6 +31,11 @@ export function ParentInfoCard({
 }: ParentInfoCardProps) {
   // Check if parent is linked
   const hasLinkedParent = !!(swimmer.parentId || swimmer.parent?.id);
+
+  // Format invitation time display
+  const formatInvitationTime = (invitedAt: string) => {
+    return formatDistanceToNow(new Date(invitedAt), { addSuffix: true });
+  };
 
   // Parent is linked (works for ALL funding sources)
   if (hasLinkedParent) {
@@ -104,7 +109,7 @@ export function ParentInfoCard({
                 </p>
                 {swimmer.invitedAt && (
                   <p className="text-xs text-gray-500 mt-1">
-                    Invitation sent {differenceInDays(new Date(), new Date(swimmer.invitedAt))} days ago
+                    Invitation sent {formatInvitationTime(swimmer.invitedAt)}
                   </p>
                 )}
               </div>

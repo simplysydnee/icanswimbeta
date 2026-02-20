@@ -68,6 +68,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
+  // Allow /claim routes for all users (authenticated or not)
+  // These routes handle their own authentication logic
+  if (pathname.startsWith('/claim')) {
+    return response
+  }
+
   // If no user or not a protected route that needs role checking, return early
   if (!user || (!pathname.startsWith('/parent') &&
                 !pathname.startsWith('/admin') &&
@@ -189,6 +195,7 @@ export const config = {
     '/instructor/:path*',
     '/coordinator/:path*',
     '/staff-mode/:path*',
+    '/claim/:path*',
     '/login',
     '/signup',
   ],

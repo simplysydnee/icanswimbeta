@@ -192,6 +192,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
 
   // Get filter values from URL or defaults
   const search = searchParams.get('search') || '';
+  const [localSearch, setLocalSearch] = useState(search);
   const status = searchParams.get('status') || 'all';
   const priority = searchParams.get('priority') || 'all';
   const funding = searchParams.get('funding') || 'all';
@@ -227,20 +228,25 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
   );
 
   // Update URL with new filter
-  const updateFilter = (key: string, value: string | null) => {
+  const updateFilter = useCallback((key: string, value: string | null) => {
     const queryString = createQueryString({ [key]: value, page: '1' });
     router.push(`${pathname}?${queryString}`);
-  };
+  }, [createQueryString, router, pathname]);
 
-  // Debounced search update
+  // Debounced search update - update URL when localSearch changes
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (search !== searchParams.get('search')) {
-        updateFilter('search', search || null);
+      if (localSearch !== search) {
+        updateFilter('search', localSearch || null);
       }
     }, 300);
 
     return () => clearTimeout(timer);
+  }, [localSearch, search, updateFilter]); // Run when localSearch, search, or updateFilter changes
+
+  // Sync localSearch with URL when it changes externally (e.g., back button, direct URL)
+  useEffect(() => {
+    setLocalSearch(search);
   }, [search]);
 
   // Fetch swimmers
@@ -457,8 +463,8 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search swimmers, parents, or emails..."
-                value={search}
-                onChange={(e) => updateFilter('search', e.target.value || null)}
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
                 className="pl-9"
               />
             </div>
