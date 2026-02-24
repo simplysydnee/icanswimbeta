@@ -1,10 +1,35 @@
-# Supabase SMTP Configuration Guide
+# Complete Password Reset Fix Guide
 
-## Problem
-Password reset emails are not being delivered due to Supabase's default email provider rate limits.
+## Problems Identified
+1. **Password reset emails not sending** - Supabase rate limiting
+2. **Wrong redirect URL in reset links** - Supabase Dashboard misconfiguration
+3. **Reset links not working** - Hash fragment handling and Site URL issues
 
-## Solution
-Configure custom SMTP in Supabase Dashboard to bypass rate limits.
+## Solutions
+
+### Fix 1: Supabase Dashboard Configuration (MOST IMPORTANT)
+
+Go to: https://supabase.com/dashboard/project/jtqlamkrhdfwtmaubfrc/auth/url-configuration
+
+**Set these exact values:**
+
+1. **Site URL**: `https://icanswimbeta.vercel.app`
+   - This tells Supabase your production domain
+
+2. **Redirect URLs** (add all of these):
+   - `https://icanswimbeta.vercel.app/reset-password`
+   - `https://icanswimbeta.vercel.app/auth/callback`
+   - `http://localhost:3000/reset-password` (for development)
+   - `http://localhost:3000/auth/callback` (for development)
+
+3. **Click "Save"**
+
+**Why this fixes the issue:**
+- Supabase uses the Site URL to construct `redirect_to` parameters
+- Without this, reset links point to wrong URLs (like `http://localhost:3000`)
+- Redirect URLs tell Supabase where it's allowed to send users
+
+### Fix 2: Configure Custom SMTP (for email delivery)
 
 ## Steps to Configure Custom SMTP
 
@@ -117,3 +142,48 @@ Test password reset in UI:
 2. Enter valid email
 3. Check for success message
 4. Check email inbox (including spam)
+
+## Troubleshooting
+
+### If reset links still don't work:
+
+1. **Check the actual reset link URL**:
+   - Click "View email source" or copy link address
+   - It should look like: `https://jtqlamkrhdfwtmaubfrc.supabase.co/auth/v1/verify?token=XXX&type=recovery&redirect_to=https://icanswimbeta.vercel.app/reset-password`
+   - The `redirect_to` MUST be `https://icanswimbeta.vercel.app/reset-password`
+
+2. **Check browser console**:
+   - Open Developer Tools (F12) → Console
+   - Click the reset link
+   - Look for "ResetPasswordForm:" logs
+   - Check for errors
+
+3. **Test the flow manually**:
+   ```javascript
+   // In browser console on https://icanswimbeta.vercel.app/reset-password
+   // Manually set a hash fragment to test
+   window.location.hash = '#access_token=test&refresh_token=test&type=recovery';
+   // The page should detect tokens and show password reset form
+   ```
+
+4. **Verify Supabase logs**:
+   - Go to Authentication → Logs
+   - Look for "Recovery" events
+   - Check if emails are being sent
+
+### Common Error Messages:
+
+- **"Invalid Reset Link"**: Tokens not found in URL or expired
+- **"Email sending rate limit reached"**: Wait 25 seconds, configure SMTP
+- **No error but form doesn't show**: Hash fragment not being read properly
+
+## How Password Reset Should Work:
+
+1. User enters email at `/forgot-password`
+2. Supabase sends email with link to its verify endpoint
+3. User clicks link, goes to Supabase
+4. Supabase verifies token, redirects to your app with hash fragment
+5. Your app reads hash, establishes session, shows reset form
+6. User enters new password, app updates it
+
+The fixes above ensure steps 2 and 4 work correctly.
