@@ -198,5 +198,8 @@ export const config = {
     '/claim/:path*',
     '/login',
     '/signup',
+    '/reset-password',
+    '/forgot-password',
+    '/auth/callback',
   ],
 }
