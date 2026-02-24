@@ -70,20 +70,34 @@ export default function ResetPasswordForm() {
         if (code || accessToken || refreshToken || hashAccessToken || hashRefreshToken) {
           console.log('ResetPasswordForm: Tokens found in URL, attempting to exchange...');
 
-          // Try to exchange the code/token for a session
+          let hasValidSession = false;
+
+          // Try to exchange the code for a session (common with ?code= parameter)
           if (code) {
             console.log('ResetPasswordForm: Exchanging code for session...');
-            const { error } = await supabase.auth.exchangeCodeForSession(code);
-            if (error) {
-              console.error('ResetPasswordForm: Code exchange failed:', error);
-              setValidToken(false);
-              return;
+            try {
+              const { error } = await supabase.auth.exchangeCodeForSession(code);
+              if (error) {
+                console.error('ResetPasswordForm: Code exchange failed:', error);
+                console.error('ResetPasswordForm: Error details:', error.message);
+
+                // Check if it's an expired/invalid code error
+                if (error.message.includes('expired') || error.message.includes('invalid') || error.message.includes('used')) {
+                  console.log('ResetPasswordForm: Code is expired, invalid, or already used');
+                  setValidToken(false);
+                  return;
+                }
+              } else {
+                console.log('ResetPasswordForm: Code exchange successful');
+                hasValidSession = true;
+              }
+            } catch (exchangeError) {
+              console.error('ResetPasswordForm: Code exchange exception:', exchangeError);
             }
-            console.log('ResetPasswordForm: Code exchange successful');
           }
 
           // If we have access/refresh tokens in URL, try to set the session
-          if ((accessToken && refreshToken) || (hashAccessToken && hashRefreshToken)) {
+          if (!hasValidSession && ((accessToken && refreshToken) || (hashAccessToken && hashRefreshToken))) {
             console.log('ResetPasswordForm: Setting session from URL tokens...');
             const { error } = await supabase.auth.setSession({
               access_token: accessToken || hashAccessToken || '',
@@ -95,9 +109,23 @@ export default function ResetPasswordForm() {
               return;
             }
             console.log('ResetPasswordForm: Session set successfully');
+            hasValidSession = true;
           }
 
-          setValidToken(true)
+          // Check if we now have a session
+          if (hasValidSession) {
+            const { data: { session: newSession } } = await supabase.auth.getSession();
+            if (newSession) {
+              console.log('ResetPasswordForm: Session established successfully');
+              setValidToken(true);
+            } else {
+              console.log('ResetPasswordForm: No session after exchange/set');
+              setValidToken(false);
+            }
+          } else {
+            console.log('ResetPasswordForm: Could not establish session');
+            setValidToken(false);
+          }
         } else {
           console.log('ResetPasswordForm: No tokens found in URL');
           setValidToken(false)
@@ -179,6 +207,10 @@ export default function ResetPasswordForm() {
           <div className="text-sm text-muted-foreground text-center">
             <p>
               Password reset links expire after 1 hour. Please request a new reset link.
+            </p>
+            <p className="mt-2 text-xs">
+              <strong>Debug info:</strong> Check browser console (F12) for details.
+              URL has {searchParams.get('code') ? 'code parameter' : 'no tokens'}.
             </p>
           </div>
           <div className="space-y-2">
