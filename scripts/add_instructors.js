@@ -116,7 +116,7 @@ async function addInstructor(instructor) {
       type: 'recovery',
       email: instructor.email,
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://icanswim209.com'}/reset-password`
+        redirectTo: `${process.env.NEXT_PUBLIC_EMAIL_APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://icanswimbeta.vercel.app'}/reset-password`
       }
     });
 

@@ -127,7 +127,7 @@ serve(async (req) => {
       type: 'recovery',
       email,
       options: {
-        redirectTo: `${Deno.env.get('APP_URL') || 'https://icanswim209.com'}/reset-password`
+        redirectTo: `${Deno.env.get('APP_URL') || 'https://icanswimbeta.vercel.app'}/reset-password`
       }
     })
 

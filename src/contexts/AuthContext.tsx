@@ -601,13 +601,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true)
       setError(null)
-      
+
+      // Use the email app URL for password reset links to ensure they work in production
+      const appUrl = process.env.NEXT_PUBLIC_EMAIL_APP_URL || process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${appUrl}/reset-password`,
       })
-      
+
       if (error) throw error
-      
+
       return { success: true, message: 'Password reset email sent successfully' }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Password reset failed'
