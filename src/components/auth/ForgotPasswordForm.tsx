@@ -34,8 +34,15 @@ export default function ForgotPasswordForm() {
     try {
       await resetPassword({ email })
       setSuccess(true)
-    } catch {
-      // Error is handled by AuthContext
+    } catch (err) {
+      // Error is handled by AuthContext, but we can check for specific errors
+      const errorMessage = err instanceof Error ? err.message : 'Password reset failed'
+
+      // Check for rate limit errors
+      if (errorMessage.includes('25 seconds') || errorMessage.includes('rate limit')) {
+        setFormError('Please wait 25 seconds before requesting another password reset email. Supabase has rate limits for email sending.')
+      }
+      // Other errors are handled by AuthContext
     }
   }
 

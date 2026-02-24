@@ -613,7 +613,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { success: true, message: 'Password reset email sent successfully' }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Password reset failed'
+      let errorMessage = err instanceof Error ? err.message : 'Password reset failed'
+
+      // Provide more user-friendly error messages for common issues
+      if (errorMessage.includes('25 seconds') || errorMessage.includes('rate limit') || errorMessage.includes('over_email_send_rate_limit')) {
+        errorMessage = 'Email sending rate limit reached. Please wait 25 seconds before trying again. Consider configuring custom SMTP in Supabase for higher limits.'
+      } else if (errorMessage.includes('Site URL') || errorMessage.includes('redirect')) {
+        errorMessage = 'Configuration issue: Please check Supabase Site URL configuration.'
+      }
+
       setError(errorMessage)
       throw new Error(errorMessage)
     } finally {
