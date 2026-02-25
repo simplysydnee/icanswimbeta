@@ -11,16 +11,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user is instructor or admin
-    const { data: userRole } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .in('role', ['instructor', 'admin'])
-      .single();
+    // Check if user is instructor or admin using has_role() function
+    // Note: We need to check both roles since the function only checks one role at a time
+    const { data: isAdmin } = await supabase.rpc('has_role', {
+      user_id: user.id,
+      check_role: 'admin'
+    });
 
-    if (!userRole) {
-      return NextResponse.json({ error: 'Instructor access required' }, { status: 403 });
+    const { data: isInstructor } = await supabase.rpc('has_role', {
+      user_id: user.id,
+      check_role: 'instructor'
+    });
+
+    if (!isAdmin && !isInstructor) {
+      return NextResponse.json({ error: 'Instructor or admin access required' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -60,7 +64,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
-    if (session.instructor_id !== user.id && userRole.role !== 'admin') {
+    if (session.instructor_id !== user.id && !isAdmin) {
       return NextResponse.json({ error: 'Not authorized to update this session' }, { status: 403 });
     }
 
@@ -277,16 +281,11 @@ export async function GET(request: Request) {
       query = query.eq('booking_id', bookingId);
     }
 
-    // For non-admins, only show their own notes or notes shared with parent
-    const { data: userRole } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
-
-    if (userRole?.role !== 'admin') {
-      query = query.or(`instructor_id.eq.${user.id},shared_with_parent.eq.true`);
-    }
+    // RLS policies handle authorization:
+    // - Admins can view all notes (has_role(auth.uid(), 'admin'))
+    // - Instructors can view their own notes (instructor_id = auth.uid())
+    // - Parents can view notes shared with them (shared_with_parent = true AND auth.uid() IN (SELECT swimmers.parent_id FROM swimmers WHERE swimmers.id = progress_notes.swimmer_id))
+    // No additional filtering needed in API
 
     const { data, error } = await query;
 
