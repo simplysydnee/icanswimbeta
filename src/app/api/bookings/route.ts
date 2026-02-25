@@ -5,6 +5,10 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
+    // Authentication check
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     // Get query parameters
     const searchParams = request.nextUrl.searchParams
     const startDate = searchParams.get('startDate')
@@ -189,6 +193,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
+
+    // Authentication check
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const body = await request.json()
 
     // Validate required fields
