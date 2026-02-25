@@ -93,7 +93,8 @@ export function WaiverUpdateForm({
         description: `All waivers for ${swimmerName} have been saved.`
       });
 
-      setTimeout(() => onComplete(), 2000);
+      // Short delay to show success message, then navigate
+      setTimeout(() => onComplete(), 500);
     },
     onError: (error) => {
       toast({

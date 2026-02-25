@@ -411,7 +411,9 @@ export async function updateSwimmerWaivers(
       updateQuery = updateQuery.eq('parent_email', metadata.parentEmail);
     }
 
-    const { error: updateError } = await updateQuery;
+    // Use select() to get the updated rows and check if any rows were affected
+    updateQuery = updateQuery.select('id');
+    const { data: updatedRows, error: updateError } = await updateQuery;
 
     if (updateError) {
       console.error('Error updating swimmer waivers:', updateError);
@@ -422,6 +424,16 @@ export async function updateSwimmerWaivers(
         code: updateError.code
       });
       return { success: false, error: 'Failed to update waiver information' };
+    }
+
+    // Check if any rows were actually updated
+    if (!updatedRows || updatedRows.length === 0) {
+      console.error('No rows updated - swimmer not found or parent mismatch', {
+        swimmerId,
+        parentId: metadata.parentId,
+        parentEmail: metadata.parentEmail
+      });
+      return { success: false, error: 'Swimmer not found or parent mismatch' };
     }
 
     // Update token's updated_at timestamp to track last activity (token not marked as used to allow multiple swimmers)
