@@ -1132,7 +1132,7 @@ function AdminReferralsContent() {
                     ⚠️ Cannot approve until parent completes their section.
                     <br />
                     <span className="text-xs">
-                      Parent link: /enroll/complete/{selectedReferral.parent_token}
+                      Parent link: /enroll/referral/{selectedReferral.parent_token}
                     </span>
                   </div>
                 )}

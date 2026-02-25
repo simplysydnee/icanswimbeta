@@ -54,7 +54,7 @@ export function PendingEnrollmentAlert() {
               Please complete the enrollment form to proceed with swim lessons.
             </p>
 
-            <Link href={`/enroll/complete/${referral.parent_token}`}>
+            <Link href={`/enroll/referral/${referral.parent_token}`}>
               <Button
                 size="sm"
                 className="bg-[#2a5e84] hover:bg-[#1e4a6d] text-white"
