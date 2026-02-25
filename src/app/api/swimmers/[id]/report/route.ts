@@ -24,7 +24,7 @@ export async function GET(
             start_time,
             end_time,
             location,
-            instructor:profiles(full_name)
+            instructor:instructor_id(full_name)
           ),
           status,
           created_at
@@ -35,7 +35,7 @@ export async function GET(
           skills_working_on,
           skills_mastered,
           created_at,
-          instructor:profiles(full_name)
+          instructor:instructor_id(full_name)
         )
       `)
       .eq('id', id)

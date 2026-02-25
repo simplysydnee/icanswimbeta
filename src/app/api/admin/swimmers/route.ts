@@ -244,7 +244,7 @@ export async function GET(request: Request) {
           status,
           session:sessions(
             start_time,
-            instructor:profiles(full_name)
+            instructor:instructor_id(full_name)
           )
         )
       `, { count: 'exact' });

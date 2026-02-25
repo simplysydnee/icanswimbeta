@@ -87,7 +87,7 @@ export async function GET() {
           id,
           start_time,
           end_time,
-          instructor:profiles(full_name)
+          instructor:instructor_id(full_name)
         )
       `)
       .in('session_id', sessionIds)

@@ -74,7 +74,7 @@ export async function GET() {
           status,
           session:sessions(
             start_time,
-            instructor:profiles(full_name)
+            instructor:instructor_id(full_name)
           )
         )
       `)
