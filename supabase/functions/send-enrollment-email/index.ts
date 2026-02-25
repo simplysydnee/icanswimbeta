@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.192.0/http/server.ts'
 import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts'
+// Using Resend SMTP: smtp.resend.com:587 with username 'resend' and API key as password
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,8 +19,8 @@ interface EmailRequest {
   customData?: Record<string, any>
 }
 
-const GMAIL_USER = Deno.env.get('GMAIL_USER') || ''
-const GMAIL_APP_PASSWORD = Deno.env.get('GMAIL_APP_PASSWORD') || ''
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') || ''
+const FROM_EMAIL = Deno.env.get('FROM_EMAIL') || 'I Can Swim <noreply@icanswim209.com>'
 const APP_URL = Deno.env.get('APP_URL') || 'https://icanswim209.com'
 const TEST_MODE = Deno.env.get('TEST_MODE') === 'true'
 
@@ -441,28 +442,27 @@ serve(async (req) => {
       )
     }
 
-    // Validate Gmail credentials
-    if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
-      throw new Error('Gmail credentials not configured. Set GMAIL_USER and GMAIL_APP_PASSWORD environment variables.')
+    // Validate Resend credentials
+    if (!RESEND_API_KEY) {
+      throw new Error('Resend credentials not configured. Set RESEND_API_KEY environment variable.')
     }
 
-    // Create SMTP client
+    // Create SMTP client for Resend
     const client = new SMTPClient({
       connection: {
-        hostname: 'smtp.gmail.com',
-        port: 465,
+        hostname: 'smtp.resend.com',
+        port: 587,
         tls: true,
         auth: {
-          username: GMAIL_USER,
-          password: GMAIL_APP_PASSWORD,
+          username: 'resend',
+          password: RESEND_API_KEY,
         },
       },
     })
 
     // Send email
-
     await client.send({
-      from: `I Can Swim <${GMAIL_USER}>`,
+      from: FROM_EMAIL,
       to: to,
       subject: template.subject,
       html: template.html,
