@@ -124,34 +124,7 @@ export async function GET(request: Request) {
     const limit = parseInt(params.limit || '25') || 25;
     const offset = (page - 1) * limit;
 
-    // ========== STEP 4: Get Swimmer IDs for This Instructor ==========
-    // Use the new database function to get swimmers instructor has access to
-    const { data: instructorSwimmers, error: swimmersError } = await supabase
-      .rpc('get_instructor_swimmers', { p_instructor_id: user.id });
-
-    if (swimmersError) {
-      console.error('Error fetching instructor swimmers via function:', swimmersError);
-      return NextResponse.json(
-        { error: `Failed to fetch instructor swimmers: ${swimmersError.message}` },
-        { status: 500 }
-      );
-    }
-
-    // If no swimmers found for this instructor, return empty
-    if (!instructorSwimmers || instructorSwimmers.length === 0) {
-      const response: SwimmersResponse = {
-        swimmers: [],
-        total: 0,
-        page: 1,
-        totalPages: 0
-      };
-      return NextResponse.json(response);
-    }
-
-    // Extract swimmer IDs
-    const swimmerIds = instructorSwimmers.map((swimmer: any) => swimmer.id);
-
-    // ========== STEP 5: Build Base Query ==========
+    // ========== STEP 4: Build Base Query (rely on RLS for authorization) ==========
     let query = supabase
       .from('swimmers')
       .select(`
@@ -197,8 +170,7 @@ export async function GET(request: Request) {
             instructor:instructor_id(full_name)
           )
         )
-      `, { count: 'exact' })
-      .in('id', Array.from(swimmerIds));
+      `, { count: 'exact' });
 
     // ========== STEP 6: Apply Filters ==========
 
@@ -337,7 +309,7 @@ export async function GET(request: Request) {
                           (swimmer.payment_type === 'private_pay' ? 'Private Pay' :
                           swimmer.payment_type === 'scholarship' ? 'Scholarship' :
                           swimmer.payment_type === 'other' ? 'Other' : 'Funded'),
-        photoUrl: null,
+        photoUrl: undefined,
         fundingSourceSessionsUsed: swimmer.authorized_sessions_used || 0,
         fundingSourceSessionsAuthorized: swimmer.authorized_sessions_total || 0,
         fundingSourceCurrentPosNumber: swimmer.current_authorization_number,
