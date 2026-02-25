@@ -68,7 +68,7 @@ export function PendingWaiverAlert() {
                 Complete Waivers
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Link href="/help/waivers" className="text-sm text-[#2a5e84] hover:underline self-center">
+              <Link href="/parent/account" className="text-sm text-[#2a5e84] hover:underline self-center">
                 Learn more about waiver requirements
               </Link>
             </div>

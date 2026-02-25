@@ -73,7 +73,7 @@ export function PendingParentReferrals() {
                     className="text-amber-700 border-amber-300 hover:bg-amber-100"
                     asChild
                   >
-                    <Link href={`/parent/referrals/${referral.id}`}>
+                    <Link href="/parent">
                       View Details
                     </Link>
                   </Button>
