@@ -27,7 +27,7 @@ export default function FAQPage() {
     },
     {
       question: getContent(content, 'faq-3-question', "Do you accept regional center funding?"),
-      answer: getContent(content, 'faq-3-answer', "Yes! We work with Valley Mountain Regional Center (VMRC) and Central Valley Regional Center (CVRC) to provide fully funded swim lessons for eligible children. We also accept private pay. We do not accept insurance.")
+      answer: getContent(content, 'faq-3-answer', "Yes! We work with regional centers including Valley Mountain Regional Center (VMRC) and Central Valley Regional Center (CVRC) to provide fully funded swim lessons for eligible children. We also accept private pay. We do not accept insurance.")
     },
     {
       question: getContent(content, 'faq-4-question', "What is your cancellation policy?"),

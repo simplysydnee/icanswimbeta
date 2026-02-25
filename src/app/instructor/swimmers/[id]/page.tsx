@@ -114,7 +114,7 @@ export default function InstructorSwimmerDetailPage() {
         .from('swimmers')
         .select(`
           *,
-          parent:profiles!swimmers_parent_id_fkey(id, full_name, email, phone),
+          parent:profiles(id, full_name, email, phone),
           current_level:swim_levels(*),
           funding_source:funding_source_id(id, name, short_name, type)
         `)

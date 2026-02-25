@@ -261,7 +261,7 @@ export default function ContactPage() {
                     <option value="">Select a topic</option>
                     <option value="assessment">Book an Assessment</option>
                     <option value="lessons">Regular Lessons Inquiry</option>
-                    <option value="vmrc">VMRC/Funding Questions</option>
+                    <option value="funding">Funding Questions</option>
                     <option value="general">General Information</option>
                     <option value="other">Other</option>
                   </select>
@@ -518,7 +518,7 @@ export default function ContactPage() {
                     <EditableText
                       pageSlug="contact"
                       sectionKey="faq-preview-2-answer"
-                      defaultContent="We accept regional center funding (VMRC, CVRC) and private pay. We do not accept insurance."
+                      defaultContent="We accept regional center funding (including VMRC and CVRC) and private pay. We do not accept insurance."
                       as="p"
                       className="text-sm text-gray-600"
                     >

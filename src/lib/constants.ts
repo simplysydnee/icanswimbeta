@@ -55,11 +55,29 @@ export const SESSION_STATUSES = {
 
 // Enrollment statuses
 export const ENROLLMENT_STATUSES = {
-  WAITLIST: 'waitlist',
   PENDING_ENROLLMENT: 'pending_enrollment',
+  PENDING_APPROVAL: 'pending_approval',
+  WAITLIST: 'waitlist',
   ENROLLED: 'enrolled',
+  EXPIRED: 'expired',
+  DROPPED: 'dropped',
+  DECLINED: 'declined',
   INACTIVE: 'inactive',
 } as const;
+
+// Statuses that need full enrollment form completed
+export const NEEDS_ENROLLMENT_FORM = [
+  'pending_enrollment',
+  'pending',            // Airtable legacy value
+  'pending enrollment'  // Airtable broken value with space
+] as const;
+
+// Statuses that only need waivers signed
+export const NEEDS_WAIVERS_ONLY = [
+  'waitlist',
+  'enrolled',
+  'pending_approval'
+] as const;
 
 // Assessment statuses
 export const ASSESSMENT_STATUSES = {

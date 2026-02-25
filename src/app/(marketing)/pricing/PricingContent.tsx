@@ -27,14 +27,14 @@ export default function PricingContent({ regionalCenterNames }: PricingContentPr
   return (
     <div className="min-h-screen">
       {/* Hero */}
-      <section className="py-16 bg-gradient-to-b from-cyan-50 to-white">
-        <div className="container mx-auto px-4 text-center">
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto text-center mb-12">
           <EditableText
             pageSlug="pricing"
             sectionKey="hero-title"
             defaultContent="Pricing"
             as="h1"
-            className="text-4xl md:text-5xl font-bold text-cyan-600 mb-4"
+            className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-[#2a5e84] to-[#23a1c0] bg-clip-text text-transparent font-playfair-display tracking-tight mb-4"
           >
             {getContent(content, 'hero-title', 'Pricing')}
           </EditableText>
@@ -43,12 +43,12 @@ export default function PricingContent({ regionalCenterNames }: PricingContentPr
             sectionKey="hero-subtitle"
             defaultContent="Transparent pricing for adaptive swim lessons"
             as="p"
-            className="text-xl text-gray-600 max-w-2xl mx-auto"
+            className="text-xl text-gray-600 font-inter max-w-3xl mx-auto"
           >
             {getContent(content, 'hero-subtitle', 'Transparent pricing for adaptive swim lessons')}
           </EditableText>
         </div>
-      </section>
+      </div>
 
       {/* Pricing Cards - 2 columns */}
       <section className="py-16">

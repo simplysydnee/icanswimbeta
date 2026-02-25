@@ -246,7 +246,7 @@ export default function SwimmerDetailDrawer({
             )}
             {swimmer.hasFundingAuthorization && (
               <Badge variant="outline" className="border-purple-200">
-                VMRC Client
+                Funded Client
               </Badge>
             )}
           </div>

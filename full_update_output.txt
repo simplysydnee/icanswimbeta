@@ -1,0 +1,72 @@
+/Users/sydnee/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+FULL PARENT NAME UPDATE
+============================================================
+CSV file: /Users/sydnee/Desktop/Clients-All data all fields  (3).csv
+Filter: Only swimmers with enrollment_status = 'pending_enrollment'
+
+Found 'Parent Name' column at index 4
+Processed 100 records...
+  Updates: 0, Skipped: 69
+Processed 200 records...
+  Updates: 0, Skipped: 169
+Processed 300 records...
+  Updates: 0, Skipped: 269
+Processed 400 records...
+  Updates: 0, Skipped: 369
+Processed 500 records...
+  Updates: 0, Skipped: 468
+Processed 600 records...
+  Updates: 0, Skipped: 568
+Processed 700 records...
+  Updates: 0, Skipped: 668
+Processed 800 records...
+  Updates: 0, Skipped: 755
+Processed 900 records...
+  Updates: 0, Skipped: 855
+Processed 1000 records...
+  Updates: 0, Skipped: 954
+Processed 1100 records...
+  Updates: 0, Skipped: 1054
+Processed 1200 records...
+  Updates: 0, Skipped: 1130
+Processed 1300 records...
+  Updates: 0, Skipped: 1230
+Processed 1400 records...
+  Updates: 0, Skipped: 1330
+Processed 1500 records...
+  Updates: 0, Skipped: 1430
+Processed 1600 records...
+  Updates: 0, Skipped: 1530
+
+============================================================
+UPDATE COMPLETE - FINAL STATISTICS
+============================================================
+Total CSV records processed: 1699
+Records with UUID: 1632
+Records with Parent Name: 1628
+Updates applied: 0
+Skipped (not pending_enrollment or already correct): 1628
+Skipped (no matching swimmer): 0
+Errors: 0
+
+Update rate: 0.0%
+
+============================================================
+FINAL VERIFICATION
+============================================================
+Total pending_enrollment swimmers in database: 413
+
+Sample of pending_enrollment swimmers:
+  • Liam Johnson: 'None'
+  • Test Swimmer: 'Sydnee Merchant'
+  • Taylen Merchant: 'None'
+  • Roland Fourre: 'Charice Fourre'
+  • Noah Williams: 'None'
+
+============================================================
+NEXT STEPS
+============================================================
+1. Test parent invitations to ensure correct names appear
+2. Verify that enrolled/waitlist families were not modified
+3. Check the parent portal for any issues

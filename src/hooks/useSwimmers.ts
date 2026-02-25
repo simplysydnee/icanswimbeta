@@ -5,7 +5,15 @@ async function fetchSwimmers(): Promise<Swimmer[]> {
   const response = await fetch('/api/swimmers');
 
   if (!response.ok) {
-    throw new Error('Failed to fetch swimmers');
+    let errorMessage = 'Failed to fetch swimmers';
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.error || errorMessage;
+    } catch {
+      // ignore
+    }
+    console.error('Swimmers API error:', response.status, errorMessage);
+    throw new Error(errorMessage);
   }
 
   return response.json();

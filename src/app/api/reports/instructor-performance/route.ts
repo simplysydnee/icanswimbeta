@@ -110,7 +110,7 @@ async function getInstructorPerformanceFallback(supabase: any, start: string, en
         id,
         full_name,
         email,
-        sessions!sessions_instructor_id_fkey(
+        sessions(
           id,
           start_time,
           status,

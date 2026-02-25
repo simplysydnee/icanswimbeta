@@ -222,7 +222,7 @@ export async function GET(request: Request) {
         comfortable_in_water,
         swim_goals,
         strengths_interests,
-        parent:profiles!swimmers_parent_id_fkey(
+        parent:profiles(
           id,
           full_name,
           email,
@@ -239,12 +239,12 @@ export async function GET(request: Request) {
           name,
           short_name
         ),
-        bookings!bookings_swimmer_id_fkey(
+        bookings(
           id,
           status,
           session:sessions(
             start_time,
-            instructor:profiles!sessions_instructor_id_fkey(full_name)
+            instructor:profiles(full_name)
           )
         )
       `, { count: 'exact' });

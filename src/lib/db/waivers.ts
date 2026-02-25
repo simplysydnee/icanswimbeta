@@ -201,7 +201,7 @@ export async function getSwimmersNeedingWaivers(
         photo_video_signature,
         cancellation_policy_signature
       `)
-      .eq('enrollment_status', 'enrolled')
+      .in('enrollment_status', ['enrolled', 'pending_enrollment'])
       .order('first_name', { ascending: true });
 
     if (parentId) {
@@ -596,7 +596,7 @@ export async function getWaiverCompletionStats(): Promise<WaiverCompletionStats>
           email
         )
       `)
-      .eq('enrollment_status', 'enrolled')
+      .in('enrollment_status', ['enrolled', 'pending_enrollment'])
       .order('parent_email', { ascending: true });
 
     if (swimmersError) {
@@ -774,7 +774,7 @@ export async function getParentsWithIncompleteWaivers(): Promise<Array<{
           email
         )
       `)
-      .eq('enrollment_status', 'enrolled')
+      .in('enrollment_status', ['enrolled', 'pending_enrollment'])
       .not('parent_email', 'is', null) // Only swimmers with parent email
       .order('parent_email', { ascending: true });
 

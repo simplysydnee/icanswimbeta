@@ -61,7 +61,7 @@ export default function AdminSwimmersPage() {
                 {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.total.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                {metrics && !metricsLoading && !metricsError ? `${metrics.vmrcClients} VMRC, ${metrics.privatePayClients} Private` : 'All clients'}
+                {metrics && !metricsLoading && !metricsError ? `${metrics.vmrcClients} Funded, ${metrics.privatePayClients} Private` : 'All clients'}
               </div>
             </CardContent>
           </Card>

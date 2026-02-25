@@ -605,11 +605,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Use the email app URL for password reset links to ensure they work in production
       const appUrl = process.env.NEXT_PUBLIC_EMAIL_APP_URL || process.env.NEXT_PUBLIC_APP_URL || window.location.origin
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${appUrl}/reset-password`,
+      // Use API route with admin.generateLink() which uses token flow (not PKCE)
+      // This bypasses cross-origin cookie issues with email clients
+      const response = await fetch('/api/auth/send-password-reset', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          redirectTo: `${appUrl}/reset-password`,
+        }),
       })
 
-      if (error) throw error
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Password reset failed')
+      }
 
       return { success: true, message: 'Password reset email sent successfully' }
     } catch (err) {

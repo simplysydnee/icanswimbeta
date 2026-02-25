@@ -1,0 +1,618 @@
+/Users/sydnee/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+PARENT NAME UPDATE SCRIPT
+==================================================
+CSV file: /Users/sydnee/Desktop/Clients-All data all fields  (3).csv
+Filter: Only swimmers with enrollment_status = 'pending_enrollment'
+MODE: LIVE UPDATE (changes will be made to database)
+
+Processing CSV file: /Users/sydnee/Desktop/Clients-All data all fields  (3).csv
+Filter: Only updating swimmers with enrollment_status = 'pending_enrollment'
+
+CSV has 91 columns
+Parent Name column found at index 4
+✓ Updated: bdec319c-a770-4b77-bd81-8a9fe572d74c -> 'Emoni Jones'
+✓ Updated: 60080f1b-c13c-4d3a-af5d-761f819ea1c9 -> 'Monica Lujan'
+✓ Updated: fc5782bb-5ccd-4f20-b271-0849e13fb878 -> 'Shayna Clark'
+✓ Updated: fcd9bfde-88a2-4cd8-bdb9-b4711699ae60 -> 'Maria Betancourt'
+✓ Updated: 730ba908-4e6c-49b7-a37a-0e68d5b7fb43 -> 'Elizabeth Ortiz'
+✓ Updated: 5d399fb2-939d-453e-9ced-4d1d5982e892 -> 'Antonia Villarreal'
+✓ Updated: 562a8e63-67f7-4d36-a4ed-25b42faa83e4 -> 'Patricia Espinoza'
+✓ Updated: 87cd06fc-e529-49f1-a337-f2fb45c7cb0c -> 'Michelle Ramirez-Valenzuela'
+✓ Updated: 5a9c87f0-615c-4855-88ec-9397e2d603e9 -> 'Charice Fourre'
+✓ Updated: 94a0169a-d41f-448e-ba70-0c7167193724 -> 'MICHAEL DISHLER'
+Processed 10 records...
+✓ Updated: 5101f144-e7d0-49b7-9ca5-da6e7ff6bd22 -> 'Gina Tostado'
+✓ Updated: b57b0e8c-4b0a-46ac-86a1-8fc15213f8d3 -> 'VANIA AQUINO'
+✓ Updated: 8909ed99-25d3-4885-b43b-e805b507e073 -> 'Jody Mejia'
+✓ Updated: bc97f1db-cf74-496c-b6d9-63beb1c5738a -> 'Nereida Hernandez'
+✓ Updated: 2feb9467-477f-4fdd-8627-3605afe138d7 -> 'AMY PATTERSON'
+✓ Updated: 3d195e8f-6eec-404f-a5ff-ae4098eb9467 -> 'Adrienne Rivera'
+✓ Updated: b0f3a85b-ecde-42dd-97ca-d88111b74477 -> 'Brianna Siarot'
+✓ Updated: c0b9b637-cf57-4f90-8d12-0fc946301e2a -> 'Elizabeth Gracian'
+Processed 20 records...
+✓ Updated: eb3dd792-d24d-4e30-a8d8-4eefca9065da -> 'Michelle Escamilla'
+✓ Updated: 6236bae4-9be8-472f-ba18-1ddd5eb633db -> 'Monica Fernandez'
+✓ Updated: e2e24d07-059b-4a20-8ef3-98955d3bb69f -> 'Monica Fernandez'
+✓ Updated: 74bd9a5b-57ea-4dc2-9a90-6305f04360d2 -> 'NANCY HERNANDEZ'
+✓ Updated: 9c78d301-d97a-413a-b750-c091a820d908 -> 'Britany Hopkins'
+✓ Updated: 3385b3cb-2a97-42f0-b200-69230ccb2ffa -> 'Katriona Fortuna'
+✓ Updated: 2793f08b-7d47-493b-bed6-277fb7bd6feb -> 'Mai Shehadeh'
+✓ Updated: 91e518f6-6709-4d1d-8471-4b00697ff5d4 -> 'Dawnette Galicia'
+✓ Updated: 6f328532-9130-40a7-a3a7-53ecf0122bfe -> 'Heather Serin'
+✓ Updated: e9fdb961-8db6-4efe-bfb4-f376c7afe0f9 -> 'JUana Munoz'
+Processed 30 records...
+✓ Updated: 95e364ee-aed8-4939-8533-fa0508d9e7f0 -> 'Samantha Mello'
+✓ Updated: 31d7ee3d-90da-4222-88dd-7fd9a7e16633 -> 'Sara Sopko'
+✓ Updated: dbea8f2b-87af-4644-93c5-bdd536b54e10 -> 'Juana Munoz'
+✓ Updated: 0ada056b-872b-4e88-899f-18965fca704c -> 'Sara Sopko'
+✓ Updated: 09ae0ed2-1634-41e0-9a52-029049264b31 -> 'Colleen Billups'
+✓ Updated: 4fc057d7-ff13-44bf-99f3-a13f0e90d003 -> 'Crystal Luevano'
+✓ Updated: 6c9fd212-b2c7-4c55-a458-0a5abe6e73ba -> 'Lucero Rodriguez'
+Processed 40 records...
+Processed 50 records...
+Processed 60 records...
+Processed 70 records...
+Processed 80 records...
+Processed 90 records...
+Processed 100 records...
+Processed 110 records...
+Processed 120 records...
+Processed 130 records...
+Processed 140 records...
+Processed 150 records...
+Processed 160 records...
+Processed 170 records...
+Processed 180 records...
+Processed 190 records...
+Processed 200 records...
+Processed 210 records...
+Processed 220 records...
+Processed 230 records...
+Processed 240 records...
+Processed 250 records...
+Processed 260 records...
+Processed 270 records...
+Processed 280 records...
+Processed 290 records...
+Processed 300 records...
+Processed 310 records...
+Processed 320 records...
+Processed 330 records...
+Processed 340 records...
+Processed 350 records...
+Processed 360 records...
+Processed 370 records...
+Processed 380 records...
+Processed 390 records...
+Processed 400 records...
+Processed 410 records...
+Processed 420 records...
+Processed 430 records...
+Processed 440 records...
+Processed 450 records...
+Processed 460 records...
+Processed 470 records...
+Processed 480 records...
+Processed 490 records...
+Processed 500 records...
+Processed 510 records...
+Processed 520 records...
+Processed 530 records...
+Processed 540 records...
+Processed 550 records...
+Processed 560 records...
+Processed 570 records...
+Processed 580 records...
+Processed 590 records...
+Processed 600 records...
+Processed 610 records...
+Processed 620 records...
+Processed 630 records...
+Processed 640 records...
+Processed 650 records...
+Processed 660 records...
+Processed 670 records...
+Processed 680 records...
+Processed 690 records...
+Processed 700 records...
+Processed 710 records...
+✓ Updated: b6a92c8f-2e80-4826-a3a9-ccb50685b75d -> 'Selena Sandoval'
+✓ Updated: 221e24fb-a6d4-429a-b47d-4588ec7d0155 -> 'Jazmin Mejia'
+✓ Updated: d375f10d-a2b0-4a1a-bb2f-83f351e3347b -> 'Sonia Saldivar'
+✓ Updated: 94ed4846-84f9-4ba8-8c56-7decee9318a3 -> 'DARIUS BAEZ MOYET'
+Processed 720 records...
+Processed 730 records...
+✓ Updated: 238d4247-efc5-47c4-b1b9-ad8d124ce9dc -> 'MADISON PIMENTEL'
+✓ Updated: 39da5cb6-a02f-4b27-965a-c24f69fb867a -> 'Maxine Hernandez'
+✓ Updated: b331b849-c177-4540-8400-33a0ebe7c53d -> 'Sasha Madrigal'
+✓ Updated: 35d5a1cb-fdfd-4b61-abf6-4dac451dc9f8 -> 'Annie Ieng'
+✓ Updated: f137db0a-f490-472a-b321-8c171c37f797 -> 'Michelle Diego'
+✓ Updated: e8e11f09-37e7-4f6d-be98-547dfda877d5 -> 'Jacqueline Noguez'
+✓ Updated: aaedbfa2-9323-4cec-accb-b93e07b717b8 -> 'Lizette Velazco'
+Processed 740 records...
+✓ Updated: d62c03d0-efd5-4216-aceb-b0754ab2327a -> 'CAROLINA CARVAJAL'
+✓ Updated: 75e47192-fcd4-4ad8-a493-89bf9746abb4 -> 'Christy Rhodes'
+✓ Updated: 1d4a5c29-6947-4289-8c42-7ca059d24a0e -> 'MICHELLE GARCIA'
+✓ Updated: 5f2de5f3-7222-4994-83c0-b40b896fde02 -> 'Margarita Zamora Sanchez'
+✓ Updated: fef5586f-71a5-4132-bda7-68fa66135b8c -> 'Brianna Sousa'
+✓ Updated: e0777b7c-910c-4bd0-b876-f3ec1fd07953 -> 'Giomayra Martinez'
+✓ Updated: c1c47b96-534e-402e-a471-0fc62e0c985f -> 'Maxwell'
+✓ Updated: f12ec5e1-b218-48fe-9085-0c9ffa5f1f10 -> 'Rosa Ochoa'
+✓ Updated: 45ff8b29-754a-47ae-bca7-229a6248272c -> 'Nicole Coleman'
+✓ Updated: fc91bfa4-3651-4852-99d0-428ac7882996 -> 'Melonie Ochoa'
+Processed 750 records...
+✓ Updated: 5260cb57-97d7-443e-83d3-bb7e0ab8d4b9 -> 'Parnell Phengthirath'
+✓ Updated: 5655fb95-3518-4929-8daa-37ca232e3825 -> 'Elaina Freitas'
+✓ Updated: 6f69b09e-f4c0-4995-ae1c-b0a8c43fcabc -> 'Teresa I De Dios Avia'
+✓ Updated: 5b610600-6477-4563-b835-5ee54c8c0314 -> 'Leticia Palafox'
+✓ Updated: 8d63c878-0542-4954-802d-4a76e2b83082 -> 'Araceli Mendoza'
+✓ Updated: cd17839f-6aa2-4b8f-8865-7ff8bbb5949c -> 'Madelyn Bell'
+✓ Updated: 66ebc5a5-1455-48c0-9c1e-8435e9565bc2 -> 'Katie Jones'
+✓ Updated: 49c992b0-e0d3-4073-9138-41f00805f3b3 -> 'Selena Ortiz'
+✓ Updated: aca726bb-4f02-4227-a713-54a85be26a90 -> 'Claudette Cerda'
+✓ Updated: 13baa6e1-82f3-4e65-bee7-4c4e954f2e73 -> 'Sofia Zepeda'
+Processed 760 records...
+✓ Updated: 3a3686d1-4647-4c0d-badd-58dbe38e78a9 -> 'Alyssa Oliver'
+✓ Updated: a79f2271-e339-4c0a-a14f-21df9a733ccd -> 'Claudia Ochoa'
+✓ Updated: 7ae5bc25-e850-45b1-ab52-3cb76af2c90f -> 'Beatriz Grajales'
+✓ Updated: a7ef7567-6d85-4db6-b0b9-31dfb783acb5 -> 'Wendy Bradley'
+✓ Updated: 34d8a8c0-889b-4743-a226-f77ecec1beed -> 'Wendy Bradley'
+✓ Updated: a1d7c1ac-b143-4dfe-b2c3-504962d1e882 -> 'Beatrice Valenzuela'
+✓ Updated: fdb7337f-6f72-40fd-98d1-527e696feee1 -> 'Cesar Algalan'
+✓ Updated: 92c88926-e707-4f71-999e-9f0c0aa52617 -> 'Felicita Lopez'
+✓ Updated: acc95b78-12fb-4e31-adcc-c129af29f19c -> 'Lucia Lopez'
+✓ Updated: 8f7076d7-0cdd-4bd2-897b-52ffc58ed481 -> 'Maria Medina'
+Processed 770 records...
+✓ Updated: 4a8dc450-903c-4a13-9d2e-529aecc69383 -> 'Veronica Linares'
+✓ Updated: 5bfd2fc4-aa3d-4d9e-98d2-85482d8b026e -> 'Loyda Ramirez'
+✓ Updated: 73d9ebec-890a-46aa-8f8a-6f75d53e5308 -> 'Irlanda Arreola'
+✓ Updated: a9b0958a-78cc-4990-a39e-4a5a13a26c36 -> 'MARIA LOURDES ARGINIEGA'
+✓ Updated: d40e7c80-f00a-4a1c-8415-8ba230b5f5bb -> 'MERCEDES CASTANEDA'
+✓ Updated: 30cbde8b-3ecc-422d-b600-561b97237367 -> 'Shelby Haverson'
+✓ Updated: 7d7de4e8-1311-452f-9d6e-ee2d7bdebbdc -> 'Irene Rosales'
+✓ Updated: c37f8935-6435-4570-9093-cbc67fb295da -> 'Jose Martinez'
+✓ Updated: 07241695-d7e6-49f2-b6b1-950c86619a60 -> 'Kasandra Greenlee'
+✓ Updated: a9feb177-a630-48f1-a2b2-6820e151e253 -> 'Casey Camarda'
+Processed 780 records...
+✓ Updated: 36f11649-0191-43a9-af8e-8039cdb7d452 -> 'ALICIA ACOSTA'
+✓ Updated: 542e4aa4-659f-44f1-b220-e9e7aaad2a37 -> 'Ashley Cook'
+✓ Updated: cbb45cd4-43fc-4a0c-b5c0-11ef4f058162 -> 'Yuliana Zarate'
+✓ Updated: f08f75cf-193d-4442-a6ac-5c4a3524d803 -> 'Perez-Bautista'
+✓ Updated: 73c0270c-f0bb-4e94-854d-626b417360c5 -> 'Stephanie Flores Alba'
+✓ Updated: beb93421-ed50-420b-ae98-c29867053b95 -> 'Jajaira Hernandez'
+✓ Updated: 4f9012de-f682-441f-b58a-c2ea66aebd89 -> 'Garcia III'
+✓ Updated: 9c12bdbb-4a67-4a94-9630-c3dc7bd34f53 -> 'Christine Vega'
+✓ Updated: fa4ee91d-c2a3-4fa8-9686-25304c3c75d3 -> 'MARIA ANGELICA RODRIGUEZ QUIRO'
+✓ Updated: 5add300b-9f69-4fb4-b2c5-c3b2f8da4ad5 -> 'STEFANI KANG'
+Processed 790 records...
+✓ Updated: 74220ab9-fbe8-493f-a7ad-f54a6e4ad08e -> 'Ayala'
+✓ Updated: f5de301c-2c98-4e80-a820-8503696edeb9 -> 'Cassie Silva'
+✓ Updated: 6abf9ea3-7672-48c3-8132-89e1d55581e0 -> 'Sara Avalos Castro'
+✓ Updated: 7c27a816-a7fb-4e3d-8616-51acf77ea019 -> 'Sara Avalos Castro'
+✓ Updated: e964a9ec-8af5-4eae-b5ac-bf6a08fc00a5 -> 'Shawna Dolin'
+✓ Updated: 3ee7dabe-1423-4dbe-84e3-5f6b0c6f76b4 -> 'Blanca Lopez'
+✓ Updated: b8fb9fb2-3f26-4a12-84b6-005cd018c0a4 -> 'Ana Martinez'
+✓ Updated: 50776d58-8d42-4d1b-a3d1-704e015f0637 -> 'Yeny Romero'
+✓ Updated: b2f88c1b-9ff2-46be-8fe8-9fe99e1e8559 -> 'Leticia Barhona'
+✓ Updated: 0c069f91-d3a4-4a39-a8c1-1d461f65d581 -> 'Dawnika Ford-Foreman'
+Processed 800 records...
+✓ Updated: 5f8ed13d-a5ae-45dc-8293-c92820404bc5 -> 'Antoine Evins, Sr.'
+✓ Updated: 1273126c-025e-4eb7-a56f-8e2682640f39 -> 'Cynthia Ortega'
+✓ Updated: ff3cfdee-a6a0-4f6b-ad42-e85738b9ad36 -> 'Hind Benhacene'
+✓ Updated: 49f1ebf4-8ea8-4d61-9488-bf7be71e4253 -> 'Amelia Luz'
+✓ Updated: e85ee2af-410a-4e36-9821-5cfa34010350 -> 'Ana Martinez'
+✓ Updated: 599f22bb-5159-476d-ac73-82e3bb132d8e -> 'Rochelle Williams'
+✓ Updated: 6ee1a8d1-fe4d-4899-b6da-93424830ff0a -> 'Patricia Camargo'
+✓ Updated: 9391460c-c071-4969-bdb0-7f0095222c8d -> 'Edith Cornejo & Rene Benitez'
+✓ Updated: 15cb8e57-2ad0-413c-9e91-2613b1639423 -> 'Corliss Robinson'
+✓ Updated: 1d794302-2c28-4b3e-8206-2506051365a4 -> 'Kelsey & Nathaniel Mcmihelk'
+Processed 810 records...
+✓ Updated: b947de2e-6fbb-4e5c-ab10-2d6181457d0c -> 'Jody & Rebecca Dozier'
+✓ Updated: 1e7c3a1d-6256-445e-a2ca-1af4ad7bbc8a -> 'Margarita Ramirez Toscano'
+✓ Updated: 70e84ac7-4297-4c1d-89e5-798883cea92a -> 'Maria Rivera'
+✓ Updated: 9b1d2915-bee4-4849-9014-670c565931db -> 'Kaylah Sweet'
+✓ Updated: 642bff4e-1962-454e-adc7-6f0e55213052 -> 'Angelica Flores'
+✓ Updated: c428ee10-8f9a-4ce1-80ee-a07553201838 -> 'Esperanza Civitello'
+✓ Updated: c2ab02c2-f36e-4e19-b7f4-4989bb812ac1 -> 'Robyn Rose'
+✓ Updated: f14d9710-f527-40be-8283-18590f9600fb -> 'Viridiana Guillen'
+✓ Updated: 57229152-6cee-4ee4-ab1a-f7381a7f382a -> 'Karina Melendez'
+✓ Updated: 855e82e0-768f-4426-ada6-165b949727cb -> 'Kyrsten Snodgrass'
+Processed 820 records...
+✓ Updated: e7d3bc79-91b4-469e-9a65-08754574630b -> 'Holli Webb'
+✓ Updated: d6f6216a-4059-4df3-8f84-d57dda78e3fe -> 'Maria Zavala'
+✓ Updated: 9a9679e4-6106-42c2-8ee2-9e897e2fcb10 -> 'Yesenia Leon'
+✓ Updated: dab400dd-47f0-4287-bbd2-e58007167866 -> 'Maria Salazar'
+✓ Updated: e4c24ea9-b65f-45f0-99f7-b446297aff4e -> 'Schafer'
+✓ Updated: 0d1d7de9-86d1-4d6d-9a17-d04aa40e12bb -> 'JAMIE WOOD'
+✓ Updated: 56869f29-2a31-4772-8820-3cb96acd2e2a -> 'Michelle Diego'
+✓ Updated: b02c7e18-2051-4604-ac32-5a88e7f0421c -> 'Judith Juarez'
+✓ Updated: 65421b19-c461-4bd2-b978-951cd1f54922 -> 'Thelma Villanueva'
+✓ Updated: f0098a5c-94f2-4c86-98bf-635d642edfcc -> 'BRITTANY FANNON'
+Processed 830 records...
+✓ Updated: 8e479d66-09d9-4bc1-a02f-6ab43e272b28 -> 'Ulany Ruiz'
+✓ Updated: c6fa5683-56b9-4765-b404-e17653077270 -> 'Jewelya Jones'
+✓ Updated: 6ad26a73-0e75-4f58-9b7e-5fcb60095764 -> 'Monica Salcedo Lomeli'
+✓ Updated: bbdecdf8-468e-4f78-8dc6-105dd2262dc2 -> 'Berenice Rodriguez'
+✓ Updated: da4a5900-cf6e-44d6-b659-692637b8b786 -> 'Maira Guti='
+✓ Updated: d18ce948-48ea-4847-a5c3-af44f573793a -> 'Blanca Juarez'
+✓ Updated: 10370a3a-cfff-4295-9b7e-3303bb37974f -> 'ELVIA BARAJAS'
+✓ Updated: eb667089-4211-47b8-acdd-a9658dda6560 -> 'Raquel Rodriguez'
+✓ Updated: 6522c88a-6932-4608-9f4b-12e194395c2f -> 'Nunes'
+✓ Updated: 055bfb1a-4720-4acf-87d6-a0ef81d906ba -> 'Marissa Nunes'
+Processed 840 records...
+✓ Updated: 741e4c58-8365-4780-99b0-6126753740ea -> 'Hart'
+✓ Updated: de2e6c0e-f2d9-42f0-a29e-a1229868753c -> 'Amber Cardenas'
+✓ Updated: b7281085-eca9-4c2c-a68a-856036700f1b -> 'Leticia Moran-Hidalgo'
+✓ Updated: 720f9424-4106-4dd5-b60c-930f4bf29d72 -> 'Jessica Miller'
+✓ Updated: 13327ec2-6b17-480c-8980-3ed39c9fe1ab -> 'Juarez Jimenez'
+✓ Updated: e064b8ae-3c57-4844-808d-9c1b89dbfca2 -> 'Liliana Jimenez'
+✓ Updated: 456f4a59-7f8e-48c1-8a1a-bfa4471318fc -> 'Taylor Leedom'
+✓ Updated: 72eac763-77a3-4222-af4e-a04c2c264495 -> 'Jeannie Vargas'
+✓ Updated: 33d8d0d1-8540-49ee-9a11-39f972a6185d -> 'JESSE COVARRUBIAS'
+✓ Updated: f5e4fab7-4c20-4596-8e5f-dd71ef0fe60b -> 'Casey Turner'
+Processed 850 records...
+✓ Updated: 0b60108c-cc8b-4e8a-b1bf-b2839bffcb82 -> 'Joan Lubembe, Guardian'
+✓ Updated: b2f0321b-cacc-4184-aa02-1bcbb0a5cd61 -> 'CINDY MERCADO'
+✓ Updated: c6eb6983-a797-4150-ab37-1288ab80d284 -> 'Alejandra Alvarado'
+✓ Updated: 75b6f38e-5aa2-438a-bfb8-c7c5b3020738 -> 'LIZETTE LOPEZ GARCIA'
+✓ Updated: 5a685536-af7a-478a-9517-dc1938156020 -> 'April Maeyama'
+✓ Updated: da71fa83-71fc-449a-ad1f-93db2adf0713 -> 'Yasmin Nunez *Spanish speaking*'
+✓ Updated: a8125d41-dd0e-4968-8b6e-512433f9ef34 -> 'Norma Rodriguez'
+✓ Updated: ea3bb970-488a-4192-aaf6-98ae2daa9b3c -> 'Norma Rodriguez'
+✓ Updated: ee9f253f-6d40-4aa6-937f-c1ca2255f56a -> 'Alejandro Valdez'
+✓ Updated: f53eafe2-5c3f-419b-a412-6c23900bb343 -> 'Kayla Threet'
+Processed 860 records...
+✓ Updated: fd131a40-d362-476a-906e-8ef69522f9ce -> 'Alicia Alvarez'
+✓ Updated: 5f492b57-05a3-43f7-8a95-157fcea77d1f -> 'Palomares'
+✓ Updated: 5f0307fd-8ef6-4d61-a14c-72bf2be24248 -> 'Justine Gil'
+✓ Updated: ade0fb3f-8b47-4b0a-8da5-eea58c439387 -> 'Justine Gil'
+✓ Updated: f14b0662-1c68-4eee-965f-9b11c005f7f4 -> 'Tameka Martinez'
+✓ Updated: 71bf5ef1-b3fe-4c28-bc89-4a49f6294b5c -> 'Tameka Martinez'
+✓ Updated: 851a0d7f-5cb1-43ba-a9ef-ee251677740a -> 'Michelle Bounsana'
+✓ Updated: 986828e9-ced2-4bf9-91f8-c919ecff095f -> 'Maria HUIZAR'
+✓ Updated: effb642e-daa0-4a08-b523-d4806c2f8c07 -> 'Monica Zaragoza'
+✓ Updated: d578a86e-6908-4691-bfd9-13c6eb5eb81f -> 'Adrianna Duffy'
+Processed 870 records...
+✓ Updated: b69dadac-0e84-42e7-9d5a-150c7b23e386 -> 'Rangel'
+✓ Updated: 324a4055-7bdd-4c12-a5b9-9d08210a12e1 -> 'Miriam Ramirez'
+✓ Updated: 28c32710-adec-4c85-9126-e9e13c1fc981 -> 'Lashondra Patrick'
+✓ Updated: dc919d0d-bf92-4afc-8558-590feaaa2330 -> 'KATIE JOHNSON'
+✓ Updated: 93a05a43-0352-487b-ba44-58dfc6ca1b09 -> 'Selena Chaven'
+✓ Updated: 15e9ac7c-d85b-4c0d-82b0-e3210819fbce -> 'Tania Carrasco'
+✓ Updated: 4c9e8c83-2d70-48cf-b4bc-6e061be9230f -> 'Humberto Linares'
+✓ Updated: ce888d13-d73f-4fe6-b8a0-fd4520a57f44 -> 'ROSA MONTIJO'
+✓ Updated: cec58d17-7696-47f2-a2e3-0ebcfac7c507 -> 'Selene Mendoza'
+✓ Updated: b5fbca87-3677-498f-be54-cd7a69ba01c9 -> 'Erica Cloird'
+Processed 880 records...
+✓ Updated: 5876749e-92f6-4fad-b349-367a899b950c -> 'Maribel Torres-Cisneros'
+✓ Updated: 6ccd6d4c-a839-42f1-8c43-1a8cfaa0cdda -> 'Marceny Martinez'
+✓ Updated: 63e0aeac-1d2b-49c5-a7c8-0d3c347e3057 -> 'Vanessa Canady'
+✓ Updated: 65bad680-fa57-4002-af0f-1f4432ba9bbb -> 'Teresa Diaz'
+✓ Updated: 39f77752-43e9-4d7e-95ef-1efaaf45156e -> 'Whitney Shugart'
+✓ Updated: 54c1a2b1-c51e-4437-aa13-6a4226395e49 -> 'Rylan Santos'
+✓ Updated: 0ed215ce-fe01-4338-b3ff-8684e796c10b -> 'MARIA RICO CALDERON'
+✓ Updated: 15ebfd8d-2439-402d-b5b8-5d510cc211df -> 'Camila Carrillo'
+✓ Updated: c5d308fa-dd43-4442-b0ff-95ba7d6cf4c0 -> 'Bianca Soto'
+✓ Updated: db75a917-5f37-417f-9686-d12b163f8dd0 -> 'Lena Schuchterman'
+Processed 890 records...
+✓ Updated: e26049ab-5c09-463f-b0a7-aad12bc2e7c3 -> 'Teresa Diaz'
+✓ Updated: b43ddbf4-9366-454f-8e4e-7da5fb486731 -> 'Teresa Diaz'
+✓ Updated: 16a8acca-a5c6-4d22-906b-b491a54f3d44 -> 'Rachelle Munoz'
+✓ Updated: c6567b37-6b7f-449c-85d5-04032d96fc54 -> 'Melissa Kirk'
+✓ Updated: 9549ede4-9dc8-488a-8da4-fd0234cdfdaf -> 'Angelina Lozano'
+✓ Updated: 328288b9-43b1-4ab5-8362-9958614b97ca -> 'Chheng Sun'
+✓ Updated: 236658ad-0b59-4213-8782-669b7fab8826 -> 'Elida Mora'
+✓ Updated: 4252dfe8-c2ac-4cf3-9c7e-d78ceb1434b5 -> 'FRANCISCO MALDONADO'
+✓ Updated: 9ea163b0-6555-4aa7-8e7e-0648e643c94b -> 'Laura Galvan'
+✓ Updated: a40778fb-e00b-458f-adfa-2df16c1fbf37 -> 'Laura Galvan'
+Processed 900 records...
+✓ Updated: 95a4c4d3-9111-4dcf-bb23-628f2f8c266c -> 'Jose Villa'
+✓ Updated: 30b78786-4912-494c-b790-79b45e0a22e7 -> 'Marisela Cordova'
+✓ Updated: e601b097-8c4a-49ba-90bb-46b5cb64408b -> 'Paola Valencia'
+✓ Updated: a360cf15-739a-4706-aec8-6d2263ba3c46 -> 'BRITTANY HOLLY'
+✓ Updated: 8775a2b8-7263-4ac3-b5d2-75802f752740 -> 'Jenny Fitch'
+✓ Updated: 8b0d2973-5ccd-44f6-8c38-4b97f3fbf064 -> 'Martha Pulido'
+✓ Updated: 60b7980f-2e18-4488-93dd-79f3f45178bc -> 'Martha Lopez'
+✓ Updated: 9bdb5ece-6363-4823-abdc-33e3220576a5 -> 'Erenderia Garcia'
+✓ Updated: d0769525-8555-43e3-9053-ea27b0a50103 -> 'Mina Rizo'
+✓ Updated: 6557998b-0c24-4b6b-a1d1-478ea5d89bb8 -> 'Len Santos'
+Processed 910 records...
+✓ Updated: aa7adbc4-48c6-4493-8c8a-95ff610e1f0a -> 'Mckayla Castro'
+✓ Updated: def21ee7-5f4d-4f4d-b8b6-f8ce73f51cfd -> 'Azucena Gonzalez  spanish speaking only*'
+✓ Updated: 54536587-eb00-4476-b504-a82b34a6af13 -> 'Simarjit Kaur'
+✓ Updated: 51f5998a-016f-4bf6-aabb-21077c1a9720 -> 'Lourdes Lopez'
+✓ Updated: 8993d315-c27e-4fc8-bd20-692925a8684b -> 'Nestor Ruiz'
+✓ Updated: 05183524-c6aa-4873-8fc5-20a7f06f4769 -> 'Gabriela Rodriguez'
+✓ Updated: 12136ecf-ee4f-4344-afc7-506d821a4613 -> 'Nora Pineda'
+✓ Updated: 759c2158-a6aa-41d6-b8e5-ffeef43659a6 -> 'Tanya Reyes'
+✓ Updated: a4f37f19-2fbe-4f18-becb-a6cb73e95a3e -> 'Dulce Gonzalez'
+✓ Updated: cf3b3d46-4288-495c-a7d9-91e97a4cf8df -> 'Nikki Mellow'
+Processed 920 records...
+✓ Updated: c52db254-6e79-4d8a-8c5a-4b874c44c378 -> 'Patricia Valdez'
+✓ Updated: 5a520050-41e5-4707-a1c0-8a3bc3fa331a -> 'Adeana Schippert'
+✓ Updated: 097b02f6-8291-48a8-8911-9d917fb709bb -> 'Maritza Bejinez'
+✓ Updated: 53d229ee-f04f-433b-a98e-edb53440e2f1 -> 'Raean Parker'
+✓ Updated: f7e963e1-0220-4348-a95e-59ddc0b3ee90 -> 'Elizabeth Roman'
+✓ Updated: a9d4768f-27c8-4231-a7a7-7834cd11f12f -> 'Alma Nancy Cruz'
+✓ Updated: 9907542c-15b8-4846-9e92-b6d08e099180 -> 'Maria Mora-Vitela'
+✓ Updated: f3819cbc-e4b2-4cb1-894e-0c66dc1ab08a -> 'Coreina Abila'
+✓ Updated: 14559a0b-26bd-4a30-a971-bd82088deb00 -> 'Jacqueline Chavez'
+Processed 930 records...
+✓ Updated: cc328503-06e5-4150-b596-48cc5b0b3c8a -> 'Nora Gonzalez Martinez'
+✓ Updated: a0133c16-82ee-4608-9f74-a79e3fa81416 -> 'Poonam Deshmukh'
+✓ Updated: d046ddef-3354-4b78-9137-e3c7665830d5 -> 'Sandra  Conover'
+✓ Updated: d6264294-f8a9-42ed-a682-4190baed560f -> 'Melina Joaquin'
+✓ Updated: ac6594d1-63e6-41d2-8f02-144eaa82152f -> 'Anna Vargas'
+✓ Updated: 9f99fecf-6ccf-4e95-a029-f8bf94b2c29a -> 'Monica Aguilera'
+✓ Updated: cb3d42af-1e37-4db4-8d22-4ee50b5d395b -> 'Stephanie Hoyos'
+✓ Updated: 7e14250d-0f5a-4735-9451-b62dc6c7c310 -> 'Sindy Deras'
+✓ Updated: 0a581bb4-d822-45f2-8ed5-6c03e9acef33 -> 'Lissette Echeverria'
+✓ Updated: be821f07-6d9d-42a3-9213-5b022e390be9 -> 'Coreina Abila'
+Processed 940 records...
+✓ Updated: c7cc1f33-2fb1-4ab5-8b1e-38b20e45323e -> 'Felicia Hernandez'
+✓ Updated: 34c25f4d-313e-4ae3-98fd-9674a53a67b8 -> 'Jazmin Palomino'
+✓ Updated: d09fdc4d-32eb-4faf-a75e-d3094b82c0e6 -> 'Veronica Pace'
+✓ Updated: 04672d54-8f1b-4711-95f5-1d8d4c2ab087 -> 'Maria Chavez'
+✓ Updated: cd5fc59a-e8c3-4ab4-af57-ed9d2d21199b -> 'Cesar Suarez'
+✓ Updated: 6ab3beb6-648d-4272-8aa2-1ec4993a798c -> 'Stephanie Macias'
+✓ Updated: 18f8884f-cbcb-4671-bdd8-650fcc4248c2 -> 'Lianne Smith'
+✓ Updated: ee7ce58e-d7c5-4bd1-9a44-1942e383a9f7 -> 'JASKIRANJEET KAUR'
+✓ Updated: 9f134dec-9f4e-4bdc-adcb-8967f7cbb8b9 -> 'KIMBERLY GARRETT'
+✓ Updated: 188651e0-71d1-48e0-a834-693cb2da1484 -> 'Ariella McDonald'
+Processed 950 records...
+✓ Updated: cba0edd7-d494-48b8-9cf5-1774ae5bdbd2 -> 'Van Nguyen'
+✓ Updated: 3b92f999-b19a-43a3-8179-061dfa655b24 -> 'Alvarado'
+✓ Updated: 5107231c-323a-4539-a043-fc8e26c83cea -> 'Maci King'
+✓ Updated: a0c355e7-6eba-481d-b53f-b0f492b7321c -> 'Lucila Pulido'
+✓ Updated: c188695b-fc4d-4887-a659-97c5c8a5d2e8 -> 'Mary Souza'
+✓ Updated: e7db903b-77da-4746-a1a8-93be0a2bfd0a -> 'AMANDA MOONEY'
+✓ Updated: bf67440b-0cea-48aa-bfcf-1f03ddee4733 -> 'Isavela Castro'
+✓ Updated: f524429d-96d0-431f-9e68-91ef62952b88 -> 'Rebecca Galvan'
+✓ Updated: 11f83ee9-a6ca-4f24-9114-065ea2daa8bc -> 'Lucia Mariano Narvaez'
+✓ Updated: f586ffaf-96cf-4a41-8df8-0944fa123015 -> 'Yasmin Becerra'
+Processed 960 records...
+✓ Updated: 0ef5935f-cf2e-452f-a808-908aa4315591 -> 'Maria De Los Santos'
+✓ Updated: 70d41307-5b38-42ee-9747-592b1dd2eb0c -> 'Wendy Pamatz'
+✓ Updated: 6c8b20a8-14e1-4444-a78e-c172484c6d4f -> 'Alma Kopitzke'
+✓ Updated: daad547e-383f-433f-b3dd-6f4974efa9ec -> 'Adrianna Duran'
+✓ Updated: 9a5731c0-0463-472b-a321-cae26abb451b -> 'Danette Vazquez'
+✓ Updated: 18525f8c-dac4-4272-b838-3bc8a7ae671e -> 'Patricia Gomez-Valdez'
+✓ Updated: f9951a93-4459-4ac5-b9ac-7ee90653ebe1 -> 'Rajwinder Kaur'
+✓ Updated: e9292d52-5583-42e3-8458-3921cd9d52e5 -> 'Paige Amador'
+✓ Updated: 9d035465-d129-496c-90e4-193f9529ac72 -> 'Lexi Daclan'
+✓ Updated: 98b20594-3c18-4281-85fd-4c3fb8c6433e -> 'Breanna Lopez'
+Processed 970 records...
+✓ Updated: edc1f917-4ba9-42a3-9caa-b6d819ba6cbc -> 'Katie Plank and Robert Plank'
+✓ Updated: 8b2ce77e-c15a-49f9-b8f5-941f31731e0c -> 'Alejandra Hermosillo'
+✓ Updated: 2dd1119f-9267-429e-b1dd-4520fe76d1ad -> '(209) 573-1840'
+✓ Updated: b5b83659-eea9-4515-bb41-e8fa5288ad7d -> 'TRACI RAMIREZ'
+✓ Updated: 19dd255d-cf12-4953-8c32-0442a798ccba -> 'Khristine Santiago'
+✓ Updated: 915725a0-3960-4331-b804-fc0171c0c56a -> 'CESAR ALGALAN'
+✓ Updated: a1fe2afa-6fe1-4994-84e5-c8595b50d15a -> 'Anna Ejoh'
+✓ Updated: 113ab574-b36a-4f0d-a33c-9e36c83442cc -> 'Lakisha Smith'
+✓ Updated: ae5175b6-6a37-4d06-8883-033f27c87afa -> 'Lakisha Smith'
+Processed 980 records...
+✓ Updated: c97d4386-dc6b-49d6-8950-577aafab5fdd -> 'Summer Randez'
+✓ Updated: 143cd247-8966-417c-8851-8ddb8d07bf98 -> 'Amanda Henry'
+✓ Updated: bbcac987-a225-440f-b3f3-e4d01832bd7a -> 'Rebecca Cortez'
+✓ Updated: 681652d5-75bc-47a1-bdee-c2f936389553 -> 'Rebecca Cortez'
+✓ Updated: d5aa85dd-ac69-4272-96de-eadc04e4724b -> 'SANDY SANCHEZ'
+✓ Updated: d973d070-0d38-43da-b461-40ff52385270 -> 'Amanda Martinez'
+✓ Updated: 12d0d22a-e481-4f49-b453-76c1dac24b93 -> 'Rocio Chavez'
+✓ Updated: 2c3dc988-19d3-4e5c-820f-b86560206ed6 -> 'Consuelo Moron'
+✓ Updated: f5149d0c-0958-4fff-b502-d221c7b4a745 -> 'Kayla Owens'
+✓ Updated: 7eb8af11-52ad-4530-b795-bd95728f6b04 -> 'Jeannette  Ceja'
+Processed 990 records...
+✓ Updated: 0754b7a8-40ad-475f-95f0-9c46853a7a24 -> 'Blanca Naranjo Valencia'
+✓ Updated: 98dd478a-aeac-476b-af9b-8146603461c2 -> 'Pang Vang'
+✓ Updated: 91600ed9-0263-4893-bd2c-e9d64b9027d1 -> 'Sydney Torres'
+✓ Updated: ac0eb694-8df7-41ae-8550-f97a1e2db788 -> 'Natalie Flores'
+✓ Updated: 4a6bf89a-b080-409d-bb54-5182ba251844 -> 'Bobbie Ann Carpenter'
+✓ Updated: 41cd0504-8617-4344-bbb7-834e8f191676 -> 'Bobbie Ann Carpenter'
+✓ Updated: 04c734c9-2d08-42aa-b6e2-0b2d36800508 -> 'Martha Garcia'
+✓ Updated: dfe98c95-55e3-4ba3-a30b-2f3234bd8d21 -> 'Gia Gomez'
+✓ Updated: 9b722b66-2dfc-4ab1-b489-3cc400111428 -> 'FLORENCIA VICTORIA'
+✓ Updated: 22c0aaa7-e0a8-476e-96c4-1a28ca44a197 -> 'Adelene Zepeda'
+Processed 1000 records...
+✓ Updated: a5873d87-846c-44ff-af4a-5289dfb5d07f -> 'NAVDEEP KUAR'
+✓ Updated: bbc12121-ec5c-4b66-bc3a-22735a653dd3 -> 'Silviano Valencia'
+✓ Updated: dffca90c-3b0e-468c-b1b2-2d1b3c089a23 -> 'Raine Huerta'
+✓ Updated: 5f612456-4329-4596-9cea-24db12026f08 -> 'Nicole Clark'
+✓ Updated: 5e7ab570-612a-4de4-b49a-e35f080261ab -> 'Brenda Montejano'
+✓ Updated: 380b48eb-3c07-4883-ab94-873e3285da09 -> 'Elizabeth Montalbo'
+✓ Updated: 1cf49e2c-b096-46bc-bae6-d6e7c01f8d09 -> 'Cierra Deaton'
+✓ Updated: 98f6bee9-bd0b-44b7-8f54-a9ce295c2f4e -> 'Linda David'
+✓ Updated: 4f4a2d24-d011-4408-9847-1536b31dbfe8 -> 'KEONIE METOYER POLOAI'
+✓ Updated: 3c9104bf-2d21-4bcc-a91c-9fb33993ec19 -> 'SHALMAE MORLOCK-FERDIN'
+Processed 1010 records...
+✓ Updated: 58c39236-e016-454f-af89-2b6c0c4c4e58 -> 'Julia Flanagan'
+✓ Updated: 97ec1a73-b1e9-4f48-9402-12b27daa46b8 -> 'ANAKAREN MEJIA'
+✓ Updated: f3330b1a-2ab4-4bc9-99ff-875793b8e45e -> 'Cristina Gomez'
+✓ Updated: 687e2226-8062-4e26-9d28-496d05fa9a46 -> 'Lilia Calderon Flores'
+✓ Updated: c0c49172-c278-45ae-8a87-fa770529650e -> 'MANUEL FRANCO'
+✓ Updated: cfa05461-c935-4969-b0f0-d33630ccb78f -> 'Latasha Hernandez'
+✓ Updated: f488c5cd-1c20-4bbb-9026-10901c59af07 -> 'Hope Jones'
+✓ Updated: ba8e42b4-8ffb-46cf-b817-a502832c028e -> 'Satvinder Singh'
+✓ Updated: a4487e61-8f50-4ffb-a4ba-496ea62ba6f1 -> 'Silva Gomez'
+✓ Updated: 516bf3d4-e861-4236-849c-a9edbbd126fc -> 'Heather Shoffner'
+Processed 1020 records...
+✓ Updated: a2e35262-e5de-4f88-992d-35b66dc7b3b0 -> 'CLAUDIA LOPEZ'
+✓ Updated: 953da874-c5ee-4281-ac5a-47b1e5e59d30 -> 'CLAUDIA LOPEZ'
+✓ Updated: 5bb45c5b-c503-4dcc-a400-5d5da65e4ccc -> 'Rolando Rodriguez'
+✓ Updated: 3b9d90f1-2b0b-4559-89e4-1430a04a2625 -> 'Cynthia Villegas'
+✓ Updated: 91ec2cc3-b6f0-4596-b8a4-923204bd0969 -> 'Gail Sasser'
+✓ Updated: 7ae6f010-e772-4193-b492-c5e87c500795 -> 'Priscilla Grajeda'
+✓ Updated: 2eb3bd35-125a-4dff-b92f-67aac4e52a81 -> 'Rosalva Garza'
+✓ Updated: d7fe51d0-a011-44c7-b319-ef81856dfe2a -> 'Trella Galvez'
+✓ Updated: aa54f91d-b674-423f-9929-f0e74937f5c4 -> 'Victoria Contreras'
+✓ Updated: a4a8c602-6ee6-4a71-8a53-d46d94752555 -> 'Trella Galvez'
+Processed 1030 records...
+✓ Updated: 677a8f67-5f6a-417b-9e35-39d5d913526c -> 'Elizabeth Zendejas'
+✓ Updated: 6ffcce54-98b0-4ec1-a2d2-90e9ce557e57 -> 'Maira Aguayo'
+✓ Updated: 5224fc4f-1942-4ebf-89e9-19189f81621f -> 'Ariana Del Rio'
+✓ Updated: 8111a80b-56f0-4587-aaca-46e87637c8b5 -> 'LUZMILA IBANEZ CARRAZCO'
+✓ Updated: 39142b46-894e-4b36-bc99-aa758fe784ac -> 'Lumila Ibanez'
+✓ Updated: 6ebd5887-aa5e-4a7d-a5b4-53f2fb5f95da -> 'Monica Kumar'
+✓ Updated: aded8965-fa22-42a6-9604-b600d4900da5 -> 'Megan Almerood'
+✓ Updated: 30bfeaf6-f5e8-45f9-811c-eaf4237b0ded -> 'Marie Park'
+✓ Updated: 650b0be4-8c08-443b-be1d-d9e687f64edb -> 'Sendy Botello-Ceja'
+✓ Updated: 414ec3a4-8b62-4395-b02a-e8b0c67baa12 -> 'Christina Arellano'
+Processed 1040 records...
+✓ Updated: ce9661d7-e7a2-4bb3-a601-58567bb41172 -> 'Cynthia Brace'
+✓ Updated: b85956e9-da37-4ea6-a426-3d02c65558b3 -> 'Liliana Mayoral'
+✓ Updated: 399078de-12e9-452b-b166-131ca1f03155 -> 'Mayra Colmenares Cruz'
+✓ Updated: 27cc3efc-1386-4b38-a24b-746fcdf125a8 -> 'Nancy Lopez'
+✓ Updated: 46d3af21-5be9-47c5-9621-55887e2de8b6 -> 'DIANA MOLINA'
+✓ Updated: 390c58ad-5b4b-45a1-9be4-314dc0756f72 -> 'Maria De Jesus Alvarez'
+✓ Updated: 6a050627-d191-4b2e-b1bf-abc0687c75fd -> 'Columba Leon'
+✓ Updated: 1299010f-13ff-4fb7-bc2a-7ec11a41d114 -> 'Alma Silva'
+✓ Updated: e66f5a9a-c812-42ab-bb2a-dfbe09677fd2 -> 'Yvonne Steglik'
+✓ Updated: d365299f-2a30-4696-9bc2-b8d99a3cecdd -> 'Denise Esquivel'
+Processed 1050 records...
+✓ Updated: cf864eb1-6024-41f4-a4a7-3470e493ada5 -> 'CHARLIE GAINES'
+✓ Updated: 175303da-5025-47c5-bedf-90da3794e365 -> 'Maria Cabrera'
+✓ Updated: 7fff184d-b03c-4053-9a9f-2692b022ea20 -> 'Heldy Corrales'
+✓ Updated: acf985b2-b67f-43a1-9567-b939f28f33d5 -> 'Megan Skinner'
+✓ Updated: 7d5c621c-8fdd-438b-b759-1873c23f9caa -> 'Esperanza Acevedo'
+✓ Updated: ca45d94c-67b9-40e3-8061-c5d71a46bea7 -> 'Gemelia White'
+✓ Updated: 56539084-6e8a-44eb-8409-d141cf47536b -> 'Guadalupe Maria Sandoval'
+✓ Updated: 0618d14d-682e-4423-816c-ee87aaa99494 -> 'Michael Perales'
+✓ Updated: 4dcd214b-af5d-45ca-bb1b-9b8ba5c042ce -> 'Jazmin Montoya'
+✓ Updated: 97730717-b590-4b7a-8355-586331b7362c -> 'Marisol Vazquez'
+Processed 1060 records...
+✓ Updated: ad7d0c4c-6c21-4358-9c12-cac76c49f64c -> 'Rachel Madrigal'
+✓ Updated: fef1303b-998d-467e-85a4-08f4e7d41df1 -> 'Megan Herrera'
+✓ Updated: c8c67474-82fe-4aef-9cf1-c68ddc96a2fd -> 'ANA ARGUETA'
+✓ Updated: 4ab821bb-4088-48e8-b7e3-63df18977d9d -> 'MARGARITA TINOCO'
+✓ Updated: 737263fd-4412-454b-aaaa-1e1bce63774c -> 'Eric Tucker'
+✓ Updated: 5459cb7f-5650-4ca6-9e70-75721d6e1ca6 -> 'Karem Cajero'
+✓ Updated: 0141ce44-1833-4fe1-b91e-d17a07cf7692 -> 'Mayra Heredia'
+✓ Updated: e8e9d66a-0efc-4076-8b6c-daade4be1be2 -> 'Olivia Hernandez'
+✓ Updated: fea78f5e-f092-4cc4-a454-609dc3360a4b -> 'Maria Corona'
+✓ Updated: 1e06bfe8-3295-4a1d-b0e7-de8e22db76b4 -> 'Leonardo Cordero'
+Processed 1070 records...
+✓ Updated: 262ae3fe-1616-4734-a4f9-6723c60375ac -> 'Karla Garcia'
+✓ Updated: 75b467b5-e8d5-4c81-b589-ecd9d8d7876c -> 'Romelia Zendejas'
+✓ Updated: 3c8ca8d3-57dc-42d1-b9d7-2f710e52ff0c -> 'Gina Anaya'
+✓ Updated: b3fbc516-0362-4b1f-8a8f-6f02b4c38d86 -> 'Belem Lozano'
+✓ Updated: 32b62599-567a-4be2-82ea-a780aea48cb8 -> 'Rebeca Muneton'
+✓ Updated: f5fdc85d-971d-407c-99c4-bc706d731928 -> 'Maria Hernandez'
+✓ Updated: f6c675c5-a3ca-41e9-b05f-4748368cc098 -> 'Gutierrez'
+✓ Updated: 67546d98-74a5-4e0f-8a3b-e67ae1f9bc78 -> 'Alondra Valdovinos'
+✓ Updated: 50e38d1c-39a4-4560-b3e0-a5a4c166b2e8 -> 'Alma Perez'
+✓ Updated: 22b58761-a3ec-4cd7-af41-d94dfa943c4d -> 'Yolanda Hernandez'
+Processed 1080 records...
+✓ Updated: e1bd56aa-3202-4da3-9e9f-d5439088c39d -> 'Nancie Chavez'
+✓ Updated: 85eae09b-d74b-4aa6-9e6c-bbe48d0e5ad3 -> 'Martha Valdespino'
+✓ Updated: 31470b4f-7b11-4086-b6e5-bce27fc651b8 -> 'Dejanay Mercer'
+✓ Updated: 28f3045b-d638-4f04-9e24-43e97db72801 -> 'Marilyn Quintero'
+✓ Updated: 9036a1b6-db68-4087-8369-8aed83d465dd -> 'Tyra Vega'
+✓ Updated: f932b3e3-0994-4d60-8d15-fa7a345747b3 -> 'Ofelia Gonzalez'
+✓ Updated: 2ecb55ac-6079-4d6c-9da5-6592ef85b2e2 -> 'Christine Schickedanz'
+✓ Updated: 9152465b-03b9-4ac8-b24d-b99c5822e4ee -> 'Ariana Cortes'
+✓ Updated: af30c783-5ae7-4261-8345-e27692ac8e46 -> 'Jennifer Thach'
+✓ Updated: 21f5780b-9f7a-4e79-bc5e-521dc001c1f9 -> 'JENIFER STONE'
+Processed 1090 records...
+✓ Updated: b2cb2080-245d-47b2-bc7c-49ef66a9c0c3 -> 'Alejandra Lugardo'
+✓ Updated: 3dae23dc-ae95-465a-b7c8-e15fc4449836 -> 'Britani Nydahl'
+✓ Updated: 369ce7ef-72a9-4d67-a96d-9f5f4108a1bb -> 'Cailagh Elliott'
+✓ Updated: 7399aad3-3122-408c-aaf7-d1a0070af1dc -> 'Amy Bullock'
+✓ Updated: a898e60c-555d-4563-a96f-59499f7547a1 -> 'Marlen Marquez'
+✓ Updated: 1bea3284-c8fe-4f64-9a69-62645df3019f -> 'Valeria Guerrero'
+✓ Updated: d55c18bc-6539-4129-8c78-70c295e6efb6 -> 'Wendy Alcala'
+✓ Updated: f73a443c-d0c4-4a63-96da-5afae15617d3 -> 'ALYSSA ELLIOTT'
+✓ Updated: eac34182-6d04-4838-9b67-a9f08394c39a -> 'Guadalupe Barragan'
+✓ Updated: b1f2b07b-1465-41ac-a0e7-3e42086f459e -> 'Davinder Kaur'
+Processed 1100 records...
+✓ Updated: 1598fcce-0577-4304-9fd2-17fc56f2358a -> 'Leighann Eldridge'
+Processed 1110 records...
+Processed 1120 records...
+Processed 1130 records...
+Processed 1140 records...
+Processed 1150 records...
+Processed 1160 records...
+Processed 1170 records...
+Processed 1180 records...
+Processed 1190 records...
+Processed 1200 records...
+Processed 1210 records...
+Processed 1220 records...
+Processed 1230 records...
+Processed 1240 records...
+Processed 1250 records...
+Processed 1260 records...
+Processed 1270 records...
+Processed 1280 records...
+Processed 1290 records...
+Processed 1300 records...
+Processed 1310 records...
+Processed 1320 records...
+Processed 1330 records...
+Processed 1340 records...
+Processed 1350 records...
+Processed 1360 records...
+Processed 1370 records...
+Processed 1380 records...
+Processed 1390 records...
+Processed 1400 records...
+Processed 1410 records...
+Processed 1420 records...
+Processed 1430 records...
+Processed 1440 records...
+Processed 1450 records...
+Processed 1460 records...
+Processed 1470 records...
+Processed 1480 records...
+Processed 1490 records...
+Processed 1500 records...
+Processed 1510 records...
+Processed 1520 records...
+Processed 1530 records...
+Processed 1540 records...
+Processed 1550 records...
+Processed 1560 records...
+Processed 1570 records...
+Processed 1580 records...
+Processed 1590 records...
+Processed 1600 records...
+Processed 1610 records...
+Processed 1620 records...
+Processed 1630 records...
+Processed 1640 records...
+Processed 1650 records...
+Processed 1660 records...
+Processed 1670 records...
+Processed 1680 records...
+Processed 1690 records...
+
+==================================================
+UPDATE COMPLETE - STATISTICS
+==================================================
+Total records in CSV: 1699
+Records with UUID: 1632
+Records with Parent Name: 1628
+Updates attempted: 405
+Updates successful: 405
+Skipped (not pending_enrollment): 1223
+Skipped (no matching swimmer): 0
+Errors: 0
+==================================================
+
+Verifying updates (sample of 5 records)...
+
+Sample of pending_enrollment swimmers after update:
+  Liam Johnson: 'None'
+  Test Swimmer: 'Sydnee Merchant'
+  Taylen Merchant: 'None'
+  Roland Fourre: 'Charice Fourre'
+  Noah Williams: 'None'
+
+==================================================
+UPDATE COMPLETE
+==================================================
+
+Next steps:
+1. Test parent invitations to ensure correct names appear
+2. Verify that enrolled families were not modified
+3. Check the parent portal for any issues

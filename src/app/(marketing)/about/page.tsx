@@ -159,7 +159,7 @@ export default function AboutPage() {
             <EditableText
               pageSlug="about"
               sectionKey="story-paragraph-3"
-              defaultContent="Today, we're proud to be a regional center vendor closely working with VMRC and CVRC (Central Valley Regional Center) to make adaptive swim lessons accessible to all families, regardless of their financial situation."
+              defaultContent="Today, we're proud to work with regional centers including VMRC and CVRC (Central Valley Regional Center) to make adaptive swim lessons accessible to all families, regardless of their financial situation."
               as="p"
             >
               {getContent(content, 'story-paragraph-3', "Today, we're proud to be a regional center vendor closely working with VMRC and CVRC (Central Valley Regional Center) to make adaptive swim lessons accessible to all families, regardless of their financial situation.")}

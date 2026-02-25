@@ -266,7 +266,7 @@ function AdminSwimmerDetailContent() {
         .from('swimmers')
         .select(`
           *,
-          parent:profiles!swimmers_parent_id_fkey(id, full_name, email, phone),
+          parent:profiles(id, full_name, email, phone),
           current_level:swim_levels(*)
         `)
         .eq('id', swimmerId)

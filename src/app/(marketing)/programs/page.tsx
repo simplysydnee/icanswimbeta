@@ -22,14 +22,14 @@ export default function ProgramsPage() {
   return (
     <div>
       {/* Section 1: Hero */}
-      <section className="py-16 bg-gradient-to-b from-cyan-50 to-white">
-        <div className="container mx-auto px-4 text-center">
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto text-center mb-12">
           <EditableText
             pageSlug="programs"
             sectionKey="hero-title"
             defaultContent="Our Programs"
             as="h1"
-            className="text-4xl md:text-5xl font-bold text-cyan-600 mb-4"
+            className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-[#2a5e84] to-[#23a1c0] bg-clip-text text-transparent font-playfair-display tracking-tight mb-4"
           >
             {getContent(content, 'hero-title', 'Our Programs')}
           </EditableText>
@@ -38,12 +38,12 @@ export default function ProgramsPage() {
             sectionKey="hero-subtitle"
             defaultContent="A personalized approach to water safety and confidence for swimmers of all abilities"
             as="p"
-            className="text-xl text-gray-600 max-w-2xl mx-auto"
+            className="text-xl text-gray-600 font-inter max-w-3xl mx-auto"
           >
             {getContent(content, 'hero-subtitle', 'A personalized approach to water safety and confidence for swimmers of all abilities')}
           </EditableText>
         </div>
-      </section>
+      </div>
 
       {/* Section 2: The Journey (3 Steps) */}
       <section className="py-16">

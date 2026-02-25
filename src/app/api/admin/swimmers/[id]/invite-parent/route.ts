@@ -2,7 +2,6 @@ import { createClient } from '@/lib/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { emailService } from '@/lib/email-service';
-import { randomBytes } from 'crypto';
 
 export async function POST(
   request: NextRequest,
@@ -43,16 +42,41 @@ export async function POST(
 
     const supabaseAdmin = createSupabaseClient(supabaseUrl, supabaseServiceKey);
 
-    // Get swimmer details
+    // Get swimmer details including parent_name
     const { data: swimmer, error: swimmerError } = await supabaseAdmin
       .from('swimmers')
-      .select('id, first_name, last_name, parent_id, parent_email, invited_at')
+      .select('id, first_name, last_name, parent_id, parent_email, parent_name, invited_at')
       .eq('id', swimmerId)
       .single();
 
     if (swimmerError || !swimmer) {
       return NextResponse.json({ error: 'Swimmer not found' }, { status: 404 });
     }
+
+    // Helper function to extract a readable name from email prefix
+    const extractNameFromEmail = (email: string): string => {
+      if (!email) return '';
+      const prefix = email.split('@')[0];
+
+      // Try to extract name from common patterns
+      // Remove numbers and special characters
+      let name = prefix.replace(/[0-9_\.]/g, ' ');
+
+      // Try to split camelCase or concatenated names
+      // Add space before capital letters (camelCase detection)
+      name = name.replace(/([a-z])([A-Z])/g, '$1 $2');
+
+      // Capitalize first letter of each word
+      name = name.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ')
+        .trim();
+
+      // If name is empty or just single letter, return empty
+      if (name.length <= 1) return '';
+
+      return name;
+    };
 
     // Check if swimmer already has a parent linked
     if (swimmer.parent_id) {
@@ -91,11 +115,20 @@ export async function POST(
         return NextResponse.json({ error: 'Failed to auto-link swimmer' }, { status: 500 });
       }
 
+      // Determine parent name:
+      // 1. Use provided name from admin
+      // 2. Use swimmer's parent_name from database (now fixed from Airtable)
+      // 3. Use profile full_name
+      // 4. Try to extract name from parent_email as fallback
+      // 5. Fall back to 'Parent'
+      const emailPrefixName = extractNameFromEmail(swimmer.parent_email || '');
+      const determinedParentName = parent_name || swimmer.parent_name || existingProfile.full_name || emailPrefixName || 'Parent';
+
       // Send welcome/notification email to existing parent
       await emailService.sendEmail({
         to: emailToUse,
         templateType: 'account_created',
-        parentName: parent_name || existingProfile.full_name || 'Parent',
+        parentName: determinedParentName,
         childName: `${swimmer.first_name} ${swimmer.last_name}`,
       });
 
@@ -120,14 +153,22 @@ export async function POST(
     const isResend = !!existingInvitation;
     const invitationId = existingInvitation?.id;
 
+    // Determine parent name:
+    // 1. Use provided name from admin
+    // 2. Use swimmer's parent_name from database (now fixed from Airtable)
+    // 3. Try to extract name from parent_email as fallback
+    // 4. Fall back to 'Parent' (better UX for emails)
+    const emailPrefixName = extractNameFromEmail(swimmer.parent_email || '');
+    const determinedParentName = parent_name || swimmer.parent_name || emailPrefixName || 'Parent';
+
     // Create or update invitation
     const invitationData = {
       swimmer_id: swimmerId,
       parent_email: emailToUse.toLowerCase(),
-      parent_name: parent_name || '',
+      parent_name: determinedParentName,
       status: 'pending',
       created_by: user.id,
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
     };
 
     let invitation;
@@ -137,48 +178,48 @@ export async function POST(
         .from('parent_invitations')
         .update({
           ...invitationData,
-          status: 'pending', // Reset status for resend
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // New 7-day expiry
+          status: 'sent', // Set to sent for resend
+          sent_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // New 30-day expiry
         })
         .eq('id', invitationId)
-        .select()
+        .select('id, invitation_token, parent_email, parent_name, status, sent_at, expires_at')
         .single();
 
       if (updateError) throw updateError;
       invitation = updatedInvitation;
     } else {
-      // Create new invitation
+      // Create new invitation - database will generate invitation_token automatically
       const { data: newInvitation, error: createError } = await supabaseAdmin
         .from('parent_invitations')
         .insert(invitationData)
-        .select()
+        .select('id, invitation_token, parent_email, parent_name, status, sent_at')
         .single();
 
       if (createError) throw createError;
       invitation = newInvitation;
+
+      // Update invitation status to sent
+      const { data: updatedInvitation, error: updateError } = await supabaseAdmin
+        .from('parent_invitations')
+        .update({
+          status: 'sent',
+          sent_at: new Date().toISOString()
+        })
+        .eq('id', invitation.id)
+        .select('id, invitation_token, parent_email, parent_name, status, sent_at, expires_at')
+        .single();
+
+      if (updateError) throw updateError;
+      invitation = updatedInvitation;
     }
 
-    // Generate a unique hex token for the invitation (64 chars)
-    const token = randomBytes(32).toString('hex');
-
-    // Update invitation with token
-    const { data: updatedInvitation, error: tokenError } = await supabaseAdmin
-      .from('parent_invitations')
-      .update({
-        invitation_token: token,
-        status: 'sent',
-        sent_at: new Date().toISOString()
-      })
-      .eq('id', invitation.id)
-      .select()
-      .single();
-
-    if (tokenError) throw tokenError;
+    const token = invitation.invitation_token;
 
     // Send parent invitation email using our new service
     const emailResult = await emailService.sendParentInvitation({
       parentEmail: emailToUse,
-      parentName: parent_name || null,
+      parentName: determinedParentName || null,
       swimmerFirstName: swimmer.first_name,
       swimmerLastName: swimmer.last_name,
       inviteToken: token,
@@ -203,7 +244,7 @@ export async function POST(
       linked: false,
       isResend,
       message: isResend ? `Invitation resent to ${emailToUse}` : `Invitation sent to ${emailToUse}`,
-      invitation_id: updatedInvitation.id,
+      invitation_id: invitation.id,
       token: token
     });
 

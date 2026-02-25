@@ -165,7 +165,7 @@ export function BasicInfoStep({ data, onChange }: BasicInfoStepProps) {
   const getPaymentTypeLabel = (type: string) => {
     switch (type) {
       case 'private_pay': return 'Private Pay';
-      case 'vmrc': return 'VMRC';
+      case 'vmrc': return 'Funded';
       case 'scholarship': return 'Scholarship';
       case 'funded': return 'Funded';
       default: return type;

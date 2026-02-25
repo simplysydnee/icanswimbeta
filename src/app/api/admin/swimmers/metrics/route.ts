@@ -143,7 +143,7 @@ export async function GET() {
       .from('swimmers')
       .select(`
         id,
-        bookings!bookings_swimmer_id_fkey(
+        bookings(
           count
         )
       `);

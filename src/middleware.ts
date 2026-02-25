@@ -1,5 +1,12 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
+import { type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+
+type Cookie = {
+  name: string
+  value: string
+  options: CookieOptions
+}
 
 export async function middleware(request: NextRequest) {
   // Only log in development
@@ -18,26 +25,40 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
+        getAll() {
+          return request.cookies.getAll()
         },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({ name, value, ...options })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
+        setAll(cookiesToSet: Cookie[]) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            // Set cookie options
+            // Note: Using token flow for password reset, not PKCE
+            // So cookies are less critical for password reset flow
+            const isProduction = process.env.NODE_ENV === 'production'
+            const cookieOptions: CookieOptions = {
+              ...options,
+              sameSite: 'lax',
+              secure: isProduction,
+              httpOnly: true, // Protect from XSS
+              path: '/', // Available on all paths
+            }
+
+            // Set domain for production if needed
+            if (isProduction) {
+              const hostname = request.nextUrl.hostname
+              // Only set domain for production domains, not localhost
+              if (!hostname.includes('localhost') && !hostname.includes('127.0.0.1')) {
+                cookieOptions.domain = hostname
+              }
+            }
+
+            request.cookies.set({ name, value, ...cookieOptions })
+            response = NextResponse.next({
+              request: {
+                headers: request.headers,
+              },
+            })
+            response.cookies.set({ name, value, ...cookieOptions })
           })
-          response.cookies.set({ name, value, ...options })
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({ name, value: '', ...options })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({ name, value: '', ...options })
         },
       },
     }
@@ -201,5 +222,6 @@ export const config = {
     '/reset-password',
     '/forgot-password',
     '/auth/callback',
+    '/auth/confirm',
   ],
 }

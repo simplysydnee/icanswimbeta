@@ -9,8 +9,10 @@ export async function GET() {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
+      console.error('Auth error:', authError);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    console.log('Fetching swimmers for user:', user.id);
 
     // Query swimmers for this parent with additional data
     const { data, error } = await supabase
@@ -37,7 +39,9 @@ export async function GET() {
         funding_coordinator_name,
         funding_coordinator_email,
         funding_coordinator_phone,
-        -- Medical & Safety fields
+        emergency_contact_name,
+        emergency_contact_phone,
+        emergency_contact_relationship,
         has_allergies,
         allergies_description,
         has_medical_conditions,
@@ -45,13 +49,11 @@ export async function GET() {
         diagnosis,
         history_of_seizures,
         seizures_description,
-        -- Care needs
         toilet_trained,
         non_ambulatory,
         communication_type,
         other_therapies,
         therapies_description,
-        -- Behavioral
         self_injurious_behavior,
         self_injurious_behavior_description,
         aggressive_behavior,
@@ -61,19 +63,18 @@ export async function GET() {
         has_behavior_plan,
         restraint_history,
         restraint_history_description,
-        -- Swimming background
         previous_swim_lessons,
         comfortable_in_water,
         swim_goals,
         strengths_interests,
         swim_levels:current_level_id(name, display_name, color),
         funding_source:funding_source_id(id, name, short_name, type),
-        bookings!bookings_swimmer_id_fkey(
+        bookings(
           id,
           status,
           session:sessions(
             start_time,
-            instructor:profiles!sessions_instructor_id_fkey(full_name)
+            instructor:profiles(full_name)
           )
         )
       `)
@@ -82,7 +83,11 @@ export async function GET() {
 
     if (error) {
       console.error('Error fetching swimmers:', error);
-      return NextResponse.json({ error: 'Failed to fetch swimmers' }, { status: 500 });
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      console.error('Error code:', error.code);
+      console.error('Error hint:', error.hint);
+      console.error('Error details:', error.details);
+      return NextResponse.json({ error: `Failed to fetch swimmers: ${error.message || error.details || error.hint || 'Unknown error'}` }, { status: 500 });
     }
 
     // Transform snake_case to camelCase and extract nested data
@@ -166,7 +171,11 @@ export async function GET() {
         // Coordinator info
         coordinatorName: swimmer.funding_coordinator_name,
         coordinatorEmail: swimmer.funding_coordinator_email,
-        coordinatorPhone: swimmer.funding_coordinator_phone
+        coordinatorPhone: swimmer.funding_coordinator_phone,
+        // Emergency contact
+        emergencyContactName: swimmer.emergency_contact_name,
+        emergencyContactPhone: swimmer.emergency_contact_phone,
+        emergencyContactRelationship: swimmer.emergency_contact_relationship
       };
     });
 

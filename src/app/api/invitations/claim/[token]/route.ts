@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { emailService } from '@/lib/email-service';
+import { createWaiverUpdateToken } from '@/lib/db/waivers';
+import { NEEDS_ENROLLMENT_FORM } from '@/lib/constants';
 
 export async function POST(
   request: NextRequest,
@@ -211,6 +213,13 @@ export async function POST(
 
     const parentName = profile ? `${profile.first_name} ${profile.last_name}`.trim() : 'Parent';
 
+    // Create waiver update token for the parent
+    const waiverToken = await createWaiverUpdateToken(
+      user.id,
+      user.email!,
+      72 // expires in 72 hours
+    );
+
     // Send welcome email
     await sendWelcomeEmailAfterClaim({
       userEmail: user.email!,
@@ -220,12 +229,40 @@ export async function POST(
       fundingSourceId: invitation.swimmer.funding_source_id
     });
 
+    // Fetch complete swimmer record to check enrollment status and waiver status
+    const { data: swimmer } = await supabaseAdmin
+      .from('swimmers')
+      .select('enrollment_status, signed_liability, cancellation_policy_signature')
+      .eq('id', invitation.swimmer_id)
+      .single();
+
+    // Determine redirect URL based on enrollment status and waiver status
+    let redirectTo: string;
+    const needsEnrollmentForm = swimmer && NEEDS_ENROLLMENT_FORM.includes(swimmer.enrollment_status);
+    const needsWaivers = swimmer && (!swimmer.signed_liability || !swimmer.cancellation_policy_signature);
+
+    if (needsEnrollmentForm) {
+      redirectTo = `/enroll/complete/${invitation.swimmer_id}`;
+    } else if (needsWaivers && waiverToken) {
+      redirectTo = `/update-waivers/${waiverToken.token}`;
+    } else {
+      redirectTo = '/parent';
+    }
+
     return NextResponse.json({
       success: true,
       swimmer: invitation.swimmer,
-      message: 'Swimmer linked successfully! Welcome email has been sent.',
+      message: needsEnrollmentForm
+        ? 'Swimmer linked successfully! Please complete the enrollment form to finish registration.'
+        : needsWaivers
+        ? 'Swimmer linked successfully! Please complete waiver forms to finish enrollment.'
+        : 'Swimmer linked successfully! Welcome email has been sent.',
       swimmerId: invitation.swimmer_id,
-      redirectTo: '/parent/dashboard'
+      redirectTo,
+      waiverTokenCreated: !!waiverToken,
+      waiverToken: waiverToken?.token,
+      needsEnrollmentForm,
+      needsWaivers
     });
   } catch (error) {
     console.error('Error claiming invitation by token:', error);

@@ -48,12 +48,12 @@ export async function POST(
         payment_type,
         funding_source_id,
         parent_id,
-        parent:profiles!swimmers_parent_id_fkey(
+        parent:profiles(
           id,
           full_name,
           email
         ),
-        funding_sources!swimmers_funding_source_id_fkey(
+        funding_sources(
           id,
           name
         )

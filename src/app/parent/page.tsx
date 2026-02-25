@@ -9,6 +9,7 @@ import { SwimmerCard } from '@/components/parent/swimmer-card'
 import { UpcomingSessions } from '@/components/parent/upcoming-sessions'
 import { PendingEnrollmentAlert } from '@/components/dashboard/PendingEnrollmentAlert'
 import { PendingParentReferrals } from '@/components/dashboard/PendingParentReferrals'
+import { PendingWaiverAlert } from '@/components/dashboard/PendingWaiverAlert'
 import { PendingInvitations } from '@/components/parent/PendingInvitations'
 import Link from 'next/link'
 import { Plus, Calendar, Users } from 'lucide-react'
@@ -211,6 +212,9 @@ export default function ParentDashboard() {
 
       {/* Pending parent referral requests */}
       <PendingParentReferrals />
+
+      {/* Pending waiver alert */}
+      <PendingWaiverAlert />
 
       {/* Pending invitations */}
       <PendingInvitations />

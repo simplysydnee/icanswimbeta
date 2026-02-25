@@ -45,14 +45,14 @@ export default function RegionalCentersContent({ regionalCenters }: RegionalCent
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="py-16 bg-gradient-to-b from-cyan-50 to-white">
-        <div className="container mx-auto px-4 text-center">
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto text-center mb-12">
           <EditableText
             pageSlug="regional-centers"
             sectionKey="hero-title"
             defaultContent="Funding Sources"
             as="h1"
-            className="text-4xl md:text-5xl font-bold text-cyan-600 mb-4"
+            className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-[#2a5e84] to-[#23a1c0] bg-clip-text text-transparent font-playfair-display tracking-tight mb-4"
           >
             {getContent(content, 'hero-title', 'Funding Sources')}
           </EditableText>
@@ -61,12 +61,12 @@ export default function RegionalCentersContent({ regionalCenters }: RegionalCent
             sectionKey="hero-subtitle"
             defaultContent="We partner with Regional Centers and Self Determination programs across California. Eligible individuals can receive fully funded swim lessons at no out-of-pocket cost."
             as="p"
-            className="text-xl text-gray-600 max-w-2xl mx-auto"
+            className="text-xl text-gray-600 font-inter max-w-3xl mx-auto"
           >
             {getContent(content, 'hero-subtitle', 'We partner with Regional Centers and Self Determination programs across California. Eligible individuals can receive fully funded swim lessons at no out-of-pocket cost.')}
           </EditableText>
         </div>
-      </section>
+      </div>
 
       {/* Funding Sources - Dynamic Cards */}
       <section className="py-12">
@@ -322,7 +322,7 @@ export default function RegionalCentersContent({ regionalCenters }: RegionalCent
           <EditableText
             pageSlug="regional-centers"
             sectionKey="cta-description"
-            defaultContent="If you're a client of VMRC, CVRC, or another Regional Center or Self Determination program, you may qualify for fully funded swim lessons. Request a referral to get started!"
+            defaultContent="If you're a client of VMRC, CVRC, or another regional center, you may qualify for fully funded swim lessons. Request a referral to get started!"
             as="p"
             className="text-cyan-100 mb-8 max-w-xl mx-auto"
           >

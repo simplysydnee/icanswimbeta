@@ -28,6 +28,14 @@ export default function ResetPasswordForm() {
   useEffect(() => {
     const checkAuthState = async () => {
       try {
+        // Check for error parameter first (from auth/confirm route)
+        const errorParam = searchParams.get('error')
+        if (errorParam === 'invalid_token') {
+          console.log('ResetPasswordForm: Invalid token error from auth/confirm route');
+          setValidToken(false)
+          return
+        }
+
         const { createClient } = await import('@/lib/supabase/client')
         const supabase = createClient()
 
@@ -55,16 +63,18 @@ export default function ResetPasswordForm() {
           searchParams: Array.from(searchParams.entries())
         });
 
-        // Also check URL hash for tokens (common with Supabase)
+        // Also check URL hash for tokens (common with Supabase admin.generateLink())
         const hash = window.location.hash.substring(1)
         const hashParams = new URLSearchParams(hash)
         const hashAccessToken = hashParams.get('access_token')
         const hashRefreshToken = hashParams.get('refresh_token')
+        const hashType = hashParams.get('type') // 'recovery' for password reset
 
         console.log('ResetPasswordForm: Hash params:', {
           hash,
           hashAccessToken: !!hashAccessToken,
-          hashRefreshToken: !!hashRefreshToken
+          hashRefreshToken: !!hashRefreshToken,
+          hashType
         });
 
         if (code || accessToken || refreshToken || hashAccessToken || hashRefreshToken) {
@@ -72,9 +82,49 @@ export default function ResetPasswordForm() {
 
           let hasValidSession = false;
 
-          // Try to exchange the code for a session (common with ?code= parameter)
-          if (code) {
-            console.log('ResetPasswordForm: Exchanging code for session...');
+          // PRIORITIZE TOKEN FLOW (from admin.generateLink())
+          // Check for tokens in hash first (token flow from admin.generateLink())
+          if (hashAccessToken && hashRefreshToken) {
+            console.log('ResetPasswordForm: Found tokens in hash (token flow), setting session...');
+            try {
+              const { error } = await supabase.auth.setSession({
+                access_token: hashAccessToken,
+                refresh_token: hashRefreshToken,
+              });
+              if (error) {
+                console.error('ResetPasswordForm: Set session from hash failed:', error);
+                console.error('ResetPasswordForm: Error details:', error.message);
+              } else {
+                console.log('ResetPasswordForm: Session set successfully from hash tokens');
+                hasValidSession = true;
+              }
+            } catch (hashError) {
+              console.error('ResetPasswordForm: Hash token exception:', hashError);
+            }
+          }
+
+          // Check for tokens in query params (alternative token flow)
+          if (!hasValidSession && accessToken && refreshToken) {
+            console.log('ResetPasswordForm: Found tokens in query params, setting session...');
+            try {
+              const { error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              });
+              if (error) {
+                console.error('ResetPasswordForm: Set session from query params failed:', error);
+              } else {
+                console.log('ResetPasswordForm: Session set successfully from query tokens');
+                hasValidSession = true;
+              }
+            } catch (queryError) {
+              console.error('ResetPasswordForm: Query token exception:', queryError);
+            }
+          }
+
+          // Only try PKCE code exchange if token flow failed
+          if (!hasValidSession && code) {
+            console.log('ResetPasswordForm: No valid tokens, trying PKCE code exchange...');
             try {
               const { error } = await supabase.auth.exchangeCodeForSession(code);
               if (error) {
@@ -94,22 +144,6 @@ export default function ResetPasswordForm() {
             } catch (exchangeError) {
               console.error('ResetPasswordForm: Code exchange exception:', exchangeError);
             }
-          }
-
-          // If we have access/refresh tokens in URL, try to set the session
-          if (!hasValidSession && ((accessToken && refreshToken) || (hashAccessToken && hashRefreshToken))) {
-            console.log('ResetPasswordForm: Setting session from URL tokens...');
-            const { error } = await supabase.auth.setSession({
-              access_token: accessToken || hashAccessToken || '',
-              refresh_token: refreshToken || hashRefreshToken || '',
-            });
-            if (error) {
-              console.error('ResetPasswordForm: Set session failed:', error);
-              setValidToken(false);
-              return;
-            }
-            console.log('ResetPasswordForm: Session set successfully');
-            hasValidSession = true;
           }
 
           // Check if we now have a session
@@ -211,6 +245,7 @@ export default function ResetPasswordForm() {
             <p className="mt-2 text-xs">
               <strong>Debug info:</strong> Check browser console (F12) for details.
               URL has {searchParams.get('code') ? 'code parameter' : 'no tokens'}.
+              {searchParams.get('error') && ` Error: ${searchParams.get('error')}`}
             </p>
           </div>
           <div className="space-y-2">

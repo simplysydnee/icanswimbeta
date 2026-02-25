@@ -182,7 +182,7 @@ export function ExpandableSwimmerCard({
             </div>
             {hasFundingAuthorization && (
               <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200 text-xs">
-                VMRC
+                Funded
               </Badge>
             )}
           </div>
@@ -302,7 +302,7 @@ export function ExpandableSwimmerCard({
 
               {hasFundingAuthorization && (
                 <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
-                  VMRC Client
+                  Funded Client
                 </Badge>
               )}
 

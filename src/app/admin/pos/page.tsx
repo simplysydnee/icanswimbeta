@@ -379,7 +379,7 @@ export default function POSPage() {
             {activeTab === 'purchase-orders' ? 'Purchase Orders' : 'Monthly Billing'}
           </h1>
           <p className="text-muted-foreground">
-            {activeTab === 'purchase-orders' ? 'Manage funding authorizations' : 'Generate and export VMRC/CVRC billing'}
+            {activeTab === 'purchase-orders' ? 'Manage funding authorizations' : 'Generate and export funding source billing'}
           </p>
         </div>
         <div className="flex items-center gap-4">

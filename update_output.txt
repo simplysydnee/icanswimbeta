@@ -1,0 +1,1833 @@
+/Users/sydnee/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+PARENT NAME UPDATE SCRIPT
+==================================================
+CSV file: /Users/sydnee/Desktop/Clients-All data all fields  (3).csv
+Filter: Only swimmers with enrollment_status = 'pending_enrollment'
+MODE: DRY RUN (no changes will be made)
+
+Processing CSV file: /Users/sydnee/Desktop/Clients-All data all fields  (3).csv
+Filter: Only updating swimmers with enrollment_status = 'pending_enrollment'
+DRY RUN MODE: No changes will be made to the database
+
+CSV has 91 columns
+Parent Name column found at index 4
+[DRY RUN] Would update: bdec319c-a770-4b77-bd81-8a9fe572d74c -> 'Emoni Jones' (current: 'Emonijones5')
+[DRY RUN] Would update: 60080f1b-c13c-4d3a-af5d-761f819ea1c9 -> 'Monica Lujan' (current: 'Moncadoo')
+[DRY RUN] Would update: fc5782bb-5ccd-4f20-b271-0849e13fb878 -> 'Shayna Clark' (current: 'Shayna36518')
+[DRY RUN] Would update: fcd9bfde-88a2-4cd8-bdb9-b4711699ae60 -> 'Maria Betancourt' (current: 'Magie Betancourt87')
+[DRY RUN] Would update: 730ba908-4e6c-49b7-a37a-0e68d5b7fb43 -> 'Elizabeth Ortiz' (current: 'Lizmonares17')
+[DRY RUN] Would update: 5d399fb2-939d-453e-9ced-4d1d5982e892 -> 'Antonia Villarreal' (current: 'Villarreal Antonia')
+[DRY RUN] Would update: 562a8e63-67f7-4d36-a4ed-25b42faa83e4 -> 'Patricia Espinoza' (current: 'Patiespinosa45')
+[DRY RUN] Would update: 87cd06fc-e529-49f1-a337-f2fb45c7cb0c -> 'Michelle Ramirez-Valenzuela' (current: 'Michelle Ramirez-Valenzuela')
+[DRY RUN] Would update: 5a9c87f0-615c-4855-88ec-9397e2d603e9 -> 'Charice Fourre' (current: 'Charice Fourre')
+[DRY RUN] Would update: 94a0169a-d41f-448e-ba70-0c7167193724 -> 'MICHAEL DISHLER' (current: 'MICHAEL DISHLER')
+Processed 10 records...
+[DRY RUN] Would update: 5101f144-e7d0-49b7-9ca5-da6e7ff6bd22 -> 'Gina Tostado' (current: 'Gina Tostado')
+[DRY RUN] Would update: b57b0e8c-4b0a-46ac-86a1-8fc15213f8d3 -> 'VANIA AQUINO' (current: 'VANIA AQUINO')
+[DRY RUN] Would skip (not pending_enrollment): 48664836-8b16-4dbe-b633-c294770303ca - status: enrolled
+[DRY RUN] Would update: 8909ed99-25d3-4885-b43b-e805b507e073 -> 'Jody Mejia' (current: 'Jody Mejia')
+[DRY RUN] Would skip (not pending_enrollment): 5beeaf19-2d2a-45a7-848e-d2575f585a8e - status: enrolled
+[DRY RUN] Would update: bc97f1db-cf74-496c-b6d9-63beb1c5738a -> 'Nereida Hernandez' (current: 'Nereida Hernandez')
+[DRY RUN] Would update: 2feb9467-477f-4fdd-8627-3605afe138d7 -> 'AMY PATTERSON' (current: 'AMY PATTERSON')
+[DRY RUN] Would update: 3d195e8f-6eec-404f-a5ff-ae4098eb9467 -> 'Adrienne Rivera' (current: 'Adrienne Rivera')
+[DRY RUN] Would update: b0f3a85b-ecde-42dd-97ca-d88111b74477 -> 'Brianna Siarot' (current: 'Brianna Siarot')
+[DRY RUN] Would update: c0b9b637-cf57-4f90-8d12-0fc946301e2a -> 'Elizabeth Gracian' (current: 'Elizabeth Gracian')
+Processed 20 records...
+[DRY RUN] Would update: eb3dd792-d24d-4e30-a8d8-4eefca9065da -> 'Michelle Escamilla' (current: 'Michelle Escamilla')
+[DRY RUN] Would update: 6236bae4-9be8-472f-ba18-1ddd5eb633db -> 'Monica Fernandez' (current: 'Monica Fernandez')
+[DRY RUN] Would update: e2e24d07-059b-4a20-8ef3-98955d3bb69f -> 'Monica Fernandez' (current: 'Monica Fernandez')
+[DRY RUN] Would update: 74bd9a5b-57ea-4dc2-9a90-6305f04360d2 -> 'NANCY HERNANDEZ' (current: 'NANCY HERNANDEZ')
+[DRY RUN] Would update: 9c78d301-d97a-413a-b750-c091a820d908 -> 'Britany Hopkins' (current: 'Britany Hopkins')
+[DRY RUN] Would update: 3385b3cb-2a97-42f0-b200-69230ccb2ffa -> 'Katriona Fortuna' (current: 'Katriona Fortuna')
+[DRY RUN] Would update: 2793f08b-7d47-493b-bed6-277fb7bd6feb -> 'Mai Shehadeh' (current: 'Mai Shehadeh1')
+[DRY RUN] Would update: 91e518f6-6709-4d1d-8471-4b00697ff5d4 -> 'Dawnette Galicia' (current: 'Dawnette Galicia')
+[DRY RUN] Would update: 6f328532-9130-40a7-a3a7-53ecf0122bfe -> 'Heather Serin' (current: 'Heather Serin')
+[DRY RUN] Would update: e9fdb961-8db6-4efe-bfb4-f376c7afe0f9 -> 'JUana Munoz' (current: 'Juanamunoz94')
+Processed 30 records...
+[DRY RUN] Would update: 95e364ee-aed8-4939-8533-fa0508d9e7f0 -> 'Samantha Mello' (current: 'Samantha Mello')
+[DRY RUN] Would update: 31d7ee3d-90da-4222-88dd-7fd9a7e16633 -> 'Sara Sopko' (current: 'Sara Sopko')
+[DRY RUN] Would update: dbea8f2b-87af-4644-93c5-bdd536b54e10 -> 'Juana Munoz' (current: 'Juana Munoz')
+[DRY RUN] Would update: 0ada056b-872b-4e88-899f-18965fca704c -> 'Sara Sopko' (current: 'Sara Sopko')
+[DRY RUN] Would update: 09ae0ed2-1634-41e0-9a52-029049264b31 -> 'Colleen Billups' (current: 'Colleen Billups')
+[DRY RUN] Would update: 4fc057d7-ff13-44bf-99f3-a13f0e90d003 -> 'Crystal Luevano' (current: 'Crystal Luevano')
+[DRY RUN] Would update: 6c9fd212-b2c7-4c55-a458-0a5abe6e73ba -> 'Lucero Rodriguez' (current: 'Lucero Rodriguez')
+Processed 40 records...
+Processed 50 records...
+Processed 60 records...
+[DRY RUN] Would skip (not pending_enrollment): 4465ef0e-da41-49bb-842b-e7ec320881bc - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 485a7739-e65a-4a45-a216-f278465f1057 - status: enrolled
+Processed 70 records...
+[DRY RUN] Would skip (not pending_enrollment): 066b73c2-fd36-4a69-b9fd-980632fa3760 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 1b3c9b9e-56a1-4bd1-af1e-410950804fa1 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): dd117e61-0c1b-47e5-b186-526212f17ea1 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 2caca044-e167-4b50-a9c8-1b73cb3385d9 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): e3aa2afc-7262-4080-afe0-4fd3f778aaae - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 2f8ab0dc-0103-4b89-8925-f9027577c720 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): b1136169-ca26-4e7a-9a73-5b5e1222e981 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): c0ada41d-91db-42ef-8142-b118e716ad44 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 75ce4e37-073d-443e-9a14-7aa25917e95e - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): b46bfc17-2be0-4b8d-b6f4-6269dd68d8b0 - status: enrolled
+Processed 80 records...
+[DRY RUN] Would skip (not pending_enrollment): 09449517-a347-4a66-9019-068e26e6e08f - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 3824ec20-a478-4a2c-9888-abf4ab7c5bbd - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): bd3405ff-f053-4c8e-90b2-a2794aa28263 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 311c07ee-bbae-466a-ba48-3b995a375b77 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 65e494b2-b463-4116-9fff-6de9cf58e628 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 3d646400-11fb-4fdc-ba4a-29e8819c4c99 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): d70cd3fe-7d0b-47e6-a20a-d42052c07b4c - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 53f82a5f-37f4-4f9a-91fa-a9332dab2b49 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): abac9084-c70c-4002-b692-4b772d13d05d - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): bd89a1f5-0a13-4bb7-8c53-472a0aaf6195 - status: enrolled
+Processed 90 records...
+[DRY RUN] Would skip (not pending_enrollment): 9372539c-f18f-4cb9-a0f8-fcaf92294db6 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): e79e59fa-10e2-409b-9c0e-5456377ce1a3 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): c1b46790-8f78-40bc-b82a-d7c01131346d - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): d4482d50-39fe-4e06-9a01-d309263d6d9b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 5ecabbcc-605b-4591-9c52-ce7e46993062 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): e72de865-e6b9-4cbb-93ae-ad24f0d422aa - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): ef1ef018-6ba6-4560-8cad-b56a767c15f1 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 59193b9f-5cae-48d4-8822-27301b1c5eac - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 512a9d4a-2bec-4a14-aabe-887968f20a57 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 19bd1afe-7b81-4b6a-8676-4b39682cf4c1 - status: enrolled
+Processed 100 records...
+[DRY RUN] Would skip (not pending_enrollment): 64e0c106-f064-4850-948a-da66d3e34e1e - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): ad33eebd-c399-47ea-813c-de5625ee2719 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 4f946f9d-f86b-4737-9a46-a50955e70874 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 0e542b88-4af6-4829-8cc4-4c41904535e2 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): b770dd5a-3737-42dd-8cf3-733e55fe754a - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 8409e3b5-af6e-4c6c-ab03-9766c67df242 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 20a8cc6a-4308-446c-8340-b6abcdfef410 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 6d427b26-1b5c-4954-8bbd-4437267b02f2 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 04f2386c-7be1-4431-b7f4-3a6b6d69e148 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 61649a1a-ee27-41ae-942b-0ff9a1671bde - status: enrolled
+Processed 110 records...
+[DRY RUN] Would skip (not pending_enrollment): d502cf86-b899-437c-9de9-f9c544d7f15a - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 5e1cc00b-fa15-478e-8fba-a06a5c482633 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 52cdd0e7-e2b4-48d2-8f80-d690b9c38454 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): a48ae5ea-8afc-4d79-8590-c5ef5f4b7baa - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): b03d728f-a272-4d35-b4f1-e19a635a7cc6 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 8ae2669d-bb2d-48da-a2dd-66ccb2c78e59 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 9b7e464a-f78d-4e2f-8beb-aebde9f8de55 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): a25814f9-0a7d-45f2-9796-927e9d4a8ea4 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 4ffd07a4-bb53-4a0f-b2e4-6eba1b60b7f3 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): c8bf2299-69d2-4777-9e6f-0056cd6652a3 - status: enrolled
+Processed 120 records...
+[DRY RUN] Would skip (not pending_enrollment): 508dc6fd-fc30-49db-8c21-d95020cdee8a - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): af86c9e1-a57f-4845-b41a-6d45767f70aa - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): d2493eec-b97a-47ad-ac6d-b102f3e28a16 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 9e6c02f1-5e38-4fca-8600-32c1e3bff49e - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): ce640ae1-129b-47e6-baae-3061ec63c0c6 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): a7ec6038-b2d8-4553-af84-693977864171 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 5c4f0daa-d0ed-4f8c-b818-ce1e9543028b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): c8f39fa2-0bc9-4b7d-8dde-aa99ffd7a7f0 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 54931633-fc72-4e81-92d0-b74742246670 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 93067a42-1d65-4ae6-a400-5d12c1e88408 - status: enrolled
+Processed 130 records...
+[DRY RUN] Would skip (not pending_enrollment): 06fb9789-bca3-47b5-9dd7-c1597eb0a270 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 553e0041-5c41-4eb7-9e07-f363f952c0e3 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): b0bb69b5-243b-4fdd-a020-b33166f828d9 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 571f9cc5-7530-4041-b3c6-1f1794aae440 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 2dbbc257-2f97-47ea-b402-63810c287386 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): f25ddf95-efbc-488e-bec4-6182308be6b8 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 21ba85e2-4b81-4629-a6c4-b8399d190938 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 2fae4347-16d9-436c-9194-ef8f113472fd - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): f2c4d76c-9f73-4d94-99c9-a6f63fb72f12 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 0121ac21-9920-44ed-9542-e2ef4fb8b551 - status: enrolled
+Processed 140 records...
+[DRY RUN] Would skip (not pending_enrollment): ee76b13e-30c0-4bf6-b412-a449c1029034 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 78331423-0ae5-40fa-a6e9-a55d35c63db1 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): ebfe6d42-dba8-4783-9e79-38aa00a5f884 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 83678010-568b-4de6-a139-f835e9284bb7 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 0659786a-4fa5-4048-be4d-ddd8ee0209b9 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 3f6c80fa-b30d-48ef-882e-c520a57ac1aa - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 7e04c803-e495-4f65-87c9-5f600583050b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 49fe7f11-e671-49b0-b3cd-a5c4243d7af8 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): b05285f7-f35d-4e39-9202-954fdb354e06 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 0ecc3aee-ad67-4b93-9a47-d6ca690d39ac - status: enrolled
+Processed 150 records...
+[DRY RUN] Would skip (not pending_enrollment): 9a846296-8fb7-4311-add9-8279be34db41 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 965d019a-4265-48ca-b716-4cd5274ff486 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 9a51df14-6144-4f88-9e51-a199e4f2f03d - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 07615bca-b043-4338-948b-5ecf7dcf1da2 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 726cfd90-5a4c-4fa4-8cf5-2580284a4b0c - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 3fb5313a-7fdd-4ba5-a794-306fbdb70899 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 7006eb6e-67d5-4e85-8496-4459dbd19efb - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 5da9e768-e484-476d-be6a-e3f7648b3907 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 32cef9a8-95ce-4c46-835e-1f348e5aedea - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 5894dcd1-0dda-4f8b-b3eb-ffa7d25141cd - status: enrolled
+Processed 160 records...
+[DRY RUN] Would skip (not pending_enrollment): e9118721-30d3-4a9b-9679-ea32b6ef0d7b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): c1873804-9bc9-414e-b2f1-d7332054e22a - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 61614592-0ae5-43a1-ad0e-0d553139f06b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 939f1ab4-217a-4d3c-acf5-9608854a8579 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 8fb7766f-5d81-41c7-9a6b-7df3767448eb - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): ee483866-7b40-43b0-b704-e23e8a0e9e89 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): f6dcf0f0-872d-4e20-9afe-54ec0c32c5b5 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): f8a6381e-4136-43b2-bcc3-f5f19f50edf2 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 004316e0-cddf-4fe7-b40d-1d8421dec828 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): b772407e-dd27-46e9-9148-32b10bee96d2 - status: enrolled
+Processed 170 records...
+[DRY RUN] Would skip (not pending_enrollment): 79184e19-1096-43fc-9493-129707963368 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): a701ebd9-72d6-4a36-9914-32d680a717fc - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 3fbfbe87-07d5-4899-85d0-fa1fc86a8b03 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): e9c2c58d-1286-4079-a215-9969c2f42a64 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 2c57f3dc-c0ab-41f4-87c3-ad7f39e448ba - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): facdce3f-0fb7-4ef7-b5fa-e6ebcb3012ac - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 9344c776-8fe5-4767-9ada-6454d2fbdcf9 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 9cb3d374-1706-4aa2-bf2e-2dc6b669569b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 58994052-eb50-40b9-a803-cd4a912c43b8 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 4b5cb966-73d8-4937-9cc5-04af264c937a - status: enrolled
+Processed 180 records...
+[DRY RUN] Would skip (not pending_enrollment): 1ebbe077-4d5c-4683-8467-f83921c9affd - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 65c6fcfc-5781-48f7-bb95-43e409a66dd4 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): f974aa1f-3650-44c1-b2ba-33039653bf17 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 0c400374-d9ef-4e50-a99c-8fb7efdbf5d6 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 1a54c484-a10e-4f4a-822b-2835e15468b7 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): e34b5789-4b34-4b69-b78a-343d3996d07b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 09694ea5-0f3f-4670-83a5-0838fde31dd6 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): dd6c5793-dde1-4fcc-97c8-94b1df7fb87a - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): c0d60310-3f46-4ed5-ac38-5f798c312c0e - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): bfd6e169-ea0e-4aa2-a63a-3ecf0682a9c7 - status: enrolled
+Processed 190 records...
+[DRY RUN] Would skip (not pending_enrollment): b48275d9-37f4-4d83-9459-41908b2c8fca - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): d0493bd9-ba4c-4b81-9479-4ae3c653dd94 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 10f81f01-f491-4385-8af4-11b19d5d469b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 9bb8bc68-69a2-421e-ae13-7b19cb48541e - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 00b9ef7c-a3a3-4d9c-9c17-68bdadea07f5 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 821ad900-e7a3-40d9-a4bd-394632508598 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 2c7820ce-deb8-4da0-8084-8a69fae0199c - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 99695e11-be55-4821-beff-730787e8564b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 91015634-1b8d-4bfe-a059-8df696c5b9b0 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): f2977532-a7b8-4966-a4a8-f19ebc006bb9 - status: enrolled
+Processed 200 records...
+[DRY RUN] Would skip (not pending_enrollment): a126d1f0-20d9-4611-af10-0a2598894bad - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): e282618a-bcd5-4034-90bb-d9afe1270de2 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 06f93320-ccb8-43c3-bdd3-48d6f7710afa - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 7eca7eba-437a-428e-93f2-c04810794715 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 02190073-c3db-4edb-b653-4e420f455d8b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 71a2b64a-604f-4be4-b8e7-46f47b92691d - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): c178c84c-574a-4c3e-9f6f-08f15355c092 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 09e2f714-91b2-48ab-b2a6-38ab4aa8e2c7 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 6c21f80d-2620-40c9-b8dc-d9548ebce232 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 6e288c68-3cca-4fb7-95dc-176b813a60cc - status: enrolled
+Processed 210 records...
+[DRY RUN] Would skip (not pending_enrollment): 1764eba8-0395-45c6-a53e-943078d2a383 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 3ff47eff-a37f-4405-84f4-8504476a0ae4 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): df866a4a-e81d-4741-bd3c-fc2eb452a467 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 07850da4-1155-4209-afc8-da26818b8b0e - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): f202f8c0-1b9e-4782-9ec0-64049fa96080 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): d54e840f-8665-41c8-a052-1bedca22bb89 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): cf5cae13-3c14-476e-85cf-de200f666f1c - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 49943965-c194-433a-8f0c-d9e7d51c4557 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 49049b04-2bbd-420c-bb0f-fc61b8015156 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 1a302ae7-f0ad-4476-98c8-6a3311d9cbad - status: enrolled
+Processed 220 records...
+[DRY RUN] Would skip (not pending_enrollment): 1d07fc40-51bc-458f-bdf1-c1f117be3fe0 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 80a76351-b5d6-4efb-859c-77d45fcb1230 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 8225c9b8-ce3d-4a30-ac74-48221b63bf98 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 2a2b3b53-3d24-4a4f-ac8d-4605c4f1e4fd - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 8e959ef1-6bb3-4517-9d00-95bec9c7f2a4 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 86e2b95e-8a8e-40d5-88fb-d9969fcdcdba - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d7873f9a-91d1-4b09-b721-08b5638527fa - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 93917bde-157e-4eca-8d1b-a4c4010d6728 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 614a0dec-aeb0-4de5-b242-748fa3752fad - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 41ac5cb3-db6b-4baa-ac1e-01c7887401e9 - status: enrolled
+Processed 230 records...
+[DRY RUN] Would skip (not pending_enrollment): 5a1f904c-c1b2-496e-b987-0fee32e620e7 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): a1bba853-19d3-407f-97f1-205695fd3a2b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 09b776fc-c923-48ad-b3f1-a09b14a32c69 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 93cd57db-21d5-4c63-9e0d-265b3967dc01 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): f17314c6-f4d9-4531-8471-54e2e390feb2 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 56f0b121-1ef9-4cd3-8b77-4a978bd55679 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): b4a30602-065e-4d9c-8ef5-abcceba31d49 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 46b153b2-d9bf-4a49-836d-c7a556b0c10b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): ac0a5e9a-b658-44ba-8993-65e914e90019 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 65f43b16-91d8-4e27-a387-fb6176120737 - status: enrolled
+Processed 240 records...
+[DRY RUN] Would skip (not pending_enrollment): 67512c4d-df05-49ac-9b6f-ccbd6cde4ad6 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 330208de-598c-4634-88cb-6167be9f5013 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 6318e2c6-520b-4a32-bcd0-3124bd116b40 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 085bae00-eb12-4180-b940-aa698a7550f0 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 23eab8ac-f547-4b22-8173-d15994c64068 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 7ed1ed9c-1a08-4acc-94ba-e4f84ea2a44a - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 06ef6d51-b845-4855-9344-55f90f764817 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 05f319ba-8d9c-486e-b0a6-ebac336b61e7 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 0ba01f78-e977-4a87-9b48-4d42979e14d8 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): dbfba573-516c-439d-ac81-5a52e592e94b - status: enrolled
+Processed 250 records...
+[DRY RUN] Would skip (not pending_enrollment): 1e17fc09-dbea-4f67-b0a4-58ed66bca093 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): cf04c5b9-0a93-4196-8da3-ff04771c463b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): fedbc502-10af-4071-94bc-699218826a3f - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 8cf5cf31-07e6-42d0-af01-67d5ed87d8cd - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 426bc44b-e74b-49ad-ab8b-6259e8f0b92b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 6485e119-3544-4379-a6c7-994d13553442 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 28648071-6cb6-4805-9e6a-ce7973d4de23 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 0d47271e-407a-4751-99e9-9cd15778e589 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 6945ec84-65c5-4506-be0d-920bb16a7611 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 3abf3912-06dc-49b5-bf53-fa20439b8561 - status: enrolled
+Processed 260 records...
+[DRY RUN] Would skip (not pending_enrollment): 09082635-6cb2-4038-bff8-b2b89574d37f - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): c55cb986-a2ae-4b85-af56-1799d4e4e3f7 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): f7325b6d-1bc3-46db-8c85-a3441a9d43b4 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 17803f47-36b7-4b16-937d-652e46fc9bee - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): fef3ecaf-fba4-469a-9cb8-e0703fed3401 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 88c6a97f-23f9-47b1-a8eb-ef5f9338497e - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): e0e996de-fa5f-401e-aa01-dfbe7a04d54a - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 50be11bc-79ae-414b-8ef2-42a992057da4 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): fced458a-f0b2-45e8-b802-d3745d551238 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): d34da5b6-552f-4be2-9dfc-662942ab8961 - status: enrolled
+Processed 270 records...
+[DRY RUN] Would skip (not pending_enrollment): 302802f0-ec36-4bf6-9612-4a68f2f5cbfc - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 49265473-fd17-4dba-9dca-cd09a74bb435 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 3cf80149-450a-4d6a-8392-b554439a5e70 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 66929a26-bf59-4cb4-844e-ba1a746cca0d - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): d169dd66-c1cd-4e66-819f-01671340edaa - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): c376108d-0246-4c63-bb0a-830da64e8c93 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): e6bb3bb6-2aee-4133-92b5-2cb3356ba912 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 1fda37ea-e618-4abd-8f46-8c4a5259f636 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 90a8d1ab-7b5b-4528-a38e-38602b2bd562 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 43472b3c-74a0-41c8-868e-4f7776eee6c7 - status: enrolled
+Processed 280 records...
+[DRY RUN] Would skip (not pending_enrollment): 436ed7b7-4b9d-472b-bce2-e5baa029a215 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): fa01be9f-aa1f-4766-bbbc-2d29236dd8c7 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b258e404-5b42-4fe5-8b55-19bcbdcd9eb2 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): e9e47c8e-03b6-4f8d-9826-bcb385d5ad48 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): e05350c0-bee8-4845-8b5e-b7624c0a0446 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 592032d6-f166-49ce-afd8-b6bb717893c7 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 4f929959-52dc-4626-a304-30a5073e113c - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 15e71499-90e9-4323-9026-7a1abe8294d0 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 52a2c46f-2a93-46e5-88e2-df81eadcefb1 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 4ef647f8-9e4e-4cda-9d41-c005a2fb1479 - status: enrolled
+Processed 290 records...
+[DRY RUN] Would skip (not pending_enrollment): ed8cd726-1862-4bf7-a2e7-655e9eaf42d4 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): d9f33b6f-29fa-4cbf-a7bf-616b44ac425f - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): c4edac0c-a111-4eaf-b5c6-9aad69ca598e - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): d9f6c692-e9a6-4171-960c-6daba4581190 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 5020a465-5420-4f27-873d-ed598a0e22d3 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 2ba47c5e-c8a4-47bb-9e9f-024a063a086e - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): b802fe57-6401-4ace-ab54-2bf1b7c96141 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 76b84f51-31b6-40e3-b41b-672ddfe1caa9 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 6edab5b5-dc05-4d5d-825d-77c576457ddd - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): ad98ec0e-4ca9-4663-9e1a-e5d1f180d433 - status: enrolled
+Processed 300 records...
+[DRY RUN] Would skip (not pending_enrollment): 71b699ef-03be-4bac-8d4e-71526c785f3a - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 070aa9eb-0588-4d6e-a6a7-46c526ce48ff - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 49e4d7d5-deb9-4dca-86e8-12073bf845a3 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): dc26ac4a-6ee0-4213-8484-e64fed2a9da1 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 4b2e2872-3ee2-4fc1-9f5e-eb4357ee6d00 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): adb0edf8-bf57-4ff4-806c-a760d7d560ff - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d10bd7fd-da6e-429b-badc-ac0eed9d6034 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 71d81a0d-5740-42fc-a59a-0c71a915efa1 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): a5df4d98-31cc-4a1c-bfd6-5f4a74acf4b6 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 289bccf0-54a2-41af-93f6-924992c95a40 - status: enrolled
+Processed 310 records...
+[DRY RUN] Would skip (not pending_enrollment): c235e53f-d399-4d15-9a14-6ea99450477a - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 31212d9a-467c-4843-901f-a6df04d5c5a7 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): f339039f-d65a-4d36-8ae6-2b6d9e99b809 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): a78c9d1c-ac52-4b41-815c-154801c30aa7 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 5cfbb21c-aade-43c0-b5d0-d18eda453b6f - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): bc3d3e9b-910e-4c4f-bdee-a4b5259c5786 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 74a52b10-4dbc-4629-b580-9d6a0151b2dd - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): d8842fd1-dd81-4079-9637-476c1bd2d6c1 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): a09b0033-adbd-427a-8c29-e0c2a9d289f1 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 714ff0a0-a4ef-441f-b8c3-5353d4eafe47 - status: enrolled
+Processed 320 records...
+[DRY RUN] Would skip (not pending_enrollment): 5f609f62-ce4a-4a9c-9e7a-f2e37e630082 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): ee11339b-6784-4aa1-8368-3d624fd655ff - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 3b63e6da-a010-4def-aa69-57b7d0953bf4 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 2995f729-0d2c-44f9-a5f4-3d63b87eacec - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 7e75c150-87f3-4a2a-b0b2-9574f1815258 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 9cbbec21-caf9-45d4-bc69-1cd0723dcfe2 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): aa333460-0a6c-48ce-9d20-b7d78f4f7062 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 260eb07b-b361-4631-a671-d8191536ddaa - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 88cb887c-1ec8-48f7-8b1a-9767df24cc81 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): bb1c99c1-88ab-4304-98c4-b95711b874d7 - status: enrolled
+Processed 330 records...
+[DRY RUN] Would skip (not pending_enrollment): 06c20776-e8bf-41bd-9c93-ae2ba55eb525 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): ecd413f3-ef38-4e59-99a8-05c3417e0802 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 0779d9ea-cff4-4f34-b221-ac15c2b0d7c8 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): cdf41861-edd0-4c72-bbf4-653700f88ad4 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): fa3abf87-1761-4dad-883a-b891ce969369 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 93a78020-0c9a-4223-aceb-51eb191657e1 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): b0307b26-2ac1-49c8-8e4d-4790bf1b40f8 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 180efb40-09c5-4e97-8655-f14e60ce98e7 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 0210431c-5ca3-4973-bde7-01c65387c2ae - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 7a2ad133-9952-4e0f-8769-f40147cb6f33 - status: enrolled
+Processed 340 records...
+[DRY RUN] Would skip (not pending_enrollment): 2c87cfe3-0d77-4c6b-9323-a1effc3855eb - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 66d2b475-3e8f-40ed-81ec-2f534bca021b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): eeb5c17e-cabd-4c19-94bb-076c5283d68c - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): cf27b9c4-42ee-4728-93ed-5e400d43a271 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 1c6f7a12-7f16-42fd-82e7-80e8948518cc - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 0022d670-7514-4efd-9393-f899e7617552 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 7c78ebb5-0516-44b0-aefb-0d98317cf9c9 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 95e304da-8e92-434f-a95e-f349cb67d594 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): a7e8e2a0-00f9-415c-8daf-851c476c01dc - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 2fdc8ccb-0013-41cd-abf7-4f84ff0a0c11 - status: enrolled
+Processed 350 records...
+[DRY RUN] Would skip (not pending_enrollment): 0f1cde96-5c7d-4e6d-90c3-78618a2bc35e - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 82773f69-8ad0-4a6a-896f-0050b056871a - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 2b7f6ddf-9bd3-4899-9cf5-29a9a22b9a07 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 98f09e06-ea98-4c24-b1a4-59e9372c1fb0 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): e3363b77-e945-4ae5-9f77-4f4c2f21c48c - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 1f1873ec-28df-4629-b62a-6eba5e8ce103 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 52a11e2c-1000-4ba6-aa30-0f61526809b6 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): dcd35cd1-471d-4718-b1da-10ea4607c834 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): df0f95e9-f895-450f-8b5e-33ed176b1914 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): e9f657eb-6aec-4439-8189-dcaaa84f2789 - status: enrolled
+Processed 360 records...
+[DRY RUN] Would skip (not pending_enrollment): 0a0dd973-2758-4eae-8bc7-19a067c4af6c - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): c5cdfe88-765f-40a4-9169-9175996d9d20 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): d84c2c67-5eb2-43a7-b618-057c6b16fbc3 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 8fc0bba9-b627-4cd1-a846-0603dae14355 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 101b5dd7-8fbd-4538-96bb-148f7eddd4fa - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 21207380-df09-4d19-931c-d5918164cbb1 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 963022f4-3e9c-484b-856b-2b3d072d18a8 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 1dec7863-ceeb-47e9-887f-8fc9f5823041 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 508548ba-2594-4464-bc0c-445d45a8406c - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 287527ee-0dc8-4306-8f0b-3503556d7cad - status: enrolled
+Processed 370 records...
+[DRY RUN] Would skip (not pending_enrollment): 6b53dc63-9b15-4f81-9735-b056a125dd6f - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): a62bee87-8c79-433d-84f7-725207002a49 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 6798eef4-74a8-478c-a444-60e9cf9abed3 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): cf700525-99a2-4344-90fa-d54fd5307fe4 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): f41d43c8-0507-4106-b306-8125eadf5667 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): ac99733e-0088-46d4-b5dc-2d3ef2a161b5 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 874bf673-151d-458b-9894-b85d652d8317 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 6dcf0114-3bc9-44d1-9e79-2fbb6bcaf627 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 6752e704-7248-4580-a64e-42cd41211613 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): ff274ea5-7555-427f-a3a7-c42e492381a5 - status: enrolled
+Processed 380 records...
+[DRY RUN] Would skip (not pending_enrollment): 1ca26bc6-c08c-404e-916b-846b10e34e3a - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): d3529c5a-652e-4192-8ca0-e51be7011bd7 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 8c425df2-5c51-47dd-b41f-80dd2383ecfa - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 5c66409a-1737-4781-ac3d-23463777f23f - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 2e0bbc6a-bfe4-4c90-bb2f-038ebdb01dc6 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 307aa20c-8de4-4ae2-bfa0-8a4ac47937a6 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): f84c8227-078a-4ee4-aaa4-c1bc0277068f - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 3100dad2-20fd-4664-a880-a195bf4e03ce - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): e0a6a94b-b6b9-4771-9861-11901dbc6d10 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): f1b77f3c-1cd9-4570-8fb7-8c6eba196921 - status: enrolled
+Processed 390 records...
+[DRY RUN] Would skip (not pending_enrollment): 7f11f3f4-f904-462c-a653-65a41b2de1da - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 1e53fce4-2d78-4ffa-9e3d-ad6d2bdcfa1f - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 5db988f7-866d-4396-b8e0-9ea0091e1e0b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 0519375f-675f-4574-aedb-9e8df4d6146b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): c185b38e-e595-4139-9d44-004ad0f8b2f3 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 177cde46-6965-4c2d-a998-fbc99a1da551 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 66d5e598-6184-466c-9910-4b1306a1b666 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): c514738d-3be2-49ec-9c83-f6002a05385c - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 2ed0f522-9ac7-47da-9bc5-cf150998119f - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 5c498989-e5a7-4ac9-8ec3-89ce08b0ae82 - status: enrolled
+Processed 400 records...
+[DRY RUN] Would skip (not pending_enrollment): b437bc70-4a4c-4fe2-9057-c8afa6bebe4f - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 6d855ac3-cc18-43b5-8387-79ade0c13764 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 70e99372-4816-416c-91bf-e90d5e05bedf - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 3ee843f3-9595-4fa7-9953-bada71827f42 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 5c8c25e9-a47b-4baf-8d6e-0a2a6812a16e - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 92d6ba7d-9b1e-4233-80c3-f2a5ae178500 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 14cbe136-f1e6-4818-bd64-fcea2a6c6fa5 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 6b97e1e8-f8a2-4cee-af31-53f4ce0a21b3 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): c6dfd539-a89a-4b75-8406-a904c053319d - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): b0f561e4-57bd-4041-a096-8b91725a7157 - status: enrolled
+Processed 410 records...
+[DRY RUN] Would skip (not pending_enrollment): f3f2d780-e8ae-425c-a0f9-7b50354b0076 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 9518c321-86b8-4a80-a49d-d9f1f8fc9f90 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 0c9d94d5-decf-481c-85b1-e4ff6c9b1185 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 68f20b9b-2cb2-4052-98c9-d83def6bbca6 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 678c34a2-8206-4713-b285-12d8f9c516e7 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 0e88826f-3f66-464e-9016-6bc1c9fc5133 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 1e54c541-3780-4d94-8eac-82ce7042d2cf - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 25da803c-0621-46ab-9d9c-255457b9b962 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): bf05a5fa-a6d1-4564-9164-c722615f9e58 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 57007856-dc06-4ac3-a24f-dc93bbf06cbc - status: enrolled
+Processed 420 records...
+[DRY RUN] Would skip (not pending_enrollment): 1347cf94-0a8a-47ac-a527-04cfc2c3e435 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): d70abfd5-5e84-48d9-bb60-4d4d6dd917a3 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 684ba3aa-89df-4b16-87e3-38814a7af703 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): c6042919-8599-4629-b66d-3f08af987004 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 4136ba51-336b-4a50-afcf-11c6d8cc19ed - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 05be56a0-e752-4a92-80b8-2ff8edff1842 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 935b057f-be35-4a3d-bdb0-c57c72ea28ce - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 34d55aa6-75ae-43cc-9aee-3f4388855e52 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): e3b38311-6bcc-40e8-9b1e-37b3f776bfba - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 71863dd2-9733-4faf-b2bc-a4a914b3263f - status: declined
+Processed 430 records...
+[DRY RUN] Would skip (not pending_enrollment): 8646956d-fbb7-40b2-9c8f-edb232d7bd90 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): eb636f10-3120-46b9-afb0-6fb8ce5e3357 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 0bc3e7e3-210f-46e1-bab9-24b55eea5b89 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 6b8b1058-7c10-463c-be20-126a6de05456 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 8d34dcc4-b849-48af-9b33-1b916e4c9b62 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): b892f81b-1ec8-458e-8e73-4c101e74f4a2 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): ea3b8900-e137-49a6-8798-a8ee85f62dc0 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 475269ed-9bf6-4760-b8da-bd80a5b14264 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): fbf98b77-e39e-47f5-842f-4dba70b5f761 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): c8b08441-2b4b-4c28-ac7a-8a606f4b0a54 - status: declined
+Processed 440 records...
+[DRY RUN] Would skip (not pending_enrollment): ebf76680-c350-4460-956d-9b9290bc52b6 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 85de3ba2-627a-4c01-be8f-36c0b8a48f26 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 156831db-2ce7-43d7-9090-ba6f06f9f7cb - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 4011d494-e98c-4ae6-9f77-2445c8623a48 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 58cfc2cd-3625-46b9-8131-34b47ed7e070 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 491efa5e-64c6-45dd-982e-8a113bf72ef8 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): f60da911-86e5-41ba-9862-990592c52b97 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 8afa8770-be94-4b77-9b91-c7660f3d9588 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): e3767a84-1b90-4029-9b24-83d9519ba721 - status: declined
+Processed 450 records...
+[DRY RUN] Would skip (not pending_enrollment): e12cc5fb-57ff-48ca-9fd4-b6d33903d321 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): cb8ad4b4-1624-41e5-b3f4-1e6ff0b7fd79 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): f939b388-bfbb-433d-a3fa-a6b576669864 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 20d10ab7-da11-460f-8ae7-7156ed8d0dca - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 9e4bf617-2af3-4a70-9c42-0dde0f833ccf - status: declined
+[DRY RUN] Would skip (not pending_enrollment): a562e8cc-dc9b-40e9-93ae-6f8495940529 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): da1aa12d-1dc4-4924-b4dc-bfcd6ba727d9 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 3b9827cb-c0d7-49cb-b6c9-d9eefb9f0fe8 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 2b55e12d-4e8e-4b4f-9d1b-573fbdf0096a - status: declined
+[DRY RUN] Would skip (not pending_enrollment): a9a64557-0a6b-45b4-bd31-d76f8293f90b - status: declined
+Processed 460 records...
+[DRY RUN] Would skip (not pending_enrollment): b1d9e4ac-eb3d-4957-a024-9612992e2512 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 97492ec0-db8a-4e81-9f9d-d3b868b28556 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 0511ad07-90cd-4b18-bb13-bd07f31a62ed - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 157d4943-7c9d-49e9-b413-c4dc0f8a1ba7 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): c1c41923-555d-48b7-9761-4be58f6f97d0 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): b2ea44d1-35fd-4910-bc86-0edefe4830bc - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 41c5bee2-fb5e-479a-9f51-d00f2a420a6c - status: declined
+[DRY RUN] Would skip (not pending_enrollment): ffeac5de-2ac8-4619-a962-cd7d68960141 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 18d271c7-5e0f-42ec-8af9-aab92f6c840d - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 6f22376f-10ed-4c51-95cb-47c97f6b84bd - status: declined
+Processed 470 records...
+[DRY RUN] Would skip (not pending_enrollment): 4b277161-2c39-4710-83ed-d97b9dbe72d8 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 5ffada3c-4ca4-4270-8136-e9f832e32c78 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 99fd06e4-c107-4558-a495-1e0441db926a - status: declined
+[DRY RUN] Would skip (not pending_enrollment): ac9f6f16-7bfc-4bf6-b226-c3bc8e9814e1 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 30dd5eb8-2db5-46a3-9411-0d01f01e41fe - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 7d4eb06c-4833-4904-8ea0-1a867f1de4ed - status: declined
+[DRY RUN] Would skip (not pending_enrollment): ea51def2-db38-4f7e-9194-ea8ee059cd9f - status: declined
+[DRY RUN] Would skip (not pending_enrollment): ee55b035-1bd9-45b4-91cb-1fca13e4401f - status: declined
+[DRY RUN] Would skip (not pending_enrollment): f7369cec-d7e2-4eca-9f21-0c03a5146a37 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 2ba88630-52e0-4ddd-a5f9-c55e41e88823 - status: declined
+Processed 480 records...
+[DRY RUN] Would skip (not pending_enrollment): fd91f9cd-8356-4cc3-b1e6-75280f0501e1 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): ae9c4af3-d30d-4f48-b7d2-f5a01a57641a - status: declined
+[DRY RUN] Would skip (not pending_enrollment): e6546b54-70fd-4b70-a24e-677ef1a2e1ed - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 49f8ef3a-17a2-4612-9e84-38b389427fbf - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 3b6047fa-10b3-406f-8def-0a219486a1ce - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 604b1bc1-d532-4f01-8a85-7ddd5e56e08a - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 3242f18a-38c3-4168-bf69-1fa4fe59c7d2 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 73e0cabd-f4ce-41c2-846e-1b20c638af20 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 6ec50ad8-3f03-4e97-b321-2793aa94d24f - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 6e79ae5c-9f4c-4e81-baec-b63290071c78 - status: declined
+Processed 490 records...
+[DRY RUN] Would skip (not pending_enrollment): a153f24a-4f05-4f6d-bb7a-2484f182e38a - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 9d1c0ad2-335d-4cab-9d70-10f081cb8a94 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 340d172b-527d-4ead-9117-c339bc5d631a - status: declined
+[DRY RUN] Would skip (not pending_enrollment): a92c95f1-bb2f-424a-88ef-d3a0e4a8de94 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 1692ce00-8b9d-4dcc-840b-494dc9243f35 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 24c35364-c904-4ed3-a75a-0a4cfd1efda5 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 882275ee-c97c-49df-8f70-9561405ae7ad - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 6a717d34-b85d-4bee-b0e8-52a33e404df1 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 68a4bcc2-2052-4b60-bfee-0178375cc788 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 23b7746a-b1f3-454f-95e4-0a37883a85d5 - status: declined
+Processed 500 records...
+[DRY RUN] Would skip (not pending_enrollment): 086ed879-0500-49db-869e-18d13416eb9c - status: declined
+[DRY RUN] Would skip (not pending_enrollment): f46a2bd4-0820-4f5d-bc85-0fad778f42ec - status: declined
+[DRY RUN] Would skip (not pending_enrollment): e3c287ca-53b6-4043-8cb1-c27cbf93771a - status: declined
+[DRY RUN] Would skip (not pending_enrollment): cf03af66-b816-42cd-9df9-86a82a1455bd - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 63b354d8-79e7-482e-ba63-1b868a238179 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 08db1a08-aca5-40fd-a51f-b9c450f8492f - status: declined
+[DRY RUN] Would skip (not pending_enrollment): f2273a23-3276-4755-b82e-a0d64f4a354f - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 1d4cf55f-ac1e-4276-8659-32c734284e08 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 60e9c7b4-229b-418b-b82d-634f2bd2f68b - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 26377e2f-3699-4d3d-afd6-1889dbdb0d97 - status: declined
+Processed 510 records...
+[DRY RUN] Would skip (not pending_enrollment): 413f57fc-3229-48d0-b848-04d275922f87 - status: declined
+[DRY RUN] Would skip (not pending_enrollment): 79f3b9cf-2827-468e-be81-8b2f089f12b4 - status: pending_approval
+[DRY RUN] Would skip (not pending_enrollment): 19fa45af-5a92-4b18-9bb6-eb1b0ecfacb1 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): b8fdd6f4-0351-4755-b789-f82f03000d53 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 6a591ec2-012e-482d-bb74-1348a678ef84 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): c5cea374-e648-4b55-84fc-f7c682ac1d4d - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 3166fafa-2b5b-4cff-a795-82b7b314be19 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 08d74c84-2a2e-4f0c-a94c-d851f67be85a - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 9c7377bc-2565-4a8a-bca0-a79b046c25aa - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 03676f9c-87f3-4780-95aa-1a3deab6b4c2 - status: dropped
+Processed 520 records...
+[DRY RUN] Would skip (not pending_enrollment): 6934d623-c54c-4c09-a42e-b6a121bdb01e - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 642406aa-52a3-47e0-8839-bd6fc09c039c - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 5fb3e9ec-9630-4c5c-9be8-428a274a94f3 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): e734c527-a294-46df-be5c-4010c002a13b - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 9b960bbc-7ede-4208-a7e7-1eecfae83e88 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 5e4ea317-0f61-4362-8f19-b415ebe527c0 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 7e7328a4-4dae-42f4-a608-0a7d2f164cb1 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): abaaeacf-d36e-4603-ab6f-ad335ac149a7 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 31b84447-6b1e-4b9f-99c1-8d1bd2e21327 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 085596b7-5710-403c-b95a-28d44bd70ac4 - status: dropped
+Processed 530 records...
+[DRY RUN] Would skip (not pending_enrollment): 98839596-b83a-4632-8177-dda3ca563a29 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): d1c95cf1-9863-4834-91fb-2ec7a661ba07 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): b066cb23-90d7-41fd-ba86-94e7b9c1bb85 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 1863f3f9-fef1-4039-adde-016618d0605e - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): bca960a3-1303-4dc8-a8b6-ea69bec33ca2 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): d001c63c-4d5a-4bc0-9988-4161645c4b69 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): ccc19289-12ae-424f-b288-979d249bbf40 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): b69961c5-1818-48f8-9aa1-0fe73e93664c - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 91299902-780b-462d-986f-20bc5b37bdd3 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 92af55e0-925d-4176-9969-74fc9590c263 - status: dropped
+Processed 540 records...
+[DRY RUN] Would skip (not pending_enrollment): e3941ca8-8244-4c5c-be0b-d9b9570a2148 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 12abdfd3-2214-4e87-a88e-a0e25758d269 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 7c46d7d5-8e1a-495d-83a6-37fa4e3f7f25 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): ef9c5c37-f04d-4ac0-a8f5-7b8d33f45902 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): c93ab903-6d85-4fc9-9676-6266d1feb5a4 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): bb2f6d1f-f96e-40fd-b285-98608639c27a - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 36c75dc5-1b6b-4131-a307-0ea60d32d940 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 2cf62783-c6ae-4e96-af48-dcd31a9486fc - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 5e879014-95f9-45a8-9e62-7efe4402ec43 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): dd5f49ff-7e2c-4d6f-a0cd-e99b3b5a2270 - status: dropped
+Processed 550 records...
+[DRY RUN] Would skip (not pending_enrollment): 4e64e663-728d-4a5d-a3e7-2928fbee701d - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 70c95aaa-2b26-4b42-a52a-6731630e4d79 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 4d7f760e-7dcb-4ad8-9ee5-e97666694506 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): aae1e9a2-da13-404c-872c-1b22d7c7e9a1 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 08ab7d7d-f3ac-4053-bb0a-0aacbf9ada65 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): a20aa618-1136-4123-94b2-d63945fee050 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 88d920cf-cf0b-427d-9c6f-9a07dcda665d - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 8fcee47d-0001-49d0-873d-1abab0e559f6 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 55debc63-ef82-4976-9598-952491768d6f - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 65f30813-818c-4ee8-8df6-a4156e94bae8 - status: dropped
+Processed 560 records...
+[DRY RUN] Would skip (not pending_enrollment): 8d63df3d-bdbb-4138-b557-90f465f4d296 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 11346db2-7d6a-47c6-99eb-2b7eff70a8ec - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 2aeee0a3-393c-41ce-8ffe-0476ee5f49a4 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): d35b7a64-968f-4c3b-9808-e782d2ed56f8 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 6dba54ad-915b-4244-9b2e-f3df05fe59ac - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 19cdd215-e2db-41df-8ac9-589908eb002e - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 1e63af19-4995-412c-80a7-dbf4ea421d6f - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 2395a78b-6501-48a5-80d5-80595b362ddc - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): ee9b2cdd-1727-4530-ae8e-22ab40f7b681 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 5431bfae-b8c1-4377-aa9f-6298cbe627df - status: dropped
+Processed 570 records...
+[DRY RUN] Would skip (not pending_enrollment): c79acadd-40e9-4206-834f-810ce13efd86 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): a6f088d1-69d1-48a9-a788-cd8c41eea789 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): de45bb04-1815-4a7b-9ca8-5cdbab9323ac - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 2a281314-6450-4352-8911-dae5b2d1cd2b - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): ce5d2607-cdea-4ff8-9f95-acf08818edc0 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 5580f5ed-fdea-48e7-a330-f15289616737 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 786e5f26-da66-4365-91f9-01bb4529395b - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 0ffd6981-16c9-44e2-a01f-73effd123582 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): 50cce4ce-708c-4b1d-8f74-9ec640e88e73 - status: dropped
+[DRY RUN] Would skip (not pending_enrollment): d14919ce-c822-4c8e-a5bd-9c2885a8a13b - status: expired
+Processed 580 records...
+[DRY RUN] Would skip (not pending_enrollment): 55d0624c-c393-485c-8fc4-3315a226b8d8 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 19d94276-2134-4868-9188-10f4a0bf44ed - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 5b58e91e-a47d-4f84-a9c9-65c88be6577a - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 2bfaed0e-6514-4430-9efd-6f221717fb24 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 3230b90d-9afe-4341-96e1-7d40ea3a1354 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 08e9e58f-95bd-4f69-8201-1fdec535ff1d - status: expired
+[DRY RUN] Would skip (not pending_enrollment): bb9c16b9-38ea-45ab-bebd-e559999bbf49 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 0ceaeb61-113a-48b5-a51c-ac475e8327fe - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 6ef8579d-4db0-4f9f-9c9f-0827d3228012 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 412c96b9-1542-42de-a78a-bff9e83645a8 - status: expired
+Processed 590 records...
+[DRY RUN] Would skip (not pending_enrollment): 2e3d9b31-8a62-40b9-90ea-42ab0030835d - status: expired
+[DRY RUN] Would skip (not pending_enrollment): fa4b7fbb-657c-4272-903f-5712eab9d78e - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 25317048-64b0-4fc1-b7ee-c7c2b4fa0726 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 9232fc72-845c-4f14-8ceb-d57badb49892 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): bce27303-c02c-4449-9cc0-8c16cdc78561 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): aceb0cd7-75e8-4cba-a511-44925759c75d - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 18a5beac-e87a-4d79-924c-08c4d68a54b4 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): b9d9296f-65ea-409a-b91e-640ef7feccb8 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 449cea6e-9cd9-415d-bad5-760b2c20095c - status: expired
+[DRY RUN] Would skip (not pending_enrollment): a0c622cb-3aff-44fc-9be4-47ce80614eec - status: expired
+Processed 600 records...
+[DRY RUN] Would skip (not pending_enrollment): 102ebf68-65d6-4723-8f59-edfa7ad9a9ad - status: expired
+[DRY RUN] Would skip (not pending_enrollment): b5c79b23-171c-4cbb-a8b2-79cc07a11102 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 98aeecaf-b775-4b5e-8ea0-8647752e8f9b - status: expired
+[DRY RUN] Would skip (not pending_enrollment): dac8d460-1560-44df-b99d-7ce8542110e5 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): f467f202-2714-4051-8b80-94a6384f4d9c - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 787faeb2-5dc8-4910-98db-ee738a59d69b - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 6b68c92d-0104-4aa0-b1fc-b29864425788 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 8cf55ac7-8e80-4bdd-ba44-0ef41cd2caff - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 1832231a-7beb-4b98-aa5e-8186abb7ffae - status: expired
+[DRY RUN] Would skip (not pending_enrollment): e3813d20-9a41-4608-9431-f3072e3bbd11 - status: expired
+Processed 610 records...
+[DRY RUN] Would skip (not pending_enrollment): 0edf95fc-24f9-4790-ab45-8c7db5fcdb0f - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 1a777af0-dde3-4f6a-85c4-9caecf92fc42 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 4b27e7bd-8746-42bf-ad57-c3e8eb0150e0 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 1f4bc45d-cb91-47ff-81c5-f1bd05c4adf4 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): b0cd0a14-4cfd-44ad-8d0f-a058d9820f3f - status: expired
+[DRY RUN] Would skip (not pending_enrollment): ce885ad1-04b7-4f6a-8745-063bc5c82e27 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 4347d49e-c73e-4903-a507-a2e4ee236520 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 7b5f14f5-beba-4f91-a4bf-4993b7115b97 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): fb0697cc-910c-4b1c-8165-eded6bfcbabc - status: expired
+[DRY RUN] Would skip (not pending_enrollment): a4aa81d3-ada1-4791-b320-63c3c757690c - status: expired
+Processed 620 records...
+[DRY RUN] Would skip (not pending_enrollment): af990b7d-5762-4915-961d-dbbbe7303238 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 9fd488a0-6695-4d36-9a7a-d533224cb5dc - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 41b7a8c4-541b-48f4-b018-6f5557c679ba - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 29f99ba1-5c55-417c-912f-e3ad2c6dcc51 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): b5762c31-a29d-4526-9f74-f382241c8d80 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): cafdb692-5377-46d8-8061-7482a39c1cd1 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 8e1a78bb-bdac-469c-973d-3a43e7b40c2c - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 63b8a2af-6191-43e0-9775-29a2c5b6a8be - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 7a433065-fce5-4486-957b-02316e3cd102 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 417c721a-7666-41f4-89c2-be7b6b3a3abe - status: expired
+Processed 630 records...
+[DRY RUN] Would skip (not pending_enrollment): f4f16082-c121-455c-9127-967aa7f6e062 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 3cbec5a5-4a33-4ed3-a4dd-3b7958400f08 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): a2c4676a-b406-463a-b47e-31f3fea40ef5 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 4f33c7f8-f656-4474-a01f-6904008e2f1d - status: expired
+[DRY RUN] Would skip (not pending_enrollment): f5002c78-b649-4722-ba55-ab246c33d294 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): f7887181-1b28-4851-90c3-2656758f7239 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 2d3fed03-c9e0-4fee-8484-0bf94f24237f - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 672f827e-8c1b-47ee-ad0d-b3c32d50b330 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 0ac813c3-1f6f-4d2a-ace5-f1f289a17be5 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): d8fa20da-1f86-4108-a334-b6aa2bf5927c - status: expired
+Processed 640 records...
+[DRY RUN] Would skip (not pending_enrollment): 8a9cb268-f08d-4222-ae88-93627312c447 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): a49202be-3e18-4b3c-991e-136c484e869f - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 6c0b1a1a-d8d7-41eb-b97b-52d6a01d4432 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 123f89e6-b5c2-4091-abd0-dd8ed13f48fb - status: expired
+[DRY RUN] Would skip (not pending_enrollment): dc6f5125-3b84-458f-b675-9de434942d89 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): c92ed0f6-0b55-4501-a5d7-db56785311d5 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 4be13cd5-5539-4ca9-bc13-34e69f38167d - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 47c5d0f5-5171-4697-bb8f-6431026b4aca - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 7f39b003-ed56-4410-bfd7-75cee9add255 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): d240fd24-65e5-438f-9504-396ea0ecd09a - status: expired
+Processed 650 records...
+[DRY RUN] Would skip (not pending_enrollment): 00319475-59c1-479f-9fc6-68a8ea3ff6bd - status: expired
+[DRY RUN] Would skip (not pending_enrollment): e788f4cb-15ed-4413-b39c-554e88cd67a0 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 2cafc018-003a-4f1c-a296-6a1330df8ad8 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): f945f0e8-9133-4087-a90e-91ecef66a8b4 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 0ebffe72-455d-42fd-9412-ec0ced410be7 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): b3faed8e-48cd-4dce-b1db-4dd04bf540c0 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 25496be3-6a45-462c-99d4-135a5377b5b2 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 75af8a68-e16d-4727-b04b-a3c404d55455 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): cf61e6aa-f153-4bdc-928c-8896b27c1fd3 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): c75ed866-626a-44ae-9ecc-b109da28ec82 - status: expired
+Processed 660 records...
+[DRY RUN] Would skip (not pending_enrollment): 63d1c795-6f28-427a-ba09-547cb55f9449 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): a07d40d6-bd9b-4faf-983a-5be56cfa4860 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 36d15405-6c40-4523-988a-1739a1524200 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 77370b1c-879c-49b4-b734-4c3b86e61a21 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 9d861249-c912-47c2-a8ba-394eb298e770 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 81dd85df-3db4-4f10-b21e-bdc1c2c96d37 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 38bff89b-e403-4167-89fe-0f6158af3353 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 5379c17d-efe6-4ff7-a19f-b0228f475d0c - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 9f9dc913-9fdd-402d-9a1d-0707d1270014 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): d64ed882-7ed0-4667-bf3f-3aa1b8eb56a0 - status: expired
+Processed 670 records...
+[DRY RUN] Would skip (not pending_enrollment): d09d52bf-6ec1-4f2b-aac3-e41bf5b624e0 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 2b1d411a-5a18-45bd-a347-cb9287f8d248 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 22baff53-d7ce-4051-9dcb-fe6cd762a6ed - status: expired
+[DRY RUN] Would skip (not pending_enrollment): ba37f500-a026-4799-aaa4-a323e17b0c17 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): c495055b-06dc-4d5c-8b41-a81c17ce7ec9 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 9449f963-e598-4cbb-9b56-ac86d366a693 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 95d41449-6a33-46f1-bdf6-12be973784a0 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 60f47e60-1d39-4a7a-a909-6c69ffc90dda - status: expired
+[DRY RUN] Would skip (not pending_enrollment): f48c6ab5-be5c-4adc-b8f0-7c06dd43784e - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 1373adfc-6bd1-42bf-b400-739c368a3988 - status: expired
+Processed 680 records...
+[DRY RUN] Would skip (not pending_enrollment): feea214f-8501-4f3c-b78c-818b573e9f1e - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 6cfb1755-e471-4514-a1d6-932f193b1209 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 8e3a6b5a-e5cb-4753-bcb6-3caae430db62 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 9cb85ad6-3944-44b3-a6fd-50c53e8add59 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 5c717bc4-2f53-4754-8883-42b34b6d3234 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): db3dd561-fa67-4007-a775-289b1a3dbb34 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): c23fd223-f444-4b12-8a34-ea82a16bcc1f - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 8d2cd2a9-255c-4c4d-a7da-958e78dcae1a - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 2f4cf353-dcf1-473e-850a-c6f112d362d4 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 88758cf9-32b3-4157-8e43-9dfa907f3a42 - status: expired
+Processed 690 records...
+[DRY RUN] Would skip (not pending_enrollment): d9a2586c-4fd9-4c9e-b2c3-d5efaa137a3a - status: expired
+[DRY RUN] Would skip (not pending_enrollment): dc8f5f71-ea02-4ccb-ba80-5f45fffdfe05 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): dc09720e-f470-41cc-a246-0ebd651c7435 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 770cd1ca-12d4-4d16-b553-9b506a78a0f2 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): d4a5e6ea-921d-4bd6-88c0-bf145e6147fe - status: expired
+[DRY RUN] Would skip (not pending_enrollment): e21a934a-eacc-451a-9ea0-3fc640ee7ec2 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 67b47519-8a03-43dd-b971-e615a462befc - status: expired
+[DRY RUN] Would skip (not pending_enrollment): f1b968b3-50a9-4295-8a7e-d37e62766273 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): ec031a61-7e8e-414d-8117-55b833e32457 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 40a2c0c6-712c-4c5a-919d-de4064a63e28 - status: expired
+Processed 700 records...
+[DRY RUN] Would skip (not pending_enrollment): 0b2e9191-d1e4-4ddb-9d74-a072f7e27183 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 3fa4a9ac-8a83-4b98-8856-7f71758c0240 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): a4f910aa-d299-42b7-849d-5da5f2a78210 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 28d7fd8c-b23b-476c-b436-aa1e6cd4cf18 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 2615946a-b11a-4405-9899-1f0d5ebfe3f6 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): d7fe8025-27f2-42b1-9b77-694382ac84a9 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): e55e8b78-7de5-4a13-a62b-cb7df85d0176 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): a4df96ea-2bbe-47de-b3e9-5619076ebdad - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 4ac76e2a-2311-44c7-a9f1-5e53e79f0e80 - status: expired
+[DRY RUN] Would skip (not pending_enrollment): 285fa603-dee2-46cf-80ef-02ab64be4aca - status: expired
+Processed 710 records...
+[DRY RUN] Would skip (not pending_enrollment): e9e83b82-4676-4403-bed7-8f73c3ce55a9 - status: expired
+[DRY RUN] Would update: b6a92c8f-2e80-4826-a3a9-ccb50685b75d -> 'Selena Sandoval' (current: 'Selena Sandoval1')
+[DRY RUN] Would update: 221e24fb-a6d4-429a-b47d-4588ec7d0155 -> 'Jazmin Mejia' (current: 'Jazmejia9')
+[DRY RUN] Would skip (not pending_enrollment): 7864f106-ff56-4419-acc2-f267f55af15b - status: pending_approval
+[DRY RUN] Would update: d375f10d-a2b0-4a1a-bb2f-83f351e3347b -> 'Sonia Saldivar' (current: 'Saldivarsonia90')
+[DRY RUN] Would skip (not pending_enrollment): 4a4bea45-e755-462a-8fbc-e70211c402f0 - status: pending_approval
+[DRY RUN] Would skip (not pending_enrollment): 317d4482-6887-438a-98fb-352c93abdac7 - status: pending_approval
+[DRY RUN] Would skip (not pending_enrollment): 7b289364-b4b8-4246-abea-4aad02a1cfe0 - status: pending_approval
+[DRY RUN] Would skip (not pending_enrollment): 65d51d7e-ca32-4050-9b42-cf5bd9d8a5f9 - status: pending_approval
+[DRY RUN] Would update: 94ed4846-84f9-4ba8-8c56-7decee9318a3 -> 'DARIUS BAEZ MOYET' (current: 'Dvade526')
+Processed 720 records...
+Processed 730 records...
+[DRY RUN] Would update: 238d4247-efc5-47c4-b1b9-ad8d124ce9dc -> 'MADISON PIMENTEL' (current: 'Madison Pimentel')
+[DRY RUN] Would update: 39da5cb6-a02f-4b27-965a-c24f69fb867a -> 'Maxine Hernandez' (current: 'Maxinehernandez106')
+[DRY RUN] Would update: b331b849-c177-4540-8400-33a0ebe7c53d -> 'Sasha Madrigal' (current: 'Sasha Madrigal')
+[DRY RUN] Would update: 35d5a1cb-fdfd-4b61-abf6-4dac451dc9f8 -> 'Annie Ieng' (current: 'At Huynh')
+[DRY RUN] Would update: f137db0a-f490-472a-b321-8c171c37f797 -> 'Michelle Diego' (current: 'Reagsmomma')
+[DRY RUN] Would update: e8e11f09-37e7-4f6d-be98-547dfda877d5 -> 'Jacqueline Noguez' (current: 'Roblesjackie68')
+[DRY RUN] Would update: aaedbfa2-9323-4cec-accb-b93e07b717b8 -> 'Lizette Velazco' (current: 'Velazcolizette')
+Processed 740 records...
+[DRY RUN] Would update: d62c03d0-efd5-4216-aceb-b0754ab2327a -> 'CAROLINA CARVAJAL' (current: 'Carolinaecm21')
+[DRY RUN] Would update: 75e47192-fcd4-4ad8-a493-89bf9746abb4 -> 'Christy Rhodes' (current: 'Christybalaoing')
+[DRY RUN] Would update: 1d4a5c29-6947-4289-8c42-7ca059d24a0e -> 'MICHELLE GARCIA' (current: 'Michellegarcia93')
+[DRY RUN] Would update: 5f2de5f3-7222-4994-83c0-b40b896fde02 -> 'Margarita Zamora Sanchez' (current: '1996 Mzs')
+[DRY RUN] Would update: fef5586f-71a5-4132-bda7-68fa66135b8c -> 'Brianna Sousa' (current: 'Briannasousa18')
+[DRY RUN] Would update: e0777b7c-910c-4bd0-b876-f3ec1fd07953 -> 'Giomayra Martinez' (current: 'Giomartinez1234526')
+[DRY RUN] Would update: c1c47b96-534e-402e-a471-0fc62e0c985f -> 'Maxwell' (current: 'Isabel Delossantos')
+[DRY RUN] Would update: f12ec5e1-b218-48fe-9085-0c9ffa5f1f10 -> 'Rosa Ochoa' (current: 'Yaritzaochoa1994')
+[DRY RUN] Would update: 45ff8b29-754a-47ae-bca7-229a6248272c -> 'Nicole Coleman' (current: 'Mcddanield606')
+[DRY RUN] Would update: fc91bfa4-3651-4852-99d0-428ac7882996 -> 'Melonie Ochoa' (current: 'Melonie134')
+Processed 750 records...
+[DRY RUN] Would update: 5260cb57-97d7-443e-83d3-bb7e0ab8d4b9 -> 'Parnell Phengthirath' (current: 'P Phengthirath')
+[DRY RUN] Would update: 5655fb95-3518-4929-8daa-37ca232e3825 -> 'Elaina Freitas' (current: 'Elainafreitas913')
+[DRY RUN] Would update: 6f69b09e-f4c0-4995-ae1c-b0a8c43fcabc -> 'Teresa I De Dios Avia' (current: 'Teresaidedios')
+[DRY RUN] Would update: 5b610600-6477-4563-b835-5ee54c8c0314 -> 'Leticia Palafox' (current: 'Palafoxl')
+[DRY RUN] Would update: 8d63c878-0542-4954-802d-4a76e2b83082 -> 'Araceli Mendoza' (current: 'Amendoza623')
+[DRY RUN] Would update: cd17839f-6aa2-4b8f-8865-7ff8bbb5949c -> 'Madelyn Bell' (current: 'Missmaddiemariee')
+[DRY RUN] Would update: 66ebc5a5-1455-48c0-9c1e-8435e9565bc2 -> 'Katie Jones' (current: 'Kmjones900')
+[DRY RUN] Would update: 49c992b0-e0d3-4073-9138-41f00805f3b3 -> 'Selena Ortiz' (current: 'Selenao0528')
+[DRY RUN] Would update: aca726bb-4f02-4227-a713-54a85be26a90 -> 'Claudette Cerda' (current: 'Claudettedelacerda6')
+[DRY RUN] Would update: 13baa6e1-82f3-4e65-bee7-4c4e954f2e73 -> 'Sofia Zepeda' (current: 'Zepeda S')
+Processed 760 records...
+[DRY RUN] Would update: 3a3686d1-4647-4c0d-badd-58dbe38e78a9 -> 'Alyssa Oliver' (current: 'Alyssataylor93')
+[DRY RUN] Would update: a79f2271-e339-4c0a-a14f-21df9a733ccd -> 'Claudia Ochoa' (current: 'Claudia 86chavez')
+[DRY RUN] Would update: 7ae5bc25-e850-45b1-ab52-3cb76af2c90f -> 'Beatriz Grajales' (current: 'Grajales')
+[DRY RUN] Would update: a7ef7567-6d85-4db6-b0b9-31dfb783acb5 -> 'Wendy Bradley' (current: 'Wbradley825')
+[DRY RUN] Would update: 34d8a8c0-889b-4743-a226-f77ecec1beed -> 'Wendy Bradley' (current: 'Wbradley825')
+[DRY RUN] Would update: a1d7c1ac-b143-4dfe-b2c3-504962d1e882 -> 'Beatrice Valenzuela' (current: 'Valenzuelabeatrice')
+[DRY RUN] Would update: fdb7337f-6f72-40fd-98d1-527e696feee1 -> 'Cesar Algalan' (current: 'Cesar Algalan')
+[DRY RUN] Would update: 92c88926-e707-4f71-999e-9f0c0aa52617 -> 'Felicita Lopez' (current: 'Skykevlani')
+[DRY RUN] Would update: acc95b78-12fb-4e31-adcc-c129af29f19c -> 'Lucia Lopez' (current: 'Ramirezlucy606')
+[DRY RUN] Would update: 8f7076d7-0cdd-4bd2-897b-52ffc58ed481 -> 'Maria Medina' (current: 'Kenha18medina')
+Processed 770 records...
+[DRY RUN] Would update: 4a8dc450-903c-4a13-9d2e-529aecc69383 -> 'Veronica Linares' (current: 'Vrtrevino82')
+[DRY RUN] Would update: 5bfd2fc4-aa3d-4d9e-98d2-85482d8b026e -> 'Loyda Ramirez' (current: 'Rodriguezcasandra854')
+[DRY RUN] Would update: 73d9ebec-890a-46aa-8f8a-6f75d53e5308 -> 'Irlanda Arreola' (current: 'Irlanda Arreola J')
+[DRY RUN] Would update: a9b0958a-78cc-4990-a39e-4a5a13a26c36 -> 'MARIA LOURDES ARGINIEGA' (current: 'Avalosjose221')
+[DRY RUN] Would update: d40e7c80-f00a-4a1c-8415-8ba230b5f5bb -> 'MERCEDES CASTANEDA' (current: 'Guadalupecastaneda831')
+[DRY RUN] Would update: 30cbde8b-3ecc-422d-b600-561b97237367 -> 'Shelby Haverson' (current: 'Shelbyhaverson01')
+[DRY RUN] Would update: 7d7de4e8-1311-452f-9d6e-ee2d7bdebbdc -> 'Irene Rosales' (current: 'Reneeybee Gr')
+[DRY RUN] Would update: c37f8935-6435-4570-9093-cbc67fb295da -> 'Jose Martinez' (current: 'Jmartinez4208')
+[DRY RUN] Would update: 07241695-d7e6-49f2-b6b1-950c86619a60 -> 'Kasandra Greenlee' (current: 'Kassie2208')
+[DRY RUN] Would update: a9feb177-a630-48f1-a2b2-6820e151e253 -> 'Casey Camarda' (current: 'Lilacs4me')
+Processed 780 records...
+[DRY RUN] Would update: 36f11649-0191-43a9-af8e-8039cdb7d452 -> 'ALICIA ACOSTA' (current: 'Alicia Acosta30')
+[DRY RUN] Would update: 542e4aa4-659f-44f1-b220-e9e7aaad2a37 -> 'Ashley Cook' (current: 'Ashleycook0337')
+[DRY RUN] Would update: cbb45cd4-43fc-4a0c-b5c0-11ef4f058162 -> 'Yuliana Zarate' (current: 'Cuezzi95')
+[DRY RUN] Would update: f08f75cf-193d-4442-a6ac-5c4a3524d803 -> 'Perez-Bautista' (current: 'Mrs Perezbautista95')
+[DRY RUN] Would update: 73c0270c-f0bb-4e94-854d-626b417360c5 -> 'Stephanie Flores Alba' (current: 'Stephanie2004alba')
+[DRY RUN] Would update: beb93421-ed50-420b-ae98-c29867053b95 -> 'Jajaira Hernandez' (current: 'Reynakhernandez')
+[DRY RUN] Would update: 4f9012de-f682-441f-b58a-c2ea66aebd89 -> 'Garcia III' (current: 'Marrisagarcia506')
+[DRY RUN] Would update: 9c12bdbb-4a67-4a94-9630-c3dc7bd34f53 -> 'Christine Vega' (current: 'Tinavega95')
+[DRY RUN] Would update: fa4ee91d-c2a3-4fa8-9686-25304c3c75d3 -> 'MARIA ANGELICA RODRIGUEZ QUIRO' (current: 'Mariaangelica669')
+[DRY RUN] Would update: 5add300b-9f69-4fb4-b2c5-c3b2f8da4ad5 -> 'STEFANI KANG' (current: 'Skang525')
+Processed 790 records...
+[DRY RUN] Would update: 74220ab9-fbe8-493f-a7ad-f54a6e4ad08e -> 'Ayala' (current: 'Mary Ayala94')
+[DRY RUN] Would update: f5de301c-2c98-4e80-a820-8503696edeb9 -> 'Cassie Silva' (current: 'Cassiemarie719')
+[DRY RUN] Would update: 6abf9ea3-7672-48c3-8132-89e1d55581e0 -> 'Sara Avalos Castro' (current: 'Tay01 Ac')
+[DRY RUN] Would update: 7c27a816-a7fb-4e3d-8616-51acf77ea019 -> 'Sara Avalos Castro' (current: 'Tay01 Ac')
+[DRY RUN] Would update: e964a9ec-8af5-4eae-b5ac-bf6a08fc00a5 -> 'Shawna Dolin' (current: 'Shawnadolin')
+[DRY RUN] Would update: 3ee7dabe-1423-4dbe-84e3-5f6b0c6f76b4 -> 'Blanca Lopez' (current: 'Bl212626')
+[DRY RUN] Would update: b8fb9fb2-3f26-4a12-84b6-005cd018c0a4 -> 'Ana Martinez' (current: 'Analmv914')
+[DRY RUN] Would update: 50776d58-8d42-4d1b-a3d1-704e015f0637 -> 'Yeny Romero' (current: 'Yenypalomino81')
+[DRY RUN] Would update: b2f88c1b-9ff2-46be-8fe8-9fe99e1e8559 -> 'Leticia Barhona' (current: 'Letybarahona')
+[DRY RUN] Would update: 0c069f91-d3a4-4a39-a8c1-1d461f65d581 -> 'Dawnika Ford-Foreman' (current: 'Dawnikaford23')
+Processed 800 records...
+[DRY RUN] Would update: 5f8ed13d-a5ae-45dc-8293-c92820404bc5 -> 'Antoine Evins, Sr.' (current: 'Evinsantoine')
+[DRY RUN] Would update: 1273126c-025e-4eb7-a56f-8e2682640f39 -> 'Cynthia Ortega' (current: 'Cynthiaor10')
+[DRY RUN] Would update: ff3cfdee-a6a0-4f6b-ad42-e85738b9ad36 -> 'Hind Benhacene' (current: 'Hindbenhacene')
+[DRY RUN] Would update: 49f1ebf4-8ea8-4d61-9488-bf7be71e4253 -> 'Amelia Luz' (current: 'Estrellafitness718')
+[DRY RUN] Would update: e85ee2af-410a-4e36-9821-5cfa34010350 -> 'Ana Martinez' (current: 'Analmv914')
+[DRY RUN] Would update: 599f22bb-5159-476d-ac73-82e3bb132d8e -> 'Rochelle Williams' (current: 'Rochellewilliams86')
+[DRY RUN] Would update: 6ee1a8d1-fe4d-4899-b6da-93424830ff0a -> 'Patricia Camargo' (current: 'Projast3')
+[DRY RUN] Would update: 9391460c-c071-4969-bdb0-7f0095222c8d -> 'Edith Cornejo & Rene Benitez' (current: 'Edithcornejo186')
+[DRY RUN] Would update: 15cb8e57-2ad0-413c-9e91-2613b1639423 -> 'Corliss Robinson' (current: 'Corlissrobinson57')
+[DRY RUN] Would update: 1d794302-2c28-4b3e-8206-2506051365a4 -> 'Kelsey & Nathaniel Mcmihelk' (current: 'Kelsey Songer')
+Processed 810 records...
+[DRY RUN] Would update: b947de2e-6fbb-4e5c-ab10-2d6181457d0c -> 'Jody & Rebecca Dozier' (current: 'Djacemixmaster')
+[DRY RUN] Would update: 1e7c3a1d-6256-445e-a2ca-1af4ad7bbc8a -> 'Margarita Ramirez Toscano' (current: 'Ramirezboly2714')
+[DRY RUN] Would update: 70e84ac7-4297-4c1d-89e5-798883cea92a -> 'Maria Rivera' (current: 'Mariarivera330594')
+[DRY RUN] Would update: 9b1d2915-bee4-4849-9014-670c565931db -> 'Kaylah Sweet' (current: 'Sweetuti06')
+[DRY RUN] Would update: 642bff4e-1962-454e-adc7-6f0e55213052 -> 'Angelica Flores' (current: 'Eliflores')
+[DRY RUN] Would update: c428ee10-8f9a-4ce1-80ee-a07553201838 -> 'Esperanza Civitello' (current: 'Esperanza0622')
+[DRY RUN] Would update: c2ab02c2-f36e-4e19-b7f4-4989bb812ac1 -> 'Robyn Rose' (current: 'Robynrose209')
+[DRY RUN] Would update: f14d9710-f527-40be-8283-18590f9600fb -> 'Viridiana Guillen' (current: 'Keva201113')
+[DRY RUN] Would update: 57229152-6cee-4ee4-ab1a-f7381a7f382a -> 'Karina Melendez' (current: 'Karinasworld97')
+[DRY RUN] Would update: 855e82e0-768f-4426-ada6-165b949727cb -> 'Kyrsten Snodgrass' (current: 'Kyrstenlarson')
+Processed 820 records...
+[DRY RUN] Would update: e7d3bc79-91b4-469e-9a65-08754574630b -> 'Holli Webb' (current: 'Holliwebb13')
+[DRY RUN] Would update: d6f6216a-4059-4df3-8f84-d57dda78e3fe -> 'Maria Zavala' (current: 'Romerogriselda')
+[DRY RUN] Would update: 9a9679e4-6106-42c2-8ee2-9e897e2fcb10 -> 'Yesenia Leon' (current: 'Yesiguillen718')
+[DRY RUN] Would update: dab400dd-47f0-4287-bbd2-e58007167866 -> 'Maria Salazar' (current: 'Msalazar0705')
+[DRY RUN] Would update: e4c24ea9-b65f-45f0-99f7-b446297aff4e -> 'Schafer' (current: 'Jynnidawn')
+[DRY RUN] Would update: 0d1d7de9-86d1-4d6d-9a17-d04aa40e12bb -> 'JAMIE WOOD' (current: 'Jrsophie0723')
+[DRY RUN] Would update: 56869f29-2a31-4772-8820-3cb96acd2e2a -> 'Michelle Diego' (current: 'Reagsmomma')
+[DRY RUN] Would update: b02c7e18-2051-4604-ac32-5a88e7f0421c -> 'Judith Juarez' (current: 'Judithjuarez133')
+[DRY RUN] Would update: 65421b19-c461-4bd2-b978-951cd1f54922 -> 'Thelma Villanueva' (current: 'Villanuevathelma123')
+[DRY RUN] Would update: f0098a5c-94f2-4c86-98bf-635d642edfcc -> 'BRITTANY FANNON' (current: 'Brittfacefosho')
+Processed 830 records...
+[DRY RUN] Would update: 8e479d66-09d9-4bc1-a02f-6ab43e272b28 -> 'Ulany Ruiz' (current: 'Ulanyr14')
+[DRY RUN] Would update: c6fa5683-56b9-4765-b404-e17653077270 -> 'Jewelya Jones' (current: 'Jewelyajones0617')
+[DRY RUN] Would update: 6ad26a73-0e75-4f58-9b7e-5fcb60095764 -> 'Monica Salcedo Lomeli' (current: 'Monicascolin')
+[DRY RUN] Would update: bbdecdf8-468e-4f78-8dc6-105dd2262dc2 -> 'Berenice Rodriguez' (current: 'Berer2506')
+[DRY RUN] Would update: da4a5900-cf6e-44d6-b659-692637b8b786 -> 'Maira Guti=' (current: 'Mayraiveth0724')
+[DRY RUN] Would update: d18ce948-48ea-4847-a5c3-af44f573793a -> 'Blanca Juarez' (current: 'Blancajuarez425')
+[DRY RUN] Would update: 10370a3a-cfff-4295-9b7e-3303bb37974f -> 'ELVIA BARAJAS' (current: 'Esalas349')
+[DRY RUN] Would update: eb667089-4211-47b8-acdd-a9658dda6560 -> 'Raquel Rodriguez' (current: 'B4ever79')
+[DRY RUN] Would update: 6522c88a-6932-4608-9f4b-12e194395c2f -> 'Nunes' (current: 'Putt07 Marissa')
+[DRY RUN] Would update: 055bfb1a-4720-4acf-87d6-a0ef81d906ba -> 'Marissa Nunes' (current: 'Putt07 Marissa')
+Processed 840 records...
+[DRY RUN] Would update: 741e4c58-8365-4780-99b0-6126753740ea -> 'Hart' (current: 'Alexandria Waid')
+[DRY RUN] Would update: de2e6c0e-f2d9-42f0-a29e-a1229868753c -> 'Amber Cardenas' (current: 'Ambercardenas67')
+[DRY RUN] Would update: b7281085-eca9-4c2c-a68a-856036700f1b -> 'Leticia Moran-Hidalgo' (current: 'Florezleti19')
+[DRY RUN] Would update: 720f9424-4106-4dd5-b60c-930f4bf29d72 -> 'Jessica Miller' (current: 'Jmiller0831')
+[DRY RUN] Would update: 13327ec2-6b17-480c-8980-3ed39c9fe1ab -> 'Juarez Jimenez' (current: 'Lilyjb14')
+[DRY RUN] Would update: e064b8ae-3c57-4844-808d-9c1b89dbfca2 -> 'Liliana Jimenez' (current: 'Lilyjb14')
+[DRY RUN] Would update: 456f4a59-7f8e-48c1-8a1a-bfa4471318fc -> 'Taylor Leedom' (current: 'Taylorleedom 21')
+[DRY RUN] Would update: 72eac763-77a3-4222-af4e-a04c2c264495 -> 'Jeannie Vargas' (current: 'Jeannie1vargas')
+[DRY RUN] Would update: 33d8d0d1-8540-49ee-9a11-39f972a6185d -> 'JESSE COVARRUBIAS' (current: 'Jlocz644')
+[DRY RUN] Would update: f5e4fab7-4c20-4596-8e5f-dd71ef0fe60b -> 'Casey Turner' (current: 'Kcmtn209')
+Processed 850 records...
+[DRY RUN] Would update: 0b60108c-cc8b-4e8a-b1bf-b2839bffcb82 -> 'Joan Lubembe, Guardian' (current: 'Musikohe')
+[DRY RUN] Would update: b2f0321b-cacc-4184-aa02-1bcbb0a5cd61 -> 'CINDY MERCADO' (current: 'Cindymercado15')
+[DRY RUN] Would update: c6eb6983-a797-4150-ab37-1288ab80d284 -> 'Alejandra Alvarado' (current: 'Alejandritaamontaanez')
+[DRY RUN] Would update: 75b6f38e-5aa2-438a-bfb8-c7c5b3020738 -> 'LIZETTE LOPEZ GARCIA' (current: 'Garcializette1997')
+[DRY RUN] Would update: 5a685536-af7a-478a-9517-dc1938156020 -> 'April Maeyama' (current: 'Aprilmaeyama')
+[DRY RUN] Would update: da71fa83-71fc-449a-ad1f-93db2adf0713 -> 'Yasmin Nunez *Spanish speaking*' (current: 'Karelyy22')
+[DRY RUN] Would update: a8125d41-dd0e-4968-8b6e-512433f9ef34 -> 'Norma Rodriguez' (current: 'Alannahz Mommy')
+[DRY RUN] Would update: ea3bb970-488a-4192-aaf6-98ae2daa9b3c -> 'Norma Rodriguez' (current: 'Alannahz Mommy')
+[DRY RUN] Would update: ee9f253f-6d40-4aa6-937f-c1ca2255f56a -> 'Alejandro Valdez' (current: 'Vinny209')
+[DRY RUN] Would update: f53eafe2-5c3f-419b-a412-6c23900bb343 -> 'Kayla Threet' (current: 'Kayla Threet')
+Processed 860 records...
+[DRY RUN] Would update: fd131a40-d362-476a-906e-8ef69522f9ce -> 'Alicia Alvarez' (current: 'Saalicia1996')
+[DRY RUN] Would update: 5f492b57-05a3-43f7-8a95-157fcea77d1f -> 'Palomares' (current: 'Lupeo157')
+[DRY RUN] Would update: 5f0307fd-8ef6-4d61-a14c-72bf2be24248 -> 'Justine Gil' (current: 'Justchris2016')
+[DRY RUN] Would update: ade0fb3f-8b47-4b0a-8da5-eea58c439387 -> 'Justine Gil' (current: 'Justchris2016')
+[DRY RUN] Would update: f14b0662-1c68-4eee-965f-9b11c005f7f4 -> 'Tameka Martinez' (current: 'Tamekamartinez')
+[DRY RUN] Would update: 71bf5ef1-b3fe-4c28-bc89-4a49f6294b5c -> 'Tameka Martinez' (current: 'Tamekamartinez')
+[DRY RUN] Would update: 851a0d7f-5cb1-43ba-a9ef-ee251677740a -> 'Michelle Bounsana' (current: 'Rodriguez Bounsana')
+[DRY RUN] Would update: 986828e9-ced2-4bf9-91f8-c919ecff095f -> 'Maria HUIZAR' (current: 'Araceli Huizar')
+[DRY RUN] Would update: effb642e-daa0-4a08-b523-d4806c2f8c07 -> 'Monica Zaragoza' (current: 'Monicazaragoza839')
+[DRY RUN] Would update: d578a86e-6908-4691-bfd9-13c6eb5eb81f -> 'Adrianna Duffy' (current: 'Duffyadrianna')
+Processed 870 records...
+[DRY RUN] Would update: b69dadac-0e84-42e7-9d5a-150c7b23e386 -> 'Rangel' (current: 'Sfgiantzfan1')
+[DRY RUN] Would update: 324a4055-7bdd-4c12-a5b9-9d08210a12e1 -> 'Miriam Ramirez' (current: 'Miriamromo1256')
+[DRY RUN] Would update: 28c32710-adec-4c85-9126-e9e13c1fc981 -> 'Lashondra Patrick' (current: 'Lpatrick40')
+[DRY RUN] Would update: dc919d0d-bf92-4afc-8558-590feaaa2330 -> 'KATIE JOHNSON' (current: 'Ktjhson18')
+[DRY RUN] Would update: 93a05a43-0352-487b-ba44-58dfc6ca1b09 -> 'Selena Chaven' (current: 'Selenachaven4')
+[DRY RUN] Would update: 15e9ac7c-d85b-4c0d-82b0-e3210819fbce -> 'Tania Carrasco' (current: 'Taniacrrsc')
+[DRY RUN] Would update: 4c9e8c83-2d70-48cf-b4bc-6e061be9230f -> 'Humberto Linares' (current: 'Humberlin71')
+[DRY RUN] Would update: ce888d13-d73f-4fe6-b8a0-fd4520a57f44 -> 'ROSA MONTIJO' (current: 'Rosa Montijo')
+[DRY RUN] Would update: cec58d17-7696-47f2-a2e3-0ebcfac7c507 -> 'Selene Mendoza' (current: 'Kendrakamila07')
+[DRY RUN] Would update: b5fbca87-3677-498f-be54-cd7a69ba01c9 -> 'Erica Cloird' (current: 'Emarie1430')
+Processed 880 records...
+[DRY RUN] Would update: 5876749e-92f6-4fad-b349-367a899b950c -> 'Maribel Torres-Cisneros' (current: 'Maribel95388')
+[DRY RUN] Would update: 6ccd6d4c-a839-42f1-8c43-1a8cfaa0cdda -> 'Marceny Martinez' (current: 'Marceny Bedoy')
+[DRY RUN] Would update: 63e0aeac-1d2b-49c5-a7c8-0d3c347e3057 -> 'Vanessa Canady' (current: 'Silva V713')
+[DRY RUN] Would update: 65bad680-fa57-4002-af0f-1f4432ba9bbb -> 'Teresa Diaz' (current: 'Tdiaz2323')
+[DRY RUN] Would update: 39f77752-43e9-4d7e-95ef-1efaaf45156e -> 'Whitney Shugart' (current: 'Janetfan4ever1986')
+[DRY RUN] Would update: 54c1a2b1-c51e-4437-aa13-6a4226395e49 -> 'Rylan Santos' (current: 'Ry Msantos96')
+[DRY RUN] Would update: 0ed215ce-fe01-4338-b3ff-8684e796c10b -> 'MARIA RICO CALDERON' (current: 'Mariagabrielaricocalderon')
+[DRY RUN] Would update: 15ebfd8d-2439-402d-b5b8-5d510cc211df -> 'Camila Carrillo' (current: 'Ccarrillo819')
+[DRY RUN] Would update: c5d308fa-dd43-4442-b0ff-95ba7d6cf4c0 -> 'Bianca Soto' (current: 'Soto Bianca')
+[DRY RUN] Would update: db75a917-5f37-417f-9686-d12b163f8dd0 -> 'Lena Schuchterman' (current: 'Lenamarie')
+Processed 890 records...
+[DRY RUN] Would update: e26049ab-5c09-463f-b0a7-aad12bc2e7c3 -> 'Teresa Diaz' (current: 'Tdiaz2323')
+[DRY RUN] Would update: b43ddbf4-9366-454f-8e4e-7da5fb486731 -> 'Teresa Diaz' (current: 'Tdiaz2323')
+[DRY RUN] Would update: 16a8acca-a5c6-4d22-906b-b491a54f3d44 -> 'Rachelle Munoz' (current: 'Rmunoz4175')
+[DRY RUN] Would update: c6567b37-6b7f-449c-85d5-04032d96fc54 -> 'Melissa Kirk' (current: 'Melissakirk0509')
+[DRY RUN] Would update: 9549ede4-9dc8-488a-8da4-fd0234cdfdaf -> 'Angelina Lozano' (current: 'Angelinalozano123')
+[DRY RUN] Would update: 328288b9-43b1-4ab5-8362-9958614b97ca -> 'Chheng Sun' (current: 'Chhengsun')
+[DRY RUN] Would update: 236658ad-0b59-4213-8782-669b7fab8826 -> 'Elida Mora' (current: 'Ellymora28')
+[DRY RUN] Would update: 4252dfe8-c2ac-4cf3-9c7e-d78ceb1434b5 -> 'FRANCISCO MALDONADO' (current: 'Franciscomasf04')
+[DRY RUN] Would update: 9ea163b0-6555-4aa7-8e7e-0648e643c94b -> 'Laura Galvan' (current: 'Ldiaz2010')
+[DRY RUN] Would update: a40778fb-e00b-458f-adfa-2df16c1fbf37 -> 'Laura Galvan' (current: 'Ldiaz2010')
+Processed 900 records...
+[DRY RUN] Would update: 95a4c4d3-9111-4dcf-bb23-628f2f8c266c -> 'Jose Villa' (current: 'Jvilla94014')
+[DRY RUN] Would update: 30b78786-4912-494c-b790-79b45e0a22e7 -> 'Marisela Cordova' (current: 'Cordovamarisela70')
+[DRY RUN] Would update: e601b097-8c4a-49ba-90bb-46b5cb64408b -> 'Paola Valencia' (current: 'Paola0084')
+[DRY RUN] Would update: a360cf15-739a-4706-aec8-6d2263ba3c46 -> 'BRITTANY HOLLY' (current: 'Brittanyborges5')
+[DRY RUN] Would update: 8775a2b8-7263-4ac3-b5d2-75802f752740 -> 'Jenny Fitch' (current: 'Jkamjkam15')
+[DRY RUN] Would update: 8b0d2973-5ccd-44f6-8c38-4b97f3fbf064 -> 'Martha Pulido' (current: 'Platardh')
+[DRY RUN] Would update: 60b7980f-2e18-4488-93dd-79f3f45178bc -> 'Martha Lopez' (current: 'Martha Lopez54')
+[DRY RUN] Would update: 9bdb5ece-6363-4823-abdc-33e3220576a5 -> 'Erenderia Garcia' (current: 'Reyesjavier844')
+[DRY RUN] Would update: d0769525-8555-43e3-9053-ea27b0a50103 -> 'Mina Rizo' (current: 'Mina Rizo')
+[DRY RUN] Would update: 6557998b-0c24-4b6b-a1d1-478ea5d89bb8 -> 'Len Santos' (current: 'Teacher Lensantos')
+Processed 910 records...
+[DRY RUN] Would update: aa7adbc4-48c6-4493-8c8a-95ff610e1f0a -> 'Mckayla Castro' (current: 'Mckaylacastro')
+[DRY RUN] Would update: def21ee7-5f4d-4f4d-b8b6-f8ce73f51cfd -> 'Azucena Gonzalez  spanish speaking only*' (current: 'Azucenag89')
+[DRY RUN] Would update: 54536587-eb00-4476-b504-a82b34a6af13 -> 'Simarjit Kaur' (current: 'Simarjitk95')
+[DRY RUN] Would update: 51f5998a-016f-4bf6-aabb-21077c1a9720 -> 'Lourdes Lopez' (current: 'Lourdesserrano2191')
+[DRY RUN] Would update: 8993d315-c27e-4fc8-bd20-692925a8684b -> 'Nestor Ruiz' (current: 'Ruizmendozanestor')
+[DRY RUN] Would update: 05183524-c6aa-4873-8fc5-20a7f06f4769 -> 'Gabriela Rodriguez' (current: 'Msgabby928')
+[DRY RUN] Would update: 12136ecf-ee4f-4344-afc7-506d821a4613 -> 'Nora Pineda' (current: 'Norapineda547')
+[DRY RUN] Would update: 759c2158-a6aa-41d6-b8e5-ffeef43659a6 -> 'Tanya Reyes' (current: 'Damiancr13')
+[DRY RUN] Would update: a4f37f19-2fbe-4f18-becb-a6cb73e95a3e -> 'Dulce Gonzalez' (current: 'Mariachavez Mcv67')
+[DRY RUN] Would update: cf3b3d46-4288-495c-a7d9-91e97a4cf8df -> 'Nikki Mellow' (current: 'Nikkichristinem')
+Processed 920 records...
+[DRY RUN] Would update: c52db254-6e79-4d8a-8c5a-4b874c44c378 -> 'Patricia Valdez' (current: 'Pattygomez19833')
+[DRY RUN] Would update: 5a520050-41e5-4707-a1c0-8a3bc3fa331a -> 'Adeana Schippert' (current: 'Adeanaschippert')
+[DRY RUN] Would update: 097b02f6-8291-48a8-8911-9d917fb709bb -> 'Maritza Bejinez' (current: 'Dominick J Lopez27')
+[DRY RUN] Would update: 53d229ee-f04f-433b-a98e-edb53440e2f1 -> 'Raean Parker' (current: 'Rae Shattuck84')
+[DRY RUN] Would update: f7e963e1-0220-4348-a95e-59ddc0b3ee90 -> 'Elizabeth Roman' (current: 'Roman Elizabeth60')
+[DRY RUN] Would update: a9d4768f-27c8-4231-a7a7-7834cd11f12f -> 'Alma Nancy Cruz' (current: 'Ncruz6812')
+[DRY RUN] Would skip (not pending_enrollment): 806e57db-4fc9-460f-8ce3-2ca7fa96dc32 - status: enrolled
+[DRY RUN] Would update: 9907542c-15b8-4846-9e92-b6d08e099180 -> 'Maria Mora-Vitela' (current: 'Mariamora1976')
+[DRY RUN] Would update: f3819cbc-e4b2-4cb1-894e-0c66dc1ab08a -> 'Coreina Abila' (current: 'Coreinaaranda')
+[DRY RUN] Would update: 14559a0b-26bd-4a30-a971-bd82088deb00 -> 'Jacqueline Chavez' (current: 'Jackiechavez4022')
+Processed 930 records...
+[DRY RUN] Would update: cc328503-06e5-4150-b596-48cc5b0b3c8a -> 'Nora Gonzalez Martinez' (current: 'Noramb1989')
+[DRY RUN] Would update: a0133c16-82ee-4608-9f74-a79e3fa81416 -> 'Poonam Deshmukh' (current: 'Deshmukh Poonam')
+[DRY RUN] Would update: d046ddef-3354-4b78-9137-e3c7665830d5 -> 'Sandra  Conover' (current: 'Sconover')
+[DRY RUN] Would update: d6264294-f8a9-42ed-a682-4190baed560f -> 'Melina Joaquin' (current: 'Silvamelina1988')
+[DRY RUN] Would update: ac6594d1-63e6-41d2-8f02-144eaa82152f -> 'Anna Vargas' (current: 'Annarserrano')
+[DRY RUN] Would update: 9f99fecf-6ccf-4e95-a029-f8bf94b2c29a -> 'Monica Aguilera' (current: 'Jazlynn25')
+[DRY RUN] Would update: cb3d42af-1e37-4db4-8d22-4ee50b5d395b -> 'Stephanie Hoyos' (current: 'Hoyos3737')
+[DRY RUN] Would update: 7e14250d-0f5a-4735-9451-b62dc6c7c310 -> 'Sindy Deras' (current: 'Sindygisel')
+[DRY RUN] Would update: 0a581bb4-d822-45f2-8ed5-6c03e9acef33 -> 'Lissette Echeverria' (current: 'Lizzyeche')
+[DRY RUN] Would update: be821f07-6d9d-42a3-9213-5b022e390be9 -> 'Coreina Abila' (current: 'Coreinaaranda')
+Processed 940 records...
+[DRY RUN] Would update: c7cc1f33-2fb1-4ab5-8b1e-38b20e45323e -> 'Felicia Hernandez' (current: 'Feliciaahernandez38')
+[DRY RUN] Would update: 34c25f4d-313e-4ae3-98fd-9674a53a67b8 -> 'Jazmin Palomino' (current: 'Jazminrocha')
+[DRY RUN] Would update: d09fdc4d-32eb-4faf-a75e-d3094b82c0e6 -> 'Veronica Pace' (current: 'Duarte0323')
+[DRY RUN] Would update: 04672d54-8f1b-4711-95f5-1d8d4c2ab087 -> 'Maria Chavez' (current: 'Mariachavez11')
+[DRY RUN] Would update: cd5fc59a-e8c3-4ab4-af57-ed9d2d21199b -> 'Cesar Suarez' (current: 'Lilia Roque0809')
+[DRY RUN] Would update: 6ab3beb6-648d-4272-8aa2-1ec4993a798c -> 'Stephanie Macias' (current: 'Sdeleon7')
+[DRY RUN] Would update: 18f8884f-cbcb-4671-bdd8-650fcc4248c2 -> 'Lianne Smith' (current: 'D3liannedj')
+[DRY RUN] Would update: ee7ce58e-d7c5-4bd1-9a44-1942e383a9f7 -> 'JASKIRANJEET KAUR' (current: 'Davinderjit75')
+[DRY RUN] Would update: 9f134dec-9f4e-4bdc-adcb-8967f7cbb8b9 -> 'KIMBERLY GARRETT' (current: 'Kimcatt1988')
+[DRY RUN] Would update: 188651e0-71d1-48e0-a834-693cb2da1484 -> 'Ariella McDonald' (current: 'Ariellabriffa1021')
+Processed 950 records...
+[DRY RUN] Would update: cba0edd7-d494-48b8-9cf5-1774ae5bdbd2 -> 'Van Nguyen' (current: 'Vankng0379')
+[DRY RUN] Would update: 3b92f999-b19a-43a3-8179-061dfa655b24 -> 'Alvarado' (current: 'Jcarlosalvarado08')
+[DRY RUN] Would update: 5107231c-323a-4539-a043-fc8e26c83cea -> 'Maci King' (current: 'Macileannered')
+[DRY RUN] Would update: a0c355e7-6eba-481d-b53f-b0f492b7321c -> 'Lucila Pulido' (current: 'Lucy Love25')
+[DRY RUN] Would update: c188695b-fc4d-4887-a659-97c5c8a5d2e8 -> 'Mary Souza' (current: 'Mrs Katie Souza')
+[DRY RUN] Would update: e7db903b-77da-4746-a1a8-93be0a2bfd0a -> 'AMANDA MOONEY' (current: 'Lilmissamanda91')
+[DRY RUN] Would update: bf67440b-0cea-48aa-bfcf-1f03ddee4733 -> 'Isavela Castro' (current: 'Castroisavela')
+[DRY RUN] Would update: f524429d-96d0-431f-9e68-91ef62952b88 -> 'Rebecca Galvan' (current: 'Reb 1987')
+[DRY RUN] Would update: 11f83ee9-a6ca-4f24-9114-065ea2daa8bc -> 'Lucia Mariano Narvaez' (current: 'Lucynarvaez873')
+[DRY RUN] Would update: f586ffaf-96cf-4a41-8df8-0944fa123015 -> 'Yasmin Becerra' (current: 'Yaocio1007')
+Processed 960 records...
+[DRY RUN] Would update: 0ef5935f-cf2e-452f-a808-908aa4315591 -> 'Maria De Los Santos' (current: 'Medinam0989')
+[DRY RUN] Would update: 70d41307-5b38-42ee-9747-592b1dd2eb0c -> 'Wendy Pamatz' (current: 'Pamatzwendy')
+[DRY RUN] Would update: 6c8b20a8-14e1-4444-a78e-c172484c6d4f -> 'Alma Kopitzke' (current: 'Agkopitzke')
+[DRY RUN] Would update: daad547e-383f-433f-b3dd-6f4974efa9ec -> 'Adrianna Duran' (current: 'Aduran')
+[DRY RUN] Would update: 9a5731c0-0463-472b-a321-cae26abb451b -> 'Danette Vazquez' (current: 'Danettevazquez')
+[DRY RUN] Would update: 18525f8c-dac4-4272-b838-3bc8a7ae671e -> 'Patricia Gomez-Valdez' (current: 'Pattygomez19833')
+[DRY RUN] Would update: f9951a93-4459-4ac5-b9ac-7ee90653ebe1 -> 'Rajwinder Kaur' (current: 'Jinder1986')
+[DRY RUN] Would update: e9292d52-5583-42e3-8458-3921cd9d52e5 -> 'Paige Amador' (current: 'Paigenamador')
+[DRY RUN] Would update: 9d035465-d129-496c-90e4-193f9529ac72 -> 'Lexi Daclan' (current: 'Lexidaclan')
+[DRY RUN] Would update: 98b20594-3c18-4281-85fd-4c3fb8c6433e -> 'Breanna Lopez' (current: 'Breannamlopez')
+Processed 970 records...
+[DRY RUN] Would update: edc1f917-4ba9-42a3-9caa-b6d819ba6cbc -> 'Katie Plank and Robert Plank' (current: 'Kateo13083')
+[DRY RUN] Would update: 8b2ce77e-c15a-49f9-b8f5-941f31731e0c -> 'Alejandra Hermosillo' (current: 'Alessiamonserratcarrillo')
+[DRY RUN] Would update: 2dd1119f-9267-429e-b1dd-4520fe76d1ad -> '(209) 573-1840' (current: 'Jo Mayorquin17')
+[DRY RUN] Would update: b5b83659-eea9-4515-bb41-e8fa5288ad7d -> 'TRACI RAMIREZ' (current: 'Mytwosons23')
+[DRY RUN] Would update: 19dd255d-cf12-4953-8c32-0442a798ccba -> 'Khristine Santiago' (current: 'Penatekhristine')
+[DRY RUN] Would update: 915725a0-3960-4331-b804-fc0171c0c56a -> 'CESAR ALGALAN' (current: 'Cesar Algalan')
+[DRY RUN] Would update: a1fe2afa-6fe1-4994-84e5-c8595b50d15a -> 'Anna Ejoh' (current: 'Anna N Ejoh')
+[DRY RUN] Would update: 113ab574-b36a-4f0d-a33c-9e36c83442cc -> 'Lakisha Smith' (current: 'Lakisha Smith76')
+[DRY RUN] Would update: ae5175b6-6a37-4d06-8883-033f27c87afa -> 'Lakisha Smith' (current: 'Lakisha Smith76')
+Processed 980 records...
+[DRY RUN] Would update: c97d4386-dc6b-49d6-8950-577aafab5fdd -> 'Summer Randez' (current: 'Be Humble 3422')
+[DRY RUN] Would update: 143cd247-8966-417c-8851-8ddb8d07bf98 -> 'Amanda Henry' (current: 'Mommysgirl0314')
+[DRY RUN] Would update: bbcac987-a225-440f-b3f3-e4d01832bd7a -> 'Rebecca Cortez' (current: 'Rebecca Cortez')
+[DRY RUN] Would update: 681652d5-75bc-47a1-bdee-c2f936389553 -> 'Rebecca Cortez' (current: 'Rebecca Cortez')
+[DRY RUN] Would update: d5aa85dd-ac69-4272-96de-eadc04e4724b -> 'SANDY SANCHEZ' (current: 'Sanchez S29')
+[DRY RUN] Would update: d973d070-0d38-43da-b461-40ff52385270 -> 'Amanda Martinez' (current: 'Amanda Martinez')
+[DRY RUN] Would update: 12d0d22a-e481-4f49-b453-76c1dac24b93 -> 'Rocio Chavez' (current: 'Chavezrocio10')
+[DRY RUN] Would update: 2c3dc988-19d3-4e5c-820f-b86560206ed6 -> 'Consuelo Moron' (current: 'Consuelomoron1972')
+[DRY RUN] Would update: f5149d0c-0958-4fff-b502-d221c7b4a745 -> 'Kayla Owens' (current: 'Owenskayla57')
+[DRY RUN] Would update: 7eb8af11-52ad-4530-b795-bd95728f6b04 -> 'Jeannette  Ceja' (current: 'Jeanetteceja')
+Processed 990 records...
+[DRY RUN] Would update: 0754b7a8-40ad-475f-95f0-9c46853a7a24 -> 'Blanca Naranjo Valencia' (current: 'Blancapaola2982')
+[DRY RUN] Would update: 98dd478a-aeac-476b-af9b-8146603461c2 -> 'Pang Vang' (current: 'Pvang85')
+[DRY RUN] Would update: 91600ed9-0263-4893-bd2c-e9d64b9027d1 -> 'Sydney Torres' (current: 'Aydneytorres09b')
+[DRY RUN] Would update: ac0eb694-8df7-41ae-8550-f97a1e2db788 -> 'Natalie Flores' (current: 'Nflores1003')
+[DRY RUN] Would update: 4a6bf89a-b080-409d-bb54-5182ba251844 -> 'Bobbie Ann Carpenter' (current: 'Bobbieanncarpenter')
+[DRY RUN] Would update: 41cd0504-8617-4344-bbb7-834e8f191676 -> 'Bobbie Ann Carpenter' (current: 'Bobbieanncarpenter')
+[DRY RUN] Would update: 04c734c9-2d08-42aa-b6e2-0b2d36800508 -> 'Martha Garcia' (current: 'Mgarciaq84')
+[DRY RUN] Would update: dfe98c95-55e3-4ba3-a30b-2f3234bd8d21 -> 'Gia Gomez' (current: 'Gogiago')
+[DRY RUN] Would update: 9b722b66-2dfc-4ab1-b489-3cc400111428 -> 'FLORENCIA VICTORIA' (current: 'Victoria Escorza')
+[DRY RUN] Would update: 22c0aaa7-e0a8-476e-96c4-1a28ca44a197 -> 'Adelene Zepeda' (current: 'Addy6k15')
+Processed 1000 records...
+[DRY RUN] Would update: a5873d87-846c-44ff-af4a-5289dfb5d07f -> 'NAVDEEP KUAR' (current: 'Nkuar87')
+[DRY RUN] Would update: bbc12121-ec5c-4b66-bc3a-22735a653dd3 -> 'Silviano Valencia' (current: 'Avlyric')
+[DRY RUN] Would update: dffca90c-3b0e-468c-b1b2-2d1b3c089a23 -> 'Raine Huerta' (current: 'Rainie Huerta17')
+[DRY RUN] Would update: 5f612456-4329-4596-9cea-24db12026f08 -> 'Nicole Clark' (current: 'Dillingernicole143')
+[DRY RUN] Would update: 5e7ab570-612a-4de4-b49a-e35f080261ab -> 'Brenda Montejano' (current: 'C Montejano95')
+[DRY RUN] Would update: 380b48eb-3c07-4883-ab94-873e3285da09 -> 'Elizabeth Montalbo' (current: 'Calitejano')
+[DRY RUN] Would update: 1cf49e2c-b096-46bc-bae6-d6e7c01f8d09 -> 'Cierra Deaton' (current: 'Cierra Deaton08')
+[DRY RUN] Would update: 98f6bee9-bd0b-44b7-8f54-a9ce295c2f4e -> 'Linda David' (current: 'Nfg2005')
+[DRY RUN] Would update: 4f4a2d24-d011-4408-9847-1536b31dbfe8 -> 'KEONIE METOYER POLOAI' (current: 'Keonie93')
+[DRY RUN] Would update: 3c9104bf-2d21-4bcc-a91c-9fb33993ec19 -> 'SHALMAE MORLOCK-FERDIN' (current: 'Shalmae888')
+Processed 1010 records...
+[DRY RUN] Would update: 58c39236-e016-454f-af89-2b6c0c4c4e58 -> 'Julia Flanagan' (current: 'Jbmf209')
+[DRY RUN] Would update: 97ec1a73-b1e9-4f48-9402-12b27daa46b8 -> 'ANAKAREN MEJIA' (current: 'Mejia727')
+[DRY RUN] Would update: f3330b1a-2ab4-4bc9-99ff-875793b8e45e -> 'Cristina Gomez' (current: 'Amezcuacristina71')
+[DRY RUN] Would update: 687e2226-8062-4e26-9d28-496d05fa9a46 -> 'Lilia Calderon Flores' (current: 'Liliacalderonflores')
+[DRY RUN] Would update: c0c49172-c278-45ae-8a87-fa770529650e -> 'MANUEL FRANCO' (current: 'Mfra1948')
+[DRY RUN] Would update: cfa05461-c935-4969-b0f0-d33630ccb78f -> 'Latasha Hernandez' (current: 'Latasha Hernandez')
+[DRY RUN] Would update: f488c5cd-1c20-4bbb-9026-10901c59af07 -> 'Hope Jones' (current: 'Jones Hope19')
+[DRY RUN] Would update: ba8e42b4-8ffb-46cf-b817-a502832c028e -> 'Satvinder Singh' (current: 'Crowntrucking89')
+[DRY RUN] Would update: a4487e61-8f50-4ffb-a4ba-496ea62ba6f1 -> 'Silva Gomez' (current: 'Sgomez146981')
+[DRY RUN] Would update: 516bf3d4-e861-4236-849c-a9edbbd126fc -> 'Heather Shoffner' (current: 'Heathershoffner1550')
+Processed 1020 records...
+[DRY RUN] Would update: a2e35262-e5de-4f88-992d-35b66dc7b3b0 -> 'CLAUDIA LOPEZ' (current: 'Claudia-1793')
+[DRY RUN] Would update: 953da874-c5ee-4281-ac5a-47b1e5e59d30 -> 'CLAUDIA LOPEZ' (current: 'Claudia-1793')
+[DRY RUN] Would update: 5bb45c5b-c503-4dcc-a400-5d5da65e4ccc -> 'Rolando Rodriguez' (current: 'Ro8489')
+[DRY RUN] Would update: 3b9d90f1-2b0b-4559-89e4-1430a04a2625 -> 'Cynthia Villegas' (current: 'Cynthia100981')
+[DRY RUN] Would update: 91ec2cc3-b6f0-4596-b8a4-923204bd0969 -> 'Gail Sasser' (current: 'Gail Sasser')
+[DRY RUN] Would update: 7ae6f010-e772-4193-b492-c5e87c500795 -> 'Priscilla Grajeda' (current: 'Grajeda P')
+[DRY RUN] Would update: 2eb3bd35-125a-4dff-b92f-67aac4e52a81 -> 'Rosalva Garza' (current: 'Garzacarrillo')
+[DRY RUN] Would update: d7fe51d0-a011-44c7-b319-ef81856dfe2a -> 'Trella Galvez' (current: 'Trellagalvez')
+[DRY RUN] Would update: aa54f91d-b674-423f-9929-f0e74937f5c4 -> 'Victoria Contreras' (current: 'Victoriacontreras759')
+[DRY RUN] Would update: a4a8c602-6ee6-4a71-8a53-d46d94752555 -> 'Trella Galvez' (current: 'Trellagalvez')
+Processed 1030 records...
+[DRY RUN] Would update: 677a8f67-5f6a-417b-9e35-39d5d913526c -> 'Elizabeth Zendejas' (current: 'Elizabethzendejas217')
+[DRY RUN] Would update: 6ffcce54-98b0-4ec1-a2d2-90e9ce557e57 -> 'Maira Aguayo' (current: 'Maguayo90')
+[DRY RUN] Would update: 5224fc4f-1942-4ebf-89e9-19189f81621f -> 'Ariana Del Rio' (current: 'Arianadelrio82')
+[DRY RUN] Would update: 8111a80b-56f0-4587-aaca-46e87637c8b5 -> 'LUZMILA IBANEZ CARRAZCO' (current: 'Luzmi8400')
+[DRY RUN] Would update: 39142b46-894e-4b36-bc99-aa758fe784ac -> 'Lumila Ibanez' (current: 'Luzmi8400')
+[DRY RUN] Would update: 6ebd5887-aa5e-4a7d-a5b4-53f2fb5f95da -> 'Monica Kumar' (current: 'Monicajk122697')
+[DRY RUN] Would update: aded8965-fa22-42a6-9604-b600d4900da5 -> 'Megan Almerood' (current: 'Malmerood')
+[DRY RUN] Would update: 30bfeaf6-f5e8-45f9-811c-eaf4237b0ded -> 'Marie Park' (current: 'Saver Cruz')
+[DRY RUN] Would update: 650b0be4-8c08-443b-be1d-d9e687f64edb -> 'Sendy Botello-Ceja' (current: 'Cendybotello76')
+[DRY RUN] Would update: 414ec3a4-8b62-4395-b02a-e8b0c67baa12 -> 'Christina Arellano' (current: 'Cmarellano87')
+Processed 1040 records...
+[DRY RUN] Would update: ce9661d7-e7a2-4bb3-a601-58567bb41172 -> 'Cynthia Brace' (current: 'Cab0614')
+[DRY RUN] Would update: b85956e9-da37-4ea6-a426-3d02c65558b3 -> 'Liliana Mayoral' (current: 'Csusaulsmom')
+[DRY RUN] Would update: 399078de-12e9-452b-b166-131ca1f03155 -> 'Mayra Colmenares Cruz' (current: 'Mayra Colmenares Cruz')
+[DRY RUN] Would update: 27cc3efc-1386-4b38-a24b-746fcdf125a8 -> 'Nancy Lopez' (current: 'Nancylopez9617')
+[DRY RUN] Would update: 46d3af21-5be9-47c5-9621-55887e2de8b6 -> 'DIANA MOLINA' (current: 'Andresx1987')
+[DRY RUN] Would update: 390c58ad-5b4b-45a1-9be4-314dc0756f72 -> 'Maria De Jesus Alvarez' (current: 'Mariaalejandro333')
+[DRY RUN] Would update: 6a050627-d191-4b2e-b1bf-abc0687c75fd -> 'Columba Leon' (current: 'Columbaleon7')
+[DRY RUN] Would update: 1299010f-13ff-4fb7-bc2a-7ec11a41d114 -> 'Alma Silva' (current: 'Almasilva040')
+[DRY RUN] Would update: e66f5a9a-c812-42ab-bb2a-dfbe09677fd2 -> 'Yvonne Steglik' (current: 'Skinnieminnie209')
+[DRY RUN] Would update: d365299f-2a30-4696-9bc2-b8d99a3cecdd -> 'Denise Esquivel' (current: 'Deniseesquivel94p')
+Processed 1050 records...
+[DRY RUN] Would update: cf864eb1-6024-41f4-a4a7-3470e493ada5 -> 'CHARLIE GAINES' (current: 'Rochelle Gaines')
+[DRY RUN] Would update: 175303da-5025-47c5-bedf-90da3794e365 -> 'Maria Cabrera' (current: 'Cabrdzmarje26')
+[DRY RUN] Would update: 7fff184d-b03c-4053-9a9f-2692b022ea20 -> 'Heldy Corrales' (current: 'Heldy2022')
+[DRY RUN] Would update: acf985b2-b67f-43a1-9567-b939f28f33d5 -> 'Megan Skinner' (current: 'Lilmegosss')
+[DRY RUN] Would update: 7d5c621c-8fdd-438b-b759-1873c23f9caa -> 'Esperanza Acevedo' (current: 'Espacevedo83')
+[DRY RUN] Would update: ca45d94c-67b9-40e3-8061-c5d71a46bea7 -> 'Gemelia White' (current: 'Gemelia White')
+[DRY RUN] Would update: 56539084-6e8a-44eb-8409-d141cf47536b -> 'Guadalupe Maria Sandoval' (current: 'Guadalupesandoval421')
+[DRY RUN] Would update: 0618d14d-682e-4423-816c-ee87aaa99494 -> 'Michael Perales' (current: 'Mikiep13')
+[DRY RUN] Would update: 4dcd214b-af5d-45ca-bb1b-9b8ba5c042ce -> 'Jazmin Montoya' (current: 'Montoyajazmin21')
+[DRY RUN] Would update: 97730717-b590-4b7a-8355-586331b7362c -> 'Marisol Vazquez' (current: 'Vazquezmar1')
+Processed 1060 records...
+[DRY RUN] Would update: ad7d0c4c-6c21-4358-9c12-cac76c49f64c -> 'Rachel Madrigal' (current: 'Rachel 2005us')
+[DRY RUN] Would update: fef1303b-998d-467e-85a4-08f4e7d41df1 -> 'Megan Herrera' (current: 'Mayherrera21')
+[DRY RUN] Would update: c8c67474-82fe-4aef-9cf1-c68ddc96a2fd -> 'ANA ARGUETA' (current: 'Arguetaana842')
+[DRY RUN] Would update: 4ab821bb-4088-48e8-b7e3-63df18977d9d -> 'MARGARITA TINOCO' (current: 'Maggietinoco')
+[DRY RUN] Would update: 737263fd-4412-454b-aaaa-1e1bce63774c -> 'Eric Tucker' (current: 'Es Tucker')
+[DRY RUN] Would update: 5459cb7f-5650-4ca6-9e70-75721d6e1ca6 -> 'Karem Cajero' (current: 'Karem Valenzuela')
+[DRY RUN] Would update: 0141ce44-1833-4fe1-b91e-d17a07cf7692 -> 'Mayra Heredia' (current: 'Mayrapinonarreola')
+[DRY RUN] Would update: e8e9d66a-0efc-4076-8b6c-daade4be1be2 -> 'Olivia Hernandez' (current: 'Oliviahernandez877')
+[DRY RUN] Would update: fea78f5e-f092-4cc4-a454-609dc3360a4b -> 'Maria Corona' (current: 'Aracelicorona100719')
+[DRY RUN] Would update: 1e06bfe8-3295-4a1d-b0e7-de8e22db76b4 -> 'Leonardo Cordero' (current: 'Aprimeropalma')
+Processed 1070 records...
+[DRY RUN] Would update: 262ae3fe-1616-4734-a4f9-6723c60375ac -> 'Karla Garcia' (current: 'Garcia Karla93')
+[DRY RUN] Would update: 75b467b5-e8d5-4c81-b589-ecd9d8d7876c -> 'Romelia Zendejas' (current: 'Valladaresromelia2')
+[DRY RUN] Would update: 3c8ca8d3-57dc-42d1-b9d7-2f710e52ff0c -> 'Gina Anaya' (current: 'Ginaluvbal')
+[DRY RUN] Would update: b3fbc516-0362-4b1f-8a8f-6f02b4c38d86 -> 'Belem Lozano' (current: 'Bethlehem83')
+[DRY RUN] Would update: 32b62599-567a-4be2-82ea-a780aea48cb8 -> 'Rebeca Muneton' (current: 'Munetonr703')
+[DRY RUN] Would update: f5fdc85d-971d-407c-99c4-bc706d731928 -> 'Maria Hernandez' (current: 'Mariaher45978')
+[DRY RUN] Would update: f6c675c5-a3ca-41e9-b05f-4748368cc098 -> 'Gutierrez' (current: 'Picassoangela1979')
+[DRY RUN] Would update: 67546d98-74a5-4e0f-8a3b-e67ae1f9bc78 -> 'Alondra Valdovinos' (current: 'Alondra88valdovinos')
+[DRY RUN] Would update: 50e38d1c-39a4-4560-b3e0-a5a4c166b2e8 -> 'Alma Perez' (current: 'Alma87perezandrede')
+[DRY RUN] Would update: 22b58761-a3ec-4cd7-af41-d94dfa943c4d -> 'Yolanda Hernandez' (current: 'Yolanda Hernandez1984 Yh')
+Processed 1080 records...
+[DRY RUN] Would update: e1bd56aa-3202-4da3-9e9f-d5439088c39d -> 'Nancie Chavez' (current: 'Nancieluna')
+[DRY RUN] Would update: 85eae09b-d74b-4aa6-9e6c-bbe48d0e5ad3 -> 'Martha Valdespino' (current: 'Marthavaldespino1971')
+[DRY RUN] Would update: 31470b4f-7b11-4086-b6e5-bce27fc651b8 -> 'Dejanay Mercer' (current: 'Dejamercer29')
+[DRY RUN] Would update: 28f3045b-d638-4f04-9e24-43e97db72801 -> 'Marilyn Quintero' (current: 'Marilynquintero59')
+[DRY RUN] Would update: 9036a1b6-db68-4087-8369-8aed83d465dd -> 'Tyra Vega' (current: 'Tyrarvega')
+[DRY RUN] Would update: f932b3e3-0994-4d60-8d15-fa7a345747b3 -> 'Ofelia Gonzalez' (current: 'Ofeliabella87')
+[DRY RUN] Would update: 2ecb55ac-6079-4d6c-9da5-6592ef85b2e2 -> 'Christine Schickedanz' (current: 'Schickewhat')
+[DRY RUN] Would update: 9152465b-03b9-4ac8-b24d-b99c5822e4ee -> 'Ariana Cortes' (current: 'Mrs Arianacortes')
+[DRY RUN] Would update: af30c783-5ae7-4261-8345-e27692ac8e46 -> 'Jennifer Thach' (current: 'Jennythach209')
+[DRY RUN] Would update: 21f5780b-9f7a-4e79-bc5e-521dc001c1f9 -> 'JENIFER STONE' (current: 'Jstone')
+Processed 1090 records...
+[DRY RUN] Would update: b2cb2080-245d-47b2-bc7c-49ef66a9c0c3 -> 'Alejandra Lugardo' (current: 'Lugareo1989')
+[DRY RUN] Would update: 3dae23dc-ae95-465a-b7c8-e15fc4449836 -> 'Britani Nydahl' (current: 'Britaninydahl')
+[DRY RUN] Would update: 369ce7ef-72a9-4d67-a96d-9f5f4108a1bb -> 'Cailagh Elliott' (current: 'Celliott1617')
+[DRY RUN] Would update: 7399aad3-3122-408c-aaf7-d1a0070af1dc -> 'Amy Bullock' (current: 'Amybullock13')
+[DRY RUN] Would update: a898e60c-555d-4563-a96f-59499f7547a1 -> 'Marlen Marquez' (current: 'Marlenmarquez02')
+[DRY RUN] Would update: 1bea3284-c8fe-4f64-9a69-62645df3019f -> 'Valeria Guerrero' (current: 'Vmendez307')
+[DRY RUN] Would update: d55c18bc-6539-4129-8c78-70c295e6efb6 -> 'Wendy Alcala' (current: 'Walcala2')
+[DRY RUN] Would update: f73a443c-d0c4-4a63-96da-5afae15617d3 -> 'ALYSSA ELLIOTT' (current: 'Elliottalyssa40')
+[DRY RUN] Would update: eac34182-6d04-4838-9b67-a9f08394c39a -> 'Guadalupe Barragan' (current: 'Guadalupe1394barragan')
+[DRY RUN] Would update: b1f2b07b-1465-41ac-a0e7-3e42086f459e -> 'Davinder Kaur' (current: 'Davinder Golu')
+Processed 1100 records...
+[DRY RUN] Would update: 1598fcce-0577-4304-9fd2-17fc56f2358a -> 'Leighann Eldridge' (current: 'Ilovemyfamily2091')
+Processed 1110 records...
+[DRY RUN] Would skip (not pending_enrollment): c94e4175-ac95-4c12-a92f-0f125feb5c2b - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): dec4432b-c0f4-41ac-ae12-f7760dc6c651 - status: enrolled
+Processed 1120 records...
+[DRY RUN] Would skip (not pending_enrollment): 56a51713-9df9-4a7b-af79-5bc8716e1863 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 92c8505a-3a4b-4306-ac89-f701d8fc6265 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): c40b4620-235e-446f-8b14-f4f35506c595 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): e8289a98-30bc-4290-ad21-6b3db1a01299 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): e2b4bf94-46db-4931-bca1-4d62fe9cb582 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 4bd0f467-7d6c-4f6f-9780-e49462c6b33b - status: enrolled
+Processed 1130 records...
+[DRY RUN] Would skip (not pending_enrollment): 4dbd9e4a-dfa1-4bc2-a4ca-0b9a49c6954d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b388d181-55e5-41f2-bf08-2e8ee89f9f54 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0e333332-bab6-427c-9804-780bf8171570 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 88644eee-6c89-4494-b6cd-0a1a3337905f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 742ee511-0592-40d0-96ff-0443adaf5aea - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8583ebf0-114d-4595-ad00-8a9753e43a10 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3b0b773c-371e-43a6-afa8-54c7f77ca9d9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 78da15e6-ac98-438c-b3f2-c39499b92059 - status: waitlist
+Processed 1140 records...
+[DRY RUN] Would skip (not pending_enrollment): 5a8ba690-5047-4420-810c-5031920ebbf8 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3ce8ac99-1d58-4bb7-b2fc-0b19d18812a0 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a552beb2-4d77-4fa1-855e-509b000ca558 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ac27b45a-7480-474c-9cbf-d80f8cc791a3 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 27b200d7-10b7-4882-8419-c9a486218e8e - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 16c40a37-2ff2-4d1a-afba-a2b5c39313b1 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4509a97a-2328-460e-b8a7-d63a67ded39e - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 26afe6d9-6e73-471c-8cb4-fb11feeb5831 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0d7e69b9-b9fd-4c7e-a7ca-be19e3781a58 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 27e42c15-1d7e-44bb-aa7e-379738b339bb - status: waitlist
+Processed 1150 records...
+[DRY RUN] Would skip (not pending_enrollment): 61fa86f3-7394-46d9-be5e-58e9750b397d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 609a48da-bea1-4563-87e9-9c26594cc6c6 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): fa33eddb-56b2-4b5b-9761-87e147f68e12 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 12215f1c-c205-49f8-b316-0a9106853903 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 9a7f8bb7-b975-4f1c-8577-728f1d428450 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a6193e70-4918-4617-8c9d-414b33f0d806 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 32664ce5-2403-45d6-aa81-f69a09f1e65c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): afef8d8c-b32a-4310-8317-251dc394d47e - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): bb27e41a-f607-4e4e-8f50-5e943ca42ea7 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 15fc701d-6ce0-4ce8-9f95-af86720c5d1d - status: waitlist
+Processed 1160 records...
+[DRY RUN] Would skip (not pending_enrollment): fde2d5e7-0e3a-48ea-97e1-4a565be0efaa - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 38048a4c-7184-405c-b2fa-05a841b857b8 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 2cadfc6e-6b33-4e62-a285-78c7256f2ffe - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 05d8ef36-7ab8-49f5-8c3d-ae3001b7cafb - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c9456b27-80c9-4d2f-ab7e-abd82f5ff66a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 18515800-ca3b-4934-a2d3-b912fc54901a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f572bc07-6820-4af4-b298-88c8fd841ed7 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 984bf6ab-aa98-4a30-9969-2d0b7d995edd - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a81efdc3-0b69-4bd4-bf04-6e5c1b717239 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f8fc7a52-6740-4325-99c3-d8f1a8de2552 - status: waitlist
+Processed 1170 records...
+[DRY RUN] Would skip (not pending_enrollment): f1b04b19-820a-437e-9d6e-f280ca2c04b3 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): bf588bb6-256f-469d-b28c-225056beca7b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 5e6eb386-3428-41fe-9294-0043cd48f294 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a35c2305-bb88-4a1b-82e1-20e4c562e22b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 339fcfa4-0c18-43f2-a35b-56aef85a0f16 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1a9f8861-1a38-485e-bc8f-2f58c978b55f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b9c41ba0-be58-4065-954b-d8579d92df77 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 5e1002ad-bc80-46c5-bdfa-c433037f4428 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 2de4ba3f-35b2-492d-bfcf-08dcbdaeaaf9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 07d24ce6-5208-41d3-a803-53806ab1e07e - status: waitlist
+Processed 1180 records...
+[DRY RUN] Would skip (not pending_enrollment): 56f00143-2500-44cf-9cc1-fd7194327a92 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f4adf662-d833-44cc-9149-e06314032076 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 623f6be6-9f9e-4dae-bb6e-d8a0208bfddd - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): e9463d60-5f1e-4414-8a2d-430112d05cc8 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 2b61a73c-c2d0-4b2f-ae67-99e8a8019817 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d10ffd42-95bd-4ed3-92f7-e575a20882d8 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d057578d-b81e-43bf-88b7-753fd4b929f9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 05806940-89df-4ffa-8662-1918e3cbf406 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 974bc85e-5c20-4f41-8ed5-9ef58273b74f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b3276ca3-2522-4c8b-ba99-0f7f74aaf85d - status: waitlist
+Processed 1190 records...
+[DRY RUN] Would skip (not pending_enrollment): 41e41bfc-30e1-4ed0-afe1-578ac65a488a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 37436c2f-a0b9-45df-8d67-cc567ea1f141 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 7324299d-5b68-43ee-a2b2-8efe06e5fd2c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 58232fed-f863-4b69-9c69-5427a9841ff0 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 2344b6b9-413c-447b-a2d7-4923d3b25cbe - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4c7bcb14-560e-43e3-b2fb-4e5bb7c801d8 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): e9e2d658-bf26-48ab-84e9-63ab77c41fb2 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 27109bb5-5ef7-4d22-bf30-13ac2fa038d8 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3a1ff71a-2655-476f-abfd-05f1f2320f40 - status: waitlist
+Processed 1200 records...
+[DRY RUN] Would skip (not pending_enrollment): e3f19d5a-f599-405b-b1bf-b2691f9158c8 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 124569c7-0f5d-44ad-a6cb-3705cb33a0a1 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0f2aa1a6-cfa5-41da-8031-696f9302f616 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ec89d4c0-0a63-4fd4-916d-7b49e4a799cb - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 81a10deb-1385-4b3a-b263-58ae9069bb98 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1aa70800-8e01-42d2-80d2-f01235f4d88a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 9d249e77-efd7-4b21-8afa-9018ebaba7e3 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 150b1246-3a52-4f02-affa-e71be5788bef - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 73ee46c8-3e87-4869-90fa-b95cba6e7913 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 48505f1e-20fe-4b3a-aa11-e5e6fdfcdb8f - status: waitlist
+Processed 1210 records...
+[DRY RUN] Would skip (not pending_enrollment): 7615f32a-d651-47d9-a01b-75ab6f9b79bd - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): e6140be8-e540-4b90-bdfb-2b07ba02fc45 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 071bde08-94ec-4f51-8e7a-42568a73b08e - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1333bbc7-6d87-4eb2-bc96-c740d7389c27 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 20135850-c5a7-4cc0-bb48-1475b586de3c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): be7720fa-864b-41d8-abdd-3dc54de452e6 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): e0305c8b-9b5f-45fa-bd3d-780e671ce67f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f77696c4-c22e-4da8-94ed-898f5975bbd0 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): af1c807e-3781-48b5-9d60-4b630b2c7a82 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): af6733bc-1498-4960-a8f3-074ef4788890 - status: waitlist
+Processed 1220 records...
+[DRY RUN] Would skip (not pending_enrollment): 12119ff5-50d0-424e-83ea-00dc62e9e825 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a4fb6b25-923f-48e5-a335-e2ceb6af625d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 933973a8-a9bd-4544-9df0-c856bae2a3ce - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 6a1fad76-1cc2-4917-a710-fcebeb0386db - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 047621cf-480f-48fe-811e-ce440280c7a3 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d177c81c-edb5-465e-b736-2d2c2ff429db - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 77748a9b-469d-4630-927f-7962940a938e - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): dc768ba4-d322-4c89-be96-ad6aef8d6395 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 9779f77c-fb7d-47f6-ace5-4154f6177a8d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): be17da8f-0088-4c5c-9113-772b137da91b - status: waitlist
+Processed 1230 records...
+[DRY RUN] Would skip (not pending_enrollment): 804f8401-350c-4fb7-a801-6ea0b9f4f337 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c25f8dfc-a311-4ca2-9e7f-1ee483612c86 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): dc71ff6d-93fb-4ec2-8c8d-69c7fda957db - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 20a1c82f-d590-4409-b2b6-464e714a8cca - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 82075a63-ce06-4bc9-8f26-e64e64505018 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a512a906-6cb0-4a2a-9b5a-4117409d11eb - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 27e15f24-0efa-4be5-bc95-f105694af276 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 68f86237-d5b4-4ee5-a8ce-950b691a0248 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4ebb7845-8fed-40d3-9441-033fc572691d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 797c223e-3650-4087-b2ef-2f8cb491d33b - status: waitlist
+Processed 1240 records...
+[DRY RUN] Would skip (not pending_enrollment): 93a7b84f-8cd7-4752-a69c-a0b361b14b0c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d060f2e9-f02d-4071-8be6-e5a04bb0f557 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b3d9c007-c820-4db0-bfa0-2772cebc9cd3 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 7b089fab-b60d-4920-9cea-25b5f86cdd0d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8abf012d-98c1-4ff9-9d8f-194f0c025b71 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0b5e5e58-74da-49aa-9c32-fd2cd6898bc9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 9a08fdd6-59ad-4c66-9792-773b45a4babc - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f8c0e324-5044-4c3c-aa0e-07f3760ce996 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 6d8a73c3-80be-4832-9240-ff98fb0998d1 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 47be70ba-0a9c-4857-af8d-a2d315d571e0 - status: waitlist
+Processed 1250 records...
+[DRY RUN] Would skip (not pending_enrollment): 073cc237-28ff-435d-b64f-17d2abed2954 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 5132897d-ccf7-4712-bce6-c6776b20e569 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 09ee8a6a-f6e0-48ad-9c7c-a6d6309411e5 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 68233295-569f-4fa5-bd56-696870391b7d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 2962e32f-2b7e-4c5a-80d3-e2eea5680c4d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 20e052dc-0528-4477-ba46-02f59342e2bb - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c905f0c2-98f3-4933-83f7-ec6031f98b38 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): fdd990ea-67fa-40f0-af4a-3cbf7aeb0674 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 56248673-ac30-413a-85da-580e84b7f6df - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d0418b16-bb9a-491b-b38b-b9fa11ec05b4 - status: waitlist
+Processed 1260 records...
+[DRY RUN] Would skip (not pending_enrollment): b714ee1a-1efd-4c2a-9c9f-369bb18e7c60 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a4bc233f-a730-4fee-b8bd-d26ba77c542f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 7376af7e-3269-444c-a80c-d5cd77f0ee24 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d1857f86-9a51-4b82-a0cb-354dbb00fec7 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): cd52b272-3ce9-4a89-af3c-97b5128b2d18 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 112a8218-8c8d-47bb-b7ff-8c90c768a6c6 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b7c9ef72-1548-491e-95a2-4ffc3222cd6e - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 50e92613-1397-4f86-b129-eb0eb29aecd4 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4036a2ec-e997-45a5-bb81-16fc2a8e1b20 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a2d96481-bdfd-49bc-bedf-7ec84a2c15a0 - status: waitlist
+Processed 1270 records...
+[DRY RUN] Would skip (not pending_enrollment): 67f44a44-6fad-4ea4-aba8-dd5c7ae41aba - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 085de1e3-bfa5-48e9-851e-0b091283d4d6 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f050f540-fe83-4344-b634-fe8ed4e976ce - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0dbb8781-9f2a-4f27-93ac-cfa01b674ac4 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 60fa02cd-aa20-451c-a2c9-c291b82df055 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 2f5af3b3-5bcc-4e43-8dac-1dccf8274557 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 6d9e0228-0850-4028-a92b-a8780865f893 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): e76933ad-f75d-4ed7-aaa8-5437105a049f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d48425c2-1328-47f1-8461-59fdf9dce5be - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 9cf6dcc8-0494-47fc-b5ed-3780a568aa3b - status: waitlist
+Processed 1280 records...
+[DRY RUN] Would skip (not pending_enrollment): 41fe4838-4f93-4bfc-8781-9908cff177fe - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 6ceb3638-6002-4d48-a95d-6419a20723dc - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4742b6e3-7d0f-4114-ba98-b37446bff12b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4976a2d8-9d65-405c-8725-c041495fb0d3 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 78e37af8-2df4-420e-bbfa-b6f95eb39f4d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): dbcfdd4f-b923-47cc-8a52-2f97663bbed6 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 440005fc-f0f7-41f0-8321-3f764d501a69 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 2a6666c0-fbb5-405c-897a-f99c3e0c8ab5 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): feef01b3-8f85-42e0-a2dc-86504c173b3b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 31e79d02-3728-4ef4-97e2-c8d67fe823a4 - status: waitlist
+Processed 1290 records...
+[DRY RUN] Would skip (not pending_enrollment): 123192ba-3ede-4275-bf02-2c6b01ebb425 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ae5521c9-cd53-43fb-86a4-d604e2514ac4 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ac0c79d4-e3db-48f6-b343-0ed980515240 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): bf8709c6-7ae5-4a4c-adc9-df1401836cc9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 5e0ef55d-be64-4310-ab0f-edade4641056 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 45e14b58-c6a3-4b86-8d4f-70ce9a5ab817 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8693fa3e-6d97-48ba-8245-aa983fdb4264 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 5d149624-2938-4fde-8773-7c2a277039f7 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 91b1585f-d9f5-49fd-92ac-83bab42b500c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 513e5e37-48d3-4ede-b79e-a08ae4aa0317 - status: waitlist
+Processed 1300 records...
+[DRY RUN] Would skip (not pending_enrollment): 53135688-97ac-43c9-8353-2169ccc1fde7 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a82f9200-6512-4b1f-9a0a-6b7cb6be183e - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 5bd438cc-3410-45e5-8246-f7cf8e24ffa3 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d878897b-1840-4f53-a456-18ad202d0819 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c79991ec-820f-483d-a152-7649c0190a59 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8e35fb7f-5ae7-42d7-9593-4f1ea948d8aa - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 24b7d04e-b7f5-4e02-82cb-502e79035a28 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 76326c8f-e5c3-442f-9d32-78a9c8606f01 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b17f3059-08b8-477b-84ea-88cae5361aef - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 435d0900-7cc2-4592-a774-6ccf750b8a90 - status: waitlist
+Processed 1310 records...
+[DRY RUN] Would skip (not pending_enrollment): 7001a0a7-0cb5-4fd4-8772-7180f22395b9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 03a70c23-4491-47da-ab96-e955b37f69ce - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a02dc82a-87cc-4310-abea-bb54ad97df5a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): eebcfa2d-a404-4c42-b3aa-ca202565da95 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 70405b81-c3a3-43bd-8605-a9454ae3817f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8471d8d6-78f7-492e-8fba-d77ad4733025 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 95bd0689-d3e1-4b82-899d-f723fdff4a26 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d1251815-9ba1-4ab8-bfee-dc6d88f6e565 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 47630004-b268-4c93-87c4-49284bfa051d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 7b780f30-f8da-44af-bbe0-17df01b929ac - status: waitlist
+Processed 1320 records...
+[DRY RUN] Would skip (not pending_enrollment): 5cddffa7-e654-4045-8939-d6240a3ee0d1 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 284fa766-edb2-4060-90f6-678326f74752 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 72e6c92e-80e2-4b34-9c88-bb1bc17ad232 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 2e0eb42b-0a86-4c79-86fb-bbb6ec907014 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 944fd2d7-f9c8-4857-9056-4ceb84e50c23 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1c0f1e1b-8531-4ccd-b131-3fe53508e222 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d78af3c7-dbdb-44b3-8a5d-bdda65aa87c8 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1bc331ec-27e4-4f1c-8407-63d017eb2930 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a98656a2-fdb5-4a66-a3e7-8e4d19bf9d6b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 5267457d-2f37-4d0d-9fa8-67cbc5ce74b4 - status: waitlist
+Processed 1330 records...
+[DRY RUN] Would skip (not pending_enrollment): eec7c2cb-dda5-4925-aecb-2efc97aa339f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 9c18af69-8690-4435-bd21-c617e34b9cd4 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 124968fa-253f-4fbd-9af9-dfb38bf59daa - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 92004ce2-a719-417f-b336-b77f943bda4f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 612a7145-469e-4376-8a8c-deb8b8127676 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 6fd9b37c-356a-4384-acfd-3bd4fe2a71fa - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 7a86cd44-241e-4820-8a41-1faf17c6204b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1baa1472-4b67-40b9-bae8-d1621ed73e74 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3e28cd8f-ceb6-472b-ba63-a42f6ab509be - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): dccae125-c7bf-40f1-bcb7-297087f2c40d - status: waitlist
+Processed 1340 records...
+[DRY RUN] Would skip (not pending_enrollment): eaa43c22-6741-4961-bf46-a3ff1cf1b2df - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 099ec041-ab66-4295-8511-aea30f67f907 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a089787f-dca5-4237-ae69-e3cc314c958d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 44e3c4da-dc83-42fc-aec8-3255a4cc9fb3 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): de1cc4df-f795-446e-bc22-5785520fb9a9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 320039b7-28d7-4bdc-b0c8-d4fd95c34501 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): eddd9287-ec5b-49fe-a1c7-272484c8c667 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b2d75667-d8c1-4985-ab41-a27129fe41ca - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c82954b6-cc1d-4e2c-8ea4-a327e128af17 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): bafdfa97-af0f-4924-91ec-9cab7cc8deeb - status: waitlist
+Processed 1350 records...
+[DRY RUN] Would skip (not pending_enrollment): fb9055a8-3cc8-4bed-b7ea-c71bc7821ea3 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f79072f6-d06e-46a7-be34-e9ab583db54b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ffcb6ec6-3b8f-4fca-b012-dd12ca58a0ac - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 15ff6d8f-5df3-4ceb-beb8-874f5a6d0264 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): dd71462d-beba-4606-a8d2-7a843e45288d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): de59b8bb-7ae0-440d-bac6-c0efa9eebafb - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 06cd250b-0707-4f76-8b4c-8e314042696a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): abc9d502-9483-4838-9a63-7ae85b6c059d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 327fd9e5-3763-4c2e-812a-242fb7e917ac - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1396b358-62cd-4a9f-b928-f5e19eb43332 - status: waitlist
+Processed 1360 records...
+[DRY RUN] Would skip (not pending_enrollment): a670c01c-f63c-4a5d-88fc-5a2026065536 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): bea85194-48a1-4290-97d5-9e92978a9ece - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 699900eb-4f64-4cb5-a075-b1947aa67899 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 42982baa-97cd-4fab-a3c2-d72072307d25 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): fae4ad4a-72c8-45d8-95a8-6773bc3c5f9f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 10f4b12d-8710-4b46-9922-e3691becb118 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 69095cd9-196e-4931-a1dd-4226edb61995 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): e0659196-7be7-4bac-939c-445f3d16fc78 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): e3811640-be4e-45c2-83e4-e06216a364da - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8f0cdc48-5727-40fb-9197-7db6bfc905da - status: waitlist
+Processed 1370 records...
+[DRY RUN] Would skip (not pending_enrollment): c1659c5d-58d6-4668-b7bb-eba80aa1cea0 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f9684bd2-b82b-4a15-be85-311e96f8c804 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 9e407009-22e8-4d13-8523-ede1db7cecf4 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 9a95318f-0475-4a2f-a887-7b4eb717415f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 851db9ae-1723-4d88-b491-6af0967d4f15 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c690dfd1-a690-4e43-a468-9c846b993f83 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): cd529a6c-03e3-4d20-882e-cd1b31f81b1c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ba5057e5-b77c-4f55-8f3a-5a04e498da7a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8a7084f0-c281-4c3d-809d-f5f3f43914b4 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 88e28d3c-f6a3-4428-8444-902b2ea5df03 - status: waitlist
+Processed 1380 records...
+[DRY RUN] Would skip (not pending_enrollment): 54e899b7-2547-4f22-b22e-e89aaa68141c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 9033cc73-215f-4fd0-899c-8754eed8fd08 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 96b70580-ff9c-4c93-8676-142e45217b83 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 53fbb2b8-d020-45a2-b6ba-e523a89e2d15 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 6a1801b3-fdae-491c-9f3c-84bad09ad74b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 724c9a64-767b-4c9b-8884-e35e87e76196 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0e1561a6-d968-4994-a56e-d7297dfd930d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3fd253e0-9be8-4325-96fc-a45ba78b5e25 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 496d41e9-22a2-4a62-848e-dbdff1eb6440 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 7f8eb2ac-7b4e-42c9-bf55-72bcae48725f - status: waitlist
+Processed 1390 records...
+[DRY RUN] Would skip (not pending_enrollment): 68894eb8-714d-4df8-b1e5-391be419f206 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3adf0e3e-fcee-4484-8cc1-30f4ca3101d9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a7bb9814-408f-491e-bbdd-e1d2ecc66804 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 740c426f-c486-41f2-b2b9-04263ab43d42 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8dc0199f-e220-4fec-a100-20abb60aecd5 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c22fa14d-cd85-454b-adaa-a11a49579a2a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a83f505a-7379-4949-9990-37722ae9fd32 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 5e01f094-ff6e-4e93-b141-c9594e7d1bd6 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 97dc5235-4cd8-4064-b353-54612c4690ad - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a585f2ac-c64e-4d5b-b3c8-81762db53761 - status: waitlist
+Processed 1400 records...
+[DRY RUN] Would skip (not pending_enrollment): 0e4abd77-c310-444e-9911-62ff2ebce7ab - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 278d33f3-eb8f-43cb-a3f1-fd34173099d9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 80f51dea-e02b-4421-b1e3-ba6ea6dfad2e - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): da976483-77e3-4e37-9ce8-d5cb9a2165a8 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c64ddc42-a70b-4dca-8500-dba217e91e4b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 05a5eb04-4199-4db1-a3c6-d0c29d80e612 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d8d26e4a-4169-4ea0-8c41-09498f96f0a1 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 69886a70-ce91-4d47-b477-1880b7b86258 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1415d566-2e44-477b-9451-45b4e7d7fab9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 43b7be1f-ce6e-48a5-b2f8-a27c702d9080 - status: waitlist
+Processed 1410 records...
+[DRY RUN] Would skip (not pending_enrollment): 59a3408b-cf3f-4370-8ab8-07fbaa68dd40 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1c6eb944-0a0c-48bc-8343-0a4d8f528356 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 584ab7d1-a2e1-40f2-8c51-8ee149e3fd51 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b4294453-90a5-4289-8bdf-102dc5cd59a9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 6a55aa8b-5fd5-4adf-9313-0840d0f8819a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8bd26481-87e8-42a5-8061-c6d2ee5dc31f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 316cf95c-de55-4722-b732-e13d4489c5aa - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4af8d415-7287-42cd-baad-fe2b2de95d66 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a1a6d890-5318-4873-ad02-3e7efa03d93d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 49f5c1d4-63e5-4af1-b251-bbc49af07168 - status: waitlist
+Processed 1420 records...
+[DRY RUN] Would skip (not pending_enrollment): f986ae66-9ccf-403a-a4d8-b0cbc3885f29 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 02269608-0fee-4159-9037-96fc5e2dd773 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c1f7e0df-601c-4e5e-9bca-d31ac6781d65 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 61c7ce35-1e42-48a4-8dc7-54df8e78cc5c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4879141a-37b2-46e5-8f4c-be5df8cb00d5 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 7f507e5a-b88a-42ca-8613-15757e7f5a33 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 30724e49-825d-40f1-b0d9-1875093a79cc - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b2ef5020-e452-4e1b-aaca-cd25081732f9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 67b81ad4-9b74-4d46-93e3-2044d5320932 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3a037d2b-ec9f-4a30-8948-e0fcd8b8ed89 - status: waitlist
+Processed 1430 records...
+[DRY RUN] Would skip (not pending_enrollment): ec08a589-c6de-4adf-ab68-e4ccc4a70201 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): e8fb377e-e5b3-4fc8-af56-27a4756f1cc7 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f884c18d-9298-47e2-96e3-694b581fe65d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8f008f51-6d0a-4c4a-8646-864a04efc128 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 82c0d48a-4589-4535-8f8e-b7eff9dbb65b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): da595698-e4f8-4387-8158-a7485e670277 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d438b011-5ef7-4fac-b913-5faa51cac339 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 17e0623c-85e1-4d49-8e6e-76c0633f63b1 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 2cfc840e-da2b-49ee-89a5-d42e334c5c99 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0d64c5a4-8dc3-4fda-9314-94681ac950cd - status: waitlist
+Processed 1440 records...
+[DRY RUN] Would skip (not pending_enrollment): d7006e79-cd79-41e7-a3a0-d71ea89033f8 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): eb0e2656-5011-4286-ac52-a34414ce2806 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 141569b1-962b-4332-b4d7-a793659190ef - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 032a72d6-7608-4a1a-b392-e36f67e45d71 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 14444221-ddfb-42c4-b36c-fc0ebc9a05e1 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d0a6209a-cec9-4d36-a907-fb86da588975 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d05ff2d6-3675-447f-a379-527fe7188e03 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0ee22f5a-b85e-43a6-aabf-50e2a269b82d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3f6ba87b-4906-425f-8523-5e5f26e21f1a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 7aad6c51-e802-419e-b59d-6525c80284a3 - status: waitlist
+Processed 1450 records...
+[DRY RUN] Would skip (not pending_enrollment): c4769c57-47aa-43ca-87ce-04b4ea63df09 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 06ec9017-4665-482f-9684-233eddd2d985 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 33306865-14fd-4a41-a6b4-2f307833c370 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): eaf86e63-e08b-4e7f-a876-c61ad94b48bc - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b3fc9661-c1da-4cc6-8a11-5de5b6c56e16 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 35ec38e6-e407-4a59-a0e1-9049298520d7 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 869bb5dc-1e7c-4fc0-8e14-e3e87e1ff94b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 17a66ddb-bcaa-48c4-a037-af1f360b9eb7 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): faa3ffd8-cab2-4728-8b74-82e9b5302d9d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c2b36732-a598-4d01-a7d1-57568717642c - status: waitlist
+Processed 1460 records...
+[DRY RUN] Would skip (not pending_enrollment): 591edd80-6938-46ac-9787-ddcfaa72b18d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f2431831-9970-431a-9e4a-e6ceacd8476b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 89172530-01bb-4e78-8dd1-65f2933e75c7 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 5396193f-1bf8-45e9-aedc-3f09efc51a43 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 71fa95d4-dada-45dc-a247-d19cfb2a9929 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 594e87bc-6e21-4690-96e4-472d70645d45 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f2bfa976-f6b5-4000-8443-b12c8a928ca6 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b8aadfa3-6dd2-4460-8e1f-edb82f100767 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 99a52793-9402-4743-b83d-59a807e03b3a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): eab6be2f-6527-434c-9a48-235819443ba3 - status: waitlist
+Processed 1470 records...
+[DRY RUN] Would skip (not pending_enrollment): f31dd5e3-f3e7-4bf4-ab63-5e540a2e13e1 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 335434d0-bb2a-4906-ad5f-61fd641e3aec - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): bbbe8838-0c23-4077-872e-26bfd546d60f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 537d86fd-c94e-4ca7-bcc7-579660270d49 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 224ebf30-830d-441b-8a27-528808bd47bb - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4e6f2034-d563-4511-91fd-c7bf937e8c97 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0d2e69c3-a34a-4e85-8696-a506a4d2f606 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f25414f2-f5f0-4c53-90f6-6e09b9c3e326 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 5440338a-d58a-4b43-aaef-ae1f211b9c2c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): dfc5455e-ee6d-45f3-9607-7ac0f107cb76 - status: waitlist
+Processed 1480 records...
+[DRY RUN] Would skip (not pending_enrollment): b9220418-fb41-4745-bdd7-47b86508fd98 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 84e254f5-aff7-4120-a786-22c2cbb014a3 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 7f63eb4a-f2af-4589-b237-7b4a67862970 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ec118302-0a68-47b0-bb60-d894426d4093 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): db3db3be-d61d-4e6e-9929-15708fb3fa0f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 54a03aec-16c9-489b-a5e4-bf1d14fa8a08 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c4e95ab8-972d-4a64-bbde-cb4a2a19b899 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 2bda331a-94cf-4a64-82e4-efe3148d1db9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a0644d51-ed60-4ca8-8596-aa415ce9ef8c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 2ac170f1-ce7f-40a8-b9e5-4832f63f7097 - status: waitlist
+Processed 1490 records...
+[DRY RUN] Would skip (not pending_enrollment): d62c8800-1ddf-4900-9ea0-dcc5b0d21bdf - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c60249aa-fb3a-4798-84a6-5fa9a1587b42 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 6169a94c-b08e-4327-95dc-399f53ee028f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 9f05a7e6-ba17-4aa1-8875-e365697c62c8 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4e383284-410a-4421-a39e-26d734fb1ac4 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1844af57-559a-4c59-a013-fbb9cc84967a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): e4408659-2794-4c91-9bdc-2dbbcacd085e - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b1ef0f63-1d96-4186-8ac6-544d3ce17947 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0adff140-3e4c-405c-b144-2475a06d2590 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3870fa1f-e109-41b2-b1c2-095d125fc479 - status: waitlist
+Processed 1500 records...
+[DRY RUN] Would skip (not pending_enrollment): 892f5bd0-1518-4a81-9fc5-af52bd4e5a53 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 50fc1edf-cc80-445e-a64b-8abe39e304c6 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 42fd66df-bd87-4f9c-b65f-8ed21fd9644a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ffadd21b-7627-4e57-9272-ad105fe5158d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 9abec397-6ded-4c39-a6a7-86d8b9f30063 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c0de196a-8ca9-40a7-af73-fb52c1fafe8c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 52a66e80-c8dd-49c1-8b40-1cb19302fdc9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c7da9856-2524-4878-957e-1f7b3337580f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 43ef73b5-17fe-4721-a894-ec414d1e507d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 365d2326-1f5e-480d-90a0-77d59e4c1e9b - status: waitlist
+Processed 1510 records...
+[DRY RUN] Would skip (not pending_enrollment): 5cc98ca5-17b3-407a-8e1a-4165c4da65b7 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 581f4987-28c1-4a7d-b286-d92f4d70249e - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4c809202-b549-4b9b-a591-e3feaf0d9aa4 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3105387a-c74b-496a-a8bf-89931ed6b69f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1805d6c7-bb99-4cdb-ad5c-e7ae65366e42 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 66da4487-40b3-46fe-bd65-cb946e20d57b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): bf36ab88-2d25-477e-9a81-561734386c98 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ba1bc896-b559-4cca-b7f4-4f33d9cf1e93 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 727f23cb-16fa-4b51-bec9-f6208a588a9d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 16801dd0-41e8-4c84-9eb1-edff32ba728d - status: waitlist
+Processed 1520 records...
+[DRY RUN] Would skip (not pending_enrollment): 7528e3d9-0d04-4dd6-b095-5051dc5f671b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 95f42a43-2da1-4680-9561-af5c2fc77d9b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 22151347-87a2-4b01-a784-49f6996a579a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 9a84e23b-9887-4a99-ac51-82858e9fefa9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3c41fc91-24f2-4c53-b2b5-e0615258aa7b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 058b828b-d688-4fd6-b742-93673d22c019 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 595be4f5-acfb-4be7-b65f-3097afa0f411 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 2e541c63-09aa-4d5a-80f1-89c069ad10d4 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a8b8888b-ae98-4f64-b0a5-f8880c2d5bb9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a470ff31-b0f4-405d-9c82-bf008cb4cef5 - status: waitlist
+Processed 1530 records...
+[DRY RUN] Would skip (not pending_enrollment): 71d9cc71-24b9-47e1-9ae0-478d161964d8 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b046b759-ff96-422b-b372-12efc9476213 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d19121ee-5174-4c91-8f7d-8f421b92bc89 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 7f7869bd-1875-47ed-b8c6-57f0fffce5ec - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f1f5cbcc-ed27-4dab-9fd1-acceecd27391 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 67b93df9-066d-44a7-8f7c-0fae4631b77d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 201dde58-ab2a-4369-bbeb-1b9c4c1b16b9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 5e29dd43-f52a-45c5-94da-b2503d19429c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 5b68d7de-4322-4da7-b67c-faea8588acf6 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c1cac8be-8358-4693-ae4f-3ff4f6c4ad6a - status: waitlist
+Processed 1540 records...
+[DRY RUN] Would skip (not pending_enrollment): 311ad09c-9e95-4c6f-9259-80825b12a174 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b9c8a33f-ab26-4719-b7a5-ae48d7db8ac7 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0524ec3c-da71-4edd-b94e-caa292338a84 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0a3417dc-6fba-4348-9938-4725d42e3ca1 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 24c07580-4a7d-48b8-af7f-7929fbe4bf1c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c40281d3-8707-4081-b24e-1443f02533f0 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f0c22a81-918e-4ca4-b96e-ca4df8be884f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3e7e2f61-131c-427b-b66b-a6410f6bea26 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 000656db-d6e3-409c-b691-9f6221d7a2bc - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): dcf804b7-e6b4-43c4-9b48-854b93f499f0 - status: waitlist
+Processed 1550 records...
+[DRY RUN] Would skip (not pending_enrollment): a0be8413-8948-47af-989c-bd0e00582682 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): caa05de3-3f44-47e7-b562-de48a00fd36c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 42e72f75-5c1a-483f-915f-689d1c123735 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 257ed23e-b1da-4eb4-adc2-0c0798471595 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 22486445-94cf-4777-9ac6-406a4be0f60b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0fa040a7-e770-4db0-82bb-7b82e84585e2 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b96a0b2d-77a8-43f8-89f3-e627504f4829 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): de3b4ba1-97f6-4ff7-81c0-170fed087a96 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): df6f5edc-781e-45a0-ae20-632eb44e73af - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): aa50ae42-a08a-4af1-9ac4-6299b16e4459 - status: waitlist
+Processed 1560 records...
+[DRY RUN] Would skip (not pending_enrollment): f09eb9bd-0a3d-4a7d-98d7-3ac0cc743d9d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d84d5a60-8950-432f-93d3-ccf66444db56 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ba3bcb5f-5645-43d2-b0bb-d51d1a997583 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8003f9f8-26cd-43fe-8c89-518d4c2aa6df - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 2a5075e2-ed3a-4432-b89c-2292ba91bbd6 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 9829dd72-b0e1-4940-b161-32bef540434d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 594932a1-e6b7-41ea-ae4f-4059cb69ee79 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 6e766aa5-53b2-4e1c-83b1-8127edf6dad3 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f92c49ce-542a-4197-9d15-038a09fc3a57 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1a63aff5-6cbe-4e38-ba81-8f42ddcc86b5 - status: waitlist
+Processed 1570 records...
+[DRY RUN] Would skip (not pending_enrollment): 10fa006a-eb9f-4edb-b838-27f13e0a533f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 2d35a483-0394-47cc-86b7-d7ef6eb90f88 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8ea03090-7221-4397-b56c-e0d46186a05c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 7638cb7b-fa71-421f-8c25-8315b3df8440 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): bd3a245c-7ab6-4adc-a24f-de677e131a51 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f253097a-7dd3-4374-881d-5482fd0dc6fe - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 97475e93-3d08-425c-a48e-4c2cab21c513 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 33f4e6df-fc3b-4abe-a791-b2b0a7f73598 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0e5d3aa4-1d1d-4add-9df2-f45402c27ccb - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ffbff410-81ac-4746-8c88-00f0da556575 - status: waitlist
+Processed 1580 records...
+[DRY RUN] Would skip (not pending_enrollment): 6942939d-a0c4-449d-860e-1da126211883 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a31f5ecb-9474-44d4-b5b2-d76a89ec73b8 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): efbe08a2-90da-44c0-b350-5b6688f6a2b0 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 517f192c-61ac-4cfa-900a-739b727a4620 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 377a4327-72e7-43bd-9459-3408e7b2abfb - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3846f0da-b17f-4114-92e3-4d015ef1b569 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d454e3dc-1f1d-44e3-b984-4a03a39bb288 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8d49a6cd-c8d7-4fd8-9eb6-59b6cc54ca62 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4d41465b-5b1a-4010-a753-f6e6301a9678 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f86e7f83-4fba-4a0d-b8ad-580f06aa4189 - status: waitlist
+Processed 1590 records...
+[DRY RUN] Would skip (not pending_enrollment): b4c4d8cd-c3f3-4ce8-a1b6-b358d80b331b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8732ba77-4ab8-42a6-ae4b-6dab612328e2 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 55c634e6-7908-40b3-b3d1-cb282df04260 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 015513b8-b7c6-4253-9c65-a2027e93244a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a6d929cb-8a57-4da9-bde6-9686004653d4 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 79deb6b8-a3d0-4fd4-a561-89ef41937821 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 294d7101-b6e5-4269-8d0a-123d1133d5cc - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 7899a187-3c7d-482e-8c6a-2d416bd400e1 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f2d7c66d-77fe-49d4-96fc-ecc37524dfd2 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0e4a0a1f-5d82-45d7-bd47-ea8c52a4c759 - status: waitlist
+Processed 1600 records...
+[DRY RUN] Would skip (not pending_enrollment): a746e9e2-3371-4555-a465-edb79916f380 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): e4a89685-0455-48c9-82f3-076b9aa0f0f2 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 689af3c8-5234-4f5c-86ad-4973f088eb81 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1bd99af0-bb0c-4b5d-b23a-198c2be0fadf - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d26c4b31-4476-4449-b899-db8b0e3bd1d6 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 87d1aea7-5dbd-4604-a1c4-b0cf82fd8afd - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 99335856-ae1c-4fed-a5b0-09526d08f6fe - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3ada0a5d-6f2c-4629-8667-708847073ef1 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): de88c556-8e35-4193-8451-a3dca44b7291 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 40ba36ca-dafd-441f-89ef-ff1f95fa664c - status: waitlist
+Processed 1610 records...
+[DRY RUN] Would skip (not pending_enrollment): f6e1b2fd-f723-43bb-b725-629ed8dd713d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 770ca30e-5292-4455-8b79-c77a77a8a244 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): e4cdf60d-5fd5-4bf7-a55f-0bc3c1290f5d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0c81db61-f03c-4a2e-87da-8016e475b5fb - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 83ce6653-4344-4bc1-b688-bde0632a4fdb - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a1acaa11-cc51-457b-b798-ce99929b9ce4 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 17308c84-5d03-4583-8bdd-ee0d3443044f - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 40775e22-c798-4709-8d72-34a975f7c3af - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 0238fe18-c091-43f4-9293-9e9c90e1a811 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): d4d58627-5169-4f96-97ac-ab59a412b87c - status: waitlist
+Processed 1620 records...
+[DRY RUN] Would skip (not pending_enrollment): 49915e8a-092a-49b9-bbb2-7eb1c6e0d1c9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): e7dead66-cdb4-4bda-8266-be6cd372b050 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 15247879-449e-4c32-9c72-e951374050f6 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 094d90a5-de5b-4fbc-8293-2e9fac078483 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 98ddb2a5-b031-4b3e-acbf-768b415d8a47 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 027e79ae-6d46-4e48-845c-26c30e2a02a9 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4f0c192f-b021-4874-875f-752a1926597e - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f5874b9e-7fcb-4791-824b-ad93dbca0931 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): edd46860-9a60-4d35-a656-2672baacc7aa - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 6b5147de-7249-4b16-ac25-e49b4f9e4b63 - status: waitlist
+Processed 1630 records...
+[DRY RUN] Would skip (not pending_enrollment): 07a1bf2c-1c32-46bd-8f6f-0c0eccc5c9ff - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): e4a13ea3-11de-431f-82e0-f7604e21b086 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): bad7c7a2-3bf6-4467-a1fa-0d177d43e335 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): dadcca85-eee4-45d9-8832-7b74f52fd0ee - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 90603fcb-a8b4-4882-9cb3-dc0b107191b0 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f34c0c96-82e5-41c6-8601-917d440ef56d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): a2daeb9a-0003-491f-8d25-ff58e2cebe88 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 00f8adf0-621a-45f2-a7d5-7a9ebbccfe9a - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3bb6078e-85aa-4aaa-bebd-be40fc0e61c7 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ef4e8e7f-16cb-4642-9000-856906ded79d - status: waitlist
+Processed 1640 records...
+[DRY RUN] Would skip (not pending_enrollment): 93df2037-bc7e-48bf-a141-126cf13e71f0 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): b1a9c17d-6223-4e89-b349-33fef6d0cb47 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f0655fc4-3d68-496f-9734-4a33f4551d01 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): adfa265e-dfaa-4b40-8152-120a4117de17 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3b5f2285-fbba-4a9c-8471-ccf2da7203f3 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 842ea1b5-1a36-4c02-8d0b-6ed513f8b3e0 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ae262108-2c01-4c9c-ad64-1c063feb2735 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1803b8d5-8c5c-4faf-bb9b-5832ecc5e9e4 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1b94bf59-d84e-4e8a-8c26-7aab14163603 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 60dbe9cf-fcd8-4b52-b6b5-bf42417ebdd3 - status: waitlist
+Processed 1650 records...
+[DRY RUN] Would skip (not pending_enrollment): bd106543-f694-4f02-be78-e698ebc8f433 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): cb1bbf06-70f4-40a9-8de6-31740790ad22 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4acef598-4db4-48d2-bae8-6cf2299c049c - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 6dcf1c2a-52b3-45ff-8c15-5b151523262e - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8adedec2-4e68-4b74-b3af-7e24cb3c1a74 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 6a4174c0-684d-4567-8304-7c87cda729a2 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 59ddd257-2b2f-4343-8cdc-347f96633956 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 6d800ef7-d72a-4e51-8cf7-4ab7cf2fd352 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f5f0012e-e25c-4362-ac0c-7575876b0871 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): dc161cbb-2d34-45b1-8dfc-794bdb13a12a - status: waitlist
+Processed 1660 records...
+[DRY RUN] Would skip (not pending_enrollment): 6f1a8e85-5c85-43c3-a0e5-7d30a69ac142 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c81f2f56-c1ff-4b5e-811d-f871153b1c25 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 6c6519f7-e3c2-4502-b667-d6ca12afc1b2 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ee6e4c64-0ce7-4209-9d47-8711c848f560 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4c19beb8-cbfe-4e89-8039-29edba6d3807 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): c7664f70-7138-47da-80b8-59fa4a2d99e2 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 7993069a-4e59-4b04-b911-bb9bda9c5caa - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 40dd8121-37a9-430b-8141-7c381ece8b32 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 595c8cc2-9acd-47c9-ad9e-37e0d48d5b91 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 1c1bd59c-a9ac-41cb-93c3-706c005b3e05 - status: waitlist
+Processed 1670 records...
+[DRY RUN] Would skip (not pending_enrollment): 63a28b0c-d981-4591-8c62-fe838e8ef179 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 3c835843-ffbf-4c98-aabe-35d71e0f5e34 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 7048a3b5-9720-44a0-84ed-669a133a50a4 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 724b917a-5f3b-4070-82a4-cd1228438f39 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 11a1ad09-e5ad-484e-a7cc-9b7feee2a84b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 9cb5f9a2-a5c9-463b-be8e-67aef2c51675 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 752a2dca-8be3-4193-9c85-31e1e85e1733 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ca583b96-bd70-441c-bcee-3d0ad83ae3aa - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): cbd32074-e79a-44c7-abae-8b232494cfe3 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): bacc0c6f-58a6-434a-8df1-03ea255077ad - status: waitlist
+Processed 1680 records...
+[DRY RUN] Would skip (not pending_enrollment): 23a5e85a-c8e3-45bc-8be7-915839eb659d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 42ed7f46-de7b-42af-80e4-4ab8acd4a369 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 2c8ddb7b-e885-47b7-9e55-3a1a2f862c0e - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 6dde10de-781e-49fd-aea1-0d5e1458c298 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 7db93da9-a6d5-4f6d-8a95-ceff257bff66 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 296587f2-b16d-41aa-b5df-2805783bb45b - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f94dd372-492a-49c8-bc2c-3be19f54b93e - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 81bc0053-70d6-43a8-8666-36214b5e977e - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): ec636ade-aa8d-4138-b9ac-b38864213fde - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 8ae31d86-29a1-42c0-83c9-ce4f7d063358 - status: waitlist
+Processed 1690 records...
+[DRY RUN] Would skip (not pending_enrollment): b5f1ec16-fe54-44fb-98d6-236155afe402 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 87e164cc-4732-405a-b19c-f9e2812ddf52 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 94f8558a-2862-4afb-b257-7c9b177cb7e0 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 77916a69-56df-45f2-b3b9-58cb3cda2d83 - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): 4a929cda-ba27-48e0-91be-3b862d09c76d - status: waitlist
+[DRY RUN] Would skip (not pending_enrollment): f16dc345-69b1-4b59-9bce-aa61afb14fec - status: pending_approval
+[DRY RUN] Would skip (not pending_enrollment): 1d1ce5ea-cf2b-4ce8-a945-b1d087fc2597 - status: enrolled
+[DRY RUN] Would skip (not pending_enrollment): 53e6d1c2-341a-42b8-9da7-5a523168cf93 - status: enrolled
+
+==================================================
+DRY RUN COMPLETE - STATISTICS
+==================================================
+Total records in CSV: 1699
+Records with UUID: 1632
+Records with Parent Name: 1628
+Updates attempted: 405
+Updates successful: 405
+Skipped (not pending_enrollment): 1223
+Skipped (no matching swimmer): 0
+Errors: 0
+==================================================
+
+==================================================
+DRY RUN COMPLETE
+==================================================
+
+Next steps:
+1. Test parent invitations to ensure correct names appear
+2. Verify that enrolled families were not modified
+3. Check the parent portal for any issues

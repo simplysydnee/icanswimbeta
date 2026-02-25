@@ -126,7 +126,7 @@ export const fundingTypeConfig = {
     size: 'large'
   },
   vmrc: {
-    label: 'VMRC',
+    label: 'Funded',
     icon: Building2,
     bg: 'bg-violet-100',
     text: 'text-violet-800',

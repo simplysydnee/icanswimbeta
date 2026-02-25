@@ -15,7 +15,7 @@ export async function GET(
       .from('swimmers')
       .select(`
         *,
-        parent:profiles!swimmers_parent_id_fkey(id, full_name, email, phone),
+        parent:profiles(id, full_name, email, phone),
         current_level:swim_levels(*),
         bookings(
           id,
@@ -24,7 +24,7 @@ export async function GET(
             start_time,
             end_time,
             location,
-            instructor:profiles!sessions_instructor_id_fkey(full_name)
+            instructor:profiles(full_name)
           ),
           status,
           created_at
@@ -35,7 +35,7 @@ export async function GET(
           skills_working_on,
           skills_mastered,
           created_at,
-          instructor:profiles!progress_notes_instructor_id_fkey(full_name)
+          instructor:profiles(full_name)
         )
       `)
       .eq('id', id)

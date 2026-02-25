@@ -550,9 +550,11 @@ export default function SwimmerDetailPage() {
                   Book Lesson
                 </Link>
               </Button>
-              <Button variant="outline" className="w-full">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Profile
+              <Button variant="outline" className="w-full" asChild>
+                <Link href={`/parent/swimmers/${swimmer.id}/edit`}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Profile
+                </Link>
               </Button>
               <Button variant="outline" className="w-full" asChild>
                 <Link href={`/parent/swimmers/${swimmer.id}/progress`}>
