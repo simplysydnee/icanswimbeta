@@ -78,7 +78,6 @@ export async function GET() {
           )
         )
       `)
-      .eq('parent_id', user.id)
       .order('first_name');
 
     if (error) {
