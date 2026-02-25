@@ -3,12 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { GradientButton } from '@/components/ui/gradient-button'
 import { ExpandableSwimmerCard } from '@/components/parent/expandable-swimmer-card'
 import Link from 'next/link'
 import { Plus, Users } from 'lucide-react'
-import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface Swimmer {
   id: string
@@ -23,7 +22,8 @@ interface Swimmer {
     color?: string
   }
   payment_type?: string
-  funding_source_id?: string
+  funding_source_id?: boolean
+  funding_source_name?: string
   lessons_completed?: number
   next_session?: {
     start_time?: string
@@ -41,13 +41,40 @@ interface Swimmer {
   parent_email?: string
 }
 
+interface ApiSwimmer {
+  id: string
+  firstName: string
+  lastName: string
+  dateOfBirth?: string
+  photoUrl?: string
+  enrollmentStatus: string
+  currentLevel?: {
+    name: string
+    displayName: string
+    color?: string
+  }
+  paymentType?: string
+  fundingSourceId?: string
+  fundingSourceName?: string
+  lessonsCompleted?: number
+  nextSession?: {
+    startTime?: string
+    instructorName?: string
+  }
+  diagnosis?: string[]
+  swimGoals?: string[]
+  hasAllergies?: boolean
+  allergiesDescription?: string
+  hasMedicalConditions?: boolean
+  medicalConditionsDescription?: string
+}
+
 export default function SwimmersPage() {
   const { user } = useAuth()
   const [swimmers, setSwimmers] = useState<Swimmer[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedSwimmerId, setExpandedSwimmerId] = useState<string | null>(null)
   const supabase = createClient()
-  const isMobile = useMediaQuery('(max-width: 768px)')
 
   useEffect(() => {
     const fetchSwimmers = async () => {
@@ -76,7 +103,7 @@ export default function SwimmersPage() {
         const data = await response.json()
 
         // Transform API response to match SwimmerCard interface
-        const transformedData = data.map((swimmer) => ({
+        const transformedData = data.map((swimmer: ApiSwimmer) => ({
           id: swimmer.id,
           first_name: swimmer.firstName,
           last_name: swimmer.lastName,
@@ -89,7 +116,7 @@ export default function SwimmersPage() {
             color: swimmer.currentLevel.color
           } : undefined,
           payment_type: swimmer.paymentType,
-          funding_source_id: swimmer.fundingSourceId,
+          funding_source_id: !!swimmer.fundingSourceId, // Convert to boolean
           funding_source_name: swimmer.fundingSourceName,
           lessons_completed: swimmer.lessonsCompleted,
           next_session: swimmer.nextSession ? {
@@ -151,9 +178,10 @@ export default function SwimmersPage() {
 
           if (error) throw error
 
-          // Add parent contact info to each swimmer
+          // Add parent contact info to each swimmer and convert funding_source_id to boolean
           const swimmersWithParentInfo = (data || []).map((swimmer) => ({
             ...swimmer,
+            funding_source_id: !!swimmer.funding_source_id, // Convert to boolean
             parent_phone: parentPhone,
             parent_email: parentEmail
           }))
@@ -203,40 +231,6 @@ export default function SwimmersPage() {
         </GradientButton>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Enrolled</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {swimmers.filter(s => s.enrollment_status === 'enrolled').length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Waitlist</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {swimmers.filter(s => s.enrollment_status === 'waitlist').length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Lessons</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {swimmers.reduce((total, s) => total + (s.lessons_completed || 0), 0)}
-            </div>
-            <div className="text-xs text-muted-foreground">Total completed</div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Swimmers Grid */}
       {swimmers.length === 0 ? (
