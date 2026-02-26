@@ -172,7 +172,7 @@ export default function AdminSwimmersPage() {
             ) : swimmersError ? (
               <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-8 text-center">
                 <div className="text-destructive font-medium mb-2">Error loading swimmers</div>
-                <div className="text-sm text-muted-foreground mb-4">{swimmersError}</div>
+                <div className="text-sm text-muted-foreground mb-4">{swimmersError instanceof Error ? swimmersError.message : String(swimmersError)}</div>
                 <Button onClick={() => refetch()} variant="outline">
                   Try Again
                 </Button>

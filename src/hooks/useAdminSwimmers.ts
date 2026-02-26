@@ -36,76 +36,30 @@ export const useAdminSwimmers = (filters?: AdminSwimmersFilters) => {
   return useQuery({
     queryKey: ['admin-swimmers', filters],
     queryFn: async () => {
-      const supabase = createClient();
+      // Build query parameters from filters
+      const params = new URLSearchParams();
 
-      // Base query - get ALL swimmers
-      let query = supabase
-        .from('swimmers')
-        .select(`
-          id,
-          first_name,
-          last_name,
-          date_of_birth,
-          enrollment_status,
-          approval_status,
-          assessment_status,
-          is_vmrc_client,
-          flexible_swimmer,
-          client_booking_limit,
-          parent_id,
-          current_level_id,
-          signed_waiver,
-          photo_video_permission,
-          important_notes,
-          admin_notes,
-          created_at,
-          updated_at,
-          parent:profiles!parent_id(
-            id,
-            email,
-            full_name,
-            phone
-          ),
-          current_level:swim_levels(
-            id,
-            name,
-            display_name
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      // Apply filters if provided
       if (filters?.enrollmentStatus?.length) {
-        query = query.in('enrollment_status', filters.enrollmentStatus);
-      }
-
-      if (filters?.approvalStatus?.length) {
-        query = query.in('approval_status', filters.approvalStatus);
-      }
-
-      if (filters?.assessmentStatus?.length) {
-        query = query.in('assessment_status', filters.assessmentStatus);
-      }
-
-      if (filters?.isVmrcClient !== undefined) {
-        query = query.eq('is_vmrc_client', filters.isVmrcClient);
+        params.append('status', filters.enrollmentStatus.join(','));
       }
 
       if (filters?.search) {
-        const searchTerm = `%${filters.search}%`;
-        query = query.or(
-          `first_name.ilike.${searchTerm},last_name.ilike.${searchTerm}`
-        );
+        params.append('search', filters.search);
       }
 
-      const { data, error } = await query;
+      // Add other filter parameters as needed
+      const queryString = params.toString();
+      const url = `/api/admin/swimmers${queryString ? `?${queryString}` : ''}`;
 
-      if (error) {
-        console.error('Error fetching swimmers:', error);
-        throw new Error(`Failed to fetch swimmers: ${error.message}`);
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch swimmers: ${response.statusText}`);
       }
 
-      return data || [];
+      const data = await response.json();
+      return data.swimmers || [];
     },
     staleTime: 1000 * 60 * 2, // 2 minutes
     refetchOnWindowFocus: true,

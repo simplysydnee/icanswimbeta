@@ -120,6 +120,9 @@ interface SwimmersResponse {
 
 interface SwimmerManagementTableProps {
   role: 'admin' | 'instructor';
+  swimmers?: any[];
+  isLoading?: boolean;
+  error?: any;
 }
 
 // Filter options - using standardized status configurations
