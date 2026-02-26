@@ -244,7 +244,10 @@ export async function GET(request: Request) {
           status,
           session:sessions(
             start_time,
-            instructor:instructor_id(full_name)
+            instructor:profiles!instructor_id(
+              id,
+              full_name
+            )
           )
         )
       `, { count: 'exact' });
