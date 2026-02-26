@@ -17,7 +17,7 @@ export default function ContactPage() {
     );
   }
   return (
-    <div className="w-full px-4 py-12">
+    <div className="container mx-auto px-4 py-12">
         {/* Hero Section */}
         <div className="max-w-4xl mx-auto text-center mb-12">
           <EditableText
@@ -42,7 +42,7 @@ export default function ContactPage() {
 
         {/* Contact Info Cards */}
         <div className="max-w-6xl mx-auto mb-16 px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl p-6 text-center">
               <div className="inline-flex items-center justify-center w-12 h-12 bg-cyan-100 rounded-full mb-4">
                 <Phone className="h-6 w-6 text-cyan-600" />
