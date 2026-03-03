@@ -20,11 +20,10 @@ interface FundingSourceStats {
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
-    // Temporarily disable auth for testing
-    // const { data: { user }, error: authError } = await supabase.auth.getUser();
-    // if (authError || !user) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -93,9 +92,9 @@ export async function GET(request: NextRequest) {
     if (!filteredData || filteredData.length === 0) {
       console.log('No POs found, returning sample data for testing');
       return NextResponse.json({
-        data: getSamplePurchaseOrders(),
-        stats: getSampleStats(),
-        fundingSourceStats: getSampleFundingSourceStats()
+        data: [],
+        stats: [],
+        fundingSourceStats: []
       });
     }
 
