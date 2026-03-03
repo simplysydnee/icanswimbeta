@@ -513,8 +513,13 @@ export async function GET(request: Request) {
 
   } catch (error) {
     console.error('Get admin swimmers error:', error);
+    console.error('Error message:', error instanceof Error ? error.message : String(error));
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : 'No stack trace'
+      },
       { status: 500 }
     );
   }
