@@ -15,6 +15,7 @@ import { MoreHorizontal, Plus, Edit, Trash2, Users, ArrowRightLeft, Check, Loade
 interface User {
   id: string;
   email: string;
+  password: string
   full_name: string | null;
   phone: string | null;
   role: 'parent' | 'instructor' | 'admin' | 'coordinator';
@@ -51,6 +52,7 @@ export default function UsersPage() {
 
   const [newUser, setNewUser] = useState({
     email: '',
+    password: '',
     full_name: '',
     phone: '',
     role: 'parent' as 'parent' | 'instructor' | 'admin' | 'coordinator'
@@ -147,59 +149,92 @@ export default function UsersPage() {
     fetchUsers();
   }, [fetchUsers]);
 
+  // const handleAddUser = async () => {
+  //   if (!newUser.email) return;
+
+  //   setSaving(true);
+  //   const supabase = createClient();
+
+  //   try {
+  //     // First check if user exists in auth
+  //     const { data: existingAuthUser } = await supabase.auth.admin.getUserById(newUser.email);
+
+  //     let userId: string;
+  //     if (existingAuthUser?.user) {
+  //       userId = existingAuthUser.user.id;
+  //     } else {
+  //       // Create auth user (they'll need to set password via email)
+  //       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+  //         email: newUser.email,
+  //         email_confirm: true,
+  //         user_metadata: {
+  //           full_name: newUser.full_name,
+  //           phone: newUser.phone
+  //         }
+  //       });
+
+  //       if (authError) throw authError;
+  //       userId = authData.user.id;
+  //     }
+
+  //     // Create profile
+  //     const { error: profileError } = await supabase
+  //       .from('profiles')
+  //       .insert({
+  //         id: userId,
+  //         email: newUser.email,
+  //         full_name: newUser.full_name || null,
+  //         phone: newUser.phone || null,
+  //       });
+
+  //     if (profileError) throw profileError;
+
+  //     // Create role in user_roles table
+  //     const { error: roleError } = await supabase
+  //       .from('user_roles')
+  //       .insert({
+  //         user_id: userId,
+  //         role: newUser.role,
+  //       });
+
+  //     if (roleError) throw roleError;
+
+  //     await fetchUsers();
+  //     setAddDialogOpen(false);
+  //     setNewUser({ email: '', full_name: '', phone: '', role: 'parent' });
+  //     alert('User added successfully!');
+  //   } catch (error) {
+  //     console.error('Error adding user:', error);
+  //     alert('Failed to add user');
+  //   } finally {
+  //     setSaving(false);
+  //   }
+  // };
+
   const handleAddUser = async () => {
     if (!newUser.email) return;
 
     setSaving(true);
-    const supabase = createClient();
 
     try {
-      // First check if user exists in auth
-      const { data: existingAuthUser } = await supabase.auth.admin.getUserById(newUser.email);
-
-      let userId: string;
-      if (existingAuthUser?.user) {
-        userId = existingAuthUser.user.id;
-      } else {
-        // Create auth user (they'll need to set password via email)
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-          email: newUser.email,
-          email_confirm: true,
-          user_metadata: {
-            full_name: newUser.full_name,
-            phone: newUser.phone
-          }
-        });
-
-        if (authError) throw authError;
-        userId = authData.user.id;
-      }
-
-      // Create profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
-          email: newUser.email,
-          full_name: newUser.full_name || null,
-          phone: newUser.phone || null,
-        });
-
-      if (profileError) throw profileError;
-
-      // Create role in user_roles table
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
+      const res = await fetch('/api/auth/add-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newUser.email.trim(),
+          password: newUser.password, // make sure you add this field in UI state
+          name: newUser.full_name,
+          phone: newUser.phone,
           role: newUser.role,
-        });
+        }),
+      });
 
-      if (roleError) throw roleError;
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || 'Failed to add user');
 
       await fetchUsers();
       setAddDialogOpen(false);
-      setNewUser({ email: '', full_name: '', phone: '', role: 'parent' });
+      setNewUser({ email: '', full_name: '', phone: '', role: 'parent', password: '' });
       alert('User added successfully!');
     } catch (error) {
       console.error('Error adding user:', error);
@@ -538,6 +573,7 @@ export default function UsersPage() {
                             setSelectedUser(user);
                             setNewUser({
                               email: user.email,
+                              password: user.password,
                               full_name: user.full_name || '',
                               phone: user.phone || '',
                               role: user.role
@@ -609,6 +645,17 @@ export default function UsersPage() {
                 placeholder="user@example.com"
                 value={newUser.email}
                 onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password *</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter password"
+                value={newUser.password}
+                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
               />
             </div>
 

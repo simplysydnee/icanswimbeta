@@ -34,7 +34,6 @@ tsconfig.tsbuildinfo
 .env.migration
 
 # Environment files with secrets
-.env.local
 .env.*.local
 .env.migration
 .env.migrate_*
@@ -51,3 +50,4 @@ index-*.ts
 *-simple.ts
 *-test.ts
 *-waiver-v2.ts
+config.bat
