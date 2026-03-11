@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import Joi from 'joi';
 
 export async function GET() {
   try {
@@ -187,3 +188,211 @@ export async function GET() {
     );
   }
 }
+
+export async function POST(req: Request) {
+  try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    console.log(user)
+    const body = await req.json();
+    const { error: validationError, value } = schema.validate(body);
+    if (validationError) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validationError.details },
+        { status: 400 }
+      );
+    }
+
+    // existence checks
+    // if (value.parent_id) {
+    //   // adjust table names here if your project stores parents in a different table
+    //   const parentFound =
+    //     (await existsInTable('parents', value.parent_id)) ||
+    //     (await existsInTable('profiles', value.parent_id));
+    //   if (!parentFound) {
+    //     return NextResponse.json({ error: 'parent_id not found' }, { status: 400 });
+    //   }
+    // }
+
+    // if (value.funding_source_id) {
+    //   const fundingFound = await existsInTable('funding_sources', value.funding_source_id);
+    //   if (!fundingFound) {
+    //     return NextResponse.json({ error: 'funding_source_id not found' }, { status: 400 });
+    //   }
+    // }
+
+    // if (value.coordinator_id) {
+    //   const coordinatorFound =
+    //     (await existsInTable('coordinators', value.coordinator_id)) ||
+    //     (await existsInTable('profiles', value.coordinator_id));
+    //   if (!coordinatorFound) {
+    //     return NextResponse.json({ error: 'coordinator_id not found' }, { status: 400 });
+    //   }
+    // }
+
+    // build insert payload with proper boolean coercion and allowed keys
+    const payload: Record<string, any> = {
+      parent_id: user.id ?? null,
+      first_name: value.first_name,
+      last_name: value.last_name,
+      date_of_birth: value.date_of_birth ?? null,
+      gender: value.gender ?? null,
+
+      has_allergies: parseBoolLike(value.has_allergies) ?? false,
+      allergies_description: value.allergies_description ?? null,
+      has_medical_conditions: parseBoolLike(value.has_medical_conditions) ?? false,
+      medical_conditions_description: value.medical_conditions_description ?? null,
+      history_of_seizures: parseBoolLike(value.history_of_seizures) ?? false,
+      seizures_description: value.seizures_description ?? null,
+
+      self_injurious_behavior: parseBoolLike(value.self_injurious_behavior) ?? false,
+      self_injurious_behavior_description: value.self_injurious_behavior_description ?? null,
+      aggressive_behavior: parseBoolLike(value.aggressive_behavior) ?? false,
+      aggressive_behavior_description: value.aggressive_behavior_description ?? null,
+      elopement_history: parseBoolLike(value.elopement_history) ?? false,
+      elopement_history_description: value.elopement_history_description ?? null,
+      has_behavior_plan: parseBoolLike(value.has_behavior_plan) ?? false,
+
+      previous_swim_lessons: parseBoolLike(value.previous_swim_lessons) ?? false,
+      previous_swim_lessons_description: value.previous_swim_lessons_description ?? null,
+      comfortable_in_water: value.comfortable_in_water,
+      swim_goals: Array.isArray(value.swim_goals) ? value.swim_goals : value.swim_goals ? [value.swim_goals] : null,
+
+      // communication_type: value.communication_type ?? null,
+      communication_type: Array.isArray(value.communication_type)
+        ? value.communication_type
+        : value.communication_type
+        ? [value.communication_type]
+        : null,
+      strengths_interests: value.strengths_interests ?? null,
+      motivators: value.motivators ?? null,
+      other_therapies: parseBoolLike(value.other_therapies) ?? false,
+      therapies_description: value.therapies_description ?? null,
+
+      availability: Array.isArray(value.availability) ? value.availability : value.availability ? [value.availability] : [],
+      flexible_swimmer: parseBoolLike(value.flexible_swimmer) ?? false,
+      preferred_start_date: value.preferred_start_date ?? null,
+
+      photo_video_permission: parseBoolLike(value.photo_video_permission) ?? false,
+      signed_cancellation: parseBoolLike(value.signed_cancellation) ?? false,
+      signed_liability: parseBoolLike(value.signed_liability) ?? false,
+      photo_video_signature: value.photo_video_signature ?? null,
+      cancellation_policy_signature: value.cancellation_policy_signature ?? null,
+      liability_waiver_signature: value.liability_waiver_signature ?? null,
+
+      payment_type: value.payment_type ?? 'private_pay',
+
+      funding_source_id: value.funding_source_id ?? null,
+      funding_coordinator_name: value.funding_coordinator_name ?? null,
+      funding_coordinator_email: value.funding_coordinator_email ?? null,
+      funding_coordinator_phone: value.funding_coordinator_phone ?? null,
+      coordinator_id: value.coordinator_id ?? null,
+
+      enrollment_status: value.enrollment_status ?? 'waitlist',
+      approval_status: value.approval_status ?? 'pending',
+      assessment_status: value.assessment_status ?? 'not_scheduled',
+    };
+    console.log('Inserting swimmer with payload:', payload);
+    const { data: inserted, error: insertError } = await supabase
+      .from('swimmers')
+      .insert([payload])
+      .select('*')
+      .single();
+
+    if (insertError) {
+      return NextResponse.json({ error: 'Insert failed', details: insertError }, { status: 500 });
+    }
+
+    return NextResponse.json({ swimmer: inserted }, { status: 201 });
+  } catch (err: any) {
+    return NextResponse.json({ error: 'Server error', details: err?.message || err }, { status: 500 });
+  }
+}
+
+
+const booleanLike = Joi.alternatives().try(
+  Joi.boolean(),
+  Joi.string().valid('yes', 'no', 'true', 'false', '1', '0')
+);
+
+const schema = Joi.object({
+  parent_id: Joi.string().uuid().optional().allow(null),
+  first_name: Joi.string().trim().required(),
+  last_name: Joi.string().trim().required(),
+  date_of_birth: Joi.date().iso().optional().allow(null),
+  gender: Joi.string().valid('male', 'female', 'other').optional().allow(null),
+
+  has_allergies: booleanLike.optional(),
+  allergies_description: Joi.string().allow(null, ''),
+  has_medical_conditions: booleanLike.optional(),
+  medical_conditions_description: Joi.string().allow(null, ''),
+  history_of_seizures: booleanLike.optional(),
+  seizures_description: Joi.string().allow(null, ''),
+
+  self_injurious_behavior: booleanLike.optional(),
+  self_injurious_behavior_description: Joi.string().allow(null, ''),
+  aggressive_behavior: booleanLike.optional(),
+  aggressive_behavior_description: Joi.string().allow(null, ''),
+  elopement_history: booleanLike.optional(),
+  elopement_history_description: Joi.string().allow(null, ''),
+  has_behavior_plan: booleanLike.optional(),
+
+  previous_swim_lessons: booleanLike.optional(),
+  previous_swim_lessons_description: Joi.string().allow(null, ''),
+  comfortable_in_water: Joi.string().trim().required(),
+  swim_goals: Joi.array().items(Joi.string().trim()).optional().allow(null),
+
+  communication_type: Joi.string().valid('verbal', 'non_verbal', 'other').optional().allow(null),
+  strengths_interests: Joi.string().allow(null, ''),
+  motivators: Joi.string().allow(null, ''),
+  other_therapies: booleanLike.optional(),
+  therapies_description: Joi.string().allow(null, ''),
+
+  availability: Joi.array().items(Joi.string().trim()).required(),
+  flexible_swimmer: booleanLike.optional(),
+  preferred_start_date: Joi.date().iso().optional().allow(null),
+
+  photo_video_permission: booleanLike.optional(),
+  signed_cancellation: booleanLike.optional(),
+  signed_liability: booleanLike.optional(),
+  photo_video_signature: Joi.string().allow(null, ''),
+  cancellation_policy_signature: Joi.string().allow(null, ''),
+  liability_waiver_signature: Joi.string().allow(null, ''),
+
+  payment_type: Joi.string().valid('private_pay', 'funding_source').optional(),
+
+  funding_source_id: Joi.string().uuid().optional().allow(null),
+  funding_coordinator_name: Joi.string().allow(null, ''),
+  funding_coordinator_email: Joi.string().email().allow(null, ''),
+  funding_coordinator_phone: Joi.string().allow(null, ''),
+  coordinator_id: Joi.string().uuid().optional().allow(null),
+
+  enrollment_status: Joi.string().optional(),
+  approval_status: Joi.string().optional(),
+  assessment_status: Joi.string().optional(),
+}).options({ stripUnknown: true });
+
+function parseBoolLike(v: any): boolean | undefined {
+  if (typeof v === 'boolean') return v;
+  if (typeof v === 'string') {
+    const s = v.toLowerCase();
+    if (['yes', 'true', '1'].includes(s)) return true;
+    if (['no', 'false', '0'].includes(s)) return false;
+  }
+  return undefined;
+}
+
+// async function existsInTable(table: string, id: string) {
+//   const { data, error } = await supabase
+//     .from(table)
+//     .select('id')
+//     .eq('id', id)
+//     .limit(1)
+//     .maybeSingle();
+
+//   if (error) return false;
+//   return !!data;
+// }

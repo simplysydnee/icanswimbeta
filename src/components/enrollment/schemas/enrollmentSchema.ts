@@ -6,6 +6,10 @@ export const childInfoSchema = z.object({
   child_last_name: z.string().min(1, "Child's last name is required"),
   child_date_of_birth: z.string().min(1, "Date of birth is required"),
   child_gender: z.string().min(1, 'Gender is required'),
+  funding_source_id: z.string(),
+  funding_coordinator_name: z.string(),
+  funding_coordinator_email: z.string(),
+  funding_coordinator_phone: z.string(),
 });
 
 // Parent Information Schema
@@ -84,7 +88,7 @@ export const swimmingBackgroundSchema = z.object({
 
 // Scheduling Schema
 export const schedulingSchema = z.object({
-  availability_slots: z.array(z.string()).min(1, 'At least one availability slot is required'),
+  availability: z.array(z.string()).min(1, 'At least one availability slot is required'),
   other_availability: z.string().optional(),
   flexible_swimmer: z.boolean(),
 });
@@ -151,13 +155,30 @@ export const consentSchema = z.object({
   }
 );
 
+const fundamentalInfoBaseSchema = z.object({
+  communication_type: z.enum(['verbal', 'non_verbal', 'other'], {
+    required_error: 'Please select a communication type'
+  }),
+  strengths_interests: z.string().min(1, 'Please describe strengths & interests'),
+  motivators: z.string().min(1, 'Please provide motivators'),
+  other_therapies: z.enum(['yes', 'no']),
+  therapies_description: z.string().optional().nullable(),
+});
+
+export const fundamentalInfoSchema = fundamentalInfoBaseSchema.refine(
+  (data) => data.other_therapies !== 'yes' || !!data.therapies_description?.trim(),
+  { message: 'Please describe other therapies', path: ['therapies_description'] }
+);
+
+
 // Full enrollment schema combining all sections
 export const enrollmentSchema = z.object({
   ...childInfoSchema.shape,
-  ...parentInfoSchema.shape,
+  // ...parentInfoSchema.shape,
   ...paymentInfoBaseSchema.shape,
   ...medicalInfoBaseSchema.shape,
   ...behavioralInfoBaseSchema.shape,
+  ...fundamentalInfoBaseSchema.shape,
   ...swimmingBackgroundSchema.shape,
   ...schedulingSchema.shape,
   ...consentSchema.shape,
@@ -171,7 +192,9 @@ export const stepSchemas = {
   2: parentInfoSchema,
   3: medicalInfoBaseSchema,
   4: behavioralInfoBaseSchema,
-  5: swimmingBackgroundSchema,
-  6: schedulingSchema,
-  7: consentSchema,
+  5: fundamentalInfoBaseSchema, 
+  6: swimmingBackgroundSchema,
+  7: schedulingSchema,
+  8: consentSchema,
 };
+
