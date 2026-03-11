@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import Joi from 'joi';
+// import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+
 
 export async function GET() {
   try {
@@ -126,7 +128,7 @@ export async function GET() {
           displayName: swimmer.swim_levels[0].display_name,
           color: swimmer.swim_levels[0].color
         } : null,
-        paymentType: swimmer.funding_source_id ? 'funded' : (swimmer.payment_type || 'private_pay'),
+        paymentType: swimmer.payment_type,
         fundingSourceId: swimmer.funding_source_id,
         fundingSourceName: swimmer.funding_source?.[0]?.name || swimmer.funding_coordinator_name || null,
         fundingSourceShortName: swimmer.funding_source?.[0]?.short_name || null,
@@ -192,11 +194,14 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const supabase = await createClient();
+    // // Read incoming bearer token
+    const token = req.headers.get('authorization')?.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
+      console.error('Auth error:', authError);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    console.log(user)
+
     const body = await req.json();
     const { error: validationError, value } = schema.validate(body);
     if (validationError) {
@@ -206,34 +211,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // existence checks
-    // if (value.parent_id) {
-    //   // adjust table names here if your project stores parents in a different table
-    //   const parentFound =
-    //     (await existsInTable('parents', value.parent_id)) ||
-    //     (await existsInTable('profiles', value.parent_id));
-    //   if (!parentFound) {
-    //     return NextResponse.json({ error: 'parent_id not found' }, { status: 400 });
-    //   }
-    // }
-
-    // if (value.funding_source_id) {
-    //   const fundingFound = await existsInTable('funding_sources', value.funding_source_id);
-    //   if (!fundingFound) {
-    //     return NextResponse.json({ error: 'funding_source_id not found' }, { status: 400 });
-    //   }
-    // }
-
-    // if (value.coordinator_id) {
-    //   const coordinatorFound =
-    //     (await existsInTable('coordinators', value.coordinator_id)) ||
-    //     (await existsInTable('profiles', value.coordinator_id));
-    //   if (!coordinatorFound) {
-    //     return NextResponse.json({ error: 'coordinator_id not found' }, { status: 400 });
-    //   }
-    // }
-
-    // build insert payload with proper boolean coercion and allowed keys
     const payload: Record<string, any> = {
       parent_id: user.id ?? null,
       first_name: value.first_name,
@@ -295,13 +272,13 @@ export async function POST(req: Request) {
       approval_status: value.approval_status ?? 'pending',
       assessment_status: value.assessment_status ?? 'not_scheduled',
     };
-    console.log('Inserting swimmer with payload:', payload);
+
     const { data: inserted, error: insertError } = await supabase
       .from('swimmers')
       .insert([payload])
-      .select('*')
+      // .select('*')
       .single();
-
+    console.log(insertError)
     if (insertError) {
       return NextResponse.json({ error: 'Insert failed', details: insertError }, { status: 500 });
     }

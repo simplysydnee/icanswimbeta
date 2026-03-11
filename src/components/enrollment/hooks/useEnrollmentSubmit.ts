@@ -3,6 +3,8 @@ import { apiClient } from '@/lib/api-client';
 import { EnrollmentFormData } from '../schemas/enrollmentSchema';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+const { createClient } = await import('@/lib/supabase/client')
+        const supabase = createClient()
 
 interface UseEnrollmentSubmitOptions {
   onSuccess?: (swimmerId: string) => void;
@@ -96,11 +98,15 @@ export function useEnrollmentSubmit(options?: UseEnrollmentSubmitOptions) {
         // Enrollment status
         enrollment_status: 'pending_enrollment',
       };
-
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
       // return apiClient.createSwimmer(swimmerData);
       const res = await fetch('/api/swimmers', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+           Authorization: `Bearer ${token}`,
+        },
+    
         body: JSON.stringify(swimmerData),
       });
 
