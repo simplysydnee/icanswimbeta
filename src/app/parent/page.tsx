@@ -214,7 +214,7 @@ export default function ParentDashboard() {
       <PendingParentReferrals />
 
       {/* Pending waiver alert */}
-      <PendingWaiverAlert />
+      {/* <PendingWaiverAlert /> */}
 
       {/* Pending invitations */}
       <PendingInvitations />

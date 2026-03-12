@@ -31,6 +31,7 @@ export async function GET() {
         weight,
         enrollment_status,
         assessment_status,
+        approval_status,
         current_level_id,
         payment_type,
         funding_source_id,
@@ -72,6 +73,9 @@ export async function GET() {
         strengths_interests,
         swim_levels:current_level_id(name, display_name, color),
         funding_source:funding_source_id(id, name, short_name, type),
+        photo_video_signature,
+        cancellation_policy_signature,
+        liability_waiver_signature,
         bookings(
           id,
           status,
@@ -122,6 +126,7 @@ export async function GET() {
         weight: swimmer.weight,
         enrollmentStatus: swimmer.enrollment_status,
         assessmentStatus: swimmer.assessment_status,
+        approvalStatus: swimmer.approval_status,
         currentLevelId: swimmer.current_level_id,
         currentLevel: swimmer.swim_levels?.[0] ? {
           name: swimmer.swim_levels[0].name,
@@ -177,7 +182,10 @@ export async function GET() {
         // Emergency contact
         emergencyContactName: swimmer.emergency_contact_name,
         emergencyContactPhone: swimmer.emergency_contact_phone,
-        emergencyContactRelationship: swimmer.emergency_contact_relationship
+        emergencyContactRelationship: swimmer.emergency_contact_relationship,
+        photo_video_signature: swimmer.photo_video_signature,
+        cancellation_policy_signature: swimmer.cancellation_policy_signature,
+        liability_waiver_signature: swimmer.liability_waiver_signature,
       };
     });
 
@@ -276,9 +284,9 @@ export async function POST(req: Request) {
     const { data: inserted, error: insertError } = await supabase
       .from('swimmers')
       .insert([payload])
-      // .select('*')
+      .select('*')
       .single();
-    console.log(insertError)
+
     if (insertError) {
       return NextResponse.json({ error: 'Insert failed', details: insertError }, { status: 500 });
     }

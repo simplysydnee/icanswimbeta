@@ -146,6 +146,9 @@ export interface Swimmer {
   admin_notes?: string;
   important_notes?: string[];
   invitedAt?: string;
+  photo_video_signature?: string;
+  cancellation_policy_signature?: string;
+  liability_waiver_signature?: string;
 }
 
 interface SwimmerDetailModalProps {
@@ -1021,8 +1024,16 @@ export function SwimmerDetailModal({
                       <p className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Legal Documents</p>
                       <div className="space-y-2 mt-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm">Waiver Signed</span>
-                          {swimmer.signedWaiver ? (
+                          <span className="text-sm">Cancellation Signed</span>
+                          {swimmer.cancellation_policy_signature ? (
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-600" />
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">Liability Signed</span>
+                          {swimmer.liability_waiver_signature ? (
                             <CheckCircle className="h-4 w-4 text-green-600" />
                           ) : (
                             <XCircle className="h-4 w-4 text-red-600" />
@@ -1030,7 +1041,7 @@ export function SwimmerDetailModal({
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm">Photo Release</span>
-                          {swimmer.photoRelease ? (
+                          {swimmer.photo_video_signature ? (
                             <CheckCircle className="h-4 w-4 text-green-600" />
                           ) : (
                             <XCircle className="h-4 w-4 text-red-600" />

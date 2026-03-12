@@ -259,7 +259,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
 
     try {
       const apiEndpoint = role === 'admin'
-        ? '/api/admin/swimmers'
+        ? '/api/swimmers'
         : '/api/instructor/swimmers';
 
       const params = new URLSearchParams({
@@ -281,20 +281,20 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
         throw new Error(`Failed to fetch swimmers: ${response.statusText}`);
       }
 
-      const data: SwimmersResponse = await response.json();
+      const data: any = await response.json();
 
       // Debug logging to see what data we're getting
-      console.log('Fetched swimmers data:', data.swimmers);
-      if (data.swimmers.length > 0) {
-        console.log('First swimmer:', data.swimmers[0]);
-        console.log('First swimmer firstName:', data.swimmers[0].firstName);
-        console.log('First swimmer lastName:', data.swimmers[0].lastName);
-        console.log('First swimmer enrollmentStatus:', data.swimmers[0].enrollmentStatus);
-        console.log('First swimmer currentLevel:', data.swimmers[0].currentLevel);
+      console.log('Fetched swimmers data:', data,);
+      if (data.length > 0) {
+        console.log('First swimmer:', data[0]);
+        console.log('First swimmer firstName:', data[0].firstName);
+        console.log('First swimmer lastName:', data[0].lastName);
+        console.log('First swimmer enrollmentStatus:', data[0].enrollmentStatus);
+        console.log('First swimmer currentLevel:', data[0].currentLevel);
       }
 
-      setSwimmers(data.swimmers);
-      setTotal(data.total);
+      setSwimmers(data);
+      setTotal(data.length);
     } catch (err) {
       console.error('Error fetching swimmers:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch swimmers');
