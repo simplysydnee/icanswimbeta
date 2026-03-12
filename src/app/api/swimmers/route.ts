@@ -4,7 +4,7 @@ import Joi from 'joi';
 // import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const supabase = await createClient();
 
@@ -17,8 +17,45 @@ export async function GET() {
     }
     console.log('Fetching swimmers for user:', user.id);
 
+    const { searchParams } = new URL(req.url);
+/*
+    const queryParams = {
+      page: searchParams.get("page")
+        ? Number(searchParams.get("page"))
+        : undefined,
+
+      limit: searchParams.get("limit")
+        ? Number(searchParams.get("limit"))
+        : undefined,
+      search: searchParams.get("search") ?? "",
+
+      sortBy: searchParams.get("sortBy"),
+      sortOrder: searchParams.get("sortOrder"),
+    };
+
+  */
+    const queryParams = Object.fromEntries(
+      Array.from(searchParams.entries())
+        .filter(([key, value]) => value !== null && value !== "")
+        .map(([key, value]) => {
+          if (key === "page" || key === "limit") return [key, Number(value)];
+          return [key, value];
+        })
+    );
+    const { value, error: validationError } = querySchema.unknown(true).validate(queryParams);
+
+    if (validationError) {
+      return NextResponse.json(
+        { error: validationError.details[0].message },
+        { status: 400 }
+      );
+    }
+
+    const { page, limit, search, enrollmentStatus, sortBy, sortOrder } = value;
+
+    
     // Query swimmers for this parent with additional data
-    const { data, error } = await supabase
+    let query =  supabase
       .from('swimmers')
       .select(`
         id,
@@ -84,8 +121,29 @@ export async function GET() {
             instructor:instructor_id(full_name)
           )
         )
-      `)
+          
+      `, { count: 'exact' })
       .order('first_name');
+
+      query = query.order(sortBy, { ascending: sortOrder === "asc" });
+
+      if (page && limit) {
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+      
+        query = query.range(from, to);
+      }
+
+      const excludedKeys = ["page", "limit", "sortBy", "sortOrder", "search", "enrollmentStatus"];
+      Object.keys(queryParams).forEach((key) => {
+        if (excludedKeys.includes(key)) return;
+        const value = queryParams[key];
+        if (value === undefined || value === null || value === "") return;
+
+        query = query.eq(key, value);
+      });
+
+      const { data, error, count } = await query;
 
     if (error) {
       console.error('Error fetching swimmers:', error);
@@ -189,7 +247,17 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(transformedData);
+//    return NextResponse.json(transformedData);
+    return NextResponse.json({
+      transformedData,
+      metadata: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count ?? 0 / limit),
+      },
+    });
+    
   } catch (error) {
     console.error('Unexpected error in swimmers API:', error);
     return NextResponse.json(
@@ -198,6 +266,29 @@ export async function GET() {
     );
   }
 }
+
+const querySchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+
+  search: Joi.string().allow("").optional(),
+
+  enrollmentStatus: Joi.string()
+    .valid("pending", "approved", "rejected")
+    .optional(),
+
+  approval_status: Joi.string()
+    .valid("pending", "approved", "declined")
+    .optional(),
+
+  sortBy: Joi.string()
+    .valid("first_name", "date_of_birth", "created_at")
+    .default("first_name"),
+
+  sortOrder: Joi.string()
+    .valid("asc", "desc")
+    .default("asc"),
+});
 
 export async function POST(req: Request) {
   try {
