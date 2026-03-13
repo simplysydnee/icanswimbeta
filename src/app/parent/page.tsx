@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -45,6 +46,7 @@ interface Booking {
 }
 
 export default function ParentDashboard() {
+  const router = useRouter()
   const { user, profile, role, loading: authLoading, isLoadingProfile } = useAuth()
   const [swimmers, setSwimmers] = useState<Swimmer[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
@@ -74,7 +76,11 @@ export default function ParentDashboard() {
           console.error('Error fetching swimmers:', swimmersError)
           // Continue with empty swimmers array
         } else {
-          setSwimmers(swimmersData || [])
+          if (!swimmersData || swimmersData.length === 0) {
+            router.push('/enroll')
+          }else{
+            setSwimmers(swimmersData || [])
+          }
         }
 
         // Fetch upcoming bookings
