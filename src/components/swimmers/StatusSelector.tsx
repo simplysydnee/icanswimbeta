@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import {
   Select,
@@ -45,14 +45,27 @@ const APPROVAL_STATUSES = [
 
 export function StatusSelector({
   swimmerId,
-  currentEnrollmentStatus,
-  currentAssessmentStatus,
-  currentApprovalStatus,
+  currentEnrollmentStatus: initialEnrollmentStatus,
+  currentAssessmentStatus: initialAssessmentStatus,
+  currentApprovalStatus: initialApprovalStatus,
   onStatusChange,
 }: StatusSelectorProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [currentEnrollmentStatus, setCurrentEnrollmentStatus] = useState(initialEnrollmentStatus);
+  const [currentAssessmentStatus, setCurrentAssessmentStatus] = useState(initialAssessmentStatus);
+  const [currentApprovalStatus, setCurrentApprovalStatus] = useState(initialApprovalStatus);
   const { toast } = useToast();
   const supabase = createClient();
+
+  // useEffect(() => {
+  //   setCurrentEnrollmentStatus(initialEnrollmentStatus);
+  // }, [initialEnrollmentStatus]);
+  // useEffect(() => {
+  //   setCurrentAssessmentStatus(initialAssessmentStatus);
+  // }, [initialAssessmentStatus]);
+  // useEffect(() => {
+  //   setCurrentApprovalStatus(initialApprovalStatus);
+  // }, [initialApprovalStatus]);
 
   const handleStatusUpdate = async (
     field: 'enrollment_status' | 'assessment_status' | 'approval_status',
@@ -99,7 +112,12 @@ export function StatusSelector({
           <Label className="text-xs">Enrollment Status</Label>
           <Select
             value={currentEnrollmentStatus || ''}
-            onValueChange={(v) => handleStatusUpdate('enrollment_status', v)}
+          onValueChange={(v) => {
+              if (typeof v === 'string') {
+                setCurrentEnrollmentStatus(v);
+                handleStatusUpdate('enrollment_status', v);
+              }
+            }}
             disabled={isLoading}
           >
             <SelectTrigger className="h-8 text-sm">
@@ -120,7 +138,12 @@ export function StatusSelector({
           <Label className="text-xs">Assessment Status</Label>
           <Select
             value={currentAssessmentStatus || ''}
-            onValueChange={(v) => handleStatusUpdate('assessment_status', v)}
+            onValueChange={(v) => {
+              if (typeof v === 'string') {
+                setCurrentAssessmentStatus(v);
+                handleStatusUpdate('assessment_status', v);
+              }
+            }}
             disabled={isLoading}
           >
             <SelectTrigger className="h-8 text-sm">
@@ -141,7 +164,12 @@ export function StatusSelector({
           <Label className="text-xs">Approval Status</Label>
           <Select
             value={currentApprovalStatus || ''}
-            onValueChange={(v) => handleStatusUpdate('approval_status', v)}
+            onValueChange={(v) => {
+              if (typeof v === 'string') {
+                setCurrentApprovalStatus(v);
+                handleStatusUpdate('approval_status', v);
+              }
+            }}
             disabled={isLoading}
           >
             <SelectTrigger className="h-8 text-sm">

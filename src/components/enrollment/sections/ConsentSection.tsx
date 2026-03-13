@@ -249,7 +249,7 @@ export function ConsentSection() {
       </div>
 
       {/* Emergency Contact */}
-      <div className="space-y-6">
+      {/* <div className="space-y-6">
         <h3 className="text-lg font-medium">Emergency Contact Information</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -295,7 +295,7 @@ export function ConsentSection() {
             </FormItem>
           )}
         />
-      </div>
+      </div> */}
     </div>
   );
 }

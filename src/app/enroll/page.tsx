@@ -34,6 +34,7 @@ export default function EnrollmentPage() {
     firstName: '',
     lastName: '',
     dob: '',
+    gender: '',
     paymentType: '' as '' | 'private_pay' | 'regional_center',
     selectedFundingSourceId: null as string | null,
     coordinatorName: '',
@@ -149,6 +150,10 @@ export default function EnrollmentPage() {
       }
     }
 
+    if (!formData.gender) {
+      newErrors.gender = 'Gender is required';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -181,6 +186,7 @@ export default function EnrollmentPage() {
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
       dob: formData.dob,
+      gender: formData.gender,
     });
 
     // Add payment information based on payment method
@@ -214,7 +220,8 @@ export default function EnrollmentPage() {
         if (formData.coordinatorPhone) {
           queryParams.append('coordinatorPhone', formData.coordinatorPhone);
         }
-        const targetPath = `/enroll/vmrc?${queryParams.toString()}`;
+        // const targetPath = `/enroll/vmrc?${queryParams.toString()}`;
+        const targetPath = `/enroll/funded?${queryParams.toString()}`;
 
         if (!user) {
           // Save coordinator info to localStorage before signup
@@ -346,24 +353,49 @@ export default function EnrollmentPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="dob" className="text-gray-700">
-                    Date of Birth *
-                  </Label>
-                  <div className="relative">
-                    <CalendarIcon className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                    <Input
-                      id="dob"
-                      type="date"
-                      value={formData.dob}
-                      onChange={(e) => handleInputChange('dob', e.target.value)}
-                      className={`pl-10 ${errors.dob ? 'border-red-300' : ''}`}
-                    />
+               
+              <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="dob" className="text-gray-700">
+                        Date of Birth *
+                      </Label>
+                      <div className="relative mt-1.5">
+                        <CalendarIcon className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                        <Input
+                          id="dob"
+                          type="date"
+                          value={formData.dob}
+                          onChange={(e) => handleInputChange('dob', e.target.value)}
+                          className={`pl-10 ${errors.dob ? 'border-red-300' : ''}`}
+                        />
+                      </div>
+                      {errors.dob && (
+                        <p className="text-sm text-red-600">{errors.dob}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="gender" className="text-gray-700">Gender *</Label>
+                      <Select
+                        value={formData.gender || ''}
+                        onValueChange={(val) => handleInputChange('gender', val)}
+                      >
+                        <SelectTrigger className={`mt-1.5 ${errors.gender ? 'border-red-300' : ''}`}>
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.gender && <p className="text-sm text-red-600">{errors.gender}</p>}
+                    </div>
                   </div>
-                  {errors.dob && (
-                    <p className="text-sm text-red-600">{errors.dob}</p>
-                  )}
                 </div>
+                
               </div>
 
               {/* Payment Method Section */}

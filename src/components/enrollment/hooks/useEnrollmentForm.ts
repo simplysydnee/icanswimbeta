@@ -86,7 +86,8 @@ export function useEnrollmentForm(options?: UseEnrollmentFormOptions) {
       emergency_contact_phone: '',
       emergency_contact_relationship: '',
     },
-    mode: 'onBlur', // Validate on blur for better UX
+    mode: 'onSubmit', // Validate on blur for better UX
+
   });
 
   // Auto-fill parent info when user is authenticated

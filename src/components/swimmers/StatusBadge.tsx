@@ -117,7 +117,7 @@ export const fundingTypeConfig = {
     border: 'border-sky-200',
     size: 'default'
   },
-  funded: {
+  funding_source: {
     label: 'Funded',
     icon: Building2,
     bg: 'bg-violet-100',
@@ -125,6 +125,7 @@ export const fundingTypeConfig = {
     border: 'border-violet-200',
     size: 'large'
   },
+/*
   vmrc: {
     label: 'Funded',
     icon: Building2,
@@ -157,6 +158,7 @@ export const fundingTypeConfig = {
     border: 'border-gray-200',
     size: 'default'
   },
+  */
 } as const;
 
 // Type definitions

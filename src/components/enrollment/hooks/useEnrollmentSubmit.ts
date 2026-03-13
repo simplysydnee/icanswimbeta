@@ -3,6 +3,8 @@ import { apiClient } from '@/lib/api-client';
 import { EnrollmentFormData } from '../schemas/enrollmentSchema';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+const { createClient } = await import('@/lib/supabase/client')
+        const supabase = createClient()
 
 interface UseEnrollmentSubmitOptions {
   onSuccess?: (swimmerId: string) => void;
@@ -36,6 +38,9 @@ export function useEnrollmentSubmit(options?: UseEnrollmentSubmitOptions) {
         // Payment Information
         payment_type: data.payment_type === 'private_pay' ? 'private_pay' : 'funding_source',
         funding_source_id: data.funding_source_id || null,
+        funding_coordinator_name: data.funding_coordinator_name || null,
+        funding_coordinator_email: data.funding_coordinator_email || null,
+        funding_coordinator_phone: data.funding_coordinator_phone || null,
 
         // Medical Information
         has_allergies: data.has_allergies,
@@ -56,6 +61,14 @@ export function useEnrollmentSubmit(options?: UseEnrollmentSubmitOptions) {
         elopement_description: data.elopement_description || null,
         has_behavior_plan: data.has_behavior_plan,
 
+        // Fundamental Information (new)
+        communication_type: data.communication_type ?? null,
+        strengths_interests: data.strengths_interests || null,
+        motivators: data.motivators || null,
+        // keep 'other_therapies' as the same shape the form provides (zod default is 'no')
+        other_therapies: typeof data.other_therapies === 'boolean' ? data.other_therapies : (data.other_therapies ?? 'no'),
+        therapies_description: data.therapies_description || null,
+
         // Swimming Background
         previous_swim_lessons: data.previous_swim_lessons,
         previous_swim_experience: data.previous_swim_experience || null,
@@ -63,7 +76,7 @@ export function useEnrollmentSubmit(options?: UseEnrollmentSubmitOptions) {
         swim_goals: data.swim_goals,
 
         // Scheduling
-        availability_slots: data.availability_slots,
+        availability: data.availability,
         other_availability: data.other_availability || null,
         flexible_swimmer: data.flexible_swimmer,
 
@@ -85,8 +98,28 @@ export function useEnrollmentSubmit(options?: UseEnrollmentSubmitOptions) {
         // Enrollment status
         enrollment_status: 'pending_enrollment',
       };
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      // return apiClient.createSwimmer(swimmerData);
+      const res = await fetch('/api/swimmers', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+           Authorization: `Bearer ${token}`,
+        },
+    
+        body: JSON.stringify(swimmerData),
+      });
 
-      return apiClient.createSwimmer(swimmerData);
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const message =
+          payload?.error || payload?.message || 'Failed to create swimmer';
+        throw new Error(message);
+      }
+
+      // endpoint returns { swimmer: inserted } — normalize to swimmer object
+      const created = payload?.swimmer ?? payload;
+      return created;
     },
     onSuccess: (newSwimmer) => {
       toast({

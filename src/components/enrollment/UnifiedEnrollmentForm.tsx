@@ -18,13 +18,15 @@ import {
   SwimmingBackgroundSection,
   SchedulingSection,
   ConsentSection,
+  FundamentalInformationSection
 } from './sections';
 
 const STEPS = [
   { id: 1, title: 'Child Information', component: ChildInfoSection },
-  { id: 2, title: 'Parent Information', component: ParentInfoSection },
-  { id: 3, title: 'Medical Information', component: MedicalSection },
-  { id: 4, title: 'Behavioral', component: BehavioralSection },
+  // { id: 2, title: 'Parent Information', component: ParentInfoSection },
+  { id: 2, title: 'Medical Information', component: MedicalSection },
+  { id: 3, title: 'Behavioral', component: BehavioralSection },
+  { id: 4, title: 'Fundamental Information', component: FundamentalInformationSection },
   { id: 5, title: 'Swimming Background', component: SwimmingBackgroundSection },
   { id: 6, title: 'Scheduling', component: SchedulingSection },
   { id: 7, title: 'Consent & Agreements', component: ConsentSection },
@@ -148,6 +150,7 @@ export function UnifiedEnrollmentForm({
             ) : (
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Enrolling...' : 'Complete Enrollment'}
+                {}
               </Button>
             )}
           </div>

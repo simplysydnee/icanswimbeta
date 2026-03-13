@@ -1,6 +1,7 @@
 'use client';
-
+import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useSearchParams } from 'next/navigation';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,8 +9,54 @@ import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { EnrollmentFormData } from '../schemas/enrollmentSchema';
 
 export function ChildInfoSection() {
-  const { control, setValue } = useFormContext<EnrollmentFormData>();
+  const { control, setValue, getValues } = useFormContext<EnrollmentFormData>();
+  const searchParams = useSearchParams();
+   useEffect(() => {
+    if (!searchParams) return;
+    
+    const paramFirst = searchParams.get('firstName');
+    const paramLast = searchParams.get('lastName');
+    const paramDob = searchParams.get('dob');
+    let paramGender = searchParams.get('gender');
+    const selectedFundingSourceId = searchParams.get('selectedFundingSourceId');
+    const coordinatorName = searchParams.get('coordinatorName');
+    const coordinatorEmail = searchParams.get('coordinatorEmail');
+    const coordinatorPhone = searchParams.get('coordinatorPhone')
+    
+    
+    
 
+    if (paramFirst) {
+      setValue('child_first_name', paramFirst, { shouldDirty: true, shouldValidate: true });
+    }
+    if (paramLast) {
+      setValue('child_last_name', paramLast, { shouldDirty: true, shouldValidate: true });
+    }
+    if (paramDob ) {
+      // assume incoming date is already yyyy-mm-dd; adjust if needed
+      setValue('child_date_of_birth', paramDob, { shouldDirty: true, shouldValidate: true });
+    }
+    if (paramGender) {
+      console.log(paramGender)
+      setValue('child_gender', paramGender, { shouldDirty: true, shouldValidate: true });
+    }
+    if (selectedFundingSourceId) {
+      setValue('funding_source_id', selectedFundingSourceId, { shouldDirty: true, shouldValidate: true });
+    }
+    if (coordinatorName) {
+      setValue('funding_coordinator_name', coordinatorName, { shouldDirty: true, shouldValidate: true });
+    }
+    if (coordinatorEmail) {
+      setValue('funding_coordinator_email', coordinatorEmail, { shouldDirty: true, shouldValidate: true });
+    }
+    if (coordinatorPhone) {
+      setValue('funding_coordinator_phone', coordinatorPhone, { shouldDirty: true, shouldValidate: true });
+    }
+  // only run once on mount or when searchParams object changes
+  }, [searchParams, setValue]);
+
+  // console.log('.................', getValues('child_first_name'), getValues('child_last_name'), getValues('child_date_of_birth'), getValues('child_gender'), )
+  console.log('.................', getValues('funding_coordinator_phone'), getValues('funding_coordinator_email'), getValues('funding_coordinator_name'), getValues('funding_source_id') )
   // Function to format name fields on blur
   const handleNameBlur = (fieldName: 'child_first_name' | 'child_last_name') => {
     return (event: React.FocusEvent<HTMLInputElement>) => {
@@ -103,10 +150,10 @@ export function ChildInfoSection() {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="flex items-center gap-2">
-                Gender *
+                Gender * 
                 <HelpTooltip content="This helps us with appropriate instructor assignments and facility arrangements." />
               </FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select gender" />

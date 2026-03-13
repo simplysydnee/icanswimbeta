@@ -132,28 +132,28 @@ export const DIAGNOSIS_OPTIONS = [
 
 // Swim goals options for enrollment form
 export const SWIM_GOALS = [
-  'Develop comfort and familiarity with water',
-  'Front crawl',
-  'Backstroke',
-  'Improve basic water safety skills (e.g. floating, treading water)',
-  'Learn basic swimming strokes (e.g. front stroke)',
-  'Learn to swim with flotation device',
-  'Become comfortable in water',
-  'Enter and exit water',
-  'To float on back',
-  'Perform basic arm and leg movement',
-  'Tread water',
+  {id:1, value:'Develop comfort and familiarity with water'},
+  {id:2, value:'Front crawl'},
+  {id:3, value:'Backstroke'},
+  {id:4, value:'Improve basic water safety skills (e.g. floating, treading water)'},
+  {id:5, value:'Learn basic swimming strokes (e.g. front stroke)'},
+  {id:6, value:'Learn to swim with flotation device'},
+  {id:7, value:'Become comfortable in water'},
+  {id:8, value:'Enter and exit water'},
+  {id:9, value:'To float on back'},
+  {id:10, value:'Perform basic arm and leg movement'},
+  {id:11, value:'Tread water'},
 ] as const;
 
 // Availability slots for enrollment form
 export const AVAILABILITY_SLOTS = [
-  'Flexible – I can adjust my schedule if needed',
-  'Weekday Mornings (8 AM- 12 PM)',
-  'Weekday Afternoons (12 PM – 4 PM)',
-  'Weekday Evenings (4 PM – 7 PM)',
-  'Saturday Availability',
-  'Sunday Availability',
-  'Other (please specify)',
+  {id:1, value:'Flexible – I can adjust my schedule if needed'},
+  {id:2, value:'Weekday Mornings (8 AM- 12 PM)'},
+  {id:3, value:'Weekday Afternoons (12 PM – 4 PM)'},
+  {id:4, value:'Weekday Evenings (4 PM – 7 PM)'},
+  {id:5, value:'Saturday Availability'},
+  {id:6, value:'Sunday Availability'},
+  {id:7, value:'Other (please specify)'},
 ] as const;
 
 // Days of week for booking
