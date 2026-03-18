@@ -182,7 +182,7 @@ export function ExpandableSwimmerCard({
             </div>
             {hasFundingAuthorization && (
               <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200 text-xs">
-                Funded
+                {swimmer.payment_type}
               </Badge>
             )}
           </div>

@@ -1,7 +1,10 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import Joi from 'joi';
+// import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
-export async function GET() {
+
+export async function GET(req: Request) {
   try {
     const supabase = await createClient();
 
@@ -14,8 +17,45 @@ export async function GET() {
     }
     console.log('Fetching swimmers for user:', user.id);
 
+    const { searchParams } = new URL(req.url);
+/*
+    const queryParams = {
+      page: searchParams.get("page")
+        ? Number(searchParams.get("page"))
+        : undefined,
+
+      limit: searchParams.get("limit")
+        ? Number(searchParams.get("limit"))
+        : undefined,
+      search: searchParams.get("search") ?? "",
+
+      sortBy: searchParams.get("sortBy"),
+      sortOrder: searchParams.get("sortOrder"),
+    };
+
+  */
+    const queryParams = Object.fromEntries(
+      Array.from(searchParams.entries())
+        .filter(([key, value]) => value !== null && value !== "")
+        .map(([key, value]) => {
+          if (key === "page" || key === "limit") return [key, Number(value)];
+          return [key, value];
+        })
+    );
+    const { value, error: validationError } = querySchema.unknown(true).validate(queryParams);
+
+    if (validationError) {
+      return NextResponse.json(
+        { error: validationError.details[0].message },
+        { status: 400 }
+      );
+    }
+
+    const { page, limit, search, enrollmentStatus, sortBy, sortOrder } = value;
+
+    
     // Query swimmers for this parent with additional data
-    const { data, error } = await supabase
+    let query =  supabase
       .from('swimmers')
       .select(`
         id,
@@ -28,6 +68,7 @@ export async function GET() {
         weight,
         enrollment_status,
         assessment_status,
+        approval_status,
         current_level_id,
         payment_type,
         funding_source_id,
@@ -69,6 +110,9 @@ export async function GET() {
         strengths_interests,
         swim_levels:current_level_id(name, display_name, color),
         funding_source:funding_source_id(id, name, short_name, type),
+        photo_video_signature,
+        cancellation_policy_signature,
+        liability_waiver_signature,
         bookings(
           id,
           status,
@@ -77,8 +121,29 @@ export async function GET() {
             instructor:instructor_id(full_name)
           )
         )
-      `)
+          
+      `, { count: 'exact' })
       .order('first_name');
+
+      query = query.order(sortBy, { ascending: sortOrder === "asc" });
+
+      if (page && limit) {
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+      
+        query = query.range(from, to);
+      }
+
+      const excludedKeys = ["page", "limit", "sortBy", "sortOrder", "search", "enrollmentStatus"];
+      Object.keys(queryParams).forEach((key) => {
+        if (excludedKeys.includes(key)) return;
+        const value = queryParams[key];
+        if (value === undefined || value === null || value === "") return;
+
+        query = query.eq(key, value);
+      });
+
+      const { data, error, count } = await query;
 
     if (error) {
       console.error('Error fetching swimmers:', error);
@@ -119,13 +184,14 @@ export async function GET() {
         weight: swimmer.weight,
         enrollmentStatus: swimmer.enrollment_status,
         assessmentStatus: swimmer.assessment_status,
+        approvalStatus: swimmer.approval_status,
         currentLevelId: swimmer.current_level_id,
         currentLevel: swimmer.swim_levels?.[0] ? {
           name: swimmer.swim_levels[0].name,
           displayName: swimmer.swim_levels[0].display_name,
           color: swimmer.swim_levels[0].color
         } : null,
-        paymentType: swimmer.funding_source_id ? 'funded' : (swimmer.payment_type || 'private_pay'),
+        paymentType: swimmer.payment_type,
         fundingSourceId: swimmer.funding_source_id,
         fundingSourceName: swimmer.funding_source?.[0]?.name || swimmer.funding_coordinator_name || null,
         fundingSourceShortName: swimmer.funding_source?.[0]?.short_name || null,
@@ -174,11 +240,24 @@ export async function GET() {
         // Emergency contact
         emergencyContactName: swimmer.emergency_contact_name,
         emergencyContactPhone: swimmer.emergency_contact_phone,
-        emergencyContactRelationship: swimmer.emergency_contact_relationship
+        emergencyContactRelationship: swimmer.emergency_contact_relationship,
+        photo_video_signature: swimmer.photo_video_signature,
+        cancellation_policy_signature: swimmer.cancellation_policy_signature,
+        liability_waiver_signature: swimmer.liability_waiver_signature,
       };
     });
 
-    return NextResponse.json(transformedData);
+//    return NextResponse.json(transformedData);
+    return NextResponse.json({
+      transformedData,
+      metadata: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count ?? 0 / limit),
+      },
+    });
+    
   } catch (error) {
     console.error('Unexpected error in swimmers API:', error);
     return NextResponse.json(
@@ -187,3 +266,209 @@ export async function GET() {
     );
   }
 }
+
+const querySchema = Joi.object({
+  page: Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(100).default(10),
+
+  search: Joi.string().allow("").optional(),
+
+  enrollmentStatus: Joi.string()
+    .valid("pending", "approved", "rejected")
+    .optional(),
+
+  approval_status: Joi.string()
+    .valid("pending", "approved", "declined")
+    .optional(),
+
+  sortBy: Joi.string()
+    .valid("first_name", "date_of_birth", "created_at")
+    .default("first_name"),
+
+  sortOrder: Joi.string()
+    .valid("asc", "desc")
+    .default("asc"),
+});
+
+export async function POST(req: Request) {
+  try {
+    const supabase = await createClient();
+    // // Read incoming bearer token
+    const token = req.headers.get('authorization')?.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('Auth error:', authError);
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { error: validationError, value } = schema.validate(body);
+    if (validationError) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validationError.details },
+        { status: 400 }
+      );
+    }
+
+    const payload: Record<string, any> = {
+      parent_id: user.id ?? null,
+      first_name: value.first_name,
+      last_name: value.last_name,
+      date_of_birth: value.date_of_birth ?? null,
+      gender: value.gender ?? null,
+
+      has_allergies: parseBoolLike(value.has_allergies) ?? false,
+      allergies_description: value.allergies_description ?? null,
+      has_medical_conditions: parseBoolLike(value.has_medical_conditions) ?? false,
+      medical_conditions_description: value.medical_conditions_description ?? null,
+      history_of_seizures: parseBoolLike(value.history_of_seizures) ?? false,
+      seizures_description: value.seizures_description ?? null,
+
+      self_injurious_behavior: parseBoolLike(value.self_injurious_behavior) ?? false,
+      self_injurious_behavior_description: value.self_injurious_behavior_description ?? null,
+      aggressive_behavior: parseBoolLike(value.aggressive_behavior) ?? false,
+      aggressive_behavior_description: value.aggressive_behavior_description ?? null,
+      elopement_history: parseBoolLike(value.elopement_history) ?? false,
+      elopement_history_description: value.elopement_history_description ?? null,
+      has_behavior_plan: parseBoolLike(value.has_behavior_plan) ?? false,
+
+      previous_swim_lessons: parseBoolLike(value.previous_swim_lessons) ?? false,
+      previous_swim_lessons_description: value.previous_swim_lessons_description ?? null,
+      comfortable_in_water: value.comfortable_in_water,
+      swim_goals: Array.isArray(value.swim_goals) ? value.swim_goals : value.swim_goals ? [value.swim_goals] : null,
+
+      // communication_type: value.communication_type ?? null,
+      communication_type: Array.isArray(value.communication_type)
+        ? value.communication_type
+        : value.communication_type
+        ? [value.communication_type]
+        : null,
+      strengths_interests: value.strengths_interests ?? null,
+      motivators: value.motivators ?? null,
+      other_therapies: parseBoolLike(value.other_therapies) ?? false,
+      therapies_description: value.therapies_description ?? null,
+
+      availability: Array.isArray(value.availability) ? value.availability : value.availability ? [value.availability] : [],
+      flexible_swimmer: parseBoolLike(value.flexible_swimmer) ?? false,
+      preferred_start_date: value.preferred_start_date ?? null,
+
+      photo_video_permission: parseBoolLike(value.photo_video_permission) ?? false,
+      signed_cancellation: parseBoolLike(value.signed_cancellation) ?? false,
+      signed_liability: parseBoolLike(value.signed_liability) ?? false,
+      photo_video_signature: value.photo_video_signature ?? null,
+      cancellation_policy_signature: value.cancellation_policy_signature ?? null,
+      liability_waiver_signature: value.liability_waiver_signature ?? null,
+
+      payment_type: value.payment_type ?? 'private_pay',
+
+      funding_source_id: value.funding_source_id ?? null,
+      funding_coordinator_name: value.funding_coordinator_name ?? null,
+      funding_coordinator_email: value.funding_coordinator_email ?? null,
+      funding_coordinator_phone: value.funding_coordinator_phone ?? null,
+      coordinator_id: value.coordinator_id ?? null,
+
+      enrollment_status: value.enrollment_status ?? 'waitlist',
+      approval_status: value.approval_status ?? 'pending',
+      assessment_status: value.assessment_status ?? 'not_scheduled',
+    };
+
+    const { data: inserted, error: insertError } = await supabase
+      .from('swimmers')
+      .insert([payload])
+      .select('*')
+      .single();
+
+    if (insertError) {
+      return NextResponse.json({ error: 'Insert failed', details: insertError }, { status: 500 });
+    }
+
+    return NextResponse.json({ swimmer: inserted }, { status: 201 });
+  } catch (err: any) {
+    return NextResponse.json({ error: 'Server error', details: err?.message || err }, { status: 500 });
+  }
+}
+
+
+const booleanLike = Joi.alternatives().try(
+  Joi.boolean(),
+  Joi.string().valid('yes', 'no', 'true', 'false', '1', '0')
+);
+
+const schema = Joi.object({
+  parent_id: Joi.string().uuid().optional().allow(null),
+  first_name: Joi.string().trim().required(),
+  last_name: Joi.string().trim().required(),
+  date_of_birth: Joi.date().iso().optional().allow(null),
+  gender: Joi.string().valid('male', 'female', 'other').optional().allow(null),
+
+  has_allergies: booleanLike.optional(),
+  allergies_description: Joi.string().allow(null, ''),
+  has_medical_conditions: booleanLike.optional(),
+  medical_conditions_description: Joi.string().allow(null, ''),
+  history_of_seizures: booleanLike.optional(),
+  seizures_description: Joi.string().allow(null, ''),
+
+  self_injurious_behavior: booleanLike.optional(),
+  self_injurious_behavior_description: Joi.string().allow(null, ''),
+  aggressive_behavior: booleanLike.optional(),
+  aggressive_behavior_description: Joi.string().allow(null, ''),
+  elopement_history: booleanLike.optional(),
+  elopement_history_description: Joi.string().allow(null, ''),
+  has_behavior_plan: booleanLike.optional(),
+
+  previous_swim_lessons: booleanLike.optional(),
+  previous_swim_lessons_description: Joi.string().allow(null, ''),
+  comfortable_in_water: Joi.string().trim().required(),
+  swim_goals: Joi.array().items(Joi.string().trim()).optional().allow(null),
+
+  communication_type: Joi.string().valid('verbal', 'non_verbal', 'other').optional().allow(null),
+  strengths_interests: Joi.string().allow(null, ''),
+  motivators: Joi.string().allow(null, ''),
+  other_therapies: booleanLike.optional(),
+  therapies_description: Joi.string().allow(null, ''),
+
+  availability: Joi.array().items(Joi.string().trim()).required(),
+  flexible_swimmer: booleanLike.optional(),
+  preferred_start_date: Joi.date().iso().optional().allow(null),
+
+  photo_video_permission: booleanLike.optional(),
+  signed_cancellation: booleanLike.optional(),
+  signed_liability: booleanLike.optional(),
+  photo_video_signature: Joi.string().allow(null, ''),
+  cancellation_policy_signature: Joi.string().allow(null, ''),
+  liability_waiver_signature: Joi.string().allow(null, ''),
+
+  payment_type: Joi.string().valid('private_pay', 'funding_source').optional(),
+
+  funding_source_id: Joi.string().uuid().optional().allow(null),
+  funding_coordinator_name: Joi.string().allow(null, ''),
+  funding_coordinator_email: Joi.string().email().allow(null, ''),
+  funding_coordinator_phone: Joi.string().allow(null, ''),
+  coordinator_id: Joi.string().uuid().optional().allow(null),
+
+  enrollment_status: Joi.string().optional(),
+  approval_status: Joi.string().optional(),
+  assessment_status: Joi.string().optional(),
+}).options({ stripUnknown: true });
+
+function parseBoolLike(v: any): boolean | undefined {
+  if (typeof v === 'boolean') return v;
+  if (typeof v === 'string') {
+    const s = v.toLowerCase();
+    if (['yes', 'true', '1'].includes(s)) return true;
+    if (['no', 'false', '0'].includes(s)) return false;
+  }
+  return undefined;
+}
+
+// async function existsInTable(table: string, id: string) {
+//   const { data, error } = await supabase
+//     .from(table)
+//     .select('id')
+//     .eq('id', id)
+//     .limit(1)
+//     .maybeSingle();
+
+//   if (error) return false;
+//   return !!data;
+// }

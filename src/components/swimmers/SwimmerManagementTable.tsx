@@ -136,6 +136,17 @@ const fundingOptions = [
   ...getStatusOptions('funding')
 ];
 
+const APPROVAL_STATUSES = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'declined', label: 'Declined' },
+];
+
+const approvalOptions = [
+  { label: 'All Approval', value: 'all' },
+  ...APPROVAL_STATUSES,
+];
+
 const levelOptions = [
   { label: 'All Levels', value: 'all' },
   { label: 'No Level Assigned', value: 'none' },
@@ -198,9 +209,10 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
   const [localSearch, setLocalSearch] = useState(search);
   const status = searchParams.get('status') || 'all';
   const priority = searchParams.get('priority') || 'all';
-  const funding = searchParams.get('funding') || 'all';
+  const funding = searchParams.get('payment_type') || 'all';
+  const approval = searchParams.get('approval_status') || 'all';
   const level = searchParams.get('level') || 'all';
-  const sortBy = searchParams.get('sortBy') || 'name';
+  const sortBy = searchParams.get('sortBy') || 'first_name';
   const sortOrder = searchParams.get('sortOrder') || 'asc';
   const page = parseInt(searchParams.get('page') || '1');
   const limit = parseInt(searchParams.get('limit') || '25');
@@ -259,7 +271,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
 
     try {
       const apiEndpoint = role === 'admin'
-        ? '/api/admin/swimmers'
+        ? '/api/swimmers'
         : '/api/instructor/swimmers';
 
       const params = new URLSearchParams({
@@ -272,7 +284,8 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
       if (search) params.set('search', search);
       if (status !== 'all') params.set('status', status);
       if (priority !== 'all') params.set('priority', priority);
-      if (funding !== 'all') params.set('funding', funding);
+      if (funding !== 'all') params.set('payment_type', funding);
+      if (approval !== 'all') params.set('approval_status', approval);
       if (level !== 'all') params.set('level', level);
 
       const response = await fetch(`${apiEndpoint}?${params.toString()}`);
@@ -281,20 +294,20 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
         throw new Error(`Failed to fetch swimmers: ${response.statusText}`);
       }
 
-      const data: SwimmersResponse = await response.json();
+      const data: any = await response.json();
 
       // Debug logging to see what data we're getting
-      console.log('Fetched swimmers data:', data.swimmers);
-      if (data.swimmers.length > 0) {
-        console.log('First swimmer:', data.swimmers[0]);
-        console.log('First swimmer firstName:', data.swimmers[0].firstName);
-        console.log('First swimmer lastName:', data.swimmers[0].lastName);
-        console.log('First swimmer enrollmentStatus:', data.swimmers[0].enrollmentStatus);
-        console.log('First swimmer currentLevel:', data.swimmers[0].currentLevel);
+      console.log('Fetched swimmers data:', data,);
+      if (data.length > 0) {
+        console.log('First swimmer:', data[0]);
+        console.log('First swimmer firstName:', data[0].firstName);
+        console.log('First swimmer lastName:', data[0].lastName);
+        console.log('First swimmer enrollmentStatus:', data[0].enrollmentStatus);
+        console.log('First swimmer currentLevel:', data[0].currentLevel);
       }
 
-      setSwimmers(data.swimmers);
-      setTotal(data.total);
+      setSwimmers(data.transformedData);
+      setTotal(data.length);
     } catch (err) {
       console.error('Error fetching swimmers:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch swimmers');
@@ -303,7 +316,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
     } finally {
       setLoading(false);
     }
-  }, [role, search, status, funding, level, sortBy, sortOrder, page, limit]);
+  }, [role, search, status, funding, approval, level, sortBy, sortOrder, page, limit]);
 
   // Initial fetch
   useEffect(() => {
@@ -461,6 +474,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
+          {/*
           <div className="flex-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -472,9 +486,10 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
               />
             </div>
           </div>
-
+          */}
           {/* Filter dropdowns */}
           <div className="flex flex-wrap gap-2">
+            {/*
             <Select value={status} onValueChange={(value) => updateFilter('status', value)}>
               <SelectTrigger className="w-[150px]">
                 <Filter className="h-4 w-4 mr-2" />
@@ -502,8 +517,8 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
                 ))}
               </SelectContent>
             </Select>
-
-            <Select value={funding} onValueChange={(value) => updateFilter('funding', value)}>
+            */}
+            <Select value={funding} onValueChange={(value) => updateFilter('payment_type', value)}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Funding" />
               </SelectTrigger>
@@ -516,7 +531,20 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
               </SelectContent>
             </Select>
 
-            <Select value={level} onValueChange={(value) => updateFilter('level', value)}>
+            <Select value={approval} onValueChange={(value) => updateFilter('approval_status', value)}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Approval" />
+              </SelectTrigger>
+              <SelectContent>
+                {approvalOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/*<Select value={level} onValueChange={(value) => updateFilter('level', value)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Level" />
               </SelectTrigger>
@@ -528,7 +556,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
                 ))}
               </SelectContent>
             </Select>
-
+            */}
             <Select
               value={limit.toString()}
               onValueChange={handleLimitChange}

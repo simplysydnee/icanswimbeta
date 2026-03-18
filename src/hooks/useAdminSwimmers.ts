@@ -49,7 +49,7 @@ export const useAdminSwimmers = (filters?: AdminSwimmersFilters) => {
 
       // Add other filter parameters as needed
       const queryString = params.toString();
-      const url = `/api/admin/swimmers${queryString ? `?${queryString}` : ''}`;
+      const url = `/api/swimmers${queryString ? `?${queryString}` : ''}`;
 
       const response = await fetch(url);
 

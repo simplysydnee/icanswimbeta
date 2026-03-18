@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { Label } from '@/components/ui/label';
 import { EnrollmentFormData } from '../schemas/enrollmentSchema';
@@ -12,7 +13,7 @@ import { AVAILABILITY_SLOTS } from '@/lib/constants';
 export function SchedulingSection() {
   const { control, watch } = useFormContext<EnrollmentFormData>();
 
-  const availabilitySlots = watch('availability_slots');
+  const availabilitySlots = watch('availability');
   const hasOtherAvailability = availabilitySlots?.includes('Other (please specify)');
 
   return (
@@ -26,31 +27,31 @@ export function SchedulingSection() {
 
         <FormField
           control={control}
-          name="availability_slots"
+          name="availability"
           render={({ field }) => (
             <FormItem>
               <div className="space-y-3">
                 {AVAILABILITY_SLOTS.map((slot) => (
-                  <div key={slot.value} className="flex items-start space-x-2">
+                  <div key={slot.id} className="flex items-start space-x-2">
                     <Checkbox
-                      id={`slot-${slot.value}`}
+                      id={`slot-${slot.id}`}
                       checked={field.value?.includes(slot.value)}
                       onCheckedChange={(checked) => {
                         const current = field.value || [];
                         if (checked) {
                           field.onChange([...current, slot.value]);
                         } else {
-                          field.onChange(current.filter((v) => v !== slot.value));
+                          field.onChange(current.filter((v: string) => v !== slot.value));
                         }
                       }}
                     />
                     <div className="grid gap-1.5 leading-none">
-                      <Label htmlFor={`slot-${slot.value}`} className="font-normal">
-                        {slot.label}
+                      <Label htmlFor={`slot-${slot.id}`} className="font-normal">
+                        {slot.value}
                       </Label>
-                      {slot.description && (
-                        <p className="text-sm text-muted-foreground">{slot.description}</p>
-                      )}
+                      {/* {slot.value && (
+                        <p className="text-sm text-muted-foreground">{slot.value}</p>
+                      )} */}
                     </div>
                   </div>
                 ))}
@@ -92,17 +93,41 @@ export function SchedulingSection() {
           control={control}
           name="flexible_swimmer"
           render={({ field }) => (
+            // <FormItem>
+            //   <div className="flex items-center space-x-2">
+            //     <Checkbox
+            //       id="flexible-swimmer"
+            //       checked={field.value}
+            //       onCheckedChange={field.onChange}
+            //     />
+            //     <Label htmlFor="flexible-swimmer" className="font-normal">
+            //       Yes, my child can be scheduled flexibly in different time slots
+            //     </Label>
+            //   </div>
+            //   <FormMessage />
+            // </FormItem>
             <FormItem>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="flexible-swimmer"
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-                <Label htmlFor="flexible-swimmer" className="font-normal">
-                  Yes, my child can be scheduled flexibly in different time slots
-                </Label>
-              </div>
+              <FormControl>
+                <RadioGroup
+                  value={field.value ? 'true' : 'false'}
+                  onValueChange={(val) => field.onChange(val === 'true')}
+                  className="flex items-center space-x-6"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="true" id="flexible-swimmer-yes" />
+                    <Label htmlFor="flexible-swimmer-yes" className="font-normal">
+                      Yes, my child can be scheduled flexibly in different time slots
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="false" id="flexible-swimmer-no" />
+                    <Label htmlFor="flexible-swimmer-no" className="font-normal">
+                      No
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

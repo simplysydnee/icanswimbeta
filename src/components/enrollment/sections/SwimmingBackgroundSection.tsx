@@ -11,10 +11,11 @@ import { EnrollmentFormData } from '../schemas/enrollmentSchema';
 import { SWIM_GOALS } from '@/lib/constants';
 
 export function SwimmingBackgroundSection() {
-  const { control, watch } = useFormContext<EnrollmentFormData>();
+  const { control, getValues, watch } = useFormContext<EnrollmentFormData>();
 
   const hasPreviousSwimLessons = watch('previous_swim_lessons');
-
+  // const hasPreviousSwimLessons = watch('previous_swim_lessons');
+  console.log(getValues());
   return (
     <div className="space-y-8">
       {/* Previous Swim Lessons */}
@@ -125,9 +126,9 @@ export function SwimmingBackgroundSection() {
             <FormItem>
               <div className="space-y-3">
                 {SWIM_GOALS.map((goal) => (
-                  <div key={goal.value} className="flex items-start space-x-2">
+                  <div key={goal.id} className="flex items-start space-x-2">
                     <Checkbox
-                      id={`goal-${goal.value}`}
+                      id={`goal-${goal.id}`}
                       checked={field.value?.includes(goal.value)}
                       onCheckedChange={(checked) => {
                         const current = field.value || [];
@@ -140,11 +141,11 @@ export function SwimmingBackgroundSection() {
                     />
                     <div className="grid gap-1.5 leading-none">
                       <Label htmlFor={`goal-${goal.value}`} className="font-normal">
-                        {goal.label}
+                        {goal.value}
                       </Label>
-                      {goal.description && (
-                        <p className="text-sm text-muted-foreground">{goal.description}</p>
-                      )}
+                      {/* {goal && (
+                        <p className="text-sm text-muted-foreground">{goal.value}</p>
+                      )} */}
                     </div>
                   </div>
                 ))}

@@ -6,6 +6,10 @@ export const childInfoSchema = z.object({
   child_last_name: z.string().min(1, "Child's last name is required"),
   child_date_of_birth: z.string().min(1, "Date of birth is required"),
   child_gender: z.string().min(1, 'Gender is required'),
+  funding_source_id: z.string().optional(),
+  funding_coordinator_name: z.string().optional(),
+  funding_coordinator_email: z.string().optional(),
+  funding_coordinator_phone: z.string().optional(),
 });
 
 // Parent Information Schema
@@ -84,13 +88,13 @@ export const swimmingBackgroundSchema = z.object({
 
 // Scheduling Schema
 export const schedulingSchema = z.object({
-  availability_slots: z.array(z.string()).min(1, 'At least one availability slot is required'),
+  availability: z.array(z.string()).min(1, 'At least one availability slot is required'),
   other_availability: z.string().optional(),
   flexible_swimmer: z.boolean(),
 });
 
 // Consent & Agreements Schema
-export const consentSchema = z.object({
+ const consentBaseSchema = z.object({
   // Electronic Signature Consent (ESIGN Act Compliance)
   electronic_consent: z.boolean().refine(val => val === true, {
     message: 'You must consent to electronic signatures to continue',
@@ -103,64 +107,74 @@ export const consentSchema = z.object({
   signed_waiver: z.boolean().refine(val => val === true, {
     message: 'You must agree to the liability waiver',
   }),
-  liability_waiver_signature: z.string().optional(),
+  liability_waiver_signature: z.string(),
   photo_release: z.boolean(),
   photo_release_signature: z.string().optional(),
   cancellation_policy_agreement: z.boolean().refine(val => val === true, {
     message: 'You must agree to the cancellation policy',
   }),
   cancellation_policy_signature: z.string().optional(),
-  emergency_contact_name: z.string().min(1, 'Emergency contact name is required'),
-  emergency_contact_phone: z.string().min(10, 'Emergency contact phone is required'),
-  emergency_contact_relationship: z.string().min(1, 'Relationship is required'),
-}).refine(
-  (data) => {
-    // Signature required only when waiver is signed
-    if (data.signed_waiver && (!data.liability_waiver_signature || data.liability_waiver_signature.trim() === '')) {
-      return false;
-    }
-    return true;
-  },
-  {
-    message: 'Liability waiver signature is required when agreeing to the waiver',
-    path: ['liability_waiver_signature'],
+  // emergency_contact_name: z.string().min(1, 'Emergency contact name is required'),
+  // emergency_contact_phone: z.string().min(10, 'Emergency contact phone is required'),
+  // emergency_contact_relationship: z.string().min(1, 'Relationship is required'),
+})
+export const consentSchema = consentBaseSchema.superRefine((data, ctx) => {
+
+  if (data.signed_waiver && !data.liability_waiver_signature?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['liability_waiver_signature'],
+      message: 'Liability waiver signature is required',
+    });
   }
-).refine(
-  (data) => {
-    // Signature required only when cancellation policy is agreed to
-    if (data.cancellation_policy_agreement && (!data.cancellation_policy_signature || data.cancellation_policy_signature.trim() === '')) {
-      return false;
-    }
-    return true;
-  },
-  {
-    message: 'Cancellation policy signature is required when agreeing to the policy',
-    path: ['cancellation_policy_signature'],
+
+  if (data.cancellation_policy_agreement && !data.cancellation_policy_signature?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['cancellation_policy_signature'],
+      message: 'Cancellation policy signature is required',
+    });
   }
-).refine(
-  (data) => {
-    // Signature required only when photo release is agreed to
-    if (data.photo_release && (!data.photo_release_signature || data.photo_release_signature.trim() === '')) {
-      return false;
-    }
-    return true;
-  },
-  {
-    message: 'Photo release signature is required when agreeing to the photo release',
-    path: ['photo_release_signature'],
+
+  if (data.photo_release && !data.photo_release_signature?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['photo_release_signature'],
+      message: 'Photo release signature is required',
+    });
   }
+
+});
+
+const fundamentalInfoBaseSchema = z.object({
+  communication_type: z.enum(['verbal', 'non_verbal', 'other'], {
+    required_error: 'Please select a communication type'
+  }),
+  strengths_interests: z.string().min(1, 'Please describe strengths & interests'),
+  motivators: z.string().min(1, 'Please provide motivators'),
+  other_therapies: z.enum(['yes', 'no']),
+  therapies_description: z.string().optional().nullable(),
+});
+
+export const fundamentalInfoSchema = fundamentalInfoBaseSchema.refine(
+  (data) => data.other_therapies !== 'yes' || !!data.therapies_description?.trim(),
+  { message: 'Please describe other therapies', path: ['therapies_description'] }
 );
+
 
 // Full enrollment schema combining all sections
 export const enrollmentSchema = z.object({
   ...childInfoSchema.shape,
-  ...parentInfoSchema.shape,
+  // ...parentInfoSchema.shape,
   ...paymentInfoBaseSchema.shape,
   ...medicalInfoBaseSchema.shape,
   ...behavioralInfoBaseSchema.shape,
+  ...fundamentalInfoBaseSchema.shape,
   ...swimmingBackgroundSchema.shape,
   ...schedulingSchema.shape,
-  ...consentSchema.shape,
+  ...consentBaseSchema.shape,
+}).superRefine((data, ctx) => {
+  consentSchema.parse(data); // reuse validation
 });
 
 export type EnrollmentFormData = z.infer<typeof enrollmentSchema>;
@@ -168,10 +182,12 @@ export type EnrollmentFormData = z.infer<typeof enrollmentSchema>;
 // Step-specific schemas for validation
 export const stepSchemas = {
   1: childInfoSchema.merge(paymentInfoBaseSchema),
-  2: parentInfoSchema,
-  3: medicalInfoBaseSchema,
-  4: behavioralInfoBaseSchema,
+  // 2: parentInfoSchema,
+  2: medicalInfoBaseSchema,
+  3: behavioralInfoBaseSchema,
+  4: fundamentalInfoBaseSchema, 
   5: swimmingBackgroundSchema,
   6: schedulingSchema,
   7: consentSchema,
 };
+
