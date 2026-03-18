@@ -62,8 +62,12 @@ export function SwimmerCard({ swimmer, isSelected, disabled, onClick }: SwimmerC
         {/* Name and badges */}
         <div className="flex items-center gap-2">
           <h3 className="font-semibold">
-            {swimmer.firstName} {swimmer.lastName}
+            {swimmer.firstName} {swimmer.lastName} {swimmer.id}
           </h3>
+          {/* For debuggin purpose only */}
+          <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+              {swimmer.paymentType}
+          </Badge>
           {swimmer.fundingSourceShortName && (
             <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
               {swimmer.fundingSourceShortName}

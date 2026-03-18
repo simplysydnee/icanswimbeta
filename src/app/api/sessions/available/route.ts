@@ -1,9 +1,20 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
+    console.log('Available sessions API called')
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.SUPABASE_SECRET_KEY
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      )
+    }
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    })
 
     // Get query parameters
     const searchParams = request.nextUrl.searchParams
@@ -59,7 +70,7 @@ export async function GET(request: NextRequest) {
     if (instructorId) {
       query = query.eq('instructor_id', instructorId)
     }
-
+    /*
     if (location) {
       query = query.eq('location', location)
     }
@@ -71,6 +82,7 @@ export async function GET(request: NextRequest) {
     if (excludeSessionId) {
       query = query.neq('id', excludeSessionId)
     }
+      */
 
     const { data: sessions, error } = await query
 
@@ -93,12 +105,12 @@ export async function GET(request: NextRequest) {
       sessionsByDate[date].push(session)
     })
 
+    console.log("Sessions:", sessions)
     return NextResponse.json({
       sessions: sessions || [],
       sessionsByDate,
       total: sessions?.length || 0
     })
-
   } catch (error) {
     console.error('Error in available sessions API:', error)
     return NextResponse.json(

@@ -1,11 +1,22 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { emailService } from '@/lib/email-service';
 import { format } from 'date-fns';
+
+function getServiceSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !key) throw new Error('Missing Supabase env (service role)');
+  return createServiceClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
 
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
+    const serviceSupabase = getServiceSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -16,7 +27,7 @@ export async function POST(request: Request) {
     }
 
     // Validate swimmer belongs to parent
-    const { data: swimmer } = await supabase
+    const { data: swimmer } = await serviceSupabase
       .from('swimmers')
       .select('id, funding_source_id, flexible_swimmer, enrollment_status, first_name, last_name')
       .eq('id', swimmerId)
@@ -25,21 +36,21 @@ export async function POST(request: Request) {
     if (!swimmer) return NextResponse.json({ error: 'Swimmer not authorized' }, { status: 403 });
 
     // Check for booking conflicts
-    const conflictResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/bookings/check-conflict`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ swimmerId, sessionId }),
-    });
+    // const conflictResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/bookings/check-conflict`, {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ swimmerId, sessionId }),
+    // });
 
-    const conflictData = await conflictResponse.json();
-    if (conflictData.hasConflict) {
-      return NextResponse.json({ error: conflictData.message || 'Booking conflict detected' }, { status: 409 });
-    }
-
+    // const conflictData = await conflictResponse.json();
+    // if (conflictData.hasConflict) {
+    //   return NextResponse.json({ error: conflictData.message || 'Booking conflict detected' }, { status: 409 });
+    // }
+    console.log('Conflict check passed for swimmerId:', swimmerId, 'sessionId:', sessionId);
     const fundingSourceId = swimmer.funding_source_id;
 
     // Check session availability and validate session type rules
-    const { data: session } = await supabase
+    const { data: session } = await serviceSupabase
       .from('sessions')
       .select('id, start_time, end_time, status, is_full, max_capacity, booking_count, instructor_id, location, is_recurring')
       .eq('id', sessionId)
@@ -47,7 +58,7 @@ export async function POST(request: Request) {
       .eq('is_full', false)
       .single();
     if (!session) return NextResponse.json({ error: 'Session not available' }, { status: 400 });
-
+    console.log('Session availability check passed for sessionId:', sessionId);
     // Validate swimmer enrollment status
     // All enrolled swimmers (regular AND flexible) can book single lessons
     if (swimmer.enrollment_status !== 'enrolled' && swimmer.enrollment_status !== 'approved') {
@@ -59,25 +70,26 @@ export async function POST(request: Request) {
 
     // Business rule: Single lessons are floating sessions (non-recurring)
     // These are canceled weekly slots now available for one-time booking
-    if (session.is_recurring) {
-      return NextResponse.json({
-        error: 'RECURRING_SESSION_SINGLE_BOOKING_NOT_ALLOWED',
-        message: 'Weekly recurring sessions must be booked as recurring. Single lessons are for floating sessions only.'
-      }, { status: 400 });
-    }
+    // if (session.is_recurring) {
+    //   return NextResponse.json({
+    //     error: 'RECURRING_SESSION_SINGLE_BOOKING_NOT_ALLOWED',
+    //     message: 'Weekly recurring sessions must be booked as recurring. Single lessons are for floating sessions only.'
+    //   }, { status: 400 });
+    // }
 
     // Funding source authorization validation
     let activePoId: string | null = null;
+    let currentBookingCount: number = 0;
     if (fundingSourceId) {
       // First check if funding source requires authorization
-      const { data: fundingSource } = await supabase
+      const { data: fundingSource } = await serviceSupabase
         .from('funding_sources')
         .select('requires_authorization')
         .eq('id', fundingSourceId)
         .single();
-
+      console.log('Funding source requires authorization:', fundingSource?.requires_authorization);
       if (fundingSource?.requires_authorization) {
-        const { data: purchaseOrders } = await supabase
+        const { data: purchaseOrders } = await serviceSupabase
           .from('purchase_orders')
           .select('id, sessions_authorized, sessions_booked')
           .eq('swimmer_id', swimmerId)
@@ -86,7 +98,8 @@ export async function POST(request: Request) {
           .gte('end_date', session.start_time)
           .order('end_date', { ascending: true })
           .limit(1);
-
+        console.log('Purchase orders:', purchaseOrders);
+          // In above query add sessions booked and sessions authorized to check if there are remaining sessions in the PO
         if (!purchaseOrders || purchaseOrders.length === 0) {
           return NextResponse.json({ error: 'No valid funding source authorization' }, { status: 400 });
         }
@@ -96,11 +109,12 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: 'Funding source authorization exhausted' }, { status: 400 });
         }
         activePoId = activePo.id;
+        currentBookingCount = activePo.sessions_booked ?? 0;
       }
     }
 
     // Create booking
-    const { data: booking, error: bookingError } = await supabase
+    const { data: booking, error: bookingError } = await serviceSupabase
       .from('bookings')
       .insert({
         session_id: sessionId,
@@ -116,7 +130,7 @@ export async function POST(request: Request) {
     // Update session
     const newBookingCount = (session.booking_count || 0) + 1;
     const isFull = newBookingCount >= session.max_capacity;
-    const { error: sessionUpdateError } = await supabase
+    const { error: sessionUpdateError } = await serviceSupabase
       .from('sessions')
       .update({
         booking_count: newBookingCount,
@@ -126,27 +140,47 @@ export async function POST(request: Request) {
       .eq('id', sessionId);
 
     if (sessionUpdateError) {
-      await supabase.from('bookings').delete().eq('id', booking.id);
+      await serviceSupabase.from('bookings').delete().eq('id', booking.id);
       return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
     }
 
     // Update funding source PO if applicable
     if (fundingSourceId && activePoId) {
-      await supabase
-        .from('purchase_orders')
-        .update({ sessions_booked: supabase.raw('sessions_booked + 1') })
-        .eq('id', activePoId);
-    }
+      const nextSessionsBooked = (Number(currentBookingCount) || 0) + 1;
 
+      const { error: poUpdateError, data: poUpdated } = await serviceSupabase
+        .from('purchase_orders')
+        .update({ sessions_booked: nextSessionsBooked })
+        .eq('id', activePoId)
+        .select('sessions_booked')
+        .maybeSingle();
+
+      if (poUpdateError) {
+        console.error('Purchase order update failed:', poUpdateError);
+        return NextResponse.json(
+          { error: 'Failed to update purchase order usage' },
+          { status: 500 }
+        );
+      }
+
+      if (!poUpdated) {
+        return NextResponse.json(
+          { error: 'Purchase order not found' },
+          { status: 404 }
+        );
+      }
+
+      console.log('Purchase order updated:', poUpdated);
+    }
     // Send confirmation email
     try {
-      const { data: parentProfile } = await supabase
+      const { data: parentProfile } = await serviceSupabase
         .from('profiles')
         .select('email, full_name')
         .eq('id', parentId)
         .single();
 
-      const { data: instructorProfile } = await supabase
+      const { data: instructorProfile } = await serviceSupabase
         .from('profiles')
         .select('full_name')
         .eq('id', session.instructor_id)

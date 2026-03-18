@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       .select('id, status, is_full, held_by, held_until')
       .eq('id', sessionId)
       .single();
-
+    console.log("Session:.......", session, sessionId)
     if (sessionError || !session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }

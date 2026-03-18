@@ -15,8 +15,11 @@ async function fetchSwimmers(): Promise<Swimmer[]> {
     console.error('Swimmers API error:', response.status, errorMessage);
     throw new Error(errorMessage);
   }
+  const data = await response.json();
+  console.log('Swimmers API payload:', data);
 
-  return response.json();
+  // API returns { transformedData, metadata }
+  return Array.isArray(data?.transformedData) ? data.transformedData : [];
 }
 
 export function useSwimmers() {
