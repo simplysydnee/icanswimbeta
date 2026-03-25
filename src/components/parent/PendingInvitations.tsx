@@ -44,14 +44,14 @@ export function PendingInvitations() {
         .gt('expires_at', new Date().toISOString());
 
       if (error) {
-        console.error('Error fetching invitations:', error);
+        console.log('Error fetching invitations:', error);
         // Continue with empty invitations array
         setInvitations([]);
       } else {
         setInvitations(data || []);
       }
     } catch (error) {
-      console.error('Error in fetchInvitations:', error);
+      console.log('Error in fetchInvitations:', error);
       setInvitations([]);
     } finally {
       setLoading(false);

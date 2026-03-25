@@ -100,7 +100,8 @@ export default function SwimmersPage() {
         if (!response.ok) {
           throw new Error('Failed to fetch swimmers')
         }
-        const data = await response.json()
+        const { transformedData: swimmers } = await response.json()
+        const data = Array.isArray(swimmers) ? swimmers : []
 
         // Transform API response to match SwimmerCard interface
         const transformedData = data.map((swimmer: ApiSwimmer) => ({
