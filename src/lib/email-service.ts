@@ -50,9 +50,13 @@ export async function sendEmail(params: SendEmailParams): Promise<{ success: boo
   const supabase = createClient()
 
   try {
-    const { data: _data, error } = await supabase.functions.invoke('send-enrollment-email', {
+    const { data: _data, error } = await supabase.functions.invoke('send-booking-email', {
       body: params,
     })
+
+    // const { data: _data, error } = await supabase.functions.invoke('send-enrollment-email', {
+    //   body: params,
+    // })
 
     if (error) {
       console.error('Email function error:', error)
