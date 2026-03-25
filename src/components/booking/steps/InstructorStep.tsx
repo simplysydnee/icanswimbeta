@@ -1,13 +1,20 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
-import { Instructor } from '@/types/booking'
 import { InstructorAvatar } from '@/components/ui/instructor-avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Users, User, AlertCircle, Check, Star } from 'lucide-react'
+import { Users, User, AlertCircle, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { priorityBookingService } from '@/lib/priority-booking-service'
+import { useInstructors } from '@/hooks/useInstructors'
+import { useInstructorsBySwimmer } from '@/hooks/useInstructorsBySwimmer'
+
+type InstructorWithPreferred = {
+  id: string
+  fullName: string
+  email?: string
+  avatarUrl?: string | null
+  isPreferred?: boolean
+}
 
 interface InstructorStepProps {
   selectedInstructorId: string | null
@@ -22,47 +29,21 @@ export default function InstructorStep({
   swimmerId,
   onSelectInstructor,
 }: InstructorStepProps) {
-  // Fetch instructors using React Query with priority booking logic
-  const {
-    data: instructorData,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ['instructors', swimmerId],
-    queryFn: async () => {
-      if (swimmerId) {
-        // Use priority booking service to get available instructors for this swimmer
-        const result = await priorityBookingService.getAvailableInstructorsForSwimmer(swimmerId)
-        return {
-          instructors: result.instructors.map(instructor => ({
-            id: instructor.id,
-            fullName: instructor.full_name,
-            email: instructor.email,
-            avatarUrl: instructor.avatar_url
-          })),
-          isPriority: result.isPriority,
-          reason: result.reason
-        }
-      } else {
-        // Fallback to fetching all instructors if no swimmerId
-        const response = await fetch('/api/instructors')
-        if (!response.ok) {
-          throw new Error('Failed to fetch instructors')
-        }
-        const allInstructors = await response.json() as Instructor[]
-        return {
-          instructors: allInstructors,
-          isPriority: false,
-          reason: null
-        }
-      }
-    },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-  })
+  const { data: instructorData, isLoading, error } = useInstructors()
+  const { data: instructorsBySwimmer } = useInstructorsBySwimmer(swimmerId ?? null)
 
-  const instructors = instructorData?.instructors || []
-  const isPriority = instructorData?.isPriority || false
-  const priorityReason = instructorData?.reason || null
+  const baseInstructors = instructorData || []
+  const preferredIds =
+    instructorsBySwimmer && instructorsBySwimmer.length > 0
+      ? new Set(instructorsBySwimmer.map((a) => a.instructorId))
+      : null
+
+  const instructors: InstructorWithPreferred[] = baseInstructors.map((inv) => ({
+    ...inv,
+    isPreferred: preferredIds === null ? true : preferredIds.has(inv.id),
+  }))
+
+  const restrictToPreferred = preferredIds !== null && preferredIds.size > 0
 
 
   // Loading state
@@ -120,7 +101,7 @@ export default function InstructorStep({
   return (
     <div className="space-y-6">
       {/* Priority booking indicator */}
-      {isPriority && (
+      {/*isPriority && (
         <Alert className="bg-yellow-50 border-yellow-200 text-yellow-800">
           <Star className="h-4 w-4 fill-yellow-400" />
           <AlertDescription>
@@ -135,7 +116,7 @@ export default function InstructorStep({
             </div>
           </AlertDescription>
         </Alert>
-      )}
+      )*/}
 
       {/* Any Available Instructor card */}
       <button
@@ -189,19 +170,22 @@ export default function InstructorStep({
 
       {/* Instructor grid */}
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-3">
-        {instructors.map(instructor => {
+        {instructors.map((instructor) => {
           const isSelected =
             instructorPreference === 'specific' &&
             selectedInstructorId === instructor.id
+          const isDisabled = restrictToPreferred && !instructor.isPreferred
 
           return (
             <button
               key={instructor.id}
               type="button"
-              onClick={() => onSelectInstructor(instructor.id, 'specific')}
+              disabled={isDisabled}
+              onClick={() => !isDisabled && onSelectInstructor(instructor.id, 'specific')}
               className={cn(
                 'w-full text-left border rounded-lg p-4 transition-all hover:border-primary hover:bg-primary/5',
-                isSelected && 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                isSelected && 'border-primary bg-primary/5 ring-2 ring-primary/20',
+                isDisabled && 'opacity-50 cursor-not-allowed hover:border-inherit hover:bg-inherit'
               )}
             >
               <div className="flex items-center justify-between">
@@ -214,6 +198,7 @@ export default function InstructorStep({
                   />
                   <div>
                     <p className="font-medium">{instructor.fullName}</p>
+                    <p className="font-medium">{instructor.id}</p>
                   </div>
                 </div>
                 <div

@@ -56,13 +56,14 @@ export function ConfirmationStep({
   isSubmitting,
   bookingResult,
 }: ConfirmationStepProps) {
-  const isFunded = swimmer.is_funded_client || swimmer.paymentType === 'funded' || swimmer.fundingSourceId;
+//  const isFunded = swimmer.is_funded_client || swimmer.paymentType === 'funded' || swimmer.fundingSourceId;
+  const isFunded = swimmer.paymentType === 'funding_source';
   const sessionsRemaining = isFunded
     ? (swimmer.funded_sessions_authorized || 0) - (swimmer.funded_sessions_used || 0)
     : null;
-  const hasEnoughSessions = sessionsRemaining === null || sessionsRemaining >= sessions.length;
+  const hasEnoughSessions = true || (sessionsRemaining === null || sessionsRemaining >= sessions.length);
 
-  // Use session hold for the first session (for single bookings)
+  // Use session hold for the first session (for single bookings)s
   const firstSessionId = sessions.length > 0 ? sessions[0].id : null;
   const {
     isHolding,

@@ -4,6 +4,7 @@ export { useSwimmers } from './useSwimmers';
 export { useInstructorSwimmers } from './useInstructorSwimmers';
 export { useSwimmerAccess } from './useSwimmerAccess';
 export { useInstructors } from './useInstructors';
+export { useInstructorsBySwimmer } from './useInstructorsBySwimmer';
 export { useSwimLevels } from './useSwimLevels';
 export { useGenerateSessions } from './useGenerateSessions';
 export { useOpenSessionBatch } from './useOpenSessionBatch';

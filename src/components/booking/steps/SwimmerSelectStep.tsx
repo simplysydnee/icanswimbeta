@@ -15,7 +15,7 @@ interface SwimmerSelectStepProps {
 
 export function SwimmerSelectStep({ selectedSwimmerId, onSelectSwimmer }: SwimmerSelectStepProps) {
   const { data: swimmers, isLoading, error } = useSwimmers();
-
+  console.log("Swimmers:", swimmers);
   // Loading skeleton
   if (isLoading) {
     return (

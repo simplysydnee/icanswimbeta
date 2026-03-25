@@ -64,7 +64,11 @@ export function DateSelectStep({
   onSetRecurring,
 }: DateSelectStepProps) {
   // Single session mode state
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date()));
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const inSevenDays = new Date();
+    inSevenDays.setDate(inSevenDays.getDate());
+    return startOfWeek(inSevenDays);
+  });
 
   // Recurring mode state
   const [localStartDate, setLocalStartDate] = useState<Date | null>(recurringStartDate);
