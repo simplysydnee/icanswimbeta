@@ -94,7 +94,7 @@ export default function ParentDashboard() {
                 start_time,
                 end_time,
                 location,
-                instructor:profiles(full_name)
+                instructor:profiles!sessions_instructor_id_fkey(full_name)
               ),
               swimmer:swimmers(first_name, last_name)
             `)
