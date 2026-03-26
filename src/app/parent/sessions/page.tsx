@@ -39,7 +39,6 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  MessageCircle
 } from 'lucide-react'
 import { InstructorAvatar } from '@/components/ui/instructor-avatar'
 
@@ -217,10 +216,10 @@ export default function ParentSessionsPage() {
 
     if (hoursUntil < 24) {
       return {
-        canCancel: false,
+        canCancel: true,
         isLateCancel: true,
         hoursLeft: Math.round(hoursUntil),
-        reason: 'Less than 24 hours - please text us'
+        reason: 'Late cancellation — flexible swimmer policy applies'
       }
     }
 
@@ -241,17 +240,14 @@ export default function ParentSessionsPage() {
       const result = await response.json()
 
       if (!response.ok) {
-        if (result.error === 'late_cancellation') {
-          setShowCancelDialog(false)
-          setShowLateMessage(true)
-          return
-        }
         throw new Error(result.error || 'Failed to cancel')
       }
 
       toast({
         title: 'Session Cancelled ✓',
-        description: 'Your session has been cancelled successfully.',
+        description: result.isLateCancellation
+          ? 'Your session has been cancelled. Your swimmer has been marked as a flexible swimmer and the slot is now available for other flexible swimmers.'
+          : 'Your session has been cancelled successfully.',
       })
 
       setShowCancelDialog(false)
@@ -442,30 +438,30 @@ export default function ParentSessionsPage() {
                               {!isPast && (
                                 <div className="flex items-center gap-2">
                                   {canCancel ? (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                      onClick={() => {
-                                        setSelectedBooking(booking)
-                                        setShowCancelDialog(true)
-                                      }}
-                                    >
-                                      <X className="h-4 w-4 mr-1" />
-                                      Cancel
-                                    </Button>
+                                    <div className="text-right">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        onClick={() => {
+                                          setSelectedBooking(booking)
+                                          setShowCancelDialog(true)
+                                        }}
+                                      >
+                                        <X className="h-4 w-4 mr-1" />
+                                        Cancel
+                                      </Button>
+                                      {isLateCancel && (
+                                        <p className="text-xs text-amber-600 mt-1">
+                                          Late cancel ({hoursLeft}h left)
+                                        </p>
+                                      )}
+                                    </div>
                                   ) : isLateCancel ? (
                                     <div className="text-right">
                                       <p className="text-xs text-amber-600 font-medium">
                                         Need to cancel? ({hoursLeft}h left)
                                       </p>
-                                      <a
-                                        href="sms:2096437969"
-                                        className="text-xs text-[#2a5e84] underline flex items-center gap-1 justify-end"
-                                      >
-                                        <MessageCircle className="h-3 w-3" />
-                                        Text (209) 643-7969
-                                      </a>
                                     </div>
                                   ) : (
                                     <span className="text-xs text-gray-400">Past</span>
@@ -571,6 +567,14 @@ export default function ParentSessionsPage() {
 
             {selectedBooking && (
               <div className="py-4">
+                {canCancelSingle(selectedBooking).isLateCancel && (
+                  <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-sm text-amber-800">
+                    <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                    <p>
+                      <strong>Late cancellation:</strong> Your swimmer will be marked as a <strong>flexible swimmer</strong> and the vacated slot will be offered to other flexible swimmers.
+                    </p>
+                  </div>
+                )}
                 <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
                   <p><strong>Swimmer:</strong> {selectedBooking.swimmer.first_name} {selectedBooking.swimmer.last_name}</p>
                   <p><strong>Date:</strong> {format(new Date(selectedBooking.session.start_time), 'EEEE, MMMM d, yyyy')}</p>
@@ -666,37 +670,26 @@ export default function ParentSessionsPage() {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Late Cancellation Message Dialog */}
+        {/* Late Cancellation Policy Dialog */}
         <Dialog open={showLateMessage} onOpenChange={setShowLateMessage}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-amber-500" />
-                Less Than 24 Hours Notice
+                Late Cancellation Policy
               </DialogTitle>
-              <DialogDescription>Information about late cancellation policy</DialogDescription>
+              <DialogDescription>What happens when you cancel less than 24 hours before a session</DialogDescription>
             </DialogHeader>
 
-            <div className="py-4">
-              <p className="text-gray-600 mb-4">
-                We understand life happens! For cancellations with less than 24 hours notice,
-                please text us directly so we can try to help.
-              </p>
-
-              <div className="bg-[#2a5e84]/10 rounded-lg p-4 text-center">
-                <p className="text-sm text-gray-600 mb-2">Text us at:</p>
-                <a
-                  href="sms:2096437969"
-                  className="text-2xl font-bold text-[#2a5e84] flex items-center justify-center gap-2"
-                >
-                  <MessageCircle className="h-6 w-6" />
-                  (209) 643-7969
-                </a>
-              </div>
-
-              <p className="text-xs text-gray-500 mt-4 text-center">
-                We&apos;ll do our best to accommodate your request and may be able to
-                offer the spot to another swimmer.
+            <div className="py-4 space-y-3 text-sm text-gray-700">
+              <p>When you cancel within 24 hours of a session:</p>
+              <ul className="list-disc list-inside space-y-1 text-gray-600">
+                <li>Your booking is cancelled immediately</li>
+                <li>Your swimmer is marked as a <strong>flexible swimmer</strong></li>
+                <li>The vacated slot becomes available to other flexible swimmers</li>
+              </ul>
+              <p className="text-xs text-gray-500">
+                Flexible swimmers can claim single open slots made available through late cancellations.
               </p>
             </div>
 
