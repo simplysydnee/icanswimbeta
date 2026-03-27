@@ -1,14 +1,25 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+
+function getServiceSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SECRET_KEY
+  if (!url || !key) throw new Error('Missing Supabase env (service role)')
+  return createServiceClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
 
 export async function POST(
   request: NextRequest,
   context: any
 ) {
-  const { params } = await context.params
+  const params = await context.params
   const bookingId = params.id
   try {
     const supabase = await createClient()
+    const serviceSupabase = getServiceSupabase()
 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
@@ -18,8 +29,8 @@ export async function POST(
     const body = await request.json()
     const { reason } = body
 
-    // Get booking with related data
-    const { data: booking, error: bookingError } = await supabase
+    // Get booking with related data (use service client to bypass RLS for read)
+    const { data: booking, error: bookingError } = await serviceSupabase
       .from('bookings')
       .select(`
         id,
@@ -36,14 +47,17 @@ export async function POST(
           booking_count,
           is_recurring,
           batch_id,
-          instructor_id
+          instructor_id,
+          session_type_detail,
+          is_semi_private_restricted
         ),
         swimmer:swimmers (
           id,
           first_name,
           last_name,
           funding_source_id,
-          parent_id
+          parent_id,
+          flexible_swimmer
         )
       `)
       .eq('id', bookingId)
@@ -73,23 +87,18 @@ export async function POST(
     const now = new Date()
     const hoursBeforeSession = (sessionStart.getTime() - now.getTime()) / (1000 * 60 * 60)
 
-    // ENFORCE 24-HOUR RULE - Parents MUST text for late cancellations
-    if (hoursBeforeSession < 24) {
-      return NextResponse.json({
-        error: 'late_cancellation',
-        cannotCancelInApp: true,
-        hoursBeforeSession: Math.round(hoursBeforeSession * 10) / 10,
-        message: 'For cancellations less than 24 hours before your session, please text us.',
-        contactPhone: '(209) 643-7969',
-        contactType: 'text',
-        contactMessage: 'We understand life happens! Text us and we\'ll do our best to help.',
-      }, { status: 400 })
-    }
+    // Determine session type
+    const isSemiPrivate =
+      (booking.session as any).session_type_detail === 'semi_private' ||
+      !!(booking.session as any).is_semi_private_restricted
+
+    // Late cancellation only applies to regular (non-semi-private) sessions < 24h
+    const isLateCancellation = !isSemiPrivate && hoursBeforeSession < 24
 
     // Get instructor name for tracking
     let instructorName = null
     if ((booking.session as any).instructor_id) {
-      const { data: instructor } = await supabase
+      const { data: instructor } = await serviceSupabase
         .from('profiles')
         .select('full_name')
         .eq('id', (booking.session as any).instructor_id)
@@ -97,8 +106,8 @@ export async function POST(
       instructorName = instructor?.full_name
     }
 
-    // Parent can cancel (> 24 hours)
-    const { error: updateError } = await supabase
+    // Cancel the booking (service client to bypass RLS)
+    const { error: updateError } = await serviceSupabase
       .from('bookings')
       .update({
         status: 'cancelled',
@@ -112,8 +121,8 @@ export async function POST(
       throw new Error('Failed to cancel booking')
     }
 
-    // Update session booking count
-    await supabase
+    // Decrement session booking count
+    await serviceSupabase
       .from('sessions')
       .update({
         booking_count: Math.max(0, ((booking.session as any).booking_count || 1) - 1),
@@ -121,30 +130,44 @@ export async function POST(
       })
       .eq('id', (booking.session as any).id)
 
-    // Create floating session if recurring and future
+    // Late cancellation consequences:
+    // - mark swimmer as flexible_swimmer
+    // - create a floating session for the vacated slot
     let createdFloatingSession = false
     let floatingSessionId = null
-    if ((booking.session as any).is_recurring && sessionStart > now) {
-      const { data: floatingSession } = await supabase
-        .from('floating_sessions')
-        .insert({
-          original_session_id: (booking.session as any).id,
-          original_booking_id: bookingId,
-          available_until: (booking.session as any).start_time,
-          month_year: sessionStart.toISOString().slice(0, 7),
-          status: 'available',
-        })
-        .select('id')
-        .single()
 
-      if (floatingSession) {
-        createdFloatingSession = true
-        floatingSessionId = floatingSession.id
+    if (isLateCancellation) {
+      await serviceSupabase
+        .from('swimmers')
+        .update({
+          flexible_swimmer: true,
+          flexible_swimmer_reason: 'late_cancellation',
+          flexible_swimmer_set_at: now.toISOString(),
+        })
+        .eq('id', (booking.swimmer as any).id)
+
+      if (sessionStart > now) {
+        const { data: floatingSession } = await serviceSupabase
+          .from('floating_sessions')
+          .insert({
+            original_session_id: (booking.session as any).id,
+            original_booking_id: bookingId,
+            available_until: (booking.session as any).start_time,
+            month_year: sessionStart.toISOString().slice(0, 7),
+            status: 'available',
+          })
+          .select('id')
+          .single()
+
+        if (floatingSession) {
+          createdFloatingSession = true
+          floatingSessionId = floatingSession.id
+        }
       }
     }
 
     // Track cancellation for analytics
-    await supabase
+    await serviceSupabase
       .from('cancellations')
       .insert({
         booking_id: bookingId,
@@ -162,7 +185,7 @@ export async function POST(
         swimmer_name: `${(booking.swimmer as any).first_name} ${(booking.swimmer as any).last_name}`,
         swimmer_has_funding_source: !!(booking.swimmer as any).funding_source_id,
         hours_before_session: Math.round(hoursBeforeSession * 100) / 100,
-        was_late_cancellation: false,
+        was_late_cancellation: isLateCancellation,
         cancel_reason: reason,
         cancel_source: 'parent',
         created_floating_session: createdFloatingSession,
@@ -171,12 +194,12 @@ export async function POST(
 
     // If assessment, update assessment record and swimmer status
     if (booking.booking_type === 'assessment') {
-      await supabase
+      await serviceSupabase
         .from('assessments')
         .update({ status: 'cancelled' })
         .eq('booking_id', bookingId)
 
-      await supabase
+      await serviceSupabase
         .from('swimmers')
         .update({ assessment_status: 'not_scheduled' })
         .eq('id', (booking.swimmer as any).id)
@@ -186,6 +209,8 @@ export async function POST(
       success: true,
       message: 'Booking cancelled successfully',
       hoursBeforeSession: Math.round(hoursBeforeSession * 10) / 10,
+      isLateCancellation,
+      isSemiPrivate,
       createdFloatingSession,
     })
 
