@@ -29,7 +29,9 @@ export async function POST(request: Request) {
     // Validate swimmer belongs to parent
     const { data: swimmer } = await serviceSupabase
       .from('swimmers')
-      .select('id, funding_source_id, flexible_swimmer, enrollment_status, first_name, last_name')
+      .select(
+        'id, funding_source_id, flexible_swimmer, enrollment_status, first_name, last_name'
+      )
       .eq('id', swimmerId)
       .eq('parent_id', parentId)
       .single();
@@ -48,6 +50,19 @@ export async function POST(request: Request) {
     // }
     console.log('Conflict check passed for swimmerId:', swimmerId, 'sessionId:', sessionId);
     const fundingSourceId = swimmer.funding_source_id;
+
+    let fundingSourceRow: {
+      requires_authorization: boolean | null;
+      name: string | null;
+    } | null = null;
+    if (fundingSourceId) {
+      const { data: fs } = await serviceSupabase
+        .from('funding_sources')
+        .select('requires_authorization, name')
+        .eq('id', fundingSourceId)
+        .single();
+      fundingSourceRow = fs;
+    }
 
     // Check session availability and validate session type rules
     const { data: session } = await serviceSupabase
@@ -80,18 +95,14 @@ export async function POST(request: Request) {
     // Funding source authorization validation
     let activePoId: string | null = null;
     let currentBookingCount: number = 0;
+    /** Coordinator user id from the purchase order row (profiles.id), not swimmers.coordinator_id */
+    let poCoordinatorId: string | null = null;
     if (fundingSourceId) {
-      // First check if funding source requires authorization
-      const { data: fundingSource } = await serviceSupabase
-        .from('funding_sources')
-        .select('requires_authorization')
-        .eq('id', fundingSourceId)
-        .single();
-      console.log('Funding source requires authorization:', fundingSource?.requires_authorization);
-      if (fundingSource?.requires_authorization) {
+      console.log('Funding source requires authorization:', fundingSourceRow?.requires_authorization);
+      if (fundingSourceRow?.requires_authorization) {
         const { data: purchaseOrders } = await serviceSupabase
           .from('purchase_orders')
-          .select('id, sessions_authorized, sessions_booked')
+          .select('id, sessions_authorized, sessions_booked, coordinator_id')
           .eq('swimmer_id', swimmerId)
           .eq('status', 'approved')
           .lte('start_date', session.start_time)
@@ -110,6 +121,7 @@ export async function POST(request: Request) {
         }
         activePoId = activePo.id;
         currentBookingCount = activePo.sessions_booked ?? 0;
+        poCoordinatorId = activePo.coordinator_id ?? null;
       }
     }
 
@@ -202,6 +214,29 @@ export async function POST(request: Request) {
           location: session.location || 'TBD',
           instructor: instructorProfile?.full_name || 'Instructor',
         });
+      }
+
+      // Funded swimmers: notify coordinator from purchase_orders.coordinator_id → profiles.email
+      if (fundingSourceId && poCoordinatorId) {
+        const { data: coordinatorProfile } = await serviceSupabase
+          .from('profiles')
+          .select('email, full_name')
+          .eq('id', poCoordinatorId)
+          .maybeSingle();
+
+        if (coordinatorProfile?.email) {
+          await emailService.sendFundedSingleLessonCoordinatorNotification({
+            coordinatorEmail: coordinatorProfile.email,
+            coordinatorName: coordinatorProfile.full_name || 'Coordinator',
+            parentName: parentProfile?.full_name || 'Parent',
+            childName: `${swimmer.first_name} ${swimmer.last_name}`,
+            date: format(new Date(session.start_time), 'EEEE, MMMM d, yyyy'),
+            time: format(new Date(session.start_time), 'h:mm a'),
+            location: session.location || 'TBD',
+            instructor: instructorProfile?.full_name || 'Instructor',
+            fundingSourceName: fundingSourceRow?.name ?? undefined,
+          });
+        }
       }
     } catch (emailError) {
       console.error('Failed to send confirmation email:', emailError);
