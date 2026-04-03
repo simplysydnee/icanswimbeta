@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format, addMonths, startOfWeek, endOfWeek, parseISO, isBefore, startOfDay, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from 'date-fns';
+import { format, addMonths, addWeeks, startOfWeek, endOfWeek, parseISO, isBefore, startOfDay, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, addDays } from 'date-fns';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, User } from 'lucide-react';
 import type { AvailableSession } from '@/types/booking';
 import { Button } from '@/components/ui/button';
@@ -260,11 +260,11 @@ export function DateSelectStep({
 
   // Week navigation for single mode
   const goToPreviousWeek = () => {
-    setCurrentWeekStart(prev => startOfWeek(addMonths(prev, -1)));
+    setCurrentWeekStart(prev => addWeeks(prev, -1));
   };
 
   const goToNextWeek = () => {
-    setCurrentWeekStart(prev => startOfWeek(addMonths(prev, 1)));
+    setCurrentWeekStart(prev => addWeeks(prev, 1));
   };
 
   const isCurrentWeek = isBefore(currentWeekStart, startOfDay(new Date()));
@@ -334,7 +334,14 @@ export function DateSelectStep({
             <Calendar
               mode="single"
               selected={selectedDate || undefined}
-              onSelect={(date) => setSelectedDate(date || null)}
+              onSelect={(date) => {
+                const newDate = date || null;
+                setSelectedDate(newDate);
+                if (newDate) {
+                  // Update week range so API fetches sessions for the selected date's week
+                  setCurrentWeekStart(startOfWeek(newDate));
+                }
+              }}
               disabled={(date) => {
                 // Disable dates before today
                 return isBefore(date, startOfDay(new Date()));

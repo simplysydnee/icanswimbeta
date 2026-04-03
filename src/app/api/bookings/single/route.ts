@@ -29,9 +29,7 @@ export async function POST(request: Request) {
     // Validate swimmer belongs to parent
     const { data: swimmer } = await serviceSupabase
       .from('swimmers')
-      .select(
-        'id, funding_source_id, flexible_swimmer, enrollment_status, first_name, last_name'
-      )
+      .select('id, funding_source_id, flexible_swimmer, is_semi_private, enrollment_status, first_name, last_name')
       .eq('id', swimmerId)
       .eq('parent_id', parentId)
       .single();
@@ -67,13 +65,48 @@ export async function POST(request: Request) {
     // Check session availability and validate session type rules
     const { data: session } = await serviceSupabase
       .from('sessions')
-      .select('id, start_time, end_time, status, is_full, max_capacity, booking_count, instructor_id, location, is_recurring')
+      .select('id, start_time, end_time, status, is_full, max_capacity, booking_count, instructor_id, location, is_recurring, session_type_detail, is_semi_private_restricted')
       .eq('id', sessionId)
       .in('status', ['available', 'open'])
       .eq('is_full', false)
       .single();
     if (!session) return NextResponse.json({ error: 'Session not available' }, { status: 400 });
     console.log('Session availability check passed for sessionId:', sessionId);
+
+    // Semi-private sessions: only is_semi_private swimmers can book; flexible swimmers cannot
+    const isSemiPrivate =
+      session.session_type_detail === 'semi_private' || !!session.is_semi_private_restricted;
+
+    if (isSemiPrivate) {
+      if (swimmer.flexible_swimmer) {
+        return NextResponse.json(
+          { error: 'Flexible swimmers cannot book semi-private sessions' },
+          { status: 403 }
+        );
+      }
+      if (!swimmer.is_semi_private) {
+        return NextResponse.json(
+          { error: 'This session is only available to semi-private swimmers' },
+          { status: 403 }
+        );
+      }
+    } else {
+      // Non-semi-private: if a floating session exists for this slot, only flexible swimmers can claim it
+      const { data: floatingSession } = await serviceSupabase
+        .from('floating_sessions')
+        .select('id')
+        .eq('original_session_id', sessionId)
+        .eq('status', 'available')
+        .maybeSingle();
+
+      if (floatingSession && !swimmer.flexible_swimmer) {
+        return NextResponse.json(
+          { error: 'This session slot is only available to flexible swimmers' },
+          { status: 403 }
+        );
+      }
+    }
+
     // Validate swimmer enrollment status
     // All enrolled swimmers (regular AND flexible) can book single lessons
     if (swimmer.enrollment_status !== 'enrolled' && swimmer.enrollment_status !== 'approved') {
