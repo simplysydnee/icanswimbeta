@@ -195,6 +195,42 @@ export const emailService = {
     })
   },
 
+  /** Notifies funding coordinator when a funded swimmer books a single lesson (same booking as parent confirmation). */
+  async sendFundedSingleLessonCoordinatorNotification(params: {
+    coordinatorEmail: string
+    coordinatorName: string
+    parentName: string
+    childName: string
+    date: string
+    time: string
+    location: string
+    instructor: string
+    fundingSourceName?: string
+  }) {
+    const subject = `Funded lesson booked — ${params.childName} (${params.date})`
+    const content = `
+      <h2 style="color: #2a5e84; margin-top: 0;">Funded lesson booked</h2>
+      <p>Hi ${params.coordinatorName},</p>
+      <p>This is a courtesy notification that a parent booked a <strong>single swim lesson</strong> for a swimmer under your funding source${params.fundingSourceName ? ` (<strong>${params.fundingSourceName}</strong>)` : ''}.</p>
+      <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
+        <h3 style="margin-top: 0; color: #2a5e84;">Lesson details</h3>
+        <p style="margin: 5px 0;"><strong>Parent:</strong> ${params.parentName}</p>
+        <p style="margin: 5px 0;"><strong>Swimmer:</strong> ${params.childName}</p>
+        <p style="margin: 5px 0;"><strong>Date:</strong> ${params.date}</p>
+        <p style="margin: 5px 0;"><strong>Time:</strong> ${params.time}</p>
+        <p style="margin: 5px 0;"><strong>Instructor:</strong> ${params.instructor}</p>
+        <p style="margin: 5px 0;"><strong>Location:</strong> ${params.location}</p>
+      </div>
+      <p style="color: #64748b; font-size: 14px;">You are receiving this because you are assigned as this swimmer&rsquo;s coordinator in I Can Swim.</p>
+    `
+    const html = wrapEmailWithHeader(content)
+    return sendEmail({
+      to: params.coordinatorEmail,
+      templateType: 'custom',
+      customData: { subject, html },
+    })
+  },
+
   async sendSessionCancellation(params: {
     parentEmail: string
     instructorName: string

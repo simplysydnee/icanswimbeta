@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { format } from 'date-fns';
 import { ChevronLeft, ChevronRight, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 import type { Swimmer, AvailableSession, BookingStep, SessionType } from '@/types/booking';
@@ -172,7 +173,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
         if (sessionType === 'single') {
           return selectedSessionId !== null;
         } else {
-          return selectedRecurringSessions.length > 0;
+          return selectedRecurringSessions.length > 0 && recurringEndDate !== null;
         }
       case 'assessment':
         return selectedSessionId !== null;
@@ -181,7 +182,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
       default:
         return false;
     }
-  }, [currentStep, selectedSwimmer, sessionType, instructorPreference, selectedInstructorId, selectedSessionId, selectedRecurringSessions]);
+  }, [currentStep, selectedSwimmer, sessionType, instructorPreference, selectedInstructorId, selectedSessionId, selectedRecurringSessions, recurringEndDate]);
 
   // Step titles
   const getStepInfo = (step: BookingStep) => {
@@ -268,6 +269,10 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
 
         endpoint = '/api/bookings/recurring';
         payload.sessionIds = sessionIds;
+        if (!recurringEndDate) {
+          throw new Error('Please choose a Book until date for your recurring schedule');
+        }
+        payload.until = format(recurringEndDate, 'yyyy-MM-dd');
       }
 
       response = await fetch(endpoint, {

@@ -61,8 +61,11 @@ export function BookingSummary({
 
   // Helper to format date range
   const formatDateRange = () => {
-    if (!recurringStartDate || !recurringEndDate) return '';
-    return `${format(recurringStartDate, 'MMM d, yyyy')} - ${format(recurringEndDate, 'MMM d, yyyy')}`;
+    if (!recurringEndDate) return '';
+    if (recurringStartDate) {
+      return `${format(recurringStartDate, 'MMM d, yyyy')} → book until ${format(recurringEndDate, 'MMM d, yyyy')}`;
+    }
+    return `Book until ${format(recurringEndDate, 'MMM d, yyyy')}`;
   };
 
   // Helper to get day name from day number
@@ -162,7 +165,7 @@ export function BookingSummary({
                     </div>
                   )}
 
-                  {recurringStartDate && recurringEndDate && (
+                  {recurringEndDate && (
                     <div className="text-sm">{formatDateRange()}</div>
                   )}
 
