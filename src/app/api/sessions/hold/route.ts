@@ -1,12 +1,23 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Hold duration in minutes
 const HOLD_DURATION_MINUTES = 5;
 
+function getServiceSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !key) throw new Error('Missing Supabase env (service role)');
+  return createServiceClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const serviceSupabase = getServiceSupabase();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -19,8 +30,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Session ID required' }, { status: 400 });
     }
 
-    // Check if session is available
-    const { data: session, error: sessionError } = await supabase
+    // Check if session is available (service client bypasses RLS)
+    const { data: session, error: sessionError } = await serviceSupabase
       .from('sessions')
       .select('id, status, is_full, held_by, held_until')
       .eq('id', sessionId)
@@ -54,7 +65,7 @@ export async function POST(request: NextRequest) {
     const holdUntil = new Date();
     holdUntil.setMinutes(holdUntil.getMinutes() + HOLD_DURATION_MINUTES);
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await serviceSupabase
       .from('sessions')
       .update({
         held_by: user.id,
@@ -83,6 +94,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const serviceSupabase = getServiceSupabase();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -97,7 +109,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Only release if held by this user
-    const { error: updateError } = await supabase
+    const { error: updateError } = await serviceSupabase
       .from('sessions')
       .update({
         held_by: null,

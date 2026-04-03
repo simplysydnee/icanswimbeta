@@ -1,9 +1,20 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
+
+function getServiceSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !key) throw new Error('Missing Supabase env (service role)');
+  return createServiceClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
+    const serviceSupabase = getServiceSupabase();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -21,7 +32,7 @@ export async function POST(request: NextRequest) {
     let sessionEnd = endTime;
 
     if (sessionId && !startTime) {
-      const { data: session } = await supabase
+      const { data: session } = await serviceSupabase
         .from('sessions')
         .select('start_time, end_time')
         .eq('id', sessionId)
@@ -38,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for existing bookings that overlap
-    const { data: conflicts, error } = await supabase
+    const { data: conflicts, error } = await serviceSupabase
       .from('bookings')
       .select(`
         id,
@@ -87,7 +98,7 @@ export async function POST(request: NextRequest) {
     const dayStart = `${sessionDate}T00:00:00.000Z`;
     const dayEnd = `${sessionDate}T23:59:59.999Z`;
 
-    const { count: dailyBookings } = await supabase
+    const { count: dailyBookings } = await serviceSupabase
       .from('bookings')
       .select('id', { count: 'exact' })
       .eq('swimmer_id', swimmerId)
