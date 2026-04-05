@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import { generateReferralRequestEmail, generateReferralConfirmationEmail, generateAssessmentBookingEmail, generateLessonBookingEmail, generateRecurringBookingEmail, generateCancellationEmail, generateParentInvitationEmail, generateWelcomeEmail, generateAccountCreatedEmail, wrapEmailWithHeader } from '@/lib/emails'
+import { generateReferralRequestEmail, generateReferralConfirmationEmail, generateAssessmentBookingEmail, generateLessonBookingEmail, generateRecurringBookingEmail, generateCancellationEmail, generateParentInvitationEmail, generateWelcomeEmail, generateAccountCreatedEmail, generateEnrollmentRejectionEmail, wrapEmailWithHeader } from '@/lib/emails'
 
 type EmailTemplate =
   | 'enrollment_invite'
@@ -549,6 +549,26 @@ export const emailService = {
         subject,
         html,
       },
+    })
+  },
+
+  async sendEnrollmentRejectionNotice(params: {
+    parentEmail: string
+    parentName: string
+    childName: string
+    coordinatorName?: string
+  }) {
+    const { subject, html } = generateEnrollmentRejectionEmail({
+      parentName: params.parentName,
+      childName: params.childName,
+      coordinatorName: params.coordinatorName,
+    })
+
+    return sendEmail({
+      to: params.parentEmail,
+      templateType: 'custom',
+      toName: params.parentName,
+      customData: { subject, html },
     })
   },
 }

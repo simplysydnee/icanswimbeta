@@ -14,6 +14,7 @@ import {
   ChevronRight,
   LogOut,
   ClipboardList,
+  UserPlus,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -22,6 +23,7 @@ const navItems = [
   { label: 'Dashboard', href: '/coordinator', icon: LayoutDashboard },
   { label: 'My Clients', href: '/coordinator/clients', icon: Users },
   { label: 'Submit Referral', href: '/coordinator/referrals/new', icon: PlusCircle },
+  { label: 'Referrals', href: '/coordinator/referrals', icon: UserPlus },
   { label: 'Purchase Orders', href: '/coordinator/pos', icon: FileText },
   { label: 'Progress Reports', href: '/coordinator/progress', icon: ClipboardList },
 ];
