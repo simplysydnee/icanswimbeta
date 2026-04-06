@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
@@ -39,37 +39,39 @@ interface AddNoteModalProps {
   onOpenChange: (open: boolean) => void
   swimmerId: string
   instructorId: any
+  currentLevelId?: string
   onSuccess?: () => void
 }
 
-async function fetchAvailableSkills(): Promise<Skill[]> {
+async function fetchCurrentLevelSkills(currentLevelId?: string): Promise<Skill[]> {
   const supabase = createClient()
 
   try {
+    if (!currentLevelId) {
+      return []
+    }
+
     const { data: skills, error } = await supabase
       .from('skills')
       .select(`
         id,
-        name,
-        swim_levels!inner (
-          name
-        )
+        name
       `)
-      .order('level_id')
+      .eq('level_id', currentLevelId)
       .order('name')
 
     if (error) {
       console.error('Error fetching skills:', error)
-      throw new Error('Failed to fetch available skills')
+      throw new Error('Failed to fetch skills for current level')
     }
 
     return skills?.map(skill => ({
       id: skill.id,
       name: skill.name,
-      level_name: skill.swim_levels?.name || 'Unknown'
+      level_name: '' // Not needed for current level skills
     })) || []
   } catch (error) {
-    console.error('Error in fetchAvailableSkills:', error)
+    console.error('Error in fetchCurrentLevelSkills:', error)
     throw error
   }
 }
@@ -160,6 +162,7 @@ export default function AddNoteModal({
   onOpenChange,
   swimmerId,
   instructorId,
+  currentLevelId,
   onSuccess
 }: AddNoteModalProps) {
   const { toast } = useToast()
@@ -178,11 +181,12 @@ export default function AddNoteModal({
   const [parentNotes, setParentNotes] = useState('')
   const [sharedWithParent, setSharedWithParent] = useState(false)
 
-  // Fetch available skills
-  const { data: availableSkills, isLoading: isLoadingSkills } = useQuery({
-    queryKey: ['availableSkills'],
-    queryFn: fetchAvailableSkills,
+  // Fetch skills for current level
+  const { data: currentLevelSkills, isLoading: isLoadingSkills } = useQuery({
+    queryKey: ['currentLevelSkills', currentLevelId],
+    queryFn: () => fetchCurrentLevelSkills(currentLevelId),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!currentLevelId,
   })
 
   const createMutation = useMutation({
@@ -270,20 +274,8 @@ export default function AddNoteModal({
   }
 
   const getSkillName = (skillId: string) => {
-    return availableSkills?.find(s => s.id === skillId)?.name || skillId
+    return currentLevelSkills?.find(s => s.id === skillId)?.name || skillId
   }
-
-  const getSkillLevel = (skillId: string) => {
-    return availableSkills?.find(s => s.id === skillId)?.level_name || 'Unknown'
-  }
-
-  // Group skills by level
-  const skillsByLevel = availableSkills?.reduce((acc, skill) => {
-    const level = skill.level_name
-    if (!acc[level]) acc[level] = []
-    acc[level].push(skill)
-    return acc
-  }, {} as Record<string, Skill[]>) || {}
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -399,82 +391,100 @@ export default function AddNoteModal({
             </div>
           </div>
 
-          {/* Skills Selection */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+          {/* Skills Selection - Current Level Only */}
+          <div className="space-y-3">
+            <div>
               <Label className="flex items-center gap-2">
                 <Award className="h-4 w-4" />
-                Skills Worked On
+                Skills worked on today
               </Label>
-              <span className="text-sm text-gray-500">
-                {selectedSkills.length} selected
-              </span>
+              <p className="text-sm text-gray-500 mt-1">
+                (optional — only shows your current level)
+              </p>
             </div>
 
             {isLoadingSkills ? (
               <div className="flex justify-center py-4">
                 <Loader2 className="h-6 w-6 animate-spin text-[#2a5e84]" />
               </div>
-            ) : (
-              <div className="space-y-4">
-                {Object.entries(skillsByLevel).map(([levelName, skills]) => (
-                  <div key={levelName} className="space-y-3">
-                    <h4 className="font-medium text-gray-900">{levelName} Level</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {skills.map(skill => {
-                        const isSelected = selectedSkills.includes(skill.id)
-                        const isMastered = masteredSkills.includes(skill.id)
+            ) : currentLevelSkills && currentLevelSkills.length > 0 ? (
+              <>
+                <div className="flex flex-wrap gap-2">
+                  {currentLevelSkills.map(skill => {
+                    const isSelected = selectedSkills.includes(skill.id)
+                    const isMastered = masteredSkills.includes(skill.id)
 
-                        return (
-                          <div
-                            key={skill.id}
-                            className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                              isSelected
-                                ? 'border-[#2a5e84] bg-[#e8f4f8]'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                            onClick={() => handleSkillToggle(skill.id)}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <Checkbox
-                                  checked={isSelected}
-                                  onCheckedChange={() => handleSkillToggle(skill.id)}
-                                  className="h-5 w-5"
-                                />
-                                <span className="font-medium text-gray-900">{skill.name}</span>
-                              </div>
-                              {isMastered && (
-                                <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-green-200">
-                                  Mastered
-                                </Badge>
-                              )}
-                            </div>
+                    return (
+                      <button
+                        key={skill.id}
+                        type="button"
+                        onClick={() => handleSkillToggle(skill.id)}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                          isSelected
+                            ? isMastered
+                              ? 'bg-green-100 text-green-800 border border-green-200'
+                              : 'bg-[#23a1c0] text-white'
+                            : 'bg-white text-gray-700 border border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        {skill.name}
+                        {isMastered && isSelected && (
+                          <span className="ml-1.5">✓</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
 
-                            {isSelected && (
-                              <div className="mt-3 pl-8">
-                                <div className="flex items-center gap-2">
-                                  <Checkbox
-                                    id={`mastered-${skill.id}`}
-                                    checked={isMastered}
-                                    onCheckedChange={() => handleMasteredToggle(skill.id)}
-                                    className="h-4 w-4"
-                                  />
-                                  <Label
-                                    htmlFor={`mastered-${skill.id}`}
-                                    className="text-sm text-gray-600 cursor-pointer"
-                                  >
-                                    Mark as mastered this lesson
-                                  </Label>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedSkills([])
+                      setMasteredSkills([])
+                    }}
+                    className="text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    Skip
+                  </button>
+                  <span className="text-sm text-gray-500">
+                    {selectedSkills.length} selected • {masteredSkills.length} mastered
+                  </span>
+                </div>
+
+                {/* Mastered skills toggle for selected skills */}
+                {selectedSkills.length > 0 && (
+                  <div className="pt-4 border-t border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="mark-all-mastered"
+                        checked={masteredSkills.length === selectedSkills.length}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setMasteredSkills([...selectedSkills])
+                          } else {
+                            setMasteredSkills([])
+                          }
+                        }}
+                        className="h-4 w-4"
+                      />
+                      <Label
+                        htmlFor="mark-all-mastered"
+                        className="text-sm text-gray-700 cursor-pointer"
+                      >
+                        Mark all selected skills as mastered this lesson
+                      </Label>
                     </div>
                   </div>
-                ))}
+                )}
+              </>
+            ) : (
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-sm text-gray-600">
+                  {currentLevelId
+                    ? 'No skills found for current level. Skills will be added as the swimmer progresses.'
+                    : 'Current level not available. Skills selection disabled.'}
+                </p>
               </div>
             )}
           </div>
@@ -535,10 +545,7 @@ export default function AddNoteModal({
               <div className="space-y-2">
                 {masteredSkills.map(skillId => (
                   <div key={skillId} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-green-700">{getSkillName(skillId)}</p>
-                      <p className="text-sm text-green-600">{getSkillLevel(skillId)} Level</p>
-                    </div>
+                    <p className="font-medium text-green-700">{getSkillName(skillId)}</p>
                     <Badge className="bg-green-100 text-green-800 border-green-200">
                       Will be updated
                     </Badge>

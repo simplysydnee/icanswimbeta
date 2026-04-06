@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useToast } from '@/hooks/use-toast'
 import { format, parseISO } from 'date-fns'
@@ -33,6 +33,7 @@ interface ProgressNote {
 interface NotesTabProps {
   swimmerId: string
   instructorId: any
+  currentLevelId?: string
 }
 
 async function fetchProgressNotes(swimmerId: string): Promise<ProgressNote[]> {
@@ -62,9 +63,9 @@ async function fetchProgressNotes(swimmerId: string): Promise<ProgressNote[]> {
 
     // Get all skill IDs from notes
     const allSkillIds = new Set<string>()
-    notes.forEach(note => {
-      note.skills_working_on?.forEach(id => allSkillIds.add(id))
-      note.skills_mastered?.forEach(id => allSkillIds.add(id))
+    notes.forEach((note: any) => {
+      note.skills_working_on?.forEach((id: string) => allSkillIds.add(id))
+      note.skills_mastered?.forEach((id: string) => allSkillIds.add(id))
     })
 
     // Fetch skill names if there are any skills
@@ -76,12 +77,12 @@ async function fetchProgressNotes(swimmerId: string): Promise<ProgressNote[]> {
         .in('id', Array.from(allSkillIds))
 
       if (!skillsError && skills) {
-        skillNamesMap = new Map(skills.map(skill => [skill.id, skill.name]))
+        skillNamesMap = new Map(skills.map((skill: any) => [skill.id, skill.name]))
       }
     }
 
     // Transform the data
-    const transformedNotes: ProgressNote[] = notes.map(note => ({
+    const transformedNotes: ProgressNote[] = notes.map((note: any) => ({
       id: note.id,
       created_at: note.created_at,
       lesson_date: note.lesson_date,
@@ -96,8 +97,8 @@ async function fetchProgressNotes(swimmerId: string): Promise<ProgressNote[]> {
       shared_with_parent: note.shared_with_parent,
       instructor_id: note.instructor_id,
       instructor_name: note.profiles?.full_name || null,
-      skill_names_working_on: (note.skills_working_on || []).map(id => skillNamesMap.get(id) || `Skill ${id}`),
-      skill_names_mastered: (note.skills_mastered || []).map(id => skillNamesMap.get(id) || `Skill ${id}`)
+      skill_names_working_on: (note.skills_working_on || []).map((id: string) => skillNamesMap.get(id) || `Skill ${id}`),
+      skill_names_mastered: (note.skills_mastered || []).map((id: string) => skillNamesMap.get(id) || `Skill ${id}`)
     }))
 
     return transformedNotes
@@ -110,7 +111,8 @@ async function fetchProgressNotes(swimmerId: string): Promise<ProgressNote[]> {
 
 export default function NotesTab({
   swimmerId,
-  instructorId
+  instructorId,
+  currentLevelId
 }: NotesTabProps) {
   const { toast } = useToast()
   const queryClient = useQueryClient()
@@ -465,6 +467,7 @@ export default function NotesTab({
         onOpenChange={setShowAddModal}
         swimmerId={swimmerId}
         instructorId={instructorId}
+        currentLevelId={currentLevelId}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['progressNotes', swimmerId] })
           queryClient.invalidateQueries({ queryKey: ['swimmerDetail', swimmerId] })

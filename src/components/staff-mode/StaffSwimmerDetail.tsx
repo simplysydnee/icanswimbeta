@@ -856,6 +856,7 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
             <NotesTab
               swimmerId={swimmerId}
               instructorId={selectedInstructor?.id || ''}
+              currentLevelId={swimmer?.current_level_id}
             />
           </TabsContent>
       </div>
