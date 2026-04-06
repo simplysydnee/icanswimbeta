@@ -281,6 +281,37 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', sessionId)
 
+    // Send booking confirmation email via edge function for non-funded clients
+    try {
+      // Check if swimmer is funded (VMRC/CVRC) - only send for private pay and SD clients
+      const { data: swimmerWithFunding } = await supabase
+        .from('swimmers')
+        .select(`
+          id,
+          funding_source_id,
+          funding_sources (
+            id,
+            requires_authorization
+          )
+        `)
+        .eq('id', swimmerId)
+        .single()
+
+      const fundingSource = swimmerWithFunding?.funding_sources as any
+
+      // Only invoke edge function for non-funded clients (requires_authorization = false or null)
+      if (!fundingSource?.requires_authorization) {
+        await supabase.functions.invoke('send-booking-confirmation', {
+          body: { bookingId: booking.id }
+        })
+      } else {
+        console.log(`Skipping booking confirmation email for funded client (booking ${booking.id})`)
+      }
+    } catch (emailError) {
+      console.error('Failed to send booking confirmation email:', emailError)
+      // Don't fail the booking if email fails
+    }
+
     return NextResponse.json({
       booking,
       message: 'Booking created successfully'

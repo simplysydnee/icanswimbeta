@@ -102,19 +102,17 @@ export async function POST(request: NextRequest) {
           .limit(1);
 
         if (!purchaseOrders || purchaseOrders.length === 0) {
-          return NextResponse.json(
-            { error: 'No valid funding source authorization for assessment' },
-            { status: 400 }
-          );
-        }
-
-        const activePo = purchaseOrders[0];
-        // Check if swimmer has available sessions for assessment
-        if (activePo.sessions_used >= activePo.sessions_authorized) {
-          return NextResponse.json(
-            { error: 'Funding source authorization exhausted - no sessions available for assessment' },
-            { status: 400 }
-          );
+          // No active PO found - booking will proceed, notification will be created after booking
+          // Continue without active PO
+        } else {
+          const activePo = purchaseOrders[0];
+          // Check if swimmer has available sessions for assessment
+          if (activePo.sessions_used >= activePo.sessions_authorized) {
+            return NextResponse.json(
+              { error: 'Funding source authorization exhausted - no sessions available for assessment' },
+              { status: 400 }
+            );
+          }
         }
       }
     }
@@ -204,22 +202,85 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 12. Return success with all details for email
+    // 11a. Check if funding source requires authorization but no active PO was found
+    if (swimmer.funding_source_id) {
+      const { data: fundingSource } = await supabase
+        .from('funding_sources')
+        .select('requires_authorization')
+        .eq('id', swimmer.funding_source_id)
+        .single();
+
+      if (fundingSource?.requires_authorization) {
+        // Check if there's an active PO (we already checked earlier)
+        const { data: purchaseOrders } = await supabase
+          .from('purchase_orders')
+          .select('id')
+          .eq('swimmer_id', swimmerId)
+          .eq('status', 'approved')
+          .order('end_date', { ascending: true })
+          .limit(1);
+
+        if (!purchaseOrders || purchaseOrders.length === 0) {
+          // No active PO found - create pending notification
+          try {
+            await supabase
+              .from('pending_notifications')
+              .insert({
+                type: 'po_missing_at_booking',
+                status: 'pending',
+                payload: {
+                  swimmer_id: swimmerId,
+                  swimmer_name: `${swimmer.first_name} ${swimmer.last_name}`,
+                  booking_id: booking.id,
+                  lesson_date: session.start_time,
+                  booking_type: 'assessment'
+                }
+              });
+          } catch (notificationError) {
+            console.error('Failed to create pending notification:', notificationError);
+            // Don't fail the booking if notification fails
+          }
+        }
+      }
+    }
+
+    // 12. Send booking confirmation email via edge function for non-funded clients
+    try {
+      // Check if swimmer is funded (VMRC/CVRC) - only send for private pay and SD clients
+      const { data: swimmerWithFunding } = await supabase
+        .from('swimmers')
+        .select(`
+          id,
+          funding_source_id,
+          funding_sources (
+            id,
+            requires_authorization
+          )
+        `)
+        .eq('id', swimmerId)
+        .single()
+
+      const fundingSource = swimmerWithFunding?.funding_sources as any
+
+      // Only invoke edge function for non-funded clients (requires_authorization = false or null)
+      if (!fundingSource?.requires_authorization) {
+        await supabase.functions.invoke('send-booking-confirmation', {
+          body: { bookingId: booking.id }
+        })
+      } else {
+        console.log(`Skipping booking confirmation email for funded client (assessment booking ${booking.id})`)
+      }
+    } catch (emailError) {
+      console.error('Failed to send booking confirmation email:', emailError)
+      // Don't fail the booking if email fails
+    }
+
+    // 13. Return success
     return NextResponse.json({
       success: true,
       booking: booking,
       assessment: assessment,
       assessmentPO: assessmentPO,
-      emailData: {
-        parentEmail: swimmer.parent?.email || user.email,
-        parentName: swimmer.parent?.full_name || 'Parent',
-        childName: `${swimmer.first_name} ${swimmer.last_name}`,
-        date: session.start_time,
-        time: session.start_time,
-        location: session.location || 'TBD',
-        instructor: session.instructor?.full_name || 'TBD',
-        hasFundingSource: !!swimmer.funding_source_id,
-      },
     })
 
   } catch (error) {
@@ -287,14 +348,9 @@ async function createAssessmentPO(
       })
       .eq('id', swimmerId)
 
-    // Send coordinator notification if email is available
-    await sendCoordinatorNotification(
-      supabase,
-      swimmerId,
-      fundingSourceId,
-      coordinatorEmail,
-      poNumber
-    )
+    // Coordinator notification removed per requirements
+    // Coordinators only receive emails for PO approvals, renewals, and referral requests
+    // NOT for individual lesson bookings (including assessments)
 
     return po
   } catch (error) {
@@ -303,58 +359,3 @@ async function createAssessmentPO(
   }
 }
 
-async function sendCoordinatorNotification(
-  supabase: any,
-  swimmerId: string,
-  fundingSourceId: string,
-  coordinatorEmail: string | null,
-  poNumber: string
-) {
-  try {
-    // Get swimmer details
-    const { data: swimmer } = await supabase
-      .from('swimmers')
-      .select('first_name, last_name, funding_coordinator_name, funding_coordinator_email')
-      .eq('id', swimmerId)
-      .single()
-
-    if (!swimmer) return
-
-    // Get funding source details
-    const { data: fundingSource } = await supabase
-      .from('funding_sources')
-      .select('name, contact_email, contact_name')
-      .eq('id', fundingSourceId)
-      .single()
-
-    if (!fundingSource) return
-
-    // Determine which email to use (prefer swimmer's coordinator email)
-    const toEmail = coordinatorEmail || swimmer.coordinator_email || fundingSource.contact_email
-    if (!toEmail) {
-      console.log('No coordinator email available for notification')
-      return
-    }
-
-    // Determine coordinator name
-    const coordinatorName = swimmer.funding_coordinator_name || fundingSource.contact_name || 'Coordinator'
-
-    // Send email notification
-    // Note: We need to add a coordinator notification template to the email service
-    // For now, we'll use the existing assessment_booking template with custom data
-    await emailService.sendAssessmentBooking({
-      parentEmail: toEmail,
-      parentName: coordinatorName,
-      childName: `${swimmer.first_name} ${swimmer.last_name}`,
-      date: new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
-      time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-      location: 'Assessment Session',
-      instructor: 'TBD',
-    })
-
-    console.log(`Coordinator notification sent to ${toEmail} for PO ${poNumber}`)
-  } catch (error) {
-    console.error('Error sending coordinator notification:', error)
-    // Don't fail the whole request if notification fails
-  }
-}

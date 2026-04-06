@@ -23,7 +23,6 @@
 - **UI Components**: shadcn/ui component library
 - **Theming**: next-themes for dark/light mode support
 - **Icons**: Lucide React
-- **Payments**: Stripe (for private-pay clients only)
 - **Package Manager**: npm
 - **Hosting**: Vercel
 
@@ -120,10 +119,6 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# Stripe (for private-pay only)
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
 
 # App
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -586,7 +581,6 @@ npx playwright test --ui
 1. Push to GitHub
 2. Vercel auto-deploys from main branch
 3. Set environment variables in Vercel dashboard
-4. Configure Stripe webhook for production URL
 
 ## Key Constants (src/lib/constants.ts)
 

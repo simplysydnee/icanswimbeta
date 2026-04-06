@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -130,6 +130,23 @@ html, body {
 }
 
 :root {
+  /* Design System Colors */
+  --ocean: #2A5E84;
+  --ocean-dk: #1e4a6a;
+  --teal: #23A1C0;
+  --lime: #7DC842;
+  --danger: #e05252;
+  --warn: #f5a623;
+  --ocean-l: #e8f2f8;
+  --teal-l: #e5f5f9;
+  --lime-l: #f0f9e8;
+  --warn-l: #fff8e6;
+  --danger-l: #fef2f2;
+  --text: #1a2e3b;
+  --muted: #6b8899;
+  --border: #d0e4ed;
+  --bg: #eef5fa;
+
   --radius: 0.625rem;
   --sidebar-width: 4rem;
   --background: oklch(1 0 0);
@@ -166,6 +183,23 @@ html, body {
 }
 
 .dark {
+  /* Design System Colors - Dark Mode */
+  --ocean: #3a6e94;
+  --ocean-dk: #2a5e84;
+  --teal: #33b1d0;
+  --lime: #8dd852;
+  --danger: #f06262;
+  --warn: #ffb633;
+  --ocean-l: #283c4a;
+  --teal-l: #253c42;
+  --lime-l: #2c3a22;
+  --warn-l: #332a1a;
+  --danger-l: #331a1a;
+  --text: #c8d6e3;
+  --muted: #8a9ca9;
+  --border: #3a4a55;
+  --bg: #1a242e;
+
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);

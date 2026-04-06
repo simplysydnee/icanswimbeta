@@ -18,49 +18,6 @@ interface POSEmailData {
   authorizationNumber?: string;
 }
 
-export async function notifyCoordinatorNewPOS(data: POSEmailData) {
-  if (!data.coordinatorEmail) {
-    console.error('Cannot send POS notification: coordinator email missing')
-    return
-  }
-
-  const subject = `New POS Request - ${data.swimmerName}`
-
-  const content = `
-    <h2 style="color: ${BRAND_MAIN}; margin-top: 0;">New Purchase Order Request</h2>
-
-    <p>Hi ${data.coordinatorName || 'Coordinator'},</p>
-
-    <p>A new <strong>${data.poType === 'assessment' ? 'Assessment' : 'Lessons'} Authorization</strong>
-    has been requested for:</p>
-
-    <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <p style="margin: 5px 0;"><strong>Swimmer:</strong> ${data.swimmerName}</p>
-      <p style="margin: 5px 0;"><strong>Parent:</strong> ${data.parentName}</p>
-      <p style="margin: 5px 0;"><strong>Type:</strong> ${data.poType === 'assessment' ? 'Initial Assessment (1 session)' : 'Swim Lessons (12 sessions)'}</p>
-      <p style="margin: 5px 0;"><strong>Funding Source:</strong> ${data.fundingSource}</p>
-      ${data.authorizationNumber ? `<p style="margin: 5px 0;"><strong>Authorization #:</strong> ${data.authorizationNumber}</p>` : ''}
-    </div>
-
-    ${createButton('Review POS Request', emailUrls.coordinatorPos(data.coordinatorEmail))}
-
-    <p>Thank you for your partnership,<br><strong>I Can Swim</strong></p>
-  `
-
-  const html = wrapEmailWithHeader(content)
-
-  try {
-    await emailService.sendEmail({
-      to: data.coordinatorEmail,
-      templateType: 'custom',
-      customData: { subject, html }
-    })
-    console.log(`POS notification sent to coordinator: ${data.coordinatorEmail}`)
-  } catch (error) {
-    console.error('Failed to send POS notification:', error)
-    // Don't throw - email failure shouldn't block the main flow
-  }
-}
 
 export async function notifyParentPOSApproved(data: POSEmailData) {
   const subject = `POS Approved - ${data.swimmerName}'s Swim Lessons`
@@ -145,60 +102,6 @@ export async function notifyParentPOSDeclined(data: POSEmailData & { reason?: st
   }
 }
 
-export async function notifyCoordinatorPOSExpiring(data: POSEmailData & {
-  daysUntilExpiry: number;
-  sessionsUsed: number;
-  sessionsRemaining: number;
-}) {
-  if (!data.coordinatorEmail) {
-    console.error('Cannot send POS expiry notification: coordinator email missing')
-    return
-  }
-
-  const subject = `POS Expiring Soon - ${data.swimmerName}'s Authorization`
-
-  const content = `
-    <h2 style="color: ${BRAND_MAIN}; margin-top: 0;">Authorization Expiring Soon</h2>
-
-    <p>Hi ${data.coordinatorName || 'Coordinator'},</p>
-
-    <p>The purchase order for <strong>${data.swimmerName}'s</strong> swim lessons will expire in <strong>${data.daysUntilExpiry} days</strong>.</p>
-
-    <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <p style="margin: 5px 0;"><strong>Swimmer:</strong> ${data.swimmerName}</p>
-      <p style="margin: 5px 0;"><strong>Parent:</strong> ${data.parentName}</p>
-      <p style="margin: 5px 0;"><strong>Authorization Period:</strong> ${data.startDate} to ${data.endDate}</p>
-      <p style="margin: 5px 0;"><strong>Sessions Used:</strong> ${data.sessionsUsed} of ${data.sessionsAuthorized}</p>
-      <p style="margin: 5px 0;"><strong>Sessions Remaining:</strong> ${data.sessionsRemaining}</p>
-      <p style="margin: 5px 0;"><strong>Funding Source:</strong> ${data.fundingSource}</p>
-      ${data.authorizationNumber ? `<p style="margin: 5px 0;"><strong>Authorization #:</strong> ${data.authorizationNumber}</p>` : ''}
-    </div>
-
-    <p>Please contact the parent to discuss renewal options or submit a new authorization request:</p>
-    <p><strong>Parent Contact:</strong><br>
-    ${data.parentName}<br>
-    Email: ${data.parentEmail}<br>
-    Phone: (209) 778-7877</p>
-
-    ${createButton('Review POS', emailUrls.coordinatorPos(data.coordinatorEmail))}
-
-    <p>Thank you,<br><strong>I Can Swim</strong></p>
-  `
-
-  const html = wrapEmailWithHeader(content)
-
-  try {
-    await emailService.sendEmail({
-      to: data.coordinatorEmail,
-      templateType: 'custom',
-      customData: { subject, html }
-    })
-    console.log(`POS expiry notification sent to coordinator: ${data.coordinatorEmail}`)
-  } catch (error) {
-    console.error('Failed to send POS expiry notification:', error)
-    // Don't throw - email failure shouldn't block the main flow
-  }
-}
 
 export async function notifyInstructorProgressNeeded(data: {
   instructorEmail: string;

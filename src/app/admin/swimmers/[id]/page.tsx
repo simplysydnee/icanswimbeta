@@ -2091,7 +2091,7 @@ function AdminSwimmerDetailContent() {
                     <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Private Pay Client</h3>
                     <p className="text-muted-foreground mb-6">
-                      This swimmer is a private pay client. All billing is handled through Stripe.
+                      This swimmer is a private pay client.
                     </p>
                     <div className="flex flex-wrap gap-2 justify-center">
                       <Button>

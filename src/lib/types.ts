@@ -31,8 +31,6 @@ export interface Subscription {
   user_id: string;
   tier: SubscriptionTier;
   status: SubscriptionStatus;
-  stripe_subscription_id?: string;
-  stripe_customer_id?: string;
   current_period_start: string;
   current_period_end: string;
   trial_end?: string;

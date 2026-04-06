@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useState, useMemo, useCallback } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useStaffMode } from './StaffModeContext'
+import { useToast } from '@/hooks/use-toast'
 import { format, addDays } from 'date-fns'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
@@ -15,13 +16,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { Loader2, ArrowLeft, Search, Calendar, Users, LogOut, AlertTriangle } from 'lucide-react'
+import { Loader2, ArrowLeft, Search, Calendar, Users, LogOut, AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SessionWithSwimmer {
   id: string
   start_time: string
   swimmer_id: string
+  booking_id: string | null
+  booking_status: string | null
   first_name: string
   last_name: string
   date_of_birth: string
@@ -75,7 +78,9 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
         start_time,
         status,
         bookings!inner (
-          swimmer_id
+          id,
+          swimmer_id,
+          status
         )
       `)
       .eq('instructor_id', instructorId)
@@ -267,6 +272,8 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
           id: session.id,
           start_time: session.start_time,
           swimmer_id: swimmerId,
+          booking_id: session.bookings?.[0]?.id || null,
+          booking_status: session.bookings?.[0]?.status || null,
           first_name: swimmer.first_name,
           last_name: swimmer.last_name,
           date_of_birth: swimmer.date_of_birth,
@@ -304,7 +311,10 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
 export default function StaffScheduleView() {
   const router = useRouter()
   const { selectedInstructor, clearInstructor } = useStaffMode()
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
+  const [updatingBookings, setUpdatingBookings] = useState<Record<string, boolean>>({})
 
   const { data: sessions, isLoading, error } = useQuery({
     queryKey: ['todaySessions', selectedInstructor?.id],
@@ -312,6 +322,83 @@ export default function StaffScheduleView() {
     enabled: !!selectedInstructor,
     staleTime: 2 * 60 * 1000, // 2 minutes
   })
+
+  // Function to update booking status with optimistic updates
+  const updateBookingStatus = useCallback(async (bookingId: string, status: 'completed' | 'no_show') => {
+    if (!bookingId) {
+      toast({
+        title: 'Error',
+        description: 'No booking ID found for this session',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setUpdatingBookings(prev => ({ ...prev, [bookingId]: true }))
+
+    // Optimistically update the cache
+    queryClient.setQueryData<SessionWithSwimmer[]>(['todaySessions', selectedInstructor?.id], (oldData) => {
+      if (!oldData) return oldData
+
+      return oldData.map(session => {
+        if (session.booking_id === bookingId) {
+          return {
+            ...session,
+            booking_status: status
+          }
+        }
+        return session
+      })
+    })
+
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to update booking status')
+      }
+
+      toast({
+        title: 'Success',
+        description: `Attendance marked as ${status === 'completed' ? 'Present' : 'No Show'}`,
+      })
+
+      // Invalidate the query to refresh data with server state
+      queryClient.invalidateQueries({ queryKey: ['todaySessions', selectedInstructor?.id] })
+    } catch (error) {
+      console.error('Error updating booking status:', error)
+
+      // Revert optimistic update on error
+      queryClient.setQueryData<SessionWithSwimmer[]>(['todaySessions', selectedInstructor?.id], (oldData) => {
+        if (!oldData) return oldData
+
+        return oldData.map(session => {
+          if (session.booking_id === bookingId) {
+            return {
+              ...session,
+              booking_status: null // Revert to original status
+            }
+          }
+          return session
+        })
+      })
+
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to update attendance',
+        variant: 'destructive',
+      })
+    } finally {
+      setUpdatingBookings(prev => ({ ...prev, [bookingId]: false }))
+    }
+  }, [toast, queryClient, selectedInstructor?.id])
 
   // Filter sessions based on search query
   const filteredSessions = useMemo(() => {
@@ -605,22 +692,67 @@ export default function StaffScheduleView() {
                   </div>
 
                   {/* Action Button */}
-                  <div className="flex-shrink-0">
-                    {canUpdateProgress ? (
-                      <Button
-                        onClick={() => router.push(`/staff-mode/swimmer/${session.swimmer_id}`)}
-                        className="bg-[#2a5e84] hover:bg-[#1e4a6d] text-white"
-                      >
-                        Update Progress
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        onClick={() => router.push(`/staff-mode/swimmer/${session.swimmer_id}`)}
-                      >
-                        View Details
-                      </Button>
-                    )}
+                  <div className="flex-shrink-0 flex flex-col gap-2 items-end">
+                    {/* Attendance Status */}
+                    {session.booking_status === 'completed' ? (
+                      <div className="flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1.5 rounded-full text-sm font-medium">
+                        <CheckCircle className="h-4 w-4" />
+                        Present
+                      </div>
+                    ) : session.booking_status === 'no_show' ? (
+                      <div className="flex items-center gap-1 bg-red-100 text-red-800 px-3 py-1.5 rounded-full text-sm font-medium">
+                        <XCircle className="h-4 w-4" />
+                        No Show
+                      </div>
+                    ) : session.booking_id && !updatingBookings[session.booking_id] ? (
+                      // Attendance buttons for today's sessions
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => updateBookingStatus(session.booking_id!, 'completed')}
+                          className="bg-[#7dc842] hover:bg-[#6cb035] text-white h-10 min-w-[88px]"
+                          aria-label="Mark as present"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          Present
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateBookingStatus(session.booking_id!, 'no_show')}
+                          className="border-gray-300 text-gray-700 hover:bg-gray-50 h-10 min-w-[88px]"
+                          aria-label="Mark as no show"
+                        >
+                          <XCircle className="h-4 w-4 mr-1" />
+                          No Show
+                        </Button>
+                      </div>
+                    ) : updatingBookings[session.booking_id!] ? (
+                      <div className="h-10 flex items-center justify-center">
+                        <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+                      </div>
+                    ) : null}
+
+                    {/* Update Progress / View Details Button */}
+                    <div className="mt-2">
+                      {canUpdateProgress ? (
+                        <Button
+                          size="sm"
+                          onClick={() => router.push(`/staff-mode/swimmer/${session.swimmer_id}`)}
+                          className="bg-[#2a5e84] hover:bg-[#1e4a6d] text-white"
+                        >
+                          Update Progress
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => router.push(`/staff-mode/swimmer/${session.swimmer_id}`)}
+                        >
+                          View Details
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )

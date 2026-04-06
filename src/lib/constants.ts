@@ -178,7 +178,6 @@ export const SUBSCRIPTION_PLANS = {
       max_swimmers: 5,
       support_level: 'community',
     },
-    stripe_price_id: null,
   },
   [SubscriptionTier.PRO]: {
     name: 'Pro',
@@ -189,7 +188,6 @@ export const SUBSCRIPTION_PLANS = {
       max_swimmers: -1,
       support_level: 'email',
     },
-    stripe_price_id: null,
   },
   [SubscriptionTier.ENTERPRISE]: {
     name: 'Enterprise',
@@ -200,7 +198,6 @@ export const SUBSCRIPTION_PLANS = {
       max_swimmers: -1,
       support_level: 'dedicated',
     },
-    stripe_price_id: null,
   },
 } as const;
 
