@@ -117,6 +117,27 @@ export const schedulingSchema = z.object({
   // emergency_contact_name: z.string().min(1, 'Emergency contact name is required'),
   // emergency_contact_phone: z.string().min(10, 'Emergency contact phone is required'),
   // emergency_contact_relationship: z.string().min(1, 'Relationship is required'),
+
+  // New fields for enhanced consent flow
+  terms_of_service_agreed: z.boolean().refine(val => val === true, {
+    message: 'You must agree to the Terms of Service',
+  }),
+  terms_of_service_signature: z.string(),
+  cancellation_quiz_passed: z.boolean().refine(val => val === true, {
+    message: 'You must pass the cancellation policy quiz',
+  }),
+  cancellation_acknowledged_24hr: z.boolean().refine(val => val === true, {
+    message: 'You must acknowledge the 24-hour cancellation requirement',
+  }),
+  cancellation_acknowledged_consequences: z.boolean().refine(val => val === true, {
+    message: 'You must acknowledge the consequences of late cancellations',
+  }),
+  privacy_policy_agreed: z.boolean().refine(val => val === true, {
+    message: 'You must agree to the Privacy Policy',
+  }),
+  privacy_policy_signature: z.string(),
+  sms_consent_given: z.boolean().default(false),
+  guardian_relationship: z.string().min(2, 'Relationship to minor is required (e.g., Parent, Legal Guardian)'),
 })
 export const consentSchema = consentBaseSchema.superRefine((data, ctx) => {
 
@@ -141,6 +162,22 @@ export const consentSchema = consentBaseSchema.superRefine((data, ctx) => {
       code: z.ZodIssueCode.custom,
       path: ['photo_release_signature'],
       message: 'Photo release signature is required',
+    });
+  }
+
+  if (data.terms_of_service_agreed && !data.terms_of_service_signature?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['terms_of_service_signature'],
+      message: 'Terms of Service signature is required',
+    });
+  }
+
+  if (data.privacy_policy_agreed && !data.privacy_policy_signature?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['privacy_policy_signature'],
+      message: 'Privacy Policy signature is required',
     });
   }
 

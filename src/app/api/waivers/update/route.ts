@@ -13,7 +13,17 @@ const schema = z.object({
   photoSignature: z.string().optional(),
   photoSignatureConsent: z.boolean().optional().default(false),
   cancellationSignature: z.string().min(3, { message: 'Cancellation policy signature must be at least 3 characters (your full name)' }),
-  cancellationAgreed: z.boolean().default(false)
+  cancellationAgreed: z.boolean().default(false),
+  // New fields
+  termsOfServiceAgreed: z.boolean().optional().default(false),
+  termsOfServiceSignature: z.string().optional(),
+  cancellationQuizPassed: z.boolean().optional().default(false),
+  cancellationAcknowledged24hr: z.boolean().optional().default(false),
+  cancellationAcknowledgedConsequences: z.boolean().optional().default(false),
+  privacyPolicyAgreed: z.boolean().optional().default(false),
+  privacyPolicySignature: z.string().optional(),
+  smsConsentGiven: z.boolean().optional().default(false),
+  guardianRelationship: z.string().optional()
 }).refine(
   data => !data.photoPermission || data.photoSignature,
   { message: 'Photo signature required when permission is granted' }

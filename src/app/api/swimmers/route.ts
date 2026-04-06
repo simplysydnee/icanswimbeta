@@ -359,6 +359,17 @@ export async function POST(req: Request) {
       cancellation_policy_signature: value.cancellation_policy_signature ?? null,
       liability_waiver_signature: value.liability_waiver_signature ?? null,
 
+      // New consent fields
+      terms_of_service_agreed: parseBoolLike(value.terms_of_service_agreed) ?? false,
+      terms_of_service_signature: value.terms_of_service_signature ?? null,
+      cancellation_quiz_passed: parseBoolLike(value.cancellation_quiz_passed) ?? false,
+      cancellation_acknowledged_24hr: parseBoolLike(value.cancellation_acknowledged_24hr) ?? false,
+      cancellation_acknowledged_consequences: parseBoolLike(value.cancellation_acknowledged_consequences) ?? false,
+      privacy_policy_agreed: parseBoolLike(value.privacy_policy_agreed) ?? false,
+      privacy_policy_signature: value.privacy_policy_signature ?? null,
+      sms_consent_given: parseBoolLike(value.sms_consent_given) ?? false,
+      guardian_relationship: value.guardian_relationship ?? null,
+
       payment_type: value.payment_type ?? 'private_pay',
 
       funding_source_id: value.funding_source_id ?? null,
@@ -437,6 +448,17 @@ const schema = Joi.object({
   photo_video_signature: Joi.string().allow(null, ''),
   cancellation_policy_signature: Joi.string().allow(null, ''),
   liability_waiver_signature: Joi.string().allow(null, ''),
+
+  // New consent fields
+  terms_of_service_agreed: booleanLike.optional(),
+  terms_of_service_signature: Joi.string().allow(null, ''),
+  cancellation_quiz_passed: booleanLike.optional(),
+  cancellation_acknowledged_24hr: booleanLike.optional(),
+  cancellation_acknowledged_consequences: booleanLike.optional(),
+  privacy_policy_agreed: booleanLike.optional(),
+  privacy_policy_signature: Joi.string().allow(null, ''),
+  sms_consent_given: booleanLike.optional(),
+  guardian_relationship: Joi.string().allow(null, ''),
 
   payment_type: Joi.string().valid('private_pay', 'funding_source').optional(),
 

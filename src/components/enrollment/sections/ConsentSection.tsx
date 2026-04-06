@@ -16,6 +16,8 @@ export function ConsentSection() {
   const signedWaiver = watch('signed_waiver');
   const photoRelease = watch('photo_release');
   const cancellationPolicyAgreement = watch('cancellation_policy_agreement');
+  const termsOfServiceAgreed = watch('terms_of_service_agreed');
+  const privacyPolicyAgreed = watch('privacy_policy_agreed');
 
   // Capture signature metadata
   const captureSignatureMetadata = () => {
@@ -246,6 +248,347 @@ export function ConsentSection() {
             )}
           />
         )}
+      </div>
+
+      {/* Terms of Service */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Label className="text-base font-medium">Terms of Service *</Label>
+            <HelpTooltip content="Please review the Terms of Service before agreeing." />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              // TODO: Implement Terms of Service modal
+              alert('Terms of Service modal would open here');
+            }}
+          >
+            View Terms
+          </Button>
+        </div>
+
+        <FormField
+          control={control}
+          name="terms_of_service_agreed"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id="terms-of-service"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label htmlFor="terms-of-service" className="font-normal">
+                    I have read and agree to the Terms of Service
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    I Can Swim LLC Terms of Service: 1. You must be 18+ and a parent/legal guardian of any enrolled child. 2. Enrollment requires completion of all forms including medical/behavioral info and execution of liability waiver, photo release, and cancellation policy. 3. Cancellations made at least 24 hours before a session will not incur penalty. Late cancellations may affect scheduling priority. 4. For VMRC/CVRC swimmers, all bookings require an active approved Purchase Order. 5. You agree to disclose all medical, behavioral, and safety information and update it promptly.
+                  </p>
+                </div>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {termsOfServiceAgreed && (
+          <FormField
+            control={control}
+            name="terms_of_service_signature"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Signature *</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Type your full name as signature"
+                    onChange={(e) => {
+                      field.onChange(e.target.value);
+                      captureSignatureMetadata();
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+      </div>
+
+      {/* Cancellation Policy Quiz */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Label className="text-base font-medium">Cancellation Policy Quiz *</Label>
+          <HelpTooltip content="Please answer these questions to confirm you understand the cancellation policy." />
+        </div>
+
+        <div className="space-y-4 p-4 border rounded-md">
+          <div>
+            <p className="font-medium mb-2">Q1: How far in advance must you cancel a session?</p>
+            <div className="space-y-2">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="cancellation_quiz_q1"
+                  value="12"
+                  className="mr-2"
+                  onChange={() => setValue('cancellation_quiz_passed', false)}
+                />
+                <span>12 hours</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="cancellation_quiz_q1"
+                  value="24"
+                  className="mr-2"
+                  onChange={() => {
+                    // Check if both answers are correct
+                    const q2Correct = document.querySelector('input[name="cancellation_quiz_q2"]:checked')?.value === 'drop';
+                    if (q2Correct) {
+                      setValue('cancellation_quiz_passed', true);
+                    }
+                  }}
+                />
+                <span>24 hours ✓</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="cancellation_quiz_q1"
+                  value="48"
+                  className="mr-2"
+                  onChange={() => setValue('cancellation_quiz_passed', false)}
+                />
+                <span>48 hours</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <p className="font-medium mb-2">Q2: What happens if you cancel with less than 24 hours notice?</p>
+            <div className="space-y-2">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="cancellation_quiz_q2"
+                  value="nothing"
+                  className="mr-2"
+                  onChange={() => setValue('cancellation_quiz_passed', false)}
+                />
+                <span>Nothing, it is fine</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="cancellation_quiz_q2"
+                  value="warning"
+                  className="mr-2"
+                  onChange={() => setValue('cancellation_quiz_passed', false)}
+                />
+                <span>I receive a warning only</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="cancellation_quiz_q2"
+                  value="drop"
+                  className="mr-2"
+                  onChange={() => {
+                    // Check if both answers are correct
+                    const q1Correct = document.querySelector('input[name="cancellation_quiz_q1"]:checked')?.value === '24';
+                    if (q1Correct) {
+                      setValue('cancellation_quiz_passed', true);
+                    }
+                  }}
+                />
+                <span>My swimmer may be subject to being dropped from the program ✓</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <FormField
+            control={control}
+            name="cancellation_acknowledged_24hr"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-start space-x-2">
+                  <Checkbox
+                    id="cancellation-24hr"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <Label htmlFor="cancellation-24hr" className="font-normal">
+                      I understand I must cancel at least 24 hours in advance
+                    </Label>
+                  </div>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={control}
+            name="cancellation_acknowledged_consequences"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-start space-x-2">
+                  <Checkbox
+                    id="cancellation-consequences"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <Label htmlFor="cancellation-consequences" className="font-normal">
+                      I understand that late cancellations may result in my swimmer being subject to being dropped from the program
+                    </Label>
+                  </div>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      </div>
+
+      {/* Privacy Policy */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Label className="text-base font-medium">Privacy Policy *</Label>
+            <HelpTooltip content="Please review the Privacy Policy before agreeing." />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              // TODO: Implement Privacy Policy modal
+              alert('Privacy Policy modal would open here');
+            }}
+          >
+            View Policy
+          </Button>
+        </div>
+
+        <div className="p-4 border rounded-md max-h-60 overflow-y-auto text-sm">
+          <p className="font-medium mb-2">I Can Swim LLC Privacy Policy</p>
+          <p className="mb-2">What we collect: parent/guardian info, swimmer medical/behavioral info, signed documents, booking records, technical data</p>
+          <p className="mb-2">How we use it: safe swim instruction, booking management, VMRC/CVRC PO processing, legal compliance. NOT for advertising.</p>
+          <p className="mb-2">We share ONLY with: instructors (for instruction), VMRC/CVRC coordinators (funded clients), trusted service providers (Supabase, Vercel, Resend)</p>
+          <p className="mb-2">We do NOT sell, rent, or trade your personal information.</p>
+          <p className="mb-2">COPPA: All accounts managed by parents/guardians. Children do not create accounts.</p>
+          <p className="mb-2">California rights (CCPA): right to know, delete, correct, non-discrimination.</p>
+          <p>Contact: Sutton@icanswim209.com | (209) 778-7877</p>
+        </div>
+
+        <FormField
+          control={control}
+          name="privacy_policy_agreed"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id="privacy-policy"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label htmlFor="privacy-policy" className="font-normal">
+                    I have read and agree to the Privacy Policy
+                  </Label>
+                </div>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {privacyPolicyAgreed && (
+          <FormField
+            control={control}
+            name="privacy_policy_signature"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Signature *</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="Type your full name as signature"
+                    onChange={(e) => {
+                      field.onChange(e.target.value);
+                      captureSignatureMetadata();
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+      </div>
+
+      {/* SMS Consent */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Label className="text-base font-medium">SMS/Text Message Consent (Optional)</Label>
+          <HelpTooltip content="Optional consent to receive text messages for appointment reminders and lesson openings." />
+        </div>
+
+        <FormField
+          control={control}
+          name="sms_consent_given"
+          render={({ field }) => (
+            <FormItem>
+              <div className="flex items-start space-x-2">
+                <Checkbox
+                  id="sms-consent"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label htmlFor="sms-consent" className="font-normal">
+                    I agree to receive text messages from I Can Swim, including appointment reminders and lesson opening notifications. Message and data rates may apply. Reply STOP at any time to unsubscribe.
+                  </Label>
+                </div>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      {/* Guardian Relationship */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Label className="text-base font-medium">Guardian Relationship *</Label>
+          <HelpTooltip content="Your relationship to the minor being enrolled." />
+        </div>
+
+        <FormField
+          control={control}
+          name="guardian_relationship"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Relationship to Minor *</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="e.g., Parent, Legal Guardian, Grandparent"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
 
       {/* Emergency Contact */}

@@ -258,6 +258,16 @@ export async function updateSwimmerWaivers(
     photoSignatureConsent?: boolean;
     cancellationSignature?: string;
     cancellationAgreed?: boolean;
+    // New fields
+    termsOfServiceAgreed?: boolean;
+    termsOfServiceSignature?: string;
+    cancellationQuizPassed?: boolean;
+    cancellationAcknowledged24hr?: boolean;
+    cancellationAcknowledgedConsequences?: boolean;
+    privacyPolicyAgreed?: boolean;
+    privacyPolicySignature?: string;
+    smsConsentGiven?: boolean;
+    guardianRelationship?: string;
   },
   metadata: {
     parentId: string | null;
@@ -393,6 +403,53 @@ export async function updateSwimmerWaivers(
     if (waivers.cancellationSignature) {
       updateData.cancellation_policy_signature = waivers.cancellationSignature;
       updatedFields.push('cancellation_policy');
+    }
+
+    // New consent fields
+    if (waivers.termsOfServiceAgreed !== undefined) {
+      updateData.terms_of_service_agreed = waivers.termsOfServiceAgreed;
+      if (waivers.termsOfServiceAgreed && waivers.termsOfServiceSignature) {
+        updateData.terms_of_service_signature = waivers.termsOfServiceSignature;
+        updateData.terms_of_service_agreed_at = now;
+        updatedFields.push('terms_of_service');
+      }
+    }
+
+    if (waivers.cancellationQuizPassed !== undefined) {
+      updateData.cancellation_quiz_passed = waivers.cancellationQuizPassed;
+      if (waivers.cancellationQuizPassed) {
+        updateData.cancellation_quiz_passed_at = now;
+        updatedFields.push('cancellation_quiz');
+      }
+    }
+
+    if (waivers.cancellationAcknowledged24hr !== undefined) {
+      updateData.cancellation_acknowledged_24hr = waivers.cancellationAcknowledged24hr;
+    }
+
+    if (waivers.cancellationAcknowledgedConsequences !== undefined) {
+      updateData.cancellation_acknowledged_consequences = waivers.cancellationAcknowledgedConsequences;
+    }
+
+    if (waivers.privacyPolicyAgreed !== undefined) {
+      updateData.privacy_policy_agreed = waivers.privacyPolicyAgreed;
+      if (waivers.privacyPolicyAgreed && waivers.privacyPolicySignature) {
+        updateData.privacy_policy_signature = waivers.privacyPolicySignature;
+        updateData.privacy_policy_agreed_at = now;
+        updatedFields.push('privacy_policy');
+      }
+    }
+
+    if (waivers.smsConsentGiven !== undefined) {
+      updateData.sms_consent_given = waivers.smsConsentGiven;
+      if (waivers.smsConsentGiven) {
+        updateData.sms_consent_given_at = now;
+        updatedFields.push('sms_consent');
+      }
+    }
+
+    if (waivers.guardianRelationship) {
+      updateData.guardian_relationship = waivers.guardianRelationship;
     }
 
     // Update swimmer record with appropriate parent check

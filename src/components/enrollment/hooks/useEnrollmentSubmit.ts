@@ -95,6 +95,17 @@ export function useEnrollmentSubmit(options?: UseEnrollmentSubmitOptions) {
         emergency_contact_phone: data.emergency_contact_phone,
         emergency_contact_relationship: data.emergency_contact_relationship,
 
+        // New consent fields
+        terms_of_service_agreed: data.terms_of_service_agreed,
+        terms_of_service_signature: data.terms_of_service_signature || null,
+        cancellation_quiz_passed: data.cancellation_quiz_passed,
+        cancellation_acknowledged_24hr: data.cancellation_acknowledged_24hr,
+        cancellation_acknowledged_consequences: data.cancellation_acknowledged_consequences,
+        privacy_policy_agreed: data.privacy_policy_agreed,
+        privacy_policy_signature: data.privacy_policy_signature || null,
+        sms_consent_given: data.sms_consent_given,
+        guardian_relationship: data.guardian_relationship,
+
         // Enrollment status
         enrollment_status: 'pending_enrollment',
       };
