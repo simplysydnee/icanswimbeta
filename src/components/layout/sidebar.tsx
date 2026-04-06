@@ -67,6 +67,7 @@ const instructorNavItems: NavItem[] = [
 const coordinatorNavItems: NavItem[] = [
   { title: 'Dashboard', href: '/coordinator', icon: <LayoutDashboard className="h-5 w-5" /> },
   { title: 'Schedule', href: '/coordinator/schedule', icon: <Calendar className="h-5 w-5" /> },
+  { title: 'Referrals', href: '/coordinator/referrals', icon: <UserCog className="h-5 w-5" /> },
   { title: 'Settings', href: '/settings', icon: <Settings className="h-5 w-5" /> },
 ]
 

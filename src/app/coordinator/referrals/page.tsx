@@ -26,8 +26,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, ChevronUp, ChevronDown, MoreHorizontal } from 'lucide-react';
+import { Loader2, Search, ChevronUp, ChevronDown, MoreHorizontal, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 type Row = {
   id: string;
@@ -170,11 +171,19 @@ export default function CoordinatorReferralsPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Referrals & approvals</h1>
-        <p className="text-muted-foreground mt-1">
-          Swimmers assigned to you as coordinator. Approve or reject enrollment requests.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Referrals & approvals</h1>
+          <p className="text-muted-foreground mt-1">
+            Swimmers assigned to you as coordinator. Approve or reject enrollment requests.
+          </p>
+        </div>
+        <Button asChild className="shrink-0">
+          <Link href="/coordinator/referrals/new">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            New Referral
+          </Link>
+        </Button>
       </div>
 
       {isAdmin && (

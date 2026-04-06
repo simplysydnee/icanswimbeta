@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import { generateReferralRequestEmail, generateReferralConfirmationEmail, generateAssessmentBookingEmail, generateLessonBookingEmail, generateRecurringBookingEmail, generateCancellationEmail, generateParentInvitationEmail, generateWelcomeEmail, generateAccountCreatedEmail, generateEnrollmentRejectionEmail, wrapEmailWithHeader } from '@/lib/emails'
+import { generateReferralRequestEmail, generateReferralConfirmationEmail, generateAssessmentBookingEmail, generateLessonBookingEmail, generateRecurringBookingEmail, generateCancellationEmail, generateParentInvitationEmail, generateWelcomeEmail, generateAccountCreatedEmail, generateEnrollmentRejectionEmail, generateCoordinatorReferralNewParentEmail, generateCoordinatorReferralExistingParentEmail, wrapEmailWithHeader } from '@/lib/emails'
 
 type EmailTemplate =
   | 'enrollment_invite'
@@ -564,6 +564,43 @@ export const emailService = {
       coordinatorName: params.coordinatorName,
     })
 
+    return sendEmail({
+      to: params.parentEmail,
+      templateType: 'custom',
+      toName: params.parentName,
+      customData: { subject, html },
+    })
+  },
+
+  async sendCoordinatorReferralNewParent(params: {
+    parentEmail: string
+    parentName: string
+    childName: string
+    temporaryPassword: string
+  }) {
+    const { subject, html } = generateCoordinatorReferralNewParentEmail({
+      parentName: params.parentName,
+      childName: params.childName,
+      email: params.parentEmail,
+      temporaryPassword: params.temporaryPassword,
+    })
+    return sendEmail({
+      to: params.parentEmail,
+      templateType: 'custom',
+      toName: params.parentName,
+      customData: { subject, html },
+    })
+  },
+
+  async sendCoordinatorReferralExistingParent(params: {
+    parentEmail: string
+    parentName: string
+    childName: string
+  }) {
+    const { subject, html } = generateCoordinatorReferralExistingParentEmail({
+      parentName: params.parentName,
+      childName: params.childName,
+    })
     return sendEmail({
       to: params.parentEmail,
       templateType: 'custom',
