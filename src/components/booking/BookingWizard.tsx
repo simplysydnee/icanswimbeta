@@ -392,6 +392,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
             recurringEndDate={recurringEndDate}
             selectedRecurringSessions={selectedRecurringSessions.map(s => s.id)}
             swimmerId={selectedSwimmer?.id || null} // Pass swimmerId for flexible_swimmer check
+            swimmerEnrollmentStatus={selectedSwimmer?.enrollmentStatus ?? null}
             onSelectSession={(session) => {
               setSelectedSessionId(session.id);
               setSelectedSession(session);
@@ -461,7 +462,8 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
               </div>
             </div>
           );
-        } else if (isAssessment) {
+        } 
+        /*else if (isAssessment) {
           // Assessment confirmation (keep existing for now)
           return (
             <div className="space-y-6">
@@ -499,7 +501,8 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
               </div>
             </div>
           );
-        } else {
+        } */
+       else {
           // Regular booking confirmation using ConfirmationStep
           const sessions = sessionType === 'single' && selectedSession
             ? [selectedSession]

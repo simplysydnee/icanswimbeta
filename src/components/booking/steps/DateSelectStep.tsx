@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, addMonths, addWeeks, startOfWeek, endOfWeek, parseISO, isBefore, startOfDay, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, addDays } from 'date-fns';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, User } from 'lucide-react';
-import type { AvailableSession } from '@/types/booking';
+import type { AvailableSession, EnrollmentStatus } from '@/types/booking';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -39,6 +39,8 @@ interface DateSelectStepProps {
   recurringEndDate: Date | null;
   selectedRecurringSessions: string[];
   swimmerId: string | null; // Add swimmerId for flexible_swimmer check
+  /** Drives `/api/sessions/available` sessionType filter: waitlist → assessment, else lesson */
+  swimmerEnrollmentStatus?: EnrollmentStatus | null;
   onSelectSession: (session: AvailableSession) => void;
   onSetRecurring: (opts: {
     day?: number;
@@ -60,9 +62,12 @@ export function DateSelectStep({
   recurringEndDate,
   selectedRecurringSessions,
   swimmerId,
+  swimmerEnrollmentStatus = null,
   onSelectSession,
   onSetRecurring,
 }: DateSelectStepProps) {
+  const sessionsApiSessionType =
+    swimmerEnrollmentStatus === 'waitlist' ? 'assessment' : 'lesson';
   // Single session mode state
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const inSevenDays = new Date();
@@ -101,12 +106,20 @@ export function DateSelectStep({
 
   // Fetch available sessions for single mode week
   const { data: weekSessions = [], isLoading: isLoadingWeek } = useQuery({
-    queryKey: ['available-sessions', instructorId, currentWeekStart.toISOString(), swimmerId, 'single'],
+    queryKey: [
+      'available-sessions',
+      instructorId,
+      currentWeekStart.toISOString(),
+      swimmerId,
+      sessionsApiSessionType,
+      'single',
+    ],
     queryFn: async () => {
       const params = new URLSearchParams({
         startDate: currentWeekStart.toISOString(),
         endDate: weekEnd.toISOString(),
         bookingType: 'single', // Specify booking type
+        sessionType: sessionsApiSessionType,
       });
       if (instructorId) {
         params.append('instructorId', instructorId);
@@ -146,7 +159,14 @@ export function DateSelectStep({
 
   // Fetch available sessions for recurring mode date range
   const { data: rangeSessions = [], isLoading: isLoadingRange } = useQuery({
-    queryKey: ['available-sessions-recurring', instructorId, localStartDate?.toISOString(), localEndDate?.toISOString(), swimmerId],
+    queryKey: [
+      'available-sessions-recurring',
+      instructorId,
+      localStartDate?.toISOString(),
+      localEndDate?.toISOString(),
+      swimmerId,
+      sessionsApiSessionType,
+    ],
     queryFn: async () => {
       if (!localStartDate || !localEndDate) return [];
 
@@ -154,6 +174,7 @@ export function DateSelectStep({
         startDate: localStartDate.toISOString(),
         endDate: localEndDate.toISOString(),
         bookingType: 'recurring', // Specify booking type
+        sessionType: sessionsApiSessionType,
       });
       if (instructorId) {
         params.append('instructorId', instructorId);

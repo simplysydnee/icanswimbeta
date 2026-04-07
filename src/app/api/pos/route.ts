@@ -56,11 +56,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (coordinatorId) {
-      query = query.eq('coordinator_id', coordinatorId);
+      query = query.eq('coordinator_id', user.id);
     }
-
+    
     const { data: poData, error } = await query;
-
+    
     if (error) {
       console.error('Error fetching POs:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });

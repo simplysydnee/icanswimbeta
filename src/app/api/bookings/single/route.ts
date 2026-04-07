@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     // Validate swimmer belongs to parent
     const { data: swimmer } = await serviceSupabase
       .from('swimmers')
-      .select('id, funding_source_id, flexible_swimmer, is_semi_private, enrollment_status, first_name, last_name')
+      .select('id, funding_source_id, flexible_swimmer, is_semi_private, enrollment_status, approval_status, first_name, last_name')
       .eq('id', swimmerId)
       .eq('parent_id', parentId)
       .single();
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     // Check session availability and validate session type rules
     const { data: session } = await serviceSupabase
       .from('sessions')
-      .select('id, start_time, end_time, status, is_full, max_capacity, booking_count, instructor_id, location, is_recurring, session_type_detail, is_semi_private_restricted')
+      .select('id, start_time, end_time, status, is_full, max_capacity, booking_count, instructor_id, location, is_recurring, session_type, session_type_detail, is_semi_private_restricted')
       .eq('id', sessionId)
       .in('status', ['available', 'open'])
       .eq('is_full', false)
@@ -109,11 +109,29 @@ export async function POST(request: Request) {
 
     // Validate swimmer enrollment status
     // All enrolled swimmers (regular AND flexible) can book single lessons
-    if (swimmer.enrollment_status !== 'enrolled' && swimmer.enrollment_status !== 'approved') {
+    // Only proceed if admin/coordinator approval (i.e. swimmer.approval_status === "approved")
+    if (swimmer.approval_status !== 'approved') {
       return NextResponse.json({
-        error: 'SWIMMER_NOT_ENROLLED',
-        message: 'Swimmer must be enrolled to book lessons'
-      }, { status: 400 });
+        error: 'APPROVAL_REQUIRED',
+        message: 'You need admin/coordinator approval before booking.'
+      }, { status: 403 });
+    }
+
+    // Check enrollment status based on session type
+    if (session.session_type === 'lesson') {
+      if (swimmer.enrollment_status !== 'enrolled') {
+        return NextResponse.json({
+          error: 'SWIMMER_NOT_ENROLLED',
+          message: 'Swimmer must be enrolled to book lessons'
+        }, { status: 400 });
+      }
+    } else if (session.session_type === 'assessment') {
+      if (swimmer.enrollment_status !== 'waitlist') {
+        return NextResponse.json({
+          error: 'SWIMMER_NOT_WAITLIST',
+          message: 'Swimmer must be on the waitlist to book an assessment'
+        }, { status: 400 });
+      }
     }
 
     // Business rule: Single lessons are floating sessions (non-recurring)
@@ -130,7 +148,7 @@ export async function POST(request: Request) {
     let currentBookingCount: number = 0;
     /** Coordinator user id from the purchase order row (profiles.id), not swimmers.coordinator_id */
     let poCoordinatorId: string | null = null;
-    if (fundingSourceId) {
+    if (fundingSourceId && session.session_type === 'lesson') {
       console.log('Funding source requires authorization:', fundingSourceRow?.requires_authorization);
       if (fundingSourceRow?.requires_authorization) {
         const { data: purchaseOrders } = await serviceSupabase
@@ -187,6 +205,33 @@ export async function POST(request: Request) {
     if (sessionUpdateError) {
       await serviceSupabase.from('bookings').delete().eq('id', booking.id);
       return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
+    }
+
+    if (session.session_type === 'assessment') {
+      const { error: swimmerAssessmentError } = await serviceSupabase
+        .from('swimmers')
+        .update({
+          assessment_status: 'scheduled',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', swimmerId)
+        .eq('assessment_status', 'not_scheduled');
+
+      if (swimmerAssessmentError) {
+        await serviceSupabase.from('bookings').delete().eq('id', booking.id);
+        await serviceSupabase
+          .from('sessions')
+          .update({
+            booking_count: session.booking_count ?? 0,
+            is_full: session.is_full ?? false,
+            status: session.status,
+          })
+          .eq('id', sessionId);
+        return NextResponse.json(
+          { error: 'Failed to update swimmer assessment status' },
+          { status: 500 }
+        );
+      }
     }
 
     // Update funding source PO if applicable

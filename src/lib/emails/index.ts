@@ -5,4 +5,6 @@ export * from './referral-request';
 export * from './referral-confirmation';
 export * from './booking-emails';
 export * from './parent-invitation';
+export * from './enrollment-rejection';
+export * from './coordinator-referral';
 export * from './email-wrapper';

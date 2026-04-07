@@ -70,11 +70,11 @@ export function SwimmerSelectStep({ selectedSwimmerId, onSelectSwimmer }: Swimme
 
   // Split swimmers into groups
   const canBookSwimmers = swimmers.filter(swimmer =>
-    swimmer.enrollmentStatus === 'enrolled' || swimmer.enrollmentStatus === 'waitlist'
+    (swimmer.enrollmentStatus === 'enrolled' || swimmer.enrollmentStatus === 'waitlist') && swimmer.approvalStatus === 'approved'
   );
 
   const cannotBookSwimmers = swimmers.filter(swimmer =>
-    !(swimmer.enrollmentStatus === 'enrolled' || swimmer.enrollmentStatus === 'waitlist')
+    !(swimmer.approvalStatus === 'approved')
   );
 
   return (
