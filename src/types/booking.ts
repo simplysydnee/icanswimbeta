@@ -35,6 +35,7 @@ export type BookingStep =
 
 // Swimmer interface
 export interface Swimmer {
+  approvalStatus: string;
   id: string;
   firstName: string;
   lastName: string;

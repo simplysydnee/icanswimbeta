@@ -62,7 +62,7 @@ export function SwimmerCard({ swimmer, isSelected, disabled, onClick }: SwimmerC
         {/* Name and badges */}
         <div className="flex items-center gap-2">
           <h3 className="font-semibold">
-            {swimmer.firstName} {swimmer.lastName} {swimmer.id}
+            {swimmer.firstName} {swimmer.lastName}
           </h3>
           {/* For debuggin purpose only */}
           <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
@@ -77,7 +77,7 @@ export function SwimmerCard({ swimmer, isSelected, disabled, onClick }: SwimmerC
 
         {/* Status and level badges */}
         <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge status={swimmer.enrollmentStatus} size="sm" />
+          <StatusBadge status={swimmer?.enrollmentStatus} size="sm" />
 
           <Badge variant={bookingStatus.variant} size="sm">
             {bookingStatus.text}

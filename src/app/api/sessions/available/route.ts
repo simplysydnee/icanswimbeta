@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
     const endDate = searchParams.get('endDate')
     const instructorId = searchParams.get('instructorId')
     const location = searchParams.get('location')
-    const sessionType = searchParams.get('sessionType')
+    const sessionType =
+      searchParams.get('sessionType') ?? searchParams.get('session_type')
     const excludeSessionId = searchParams.get('excludeSessionId')
     const bookingType = searchParams.get('bookingType')
 
@@ -76,13 +77,14 @@ export async function GET(request: NextRequest) {
     if (bookingType === 'recurring') {
       query = query.eq('is_recurring', true)
     }
-    /*
-    if (location) {
-      query = query.eq('location', location)
-    }
 
     if (sessionType) {
       query = query.eq('session_type', sessionType)
+    }
+
+    /*
+    if (location) {
+      query = query.eq('location', location)
     }
 
     if (excludeSessionId) {
