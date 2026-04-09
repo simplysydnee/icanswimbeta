@@ -269,7 +269,7 @@ export async function GET(req: Request) {
 
 const querySchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(100).default(10),
+  limit: Joi.number().integer().min(1).max(100).default(1000),
 
   search: Joi.string().allow("").optional(),
 

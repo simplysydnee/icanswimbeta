@@ -57,6 +57,14 @@ const INSTRUCTOR_COLORS = [
   { bg: 'bg-sky-100', border: 'border-sky-500', text: 'text-sky-800' },
 ]
 
+/** Priority swimmers listed first (top) within the same slot/day, then by start time. */
+function compareSessionsPriorityFirst(a: Session, b: Session): number {
+  const pa = a.swimmer_is_priority_booking ? 1 : 0
+  const pb = b.swimmer_is_priority_booking ? 1 : 0
+  if (pa !== pb) return pb - pa
+  return parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime()
+}
+
 interface Session {
   id: string
   start_time: string
@@ -72,6 +80,7 @@ interface Session {
   parent_email: string | null
   booking_id: string | null
   bookings_count: number
+  swimmer_is_priority_booking?: boolean
 }
 
 interface Instructor {
@@ -358,7 +367,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
         instructor:profiles!instructor_id(full_name, avatar_url),
         bookings(
           id,
-          swimmer:swimmers(id, first_name, last_name, parent_id),
+          swimmer:swimmers(id, first_name, last_name, parent_id, is_priority_booking),
           parent:profiles!parent_id(email)
         )
       `)
@@ -382,7 +391,15 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
       const formatted: Session[] = data.map((s) => {
         // Handle instructor data which might be an array or object
         const instructor = Array.isArray(s.instructor) ? s.instructor[0] : s.instructor
-        const bookings = s.bookings || []
+        const rawBookings = s.bookings || []
+        const bookings = [...rawBookings].sort((a, b) => {
+          const swA = a.swimmer as { is_priority_booking?: boolean | null } | undefined
+          const swB = b.swimmer as { is_priority_booking?: boolean | null } | undefined
+          const pa = swA?.is_priority_booking ? 1 : 0
+          const pb = swB?.is_priority_booking ? 1 : 0
+          if (pa !== pb) return pb - pa
+          return 0
+        })
         const firstBooking = bookings[0]
 
         return {
@@ -402,6 +419,9 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
           parent_email: firstBooking?.parent?.email || null,
           booking_id: firstBooking?.id || null,
           bookings_count: bookings.length,
+          swimmer_is_priority_booking: !!(
+            firstBooking?.swimmer as { is_priority_booking?: boolean | null } | undefined
+          )?.is_priority_booking,
         }
       })
       setSessions(formatted)
@@ -427,22 +447,26 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
   const getSessionsForSlot = (instructorId: string, timeSlot: string) => {
     const [slotHour, slotMinute] = timeSlot.split(':').map(Number)
 
-    return sessions.filter(session => {
-      if (session.instructor_id !== instructorId) return false
+    return sessions
+      .filter(session => {
+        if (session.instructor_id !== instructorId) return false
 
-      // Apply filters
-      if (selectedInstructorFilter !== 'all' && session.instructor_id !== selectedInstructorFilter) return false
-      if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
+        // Apply filters
+        if (selectedInstructorFilter !== 'all' && session.instructor_id !== selectedInstructorFilter) return false
+        if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
 
-      // Convert UTC session time to Pacific time for comparison
-      const { hour: sessionStartHour, minute: sessionStartMinute } = getPacificHourMinute(session.start_time)
+        // Convert UTC session time to Pacific time for comparison
+        const { hour: sessionStartHour, minute: sessionStartMinute } = getPacificHourMinute(session.start_time)
 
-      // Check if session starts in this 30-minute slot
-      // Slot represents the start of a 30-minute period (e.g., "13:00" means 1:00-1:30 PM)
-      return sessionStartHour === slotHour &&
-             sessionStartMinute >= slotMinute &&
-             sessionStartMinute < slotMinute + 30
-    })
+        // Check if session starts in this 30-minute slot
+        // Slot represents the start of a 30-minute period (e.g., "13:00" means 1:00-1:30 PM)
+        return (
+          sessionStartHour === slotHour &&
+          sessionStartMinute >= slotMinute &&
+          sessionStartMinute < slotMinute + 30
+        )
+      })
+      .sort(compareSessionsPriorityFirst)
   }
 
   // Get displayed instructors based on sessions and filters
@@ -860,29 +884,33 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                     )
                   }
 
-                  return timeSlots.map((slot) => {
+                  return (
+                    <>
+                      {timeSlots.map((slot) => {
                     const [slotHour, slotMinute] = slot.split(':').map(Number)
-                    const slotSessions = sessions.filter(session => {
-                      // Apply instructor filter
-                      if (selectedInstructorFilter !== 'all' && session.instructor_id !== selectedInstructorFilter) return false
-                      // Apply location filter
-                      if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
+                    const slotSessions = sessions
+                      .filter(session => {
+                        // Apply instructor filter
+                        if (selectedInstructorFilter !== 'all' && session.instructor_id !== selectedInstructorFilter) return false
+                        // Apply location filter
+                        if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
 
-                      const sessionStartUTC = parseISO(session.start_time)
-                      // Use Intl.DateTimeFormat for proper Pacific timezone conversion
-                      const formatter = new Intl.DateTimeFormat('en-US', {
-                        timeZone: 'America/Los_Angeles',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                      });
-                      const parts = formatter.formatToParts(sessionStartUTC);
-                      const sessionHour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
-                      const sessionMinute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
-                      return sessionHour === slotHour &&
-                             sessionMinute >= slotMinute &&
-                             sessionMinute < slotMinute + 30
-                    })
+                        const sessionStartUTC = parseISO(session.start_time)
+                        // Use Intl.DateTimeFormat for proper Pacific timezone conversion
+                        const formatter = new Intl.DateTimeFormat('en-US', {
+                          timeZone: 'America/Los_Angeles',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false
+                        });
+                        const parts = formatter.formatToParts(sessionStartUTC);
+                        const sessionHour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
+                        const sessionMinute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
+                        return sessionHour === slotHour &&
+                               sessionMinute >= slotMinute &&
+                               sessionMinute < slotMinute + 30
+                      })
+                      .sort(compareSessionsPriorityFirst)
 
                     if (slotSessions.length === 0) return null
 
@@ -897,7 +925,14 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                           const color = instructor ? INSTRUCTOR_COLORS[instructor.colorIndex] : INSTRUCTOR_COLORS[0]
 
                           return (
-                            <div key={session.id} className={`${color.bg} ${color.border} border-l-4 rounded p-3`}>
+                            <div
+                              key={session.id}
+                              className={`${color.bg} ${color.border} border-l-4 rounded p-3 ${
+                                session.swimmer_is_priority_booking
+                                  ? 'ring-2 ring-amber-400 ring-offset-1 relative z-10'
+                                  : ''
+                              }`}
+                            >
                               <div className="flex justify-between items-start">
                                 <div>
                                   <p className={`font-semibold ${color.text}`}>
@@ -917,6 +952,11 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                   </div>
                                 </div>
                                 <div className="flex flex-col items-end gap-1">
+                                  {session.swimmer_is_priority_booking && (
+                                    <Badge className="text-xs bg-amber-100 text-amber-900 border-amber-300">
+                                      Priority
+                                    </Badge>
+                                  )}
                                   <Badge variant="outline" className="text-xs">
                                     {session.session_type === 'assessment' ? 'Assessment' : 'Lesson'}
                                   </Badge>
@@ -958,7 +998,9 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                     </div>
                   )
                 })}
-                )}
+                    </>
+                  )
+                })()}
               </div>
 
               {/* Desktop Table for Day View */}
@@ -1003,7 +1045,11 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                               {slotSessions.map((session) => (
                                 <div
                                   key={session.id}
-                                  className={`${color.bg} ${color.border} border-l-4 rounded p-2 mb-1 group relative`}
+                                  className={`${color.bg} ${color.border} border-l-4 rounded p-2 mb-1 group relative ${
+                                    session.swimmer_is_priority_booking
+                                      ? 'ring-2 ring-amber-400 ring-offset-1 z-10'
+                                      : ''
+                                  }`}
                                 >
                                   <p className={`text-sm font-semibold ${color.text}`}>
                                     {session.swimmer_name || 'Open Slot'}
@@ -1012,6 +1058,11 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                     {format(parseISO(session.start_time), 'h:mm')} - {format(parseISO(session.end_time), 'h:mm a')}
                                   </p>
                                   <div className="flex gap-1 mt-1 flex-wrap">
+                                    {session.swimmer_is_priority_booking && (
+                                      <Badge className="text-[10px] px-1 py-0 bg-amber-100 text-amber-900 border-amber-300">
+                                        Priority
+                                      </Badge>
+                                    )}
                                     <Badge variant="outline" className="text-xs">
                                       {session.session_type === 'assessment' ? 'Assessment' : 'Lesson'}
                                     </Badge>
@@ -1066,14 +1117,16 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                   const dayDate = format(day, 'MMM d')
                   const isToday = isSameDay(day, new Date())
 
-                  const daySessions = sessions.filter(s => {
-                    // Apply instructor filter
-                    if (selectedInstructorFilter !== 'all' && s.instructor_id !== selectedInstructorFilter) return false
-                    // Apply location filter
-                    if (selectedLocationFilter !== 'all' && s.location !== selectedLocationFilter) return false
-                    // Check if session is on this day
-                    return isSameDay(parseISO(s.start_time), day)
-                  })
+                  const daySessions = sessions
+                    .filter(s => {
+                      // Apply instructor filter
+                      if (selectedInstructorFilter !== 'all' && s.instructor_id !== selectedInstructorFilter) return false
+                      // Apply location filter
+                      if (selectedLocationFilter !== 'all' && s.location !== selectedLocationFilter) return false
+                      // Check if session is on this day
+                      return isSameDay(parseISO(s.start_time), day)
+                    })
+                    .sort(compareSessionsPriorityFirst)
 
                   if (daySessions.length === 0) return null
 
@@ -1099,7 +1152,14 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                           const color = instructor ? INSTRUCTOR_COLORS[instructor.colorIndex] : INSTRUCTOR_COLORS[0]
 
                           return (
-                            <div key={session.id} className={`${color.bg} ${color.border} border-l-4 rounded p-3`}>
+                            <div
+                              key={session.id}
+                              className={`${color.bg} ${color.border} border-l-4 rounded p-3 ${
+                                session.swimmer_is_priority_booking
+                                  ? 'ring-2 ring-amber-400 ring-offset-1 relative z-10'
+                                  : ''
+                              }`}
+                            >
                               <div className="flex justify-between items-start">
                                 <div>
                                   <p className={`font-semibold ${color.text}`}>
@@ -1119,6 +1179,11 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                   </div>
                                 </div>
                                 <div className="flex flex-col items-end gap-1">
+                                  {session.swimmer_is_priority_booking && (
+                                    <Badge className="text-xs bg-amber-100 text-amber-900 border-amber-300">
+                                      Priority
+                                    </Badge>
+                                  )}
                                   <Badge variant="outline" className="text-xs">
                                     {session.session_type === 'assessment' ? 'Assessment' : 'Lesson'}
                                   </Badge>
@@ -1212,7 +1277,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                           {displayedInstructors.map((instructor) => {
                             const instructorDaySessions = daySessions
                               .filter(s => s.instructor_id === instructor.id)
-                              .sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime())
+                              .sort(compareSessionsPriorityFirst)
                             const color = INSTRUCTOR_COLORS[instructor.colorIndex]
 
                             return (
@@ -1224,7 +1289,11 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                     {instructorDaySessions.map((session) => (
                                       <div
                                         key={session.id}
-                                        className={`${color.bg} ${color.border} border-l-2 rounded p-1.5 text-xs group relative cursor-pointer hover:shadow-sm`}
+                                        className={`${color.bg} ${color.border} border-l-2 rounded p-1.5 text-xs group relative cursor-pointer hover:shadow-sm ${
+                                          session.swimmer_is_priority_booking
+                                            ? 'ring-2 ring-amber-400 ring-offset-1 z-10'
+                                            : ''
+                                        }`}
                                       >
                                         <div className="flex justify-between items-start">
                                           <span className={`font-semibold ${color.text}`}>
@@ -1244,7 +1313,12 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                         <p className="text-gray-700 truncate font-medium">
                                           {session.swimmer_name || 'Open'}
                                         </p>
-                                        <div className="flex gap-1 mt-1">
+                                        <div className="flex gap-1 mt-1 flex-wrap">
+                                          {session.swimmer_is_priority_booking && (
+                                            <Badge className="text-[10px] px-1 py-0 bg-amber-100 text-amber-900 border-amber-300">
+                                              Priority
+                                            </Badge>
+                                          )}
                                           <Badge variant="outline" className="text-[10px] px-1 py-0">
                                             {session.session_type === 'assessment' ? 'Assess' : 'Lesson'}
                                           </Badge>

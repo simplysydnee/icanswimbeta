@@ -955,6 +955,7 @@ function AdminSessionsContent() {
                       <TableHead className="px-2">Date & Time</TableHead>
                       <TableHead className="px-2 hidden md:table-cell">Location</TableHead>
                       <TableHead className="px-2">Instructor</TableHead>
+                      <TableHead className="px-2">Type</TableHead>
                       <TableHead className="px-2 hidden lg:table-cell">Client</TableHead>
                       <TableHead className="px-2">Status</TableHead>
                       <TableHead className="px-2 hidden sm:table-cell">Capacity</TableHead>
@@ -1001,6 +1002,13 @@ function AdminSessionsContent() {
                           <TableCell className="px-2 py-2">
                             <span className="text-xs font-medium">
                               {session.instructor_name || 'Unassigned'}
+                            </span>
+                          </TableCell>
+
+                          {/* Session Type */}
+                          <TableCell className="px-2 py-2">
+                            <span className="text-xs font-medium">
+                              {session.session_type || ''}
                             </span>
                           </TableCell>
 
