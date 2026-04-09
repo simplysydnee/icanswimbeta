@@ -11,19 +11,19 @@ export type SessionMode = z.infer<typeof SessionMode>;
 export const SESSION_MODES = [
   {
     value: 'single' as const,
-    label: 'Single (Floating)',
+    label: 'Single Lesson (Floating)',
     description: 'One-time session for makeup or special booking',
     icon: 'Calendar',
   },
   {
     value: 'repeating' as const,
-    label: 'Repeating (Weekly)',
+    label: 'Repeating Lesson (Weekly)',
     description: 'Recurring weekly lessons on a specific day',
     icon: 'Repeat',
   },
   {
     value: 'assessment' as const,
-    label: 'Assessment Block',
+    label: 'Single Assessment',
     description: 'One-time assessment sessions',
     icon: 'ClipboardCheck',
   },

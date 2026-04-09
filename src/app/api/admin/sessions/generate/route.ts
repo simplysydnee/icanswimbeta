@@ -135,8 +135,10 @@ function generateTimeSlots(
   // Sort breaks by start time to process them in order
   const sortedBreaks = [...breaks].sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-  // Keep creating slots until we reach or exceed the original end time
-  while (isTimeBefore(currentStart, originalEndTime) || currentStart === originalEndTime) {
+  // Only start a new slot while its start is strictly before endTime.
+  // (Do not use currentStart === endTime — that duplicated a slot after one ending exactly at endTime, e.g. 14:00–14:30 with end 14:30 produced a spurious 14:30–15:00.)
+  // A slot may still end after originalEndTime when it began before endTime (extension case above).
+  while (isTimeBefore(currentStart, originalEndTime)) {
     const currentEnd = addMinutesToTime(currentStart, durationMinutes);
 
     // Check if this slot overlaps with any break

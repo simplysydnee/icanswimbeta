@@ -27,13 +27,13 @@ export function SessionGeneratorForm() {
   const { mutate: generateSessions, isPending } = useGenerateSessions();
 
   // Form state
-  const [mode, setMode] = useState<SessionMode>('repeating');
+  const [mode, setMode] = useState<SessionMode>('single');
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [repeatDay, setRepeatDay] = useState<number>(1); // Monday default
   const [blackoutDates, setBlackoutDates] = useState<Date[]>([]);
   const [startTime, setStartTime] = useState<string>('14:00'); // 2 PM default
-  const [endTime, setEndTime] = useState<string>('17:00'); // 5 PM default
+  const [endTime, setEndTime] = useState<string>('14:30'); // 2:30 PM default
   const [durationMinutes, setDurationMinutes] = useState<30>(30);
   const [breaks, setBreaks] = useState<Break[]>([]);
   const [instructorIds, setInstructorIds] = useState<string[]>([]);
@@ -44,13 +44,13 @@ export function SessionGeneratorForm() {
 
   // Reset form to defaults
   const resetForm = () => {
-    setMode('repeating');
+    setMode('single');
     setStartDate(undefined);
     setEndDate(undefined);
     setRepeatDay(1);
     setBlackoutDates([]);
     setStartTime('14:00');
-    setEndTime('17:00');
+    setEndTime('14:30');
     setDurationMinutes(30);
     setBreaks([]);
     setInstructorIds([]);
