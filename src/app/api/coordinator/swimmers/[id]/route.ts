@@ -54,6 +54,7 @@ export async function PATCH(
         `
         id,
         coordinator_id,
+        funding_coordinator_email,
         first_name,
         last_name,
         parent_id,
@@ -75,7 +76,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Swimmer not found' }, { status: 404 });
     }
 
-    if (!isAdmin && swimmer.coordinator_id !== user.id) {
+    if (!isAdmin && swimmer.funding_coordinator_email !== user.email) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -93,10 +94,8 @@ export async function PATCH(
     if (decision === 'approved') {
       updatePayload.approved_at = now;
       updatePayload.approved_by = user.id;
-      updatePayload.enrollment_status = 'pending_assessment';
-    } else {
-      updatePayload.enrollment_status = 'declined';
-    }
+      //updatePayload.enrollment_status = 'waitlist';
+    } 
 
     const { data: updatedRows, error: updateError } = await supabase
       .from('swimmers')

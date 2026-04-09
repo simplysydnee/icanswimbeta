@@ -374,7 +374,11 @@ export async function POST(req: Request) {
 
       funding_source_id: value.funding_source_id ?? null,
       funding_coordinator_name: value.funding_coordinator_name ?? null,
-      funding_coordinator_email: value.funding_coordinator_email ?? null,
+      funding_coordinator_email:
+        value.funding_coordinator_email &&
+        String(value.funding_coordinator_email).trim() !== ''
+          ? String(value.funding_coordinator_email).trim()
+          : null,
       funding_coordinator_phone: value.funding_coordinator_phone ?? null,
       coordinator_id: value.coordinator_id ?? null,
 
@@ -464,7 +468,14 @@ const schema = Joi.object({
 
   funding_source_id: Joi.string().uuid().optional().allow(null),
   funding_coordinator_name: Joi.string().allow(null, ''),
-  funding_coordinator_email: Joi.string().email().allow(null, ''),
+  // Allow internal / dev domains (e.g. *.local) — default Joi email rejects non-IANA TLDs.
+  funding_coordinator_email: Joi.alternatives()
+    .try(
+      Joi.valid(null),
+      Joi.string().trim().valid(''),
+      Joi.string().trim().email({ tlds: { allow: false } })
+    )
+    .optional(),
   funding_coordinator_phone: Joi.string().allow(null, ''),
   coordinator_id: Joi.string().uuid().optional().allow(null),
 

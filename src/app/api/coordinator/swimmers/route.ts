@@ -107,7 +107,8 @@ export async function GET(request: NextRequest) {
       `,
         { count: 'exact' }
       )
-      .eq('coordinator_id', scope.coordinatorId);
+      //.eq('coordinator_id', scope.coordinatorId);
+      .eq('funding_coordinator_email', user.email);
 
     if (search) {
       const cleaned = search.replace(/,/g, ' ').trim();
@@ -120,7 +121,7 @@ export async function GET(request: NextRequest) {
     query = query.order(sortBy, { ascending: sortOrder }).range(from, to);
 
     const { data, error, count } = await query;
-
+    console.log("Data............", data);
     if (error) {
       console.error('GET /api/coordinator/swimmers:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
