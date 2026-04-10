@@ -68,6 +68,7 @@ interface PurchaseOrder {
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
   pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+  approved: { label: 'Approved', color: 'bg-green-100 text-green-800', icon: CheckCircle},
   approved_pending_auth: { label: 'Approved (Pending Auth#)', color: 'bg-orange-100 text-orange-800', icon: AlertCircle },
   active: { label: 'Active', color: 'bg-green-100 text-green-800', icon: CheckCircle },
   completed: { label: 'Completed', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
@@ -271,6 +272,7 @@ export default function CoordinatorPOSPage() {
         </div>
       ) : (
         <div className="space-y-4">
+          <p>asd</p>
           {filteredPOs.map((po) => (
             <POCard
               key={po.id}
@@ -404,7 +406,9 @@ function POCard({
             <Badge className={statusConfig.color}>
               <StatusIcon className="h-3 w-3 mr-1" />
               {statusConfig.label}
+              {po.coordinator_id}
             </Badge>
+            <p>{po.funding_source_id}</p>
             <Badge variant="outline">
               {po.po_type === 'assessment' ? 'ASMT' : 'LESSONS'}
             </Badge>
@@ -435,6 +439,7 @@ function POCard({
 
           {/* Actions */}
           <div className="flex items-center gap-2">
+            {po.status}
             {po.status === 'pending' && (
               <Button size="sm" onClick={onApprove}>
                 Approve
