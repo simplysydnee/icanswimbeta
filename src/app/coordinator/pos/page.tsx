@@ -272,7 +272,6 @@ export default function CoordinatorPOSPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          <p>asd</p>
           {filteredPOs.map((po) => (
             <POCard
               key={po.id}
@@ -406,9 +405,7 @@ function POCard({
             <Badge className={statusConfig.color}>
               <StatusIcon className="h-3 w-3 mr-1" />
               {statusConfig.label}
-              {po.coordinator_id}
             </Badge>
-            <p>{po.funding_source_id}</p>
             <Badge variant="outline">
               {po.po_type === 'assessment' ? 'ASMT' : 'LESSONS'}
             </Badge>
@@ -439,7 +436,6 @@ function POCard({
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            {po.status}
             {po.status === 'pending' && (
               <Button size="sm" onClick={onApprove}>
                 Approve
