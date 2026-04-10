@@ -68,6 +68,7 @@ interface PurchaseOrder {
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
   pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+  approved: { label: 'Approved', color: 'bg-green-100 text-green-800', icon: CheckCircle},
   approved_pending_auth: { label: 'Approved (Pending Auth#)', color: 'bg-orange-100 text-orange-800', icon: AlertCircle },
   active: { label: 'Active', color: 'bg-green-100 text-green-800', icon: CheckCircle },
   completed: { label: 'Completed', color: 'bg-blue-100 text-blue-800', icon: CheckCircle },
