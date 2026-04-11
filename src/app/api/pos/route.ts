@@ -260,15 +260,21 @@ export async function POST(request: NextRequest) {
       swimmer_id,
       funding_source_id,
       coordinator_id,
-      po_type,
+      po_type: rawPoType,
       sub_code,
       sessions_authorized,
       start_date,
       end_date,
       assessment_id,
       parent_po_id,
-      notes
+      notes,
+      authorization_number,
+      service_code,
+      service_subcode,
     } = body;
+
+    const po_type =
+      rawPoType === 'lesson' ? 'lessons' : rawPoType;
 
     // Validate required fields
     if (!swimmer_id || !funding_source_id || !po_type || !start_date || !end_date) {
@@ -277,6 +283,59 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    if (po_type !== 'assessment' && po_type !== 'lessons') {
+      return NextResponse.json(
+        { error: 'po_type must be assessment, lesson, or lessons' },
+        { status: 400 }
+      );
+    }
+
+    const start = new Date(start_date);
+    const end = new Date(end_date);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return NextResponse.json({ error: 'Invalid start_date or end_date' }, { status: 400 });
+    }
+    if (end < start) {
+      return NextResponse.json(
+        { error: 'end_date must be on or after start_date' },
+        { status: 400 }
+      );
+    }
+    if (po_type === 'lessons' && end <= start) {
+      return NextResponse.json(
+        { error: 'end_date must be after start_date' },
+        { status: 400 }
+      );
+    }
+
+    let sessionsAuth: number;
+    if (po_type === 'assessment') {
+      sessionsAuth = 1;
+    } else {
+      const n = Number(sessions_authorized);
+      if (!Number.isFinite(n) || n < 1 || !Number.isInteger(n)) {
+        return NextResponse.json(
+          { error: 'sessions_authorized must be a positive integer' },
+          { status: 400 }
+        );
+      }
+      sessionsAuth = n;
+    }
+
+    const subFromBody =
+      typeof sub_code === 'string' && sub_code.trim() !== ''
+        ? sub_code.trim()
+        : typeof service_subcode === 'string' && service_subcode.trim() !== ''
+          ? service_subcode.trim()
+          : null;
+
+    let combinedNotes = typeof notes === 'string' ? notes.trim() : '';
+    if (typeof service_code === 'string' && service_code.trim() !== '') {
+      const line = `Service code: ${service_code.trim()}`;
+      combinedNotes = combinedNotes ? `${line}\n\n${combinedNotes}` : line;
+    }
+    const notesValue = combinedNotes || null;
+
     const { data, error } = await supabase
       .from('purchase_orders')
       .insert({
@@ -284,15 +343,19 @@ export async function POST(request: NextRequest) {
         funding_source_id,
         coordinator_id,
         po_type,
-        sub_code: po_type === 'assessment' ? 'ASMT' : sub_code,
-        sessions_authorized: po_type === 'assessment' ? 1 : (sessions_authorized || 12),
+        authorization_number:
+          typeof authorization_number === 'string' && authorization_number.trim() !== ''
+            ? authorization_number.trim()
+            : null,
+        sub_code: po_type === 'assessment' ? 'ASMT' : subFromBody,
+        sessions_authorized: sessionsAuth,
         sessions_booked: 0,
         sessions_used: 0,
         start_date,
         end_date,
         assessment_id,
         parent_po_id,
-        notes,
+        notes: notesValue,
         status: 'pending'
       })
       .select(`

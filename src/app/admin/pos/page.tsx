@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,7 +30,10 @@ import {
   RefreshCw,
   DollarSign,
   Calendar,
-  Mail
+  Mail,
+  Plus,
+  Bell,
+  AlertTriangle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
@@ -401,6 +405,14 @@ export default function POSPage() {
             </div>
           )}
           <div className="flex gap-2">
+            {activeTab === 'purchase-orders' && (
+              <Button size="sm" asChild>
+                <Link href="/admin/pos/new">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create PO
+                </Link>
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={activeTab === 'purchase-orders' ? fetchPurchaseOrders : fetchFundingSources}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
@@ -452,6 +464,7 @@ export default function POSPage() {
       </div>
 
       {/* Funding Source Summary */}
+      {/*
       <div className="mb-6">
         <FundingSourceSummary
           stats={fundingSourceStats}
@@ -467,7 +480,7 @@ export default function POSPage() {
           }}
         />
       </div>
-
+      */}
       {/* Filters */}
       <Card className="mb-6">
         <CardContent className="p-4">
@@ -569,9 +582,9 @@ export default function POSPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="overflow-x-auto rounded-lg border bg-white">
           {selectedFundingSource && (
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2 px-4 pt-4">
               <h3 className="text-lg font-semibold">
                 {fundingSourceStats.find(fs => fs.id === selectedFundingSource)?.name} Purchase Orders
               </h3>
@@ -585,177 +598,199 @@ export default function POSPage() {
               </Button>
             </div>
           )}
-          {filteredPOs.map((po) => {
-            const statusConfig = STATUS_CONFIG[po.status] || STATUS_CONFIG.pending;
-            const StatusIcon = statusConfig.icon;
-            const isExpired = po.status === 'expired' || (po.status === 'active' && new Date(po.end_date) < new Date());
-            const isNearExpiry = po.status === 'active' && new Date(po.end_date) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+          <table className="min-w-full divide-y divide-gray-200 text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 font-semibold text-left whitespace-nowrap">Swimmer</th>
+                <th className="px-4 py-3 font-semibold text-left whitespace-nowrap">Type</th>
+                <th className="px-4 py-3 font-semibold text-left whitespace-nowrap">Status</th>
+                <th className="px-4 py-3 font-semibold text-left whitespace-nowrap">Funding / Auth #</th>
+                <th className="px-4 py-3 font-semibold text-left whitespace-nowrap">Dates</th>
+                <th className="px-4 py-3 font-semibold text-left whitespace-nowrap">Coordinator</th>
+                <th className="px-4 py-3 font-semibold text-right whitespace-nowrap">Sessions Used</th>
+                <th className="px-4 py-3 font-semibold text-right whitespace-nowrap">Sessions Authorized</th>
+                {/*<th className="px-4 py-3 font-semibold text-right whitespace-nowrap">Booked</th>*/}
+                <th className="px-4 py-3 font-semibold text-left whitespace-nowrap">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredPOs.map((po) => {
+                const statusConfig = STATUS_CONFIG[po.status] || STATUS_CONFIG.pending;
+                const StatusIcon = statusConfig.icon;
+                const isExpired = po.status === 'expired' || (po.status === 'active' && new Date(po.end_date) < new Date());
+                const isNearExpiry = po.status === 'active' && new Date(po.end_date) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-            return (
-              <Card key={po.id} className={`hover:shadow-md transition-shadow ${isExpired ? 'border-red-200' : isNearExpiry ? 'border-yellow-200' : ''}`}>
-                <CardContent className="p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center ${statusConfig.color.split(' ')[0]} shrink-0`}>
-                        <StatusIcon className={`h-5 w-5 ${statusConfig.color.split(' ')[1]}`} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <span className="font-semibold truncate">
-                            {po.swimmer?.first_name} {po.swimmer?.last_name}
-                          </span>
-                          <Badge variant="outline" className="text-xs shrink-0">
-                            {po.po_type === 'assessment' ? 'Assessment' : 'Lessons'}
-                          </Badge>
-                          <Badge className={`${statusConfig.color} border text-xs shrink-0`}>
-                            {statusConfig.label}
-                          </Badge>
-                          {isNearExpiry && po.status === 'active' && (
-                            <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs shrink-0">
-                              Expires Soon
-                            </Badge>
-                          )}
-                          {isExpired && po.status === 'active' && (
-                            <Badge className="bg-red-100 text-red-800 border-red-300 text-xs shrink-0">
-                              Expired
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-sm text-muted-foreground break-words">
-                          {po.funding_source?.short_name || 'Unknown'} •
-                          {po.authorization_number ? ` Auth: ${po.authorization_number}` : ' No auth#'} •
-                          {' '}{format(new Date(po.start_date), 'MMM d')} - {format(new Date(po.end_date), 'MMM d, yyyy')}
-                          {po.coordinator && ` • Coordinator: ${po.coordinator.full_name}`}
-                        </div>
-                      </div>
-                    </div>
+                const billingConfig = BILLING_STATUS_CONFIG[po.billing_status] || BILLING_STATUS_CONFIG.unbilled;
+                const BillingIcon = billingConfig.icon;
 
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-                      <div className="text-right sm:text-left">
-                        <div className="text-sm font-medium">
-                          {po.sessions_used}/{po.sessions_authorized} used
+                return (
+                  <tr
+                    key={po.id}
+                    className={`${isExpired ? 'bg-red-50' : isNearExpiry ? 'bg-yellow-50' : ''} group hover:bg-cyan-50 transition-colors`}
+                  >
+                    {/* Swimmer */}
+                    <td className="px-4 py-2 whitespace-nowrap font-medium">
+                      <div className="flex items-center gap-2">
+                        <span>{po.swimmer?.first_name} {po.swimmer?.last_name}</span>
+                      </div>
+                    </td>
+                    {/* Type */}
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      <Badge variant="outline" className="text-xs">
+                        {po.po_type === 'assessment' ? 'Assessment' : 'Lessons'}
+                      </Badge>
+                    </td>
+                    {/* Status */}
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      <div className="flex items-center gap-1">
+                        <div className={`h-6 w-6 rounded-full flex items-center justify-center ${statusConfig.color.split(' ')[0]}`}>
+                          <StatusIcon className={`h-3 w-3 ${statusConfig.color.split(' ')[1]}`} />
                         </div>
+                        <Badge className={`${statusConfig.color} border text-xs ml-1`}>
+                          {statusConfig.label}
+                        </Badge>
+                        {isNearExpiry && po.status === 'active' && (
+                          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs ml-1">
+                            Expires Soon
+                          </Badge>
+                        )}
+                        {isExpired && po.status === 'active' && (
+                          <Badge className="bg-red-100 text-red-800 border-red-300 text-xs ml-1">
+                            Expired
+                          </Badge>
+                        )}
+                      </div>
+                    </td>
+                    {/* Funding/ Auth */}
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      <div>
+                        <div className="font-medium">{po.funding_source?.short_name || 'Unknown'}</div>
                         <div className="text-xs text-muted-foreground">
-                          {po.sessions_booked} booked
+                          {po.authorization_number ? `Auth: ${po.authorization_number}` : 'No auth#'}
                         </div>
                       </div>
-
-                      {/* Billing Info */}
-                      <div className="text-right sm:text-left">
-                        <div className="flex flex-wrap items-center gap-2 justify-end sm:justify-start mb-1">
-                          {(() => {
-                            const billingConfig = BILLING_STATUS_CONFIG[po.billing_status] || BILLING_STATUS_CONFIG.unbilled;
-                            const BillingIcon = billingConfig.icon;
-                            return (
-                              <Badge className={`${billingConfig.color} text-xs shrink-0`}>
-                                <BillingIcon className="h-3 w-3 mr-1" />
-                                {billingConfig.label}
-                              </Badge>
-                            );
-                          })()}
-                          {po.due_date && new Date(po.due_date) < new Date() && po.billing_status !== 'paid' && (
-                            <div className="flex items-center gap-1">
-                              <Badge className="bg-red-100 text-red-800 border-red-300 text-xs shrink-0">
-                                Past Due
-                              </Badge>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-6 w-6 p-0 text-xs shrink-0"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // Use coordinator email if available
-                                  const email = po.coordinator?.email;
-                                  if (email) {
-                                    const amountOwed = ((po.billed_amount_cents || 0) - (po.paid_amount_cents || 0)) / 100;
-                                    const swimmerName = `${po.swimmer?.first_name || ''} ${po.swimmer?.last_name || ''}`.trim();
-                                    const subject = `Payment Reminder - PO ${po.authorization_number || po.id}`;
-                                    const body = `Hello ${po.coordinator?.full_name || 'Coordinator'},
-
-This is a reminder that PO ${po.authorization_number || po.id} for ${swimmerName} is past due.
-
-Amount owed: $${amountOwed.toFixed(2)}
-Due date: ${po.due_date ? new Date(po.due_date).toLocaleDateString() : 'N/A'}
-
-Please let us know when we can expect payment.
-
-Thank you,
-I Can Swim Team`;
-                                    window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                                  } else {
-                                    alert('No coordinator email on file for this PO');
-                                  }
-                                }}
+                    </td>
+                    {/* Dates */}
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      <div className="text-xs">{po.start_date ? format(new Date(po.start_date), 'MMM d, yyyy') : '-'}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {po.end_date ? format(new Date(po.end_date), 'MMM d, yyyy') : '-'}
+                      </div>
+                    </td>
+                    {/* Coordinator */}
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      <div className="text-xs">{po.coordinator?.full_name || <span className="text-gray-400">Unassigned</span>}</div>
+                    </td>
+                    {/* Sessions */}
+                    <td className="px-4 py-2 whitespace-nowrap text-right">
+                      <span className="font-medium">{po.sessions_used}</span>
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-right">
+                      <span className="font-medium">{po.sessions_authorized}</span>
+                    </td>
+                    {/* Booked 
+                    <td className="px-4 py-2 whitespace-nowrap text-right text-xs text-muted-foreground">
+                      {po.sessions_booked} booked
+                    </td>*/}
+                    {/* Actions */}
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      <div className="relative">
+                        <details className="group">
+                          <summary className="flex items-center gap-1 cursor-pointer list-none border rounded-full w-8 h-8 justify-center hover:bg-gray-100 transition">
+                            <svg
+                              className="w-5 h-5 text-gray-500"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <circle cx="5" cy="12" r="1.5" />
+                              <circle cx="12" cy="12" r="1.5" />
+                              <circle cx="19" cy="12" r="1.5" />
+                            </svg>
+                          </summary>
+                          <div className="absolute z-10 mt-2 w-44 right-0 bg-white border border-gray-200 rounded shadow-lg text-sm py-1">
+                            {/* 
+                            {(po.status === 'pending' || po.status === 'approved_pending_auth') && (
+                              <button
+                                onClick={() => openApprovalDialog(po)}
+                                className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100"
                               >
-                                <Mail className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-xs">
-                          {po.billed_amount_cents > 0 && (
-                            <span className="font-medium">${(po.billed_amount_cents / 100).toFixed(2)}</span>
-                          )}
-                          {po.paid_amount_cents > 0 && (
-                            <span className={`ml-2 ${po.paid_amount_cents >= po.billed_amount_cents ? 'text-green-600' : 'text-yellow-600'}`}>
-                              Paid: ${(po.paid_amount_cents / 100).toFixed(2)}
-                            </span>
-                          )}
-                          {po.due_date && (
-                            <div className="text-muted-foreground">
-                              Due: {format(new Date(po.due_date), 'MMM d')}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        {(po.status === 'pending' || po.status === 'approved_pending_auth') && (
-                          <Button size="sm" onClick={() => openApprovalDialog(po)} className="shrink-0">
-                            {po.status === 'pending' ? 'Review' : 'Add Auth#'}
-                          </Button>
-                        )}
-
-                        {po.status === 'active' && (
-                          <>
-                            <Button size="sm" variant="outline" onClick={() => openApprovalDialog(po)} className="shrink-0">
-                              <Eye className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
-                            {po.sessions_used >= po.sessions_authorized && (
-                              <Button size="sm" variant="outline" onClick={() => handleMarkComplete(po)} className="shrink-0">
-                                Mark Complete
-                              </Button>
+                                {po.status === 'pending' ? 'Review' : 'Add Auth#'}
+                              </button>
                             )}
-                          </>
-                        )}
-
-                        {po.status === 'completed' && (
-                          <Button size="sm" variant="outline" onClick={() => openApprovalDialog(po)} className="shrink-0">
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Button>
-                        )}
-
-                        {/* Billing Action */}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openBillingModal(po)}
-                          className="border-cyan-200 text-cyan-700 hover:bg-cyan-50 shrink-0"
-                        >
-                          <DollarSign className="h-4 w-4 mr-1" />
-                          Billing
-                        </Button>
+                            {po.status === 'active' && (
+                              <>
+                                <button
+                                  onClick={() => openApprovalDialog(po)}
+                                  className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
+                                >
+                                  <Eye className="h-4 w-4 mr-1" /> View
+                                </button>
+                                {po.sessions_used >= po.sessions_authorized && (
+                                  <button
+                                    onClick={() => handleMarkComplete(po)}
+                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100"
+                                  >
+                                    Mark Complete
+                                  </button>
+                                )}
+                              </>
+                            )}
+                            {po.status === 'completed' && (
+                              <button
+                                onClick={() => openApprovalDialog(po)}
+                                className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
+                              >
+                                <Eye className="h-4 w-4 mr-1" /> View
+                              </button>
+                            )}
+                            <button
+                              onClick={() => openBillingModal(po)}
+                              className="w-full text-left px-4 py-2 border-t border-gray-100 hover:bg-gray-100 focus:bg-gray-100 text-cyan-700 flex items-center"
+                            >
+                              <DollarSign className="h-4 w-4 mr-1" /> Billing
+                            </button>
+                            */}
+                            <button
+                                  onClick={() => openApprovalDialog(po)}
+                                  className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
+                                >
+                                  <Eye className="h-4 w-4 mr-1" /> View
+                                </button>
+                          <button
+                            onClick={() => {}}
+                            className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
+                          >
+                            <Bell className="h-4 w-4 mr-1" /> Remind
+                          </button>
+                          <button
+                            onClick={() => {}}
+                            className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
+                          >
+                            <AlertTriangle className="h-4 w-4 mr-1" /> Warn
+                          </button>
+                          <button
+                            onClick={() => {}}
+                            className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
+                          >
+                            <XCircle className="h-4 w-4 mr-1" /> Cancel Lesson
+                          </button>
+                     
+                          </div>
+                        </details>
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                    </td>
+               
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
+ 
 
       {/* Approval Dialog */}
       <Dialog open={approvalDialogOpen} onOpenChange={setApprovalDialogOpen}>

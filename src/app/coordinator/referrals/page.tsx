@@ -31,6 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
 type Row = {
+  uciNumber: string;
   id: string;
   firstName: string;
   lastName: string;
@@ -276,9 +277,10 @@ export default function CoordinatorReferralsPage() {
                   <TableHead
                     className="cursor-pointer select-none"
                     onClick={() => toggleSort('enrollment_status')}
-                  >
+                    >
                     Enrollment {sortIcon('enrollment_status')}
                   </TableHead>
+                  <TableHead>UCI Number</TableHead>
                   <TableHead
                     className="cursor-pointer select-none"
                     onClick={() => toggleSort('approval_status')}
@@ -313,6 +315,7 @@ export default function CoordinatorReferralsPage() {
                       <TableCell>
                         <Badge variant="secondary">{r.enrollmentStatus || '—'}</Badge>
                       </TableCell>
+                      <TableCell>{r.uciNumber || '—'}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{r.approvalStatus || '—'}</Badge>
                       </TableCell>
