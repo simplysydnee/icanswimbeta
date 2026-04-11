@@ -97,6 +97,7 @@ export async function GET(request: NextRequest) {
         enrollment_status,
         approval_status,
         assessment_status,
+        uci_number,
         created_at,
         coordinator_id,
         parent:profiles!parent_id (
@@ -140,6 +141,7 @@ export async function GET(request: NextRequest) {
         enrollmentStatus: row.enrollment_status,
         approvalStatus: row.approval_status,
         assessmentStatus: row.assessment_status,
+        uciNumber: row.uci_number,
         createdAt: row.created_at,
       };
     });

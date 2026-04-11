@@ -127,6 +127,12 @@ export async function GET(req: Request) {
 
       query = query.order(sortBy, { ascending: sortOrder === "asc" });
 
+      if (search && typeof search === 'string' && search.trim()) {
+        const term = search.trim().replace(/[%_]/g, '\\$&');
+        const pattern = `%${term}%`;
+        query = query.or(`first_name.ilike.${pattern},last_name.ilike.${pattern}`);
+      }
+
       if (page && limit) {
         const from = (page - 1) * limit;
         const to = from + limit - 1;
