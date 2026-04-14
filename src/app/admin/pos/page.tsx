@@ -15,6 +15,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -78,7 +85,12 @@ interface PurchaseOrder {
     sessions?: Array<{
       booking_id?: string;
       status?: string;
-      session?: { start_time?: string | null } | null;
+      session?: {
+        start_time?: string | null;
+        end_time?: string | null;
+        location?: string | null;
+        session_type?: string | null;
+      } | null;
     }>;
   } | null;
   funding_source: {
@@ -113,6 +125,46 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   expired: { label: 'Expired', color: 'bg-gray-100 text-gray-600 border-gray-300', icon: XCircle },
   cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800 border-red-300', icon: XCircle },
 };
+
+type PoSwimmerSessionEntry = NonNullable<
+  NonNullable<PurchaseOrder['swimmer']>['sessions']
+>[number];
+
+/** Bookings we treat as cancellable from the POS list (matches confirmed rows from `/api/pos`). */
+function getActiveLessonBookings(po: PurchaseOrder) {
+  const sessions = po.swimmer?.sessions ?? [];
+  return sessions.filter(
+    (s): s is PoSwimmerSessionEntry & { booking_id: string } =>
+      Boolean(s.booking_id) && (s.status === 'confirmed' || s.status === 'active')
+  );
+}
+
+function canShowCancelLesson(po: PurchaseOrder) {
+  const sessions = po.swimmer?.sessions;
+  if (!sessions?.length) return false;
+  return getActiveLessonBookings(po).length > 0;
+}
+
+function formatLessonBookingLabel(entry: PoSwimmerSessionEntry) {
+  if (!entry?.booking_id) return '';
+  const start = entry.session?.start_time;
+  const parts: string[] = [];
+  if (start) {
+    try {
+      parts.push(format(new Date(start), 'EEE MMM d, yyyy h:mm a'));
+    } catch {
+      parts.push(String(start));
+    }
+  }
+  if (entry.session?.location) {
+    parts.push(entry.session.location);
+  }
+  const idShort = entry.booking_id.length > 12 ? `${entry.booking_id.slice(0, 8)}…` : entry.booking_id;
+  if (parts.length) {
+    return `${parts.join(' · ')} — ${idShort}`;
+  }
+  return `Booking ${idShort}`;
+}
 
 const BILLING_STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   unbilled: { label: 'Unbilled', color: 'bg-gray-100 text-gray-800 border-gray-300', icon: FileText },
@@ -150,6 +202,13 @@ function POSPageContent() {
   const [approving, setApproving] = useState(false);
   const [remindingPoId, setRemindingPoId] = useState<string | null>(null);
   const [warningPoId, setWarningPoId] = useState<string | null>(null);
+
+  // Cancel lesson modal
+  const [cancelLessonModalOpen, setCancelLessonModalOpen] = useState(false);
+  const [poForCancelLesson, setPoForCancelLesson] = useState<PurchaseOrder | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState('');
+  const [reason, setReason] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Billing modal state
   const [billingModalOpen, setBillingModalOpen] = useState(false);
@@ -394,6 +453,63 @@ function POSPageContent() {
       });
     } finally {
       setWarningPoId(null);
+    }
+  };
+
+  const openCancelLessonModal = (po: PurchaseOrder) => {
+    const bookings = getActiveLessonBookings(po);
+    const firstId = bookings[0]?.booking_id ?? '';
+    setPoForCancelLesson(po);
+    setSelectedBookingId(firstId);
+    setReason('');
+    setCancelLessonModalOpen(true);
+  };
+
+  const handleCancelLesson = async () => {
+    if (!poForCancelLesson || !selectedBookingId) return;
+
+    setIsCancelling(true);
+    const supabase = createClient();
+    const trimmedReason = reason.trim();
+
+    try {
+      const { data, error } = await supabase.functions.invoke('po-cancel-lesson', {
+        body: {
+          po_id: poForCancelLesson.id,
+          booking_id: selectedBookingId,
+          ...(trimmedReason ? { reason: trimmedReason } : {}),
+        },
+      });
+
+      if (error) throw error;
+
+      if (
+        data &&
+        typeof data === 'object' &&
+        'error' in data &&
+        typeof (data as { error: unknown }).error === 'string' &&
+        (data as { error: string }).error
+      ) {
+        throw new Error((data as { error: string }).error);
+      }
+
+      setCancelLessonModalOpen(false);
+      setPoForCancelLesson(null);
+      setSelectedBookingId('');
+      setReason('');
+      toast({
+        title: 'Lesson cancelled and notifications sent',
+      });
+      await fetchPurchaseOrders();
+    } catch (err) {
+      console.error('Error cancelling lesson:', err);
+      toast({
+        title: 'Failed to cancel lesson',
+        description: err instanceof Error ? err.message : 'Please try again',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -884,12 +1000,15 @@ function POSPageContent() {
                             )}{' '}
                             Warn
                           </button>
-                          <button
-                            onClick={() => {}}
-                            className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
-                          >
-                            <XCircle className="h-4 w-4 mr-1" /> Cancel Lesson
-                          </button>
+                          {canShowCancelLesson(po) && (
+                            <button
+                              type="button"
+                              onClick={() => openCancelLessonModal(po)}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
+                            >
+                              <XCircle className="h-4 w-4 mr-1" /> Cancel Lesson
+                            </button>
+                          )}
                      
                           </div>
                         </details>
@@ -980,6 +1099,86 @@ function POSPageContent() {
               {selectedPO?.status === 'pending' ? 'Approve' :
                selectedPO?.status === 'approved_pending_auth' ? 'Save Auth#' :
                'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={cancelLessonModalOpen}
+        onOpenChange={(open) => {
+          setCancelLessonModalOpen(open);
+          if (!open) {
+            setPoForCancelLesson(null);
+            setSelectedBookingId('');
+            setReason('');
+            setIsCancelling(false);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancel lesson</DialogTitle>
+            <DialogDescription>
+              Choose a booking to cancel for{' '}
+              {poForCancelLesson?.swimmer?.first_name} {poForCancelLesson?.swimmer?.last_name}. Parents and
+              staff will be notified.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="cancel-booking">Booking</Label>
+              <Select
+                value={selectedBookingId}
+                onValueChange={setSelectedBookingId}
+                disabled={
+                  !poForCancelLesson || getActiveLessonBookings(poForCancelLesson).length === 0
+                }
+              >
+                <SelectTrigger id="cancel-booking" className="w-full min-w-0">
+                  <SelectValue placeholder="Select a booking" />
+                </SelectTrigger>
+                <SelectContent>
+                  {poForCancelLesson &&
+                    getActiveLessonBookings(poForCancelLesson).map((b) => (
+                      <SelectItem key={b.booking_id} value={b.booking_id}>
+                        {formatLessonBookingLabel(b)}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cancel-reason">Reason (optional)</Label>
+              <Input
+                id="cancel-reason"
+                placeholder="e.g. illness, schedule change…"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                disabled={isCancelling}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCancelLessonModalOpen(false)}
+              disabled={isCancelling}
+            >
+              Back
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleCancelLesson}
+              disabled={!selectedBookingId || isCancelling}
+            >
+              {isCancelling && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Confirm Cancel
             </Button>
           </DialogFooter>
         </DialogContent>
