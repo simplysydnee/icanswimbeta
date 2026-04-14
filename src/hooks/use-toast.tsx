@@ -1,6 +1,13 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 
 export type ToastVariant = 'default' | 'destructive';
 
@@ -14,7 +21,15 @@ export interface Toast extends ToastProps {
   id: string;
 }
 
-export function useToast() {
+interface ToastContextValue {
+  toast: (props: ToastProps) => string;
+  dismiss: (id: string) => void;
+  toasts: Toast[];
+}
+
+const ToastContext = createContext<ToastContextValue | null>(null);
+
+export function ToastContextProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const toast = useCallback(({ title, description, variant = 'default' }: ToastProps) => {
@@ -23,7 +38,6 @@ export function useToast() {
 
     setToasts((prev) => [...prev, newToast]);
 
-    // Auto remove after 5 seconds
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 5000);
@@ -35,9 +49,22 @@ export function useToast() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  return {
-    toast,
-    dismiss,
-    toasts,
-  };
+  const value = useMemo(
+    () => ({ toast, dismiss, toasts }),
+    [toast, dismiss, toasts]
+  );
+
+  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
+}
+
+export function useToast() {
+  const ctx = useContext(ToastContext);
+  if (!ctx) {
+    return {
+      toast: () => '',
+      dismiss: () => {},
+      toasts: [] as Toast[],
+    };
+  }
+  return ctx;
 }

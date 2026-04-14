@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { isPurchaseOrderNeedingAttention } from '@/lib/po-attention';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,11 @@ export async function GET(request: NextRequest) {
     const coordinatorId = searchParams.get('coordinator_id');
     const search = searchParams.get('search');
     const month = searchParams.get('month'); // yyyy-MM format
+    const attention = searchParams.get('attention');
+    const countOnly = searchParams.get('countOnly') === 'true';
+    const limitRaw = parseInt(searchParams.get('limit') || '0', 10);
+    const limit =
+      Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 200) : 0;
 
     let query = supabase
       .from('purchase_orders')
@@ -66,6 +72,75 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Attach confirmed sessions to each swimmer in the PO payload
+    let enrichedPoData = poData || [];
+    const swimmerIds = Array.from(
+      new Set(
+        (poData || [])
+          .map((po: any) => po.swimmer?.id)
+          .filter((id: string | undefined): id is string => Boolean(id))
+      )
+    );
+
+    if (swimmerIds.length > 0) {
+      const { data: confirmedBookings, error: confirmedBookingsError } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          swimmer_id,
+          status,
+          session:sessions(
+            start_time,
+            end_time,
+            location,
+            session_type
+          )
+        `)
+        .eq('status', 'confirmed')
+        .in('swimmer_id', swimmerIds);
+
+      if (confirmedBookingsError) {
+        console.error('Error fetching confirmed bookings for POS swimmers:', confirmedBookingsError);
+      } else if (confirmedBookings) {
+        const sessionsBySwimmer = new Map<string, any[]>();
+
+        confirmedBookings.forEach((booking: any) => {
+          const swimmerId = booking.swimmer_id;
+          if (!swimmerId) return;
+
+          if (!sessionsBySwimmer.has(swimmerId)) {
+            sessionsBySwimmer.set(swimmerId, []);
+          }
+
+          const row = booking.session?.[0];
+          sessionsBySwimmer.get(swimmerId)?.push({
+            booking_id: booking.id,
+            status: booking.status,
+            session: row
+              ? {
+                  start_time: row.start_time,
+                  end_time: row.end_time,
+                  location: row.location,
+                  session_type: row.session_type,
+                }
+              : null,
+          });
+        });
+
+        enrichedPoData = (poData || []).map((po: any) => {
+          if (!po.swimmer?.id) return po;
+
+          return {
+            ...po,
+            swimmer: {
+              ...po.swimmer,
+              sessions: sessionsBySwimmer.get(po.swimmer.id) || []
+            }
+          };
+        });
+      }
+    }
+
     // Fetch all active funding sources
     const { data: fundingSources, error: fsError } = await supabase
       .from('funding_sources')
@@ -79,22 +154,37 @@ export async function GET(request: NextRequest) {
     }
 
     // Filter by search (swimmer name) if provided
-    let filteredData = poData;
+    let filteredData = enrichedPoData;
     if (search) {
       const searchLower = search.toLowerCase();
-      filteredData = poData?.filter(po =>
+      filteredData = enrichedPoData?.filter(po =>
         po.swimmer?.first_name?.toLowerCase().includes(searchLower) ||
         po.swimmer?.last_name?.toLowerCase().includes(searchLower)
       );
     }
 
-    // If no data, return sample data for testing
-    if (!filteredData || filteredData.length === 0) {
+    let outputData = filteredData;
+    let statsSource: typeof poData = poData || [];
+
+    if (attention === 'needs') {
+      const attentionFull = (filteredData || []).filter((po: any) =>
+        isPurchaseOrderNeedingAttention(po)
+      );
+      if (countOnly) {
+        return NextResponse.json({ attentionCount: attentionFull.length });
+      }
+      statsSource = attentionFull;
+      outputData = limit > 0 ? attentionFull.slice(0, limit) : attentionFull;
+    }
+
+    // If no data, return empty payload
+    if (!outputData || outputData.length === 0) {
       console.log('No POs found, returning sample data for testing');
       return NextResponse.json({
         data: [],
         stats: [],
-        fundingSourceStats: []
+        fundingSourceStats: [],
+        ...(attention === 'needs' ? { attentionCount: 0 } : {}),
       });
     }
 
@@ -161,7 +251,7 @@ export async function GET(request: NextRequest) {
       monthEnd = endOfMonth(new Date(year, monthNum - 1));
     }
 
-    poData?.forEach(po => {
+    statsSource?.forEach(po => {
       // Overall stats
       overallStats.total++;
       if (po.status === 'pending') overallStats.pending++;
@@ -235,9 +325,12 @@ export async function GET(request: NextRequest) {
     const fundingSourceStatsArray = Object.values(fundingSourceStats);
 
     return NextResponse.json({
-      data: filteredData,
+      data: outputData,
       stats: overallStats,
-      fundingSourceStats: fundingSourceStatsArray
+      fundingSourceStats: fundingSourceStatsArray,
+      ...(attention === 'needs'
+        ? { attentionCount: statsSource.length }
+        : {}),
     });
   } catch (error) {
     console.error('POS GET error:', error);
