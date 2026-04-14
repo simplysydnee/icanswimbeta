@@ -1,18 +1,26 @@
 'use client';
 
 import * as React from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { ToastContextProvider, useToast } from '@/hooks/use-toast';
 import { Toast } from './toast';
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+function ToastViewport() {
   const { toasts, dismiss } = useToast();
 
   return (
     <>
-      {children}
       {toasts.map((toast) => (
         <Toast key={toast.id} toast={toast} onDismiss={dismiss} />
       ))}
     </>
+  );
+}
+
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <ToastContextProvider>
+      {children}
+      <ToastViewport />
+    </ToastContextProvider>
   );
 }

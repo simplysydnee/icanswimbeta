@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -37,12 +45,14 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { POBillingModal } from '@/components/admin/POBillingModal';
 import { FundingSourceSummary } from '@/components/admin/FundingSourceSummary';
 import { FundingSourceDetailModal } from '@/components/admin/FundingSourceDetailModal';
 import { PostTabs, POSTab } from '@/components/admin/pos/PostTabs';
 import { MonthlyBillingTab } from '@/components/admin/pos/MonthlyBillingTab';
 import type { FundingSource } from '@/types/billing-types';
+import { isPurchaseOrderNeedingAttention } from '@/lib/po-attention';
 
 interface PurchaseOrder {
   id: string;
@@ -72,6 +82,16 @@ interface PurchaseOrder {
     last_name: string;
     date_of_birth: string;
     parent_id: string;
+    sessions?: Array<{
+      booking_id?: string;
+      status?: string;
+      session?: {
+        start_time?: string | null;
+        end_time?: string | null;
+        location?: string | null;
+        session_type?: string | null;
+      } | null;
+    }>;
   } | null;
   funding_source: {
     id: string;
@@ -106,6 +126,46 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800 border-red-300', icon: XCircle },
 };
 
+type PoSwimmerSessionEntry = NonNullable<
+  NonNullable<PurchaseOrder['swimmer']>['sessions']
+>[number];
+
+/** Bookings we treat as cancellable from the POS list (matches confirmed rows from `/api/pos`). */
+function getActiveLessonBookings(po: PurchaseOrder) {
+  const sessions = po.swimmer?.sessions ?? [];
+  return sessions.filter(
+    (s): s is PoSwimmerSessionEntry & { booking_id: string } =>
+      Boolean(s.booking_id) && (s.status === 'confirmed' || s.status === 'active')
+  );
+}
+
+function canShowCancelLesson(po: PurchaseOrder) {
+  const sessions = po.swimmer?.sessions;
+  if (!sessions?.length) return false;
+  return getActiveLessonBookings(po).length > 0;
+}
+
+function formatLessonBookingLabel(entry: PoSwimmerSessionEntry) {
+  if (!entry?.booking_id) return '';
+  const start = entry.session?.start_time;
+  const parts: string[] = [];
+  if (start) {
+    try {
+      parts.push(format(new Date(start), 'EEE MMM d, yyyy h:mm a'));
+    } catch {
+      parts.push(String(start));
+    }
+  }
+  if (entry.session?.location) {
+    parts.push(entry.session.location);
+  }
+  const idShort = entry.booking_id.length > 12 ? `${entry.booking_id.slice(0, 8)}…` : entry.booking_id;
+  if (parts.length) {
+    return `${parts.join(' · ')} — ${idShort}`;
+  }
+  return `Booking ${idShort}`;
+}
+
 const BILLING_STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   unbilled: { label: 'Unbilled', color: 'bg-gray-100 text-gray-800 border-gray-300', icon: FileText },
   billed: { label: 'Billed', color: 'bg-blue-100 text-blue-800 border-blue-300', icon: FileText },
@@ -115,7 +175,11 @@ const BILLING_STATUS_CONFIG: Record<string, { label: string; color: string; icon
   disputed: { label: 'Disputed', color: 'bg-orange-100 text-orange-800 border-orange-300', icon: AlertCircle },
 };
 
-export default function POSPage() {
+function POSPageContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const attentionNeeds = searchParams.get('attention') === 'needs';
+  const { toast } = useToast();
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -136,6 +200,15 @@ export default function POSPage() {
   const [authNumber, setAuthNumber] = useState('');
   const [approvalNotes, setApprovalNotes] = useState('');
   const [approving, setApproving] = useState(false);
+  const [remindingPoId, setRemindingPoId] = useState<string | null>(null);
+  const [warningPoId, setWarningPoId] = useState<string | null>(null);
+
+  // Cancel lesson modal
+  const [cancelLessonModalOpen, setCancelLessonModalOpen] = useState(false);
+  const [poForCancelLesson, setPoForCancelLesson] = useState<PurchaseOrder | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState('');
+  const [reason, setReason] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Billing modal state
   const [billingModalOpen, setBillingModalOpen] = useState(false);
@@ -191,6 +264,9 @@ export default function POSPage() {
       if (selectedMonth) {
         params.append('month', selectedMonth);
       }
+      if (attentionNeeds) {
+        params.append('attention', 'needs');
+      }
 
       const response = await fetch(`/api/pos?${params.toString()}`);
       if (!response.ok) {
@@ -224,7 +300,7 @@ export default function POSPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedMonth]);
+  }, [selectedMonth, attentionNeeds]);
 
   useEffect(() => {
     fetchPurchaseOrders();
@@ -324,6 +400,119 @@ export default function POSPage() {
     }
   };
 
+  const handleReminder = async (po: PurchaseOrder) => {
+    const coordinatorName = po.coordinator?.full_name?.trim();
+    if (!coordinatorName) {
+      toast({
+        title: 'No coordinator assigned',
+        description: 'Assign a coordinator before sending a reminder.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setRemindingPoId(po.id);
+    const supabase = createClient();
+    try {
+      const { error } = await supabase.functions.invoke('po-reminder', {
+        body: { po_id: po.id },
+      });
+      if (error) throw error;
+      toast({
+        title: `Reminder sent to ${coordinatorName}`,
+      });
+    } catch (error) {
+      console.error('Error sending PO reminder:', error);
+      toast({
+        title: 'Failed to send reminder',
+        description: error instanceof Error ? error.message : 'Please try again',
+        variant: 'destructive',
+      });
+    } finally {
+      setRemindingPoId(null);
+    }
+  };
+
+  const handleWarning = async (po: PurchaseOrder) => {
+    setWarningPoId(po.id);
+    const supabase = createClient();
+    try {
+      const { error } = await supabase.functions.invoke('po-warning', {
+        body: { po_id: po.id },
+      });
+      if (error) throw error;
+      toast({
+        title: 'Warning sent to coordinator and parent',
+      });
+    } catch (error) {
+      console.error('Error sending PO warning:', error);
+      toast({
+        title: 'Failed to send warning',
+        description: error instanceof Error ? error.message : 'Please try again',
+        variant: 'destructive',
+      });
+    } finally {
+      setWarningPoId(null);
+    }
+  };
+
+  const openCancelLessonModal = (po: PurchaseOrder) => {
+    const bookings = getActiveLessonBookings(po);
+    const firstId = bookings[0]?.booking_id ?? '';
+    setPoForCancelLesson(po);
+    setSelectedBookingId(firstId);
+    setReason('');
+    setCancelLessonModalOpen(true);
+  };
+
+  const handleCancelLesson = async () => {
+    if (!poForCancelLesson || !selectedBookingId) return;
+
+    setIsCancelling(true);
+    const supabase = createClient();
+    const trimmedReason = reason.trim();
+
+    try {
+      const { data, error } = await supabase.functions.invoke('po-cancel-lesson', {
+        body: {
+          po_id: poForCancelLesson.id,
+          booking_id: selectedBookingId,
+          ...(trimmedReason ? { reason: trimmedReason } : {}),
+        },
+      });
+
+      if (error) throw error;
+
+      if (
+        data &&
+        typeof data === 'object' &&
+        'error' in data &&
+        typeof (data as { error: unknown }).error === 'string' &&
+        (data as { error: string }).error
+      ) {
+        throw new Error((data as { error: string }).error);
+      }
+
+      setCancelLessonModalOpen(false);
+      setPoForCancelLesson(null);
+      setSelectedBookingId('');
+      setReason('');
+      toast({
+        title: 'Lesson cancelled and notifications sent',
+      });
+      await fetchPurchaseOrders();
+    } catch (err) {
+      console.error('Error cancelling lesson:', err);
+      toast({
+        title: 'Failed to cancel lesson',
+        description: err instanceof Error ? err.message : 'Please try again',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   const openApprovalDialog = (po: PurchaseOrder) => {
     setSelectedPO(po);
     setAuthNumber(po.authorization_number || '');
@@ -337,6 +526,9 @@ export default function POSPage() {
   };
 
   const filteredPOs = purchaseOrders.filter(po => {
+    if (attentionNeeds && !isPurchaseOrderNeedingAttention(po)) {
+      return false;
+    }
     const matchesSearch = searchTerm === '' ||
       `${po.swimmer?.first_name} ${po.swimmer?.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
       po.authorization_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -429,6 +621,29 @@ export default function POSPage() {
 
       {/* Tabs */}
       <PostTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {activeTab === 'purchase-orders' && attentionNeeds && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
+            <div>
+              <p className="font-medium">Showing purchase orders that need attention</p>
+              <p className="text-amber-900/80 text-xs mt-0.5">
+                Pending or need auth, ending within 30 days, or inactive PO with an upcoming confirmed booking.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="border-amber-300 shrink-0 self-start sm:self-center"
+            onClick={() => router.replace('/admin/pos')}
+          >
+            Clear filter
+          </Button>
+        </div>
+      )}
 
       {/* Conditional Content */}
       {activeTab === 'purchase-orders' ? (
@@ -760,23 +975,40 @@ export default function POSPage() {
                                   <Eye className="h-4 w-4 mr-1" /> View
                                 </button>
                           <button
-                            onClick={() => {}}
-                            className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
+                            type="button"
+                            onClick={() => handleReminder(po)}
+                            disabled={remindingPoId === po.id}
+                            className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center disabled:opacity-50"
                           >
-                            <Bell className="h-4 w-4 mr-1" /> Remind
+                            {remindingPoId === po.id ? (
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : (
+                              <Bell className="h-4 w-4 mr-1" />
+                            )}{' '}
+                            Remind
                           </button>
                           <button
-                            onClick={() => {}}
-                            className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
+                            type="button"
+                            onClick={() => handleWarning(po)}
+                            disabled={warningPoId === po.id}
+                            className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center disabled:opacity-50"
                           >
-                            <AlertTriangle className="h-4 w-4 mr-1" /> Warn
+                            {warningPoId === po.id ? (
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : (
+                              <AlertTriangle className="h-4 w-4 mr-1" />
+                            )}{' '}
+                            Warn
                           </button>
-                          <button
-                            onClick={() => {}}
-                            className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
-                          >
-                            <XCircle className="h-4 w-4 mr-1" /> Cancel Lesson
-                          </button>
+                          {canShowCancelLesson(po) && (
+                            <button
+                              type="button"
+                              onClick={() => openCancelLessonModal(po)}
+                              className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
+                            >
+                              <XCircle className="h-4 w-4 mr-1" /> Cancel Lesson
+                            </button>
+                          )}
                      
                           </div>
                         </details>
@@ -872,6 +1104,86 @@ export default function POSPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog
+        open={cancelLessonModalOpen}
+        onOpenChange={(open) => {
+          setCancelLessonModalOpen(open);
+          if (!open) {
+            setPoForCancelLesson(null);
+            setSelectedBookingId('');
+            setReason('');
+            setIsCancelling(false);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cancel lesson</DialogTitle>
+            <DialogDescription>
+              Choose a booking to cancel for{' '}
+              {poForCancelLesson?.swimmer?.first_name} {poForCancelLesson?.swimmer?.last_name}. Parents and
+              staff will be notified.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="cancel-booking">Booking</Label>
+              <Select
+                value={selectedBookingId}
+                onValueChange={setSelectedBookingId}
+                disabled={
+                  !poForCancelLesson || getActiveLessonBookings(poForCancelLesson).length === 0
+                }
+              >
+                <SelectTrigger id="cancel-booking" className="w-full min-w-0">
+                  <SelectValue placeholder="Select a booking" />
+                </SelectTrigger>
+                <SelectContent>
+                  {poForCancelLesson &&
+                    getActiveLessonBookings(poForCancelLesson).map((b) => (
+                      <SelectItem key={b.booking_id} value={b.booking_id}>
+                        {formatLessonBookingLabel(b)}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cancel-reason">Reason (optional)</Label>
+              <Input
+                id="cancel-reason"
+                placeholder="e.g. illness, schedule change…"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                disabled={isCancelling}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCancelLessonModalOpen(false)}
+              disabled={isCancelling}
+            >
+              Back
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleCancelLesson}
+              disabled={!selectedBookingId || isCancelling}
+            >
+              {isCancelling && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Confirm Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Billing Modal */}
       <POBillingModal
         po={selectedPOForBilling}
@@ -918,5 +1230,19 @@ export default function POSPage() {
       )}
       </div>
     </div>
+  );
+}
+
+export default function POSPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-6 flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-600" />
+        </div>
+      }
+    >
+      <POSPageContent />
+    </Suspense>
   );
 }
