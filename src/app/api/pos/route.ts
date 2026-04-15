@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
             ...po,
             swimmer: {
               ...po.swimmer,
-              sessions: sessionsBySwimmer.get(po.swimmer.id) || []
+              bookings: sessionsBySwimmer.get(po.swimmer.id) || []
             }
           };
         });

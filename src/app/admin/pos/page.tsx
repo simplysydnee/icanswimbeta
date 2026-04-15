@@ -82,7 +82,7 @@ interface PurchaseOrder {
     last_name: string;
     date_of_birth: string;
     parent_id: string;
-    sessions?: Array<{
+    bookings?: Array<{
       booking_id?: string;
       status?: string;
       session?: {
@@ -127,21 +127,21 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 };
 
 type PoSwimmerSessionEntry = NonNullable<
-  NonNullable<PurchaseOrder['swimmer']>['sessions']
+  NonNullable<PurchaseOrder['swimmer']>['bookings']
 >[number];
 
 /** Bookings we treat as cancellable from the POS list (matches confirmed rows from `/api/pos`). */
 function getActiveLessonBookings(po: PurchaseOrder) {
-  const sessions = po.swimmer?.sessions ?? [];
-  return sessions.filter(
+  const bookings = po.swimmer?.bookings ?? [];
+  return bookings.filter(
     (s): s is PoSwimmerSessionEntry & { booking_id: string } =>
       Boolean(s.booking_id) && (s.status === 'confirmed' || s.status === 'active')
   );
 }
 
 function canShowCancelLesson(po: PurchaseOrder) {
-  const sessions = po.swimmer?.sessions;
-  if (!sessions?.length) return false;
+  const bookings = po.swimmer?.bookings;
+  if (!bookings?.length) return false;
   return getActiveLessonBookings(po).length > 0;
 }
 
