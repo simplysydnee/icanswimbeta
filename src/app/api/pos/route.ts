@@ -112,7 +112,9 @@ export async function GET(request: NextRequest) {
             sessionsBySwimmer.set(swimmerId, []);
           }
 
-          const row = booking.session?.[0];
+          const row = Array.isArray(booking.session)
+            ? booking.session[0]
+            : booking.session;
           sessionsBySwimmer.get(swimmerId)?.push({
             booking_id: booking.id,
             status: booking.status,
