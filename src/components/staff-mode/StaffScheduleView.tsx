@@ -49,118 +49,74 @@ interface SessionWithSwimmer {
   parent_email: string | null
 }
 
+type SessionRow = {
+  id: string
+  start_time: string
+  status: string
+  bookings: { id: string; swimmer_id: string | null; status: string | null }[] | null
+}
+
+function pickUsableBooking(
+  bookings: SessionRow['bookings']
+): { id: string; swimmer_id: string; status: string | null } | null {
+  if (!bookings?.length) return null
+  const row = bookings.find(
+    (b) => b.swimmer_id && b.status !== 'cancelled'
+  )
+  if (!row?.swimmer_id) return null
+  return { id: row.id, swimmer_id: row.swimmer_id, status: row.status }
+}
+
 async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwimmer[]> {
   const supabase = createClient()
 
   try {
-    // Get today's date with proper timezone adjustment
-    // Sessions are stored in UTC but represent local time with 8-hour offset
     const today = new Date()
     const dateStr = format(today, 'yyyy-MM-dd')
-    const startOfDayUTC = `${dateStr}T08:00:00.000Z`
-    const endOfDayUTC = `${format(addDays(today, 1), 'yyyy-MM-dd')}T08:00:00.000Z`
+    const nextDateStr = format(addDays(today, 1), 'yyyy-MM-dd')
 
-    console.log('=== DEBUG: Fetching sessions for instructor ===')
-    console.log('Instructor ID:', instructorId)
-    console.log('Date range (UTC) - startOfDayUTC:', startOfDayUTC)
-    console.log('Date range (UTC) - endOfDayUTC:', endOfDayUTC)
-    console.log('Today date string:', dateStr)
-    console.log('Local date:', today.toLocaleDateString())
-    console.log('Local time now:', new Date().toLocaleTimeString())
-    console.log('Current UTC time:', new Date().toISOString())
-
-    // First, let's debug by fetching ALL sessions for this instructor
-    // without date filter to see what we get
-    const { data: allSessions, error: allSessionsError } = await supabase
+    const { data: rawSessions, error: sessionsError } = await supabase
       .from('sessions')
       .select(`
         id,
         start_time,
         status,
-        bookings!inner (
+        bookings (
           id,
           swimmer_id,
           status
         )
       `)
       .eq('instructor_id', instructorId)
+      .gte('start_time', dateStr)
+      .lt('start_time', nextDateStr)
+      .neq('status', 'cancelled')
       .order('start_time')
 
-    if (allSessionsError) {
-      console.error('Error fetching all sessions:', allSessionsError)
+    if (sessionsError) {
+      console.error('Error fetching today sessions:', sessionsError)
       throw new Error('Failed to fetch sessions')
     }
 
-    console.log('=== DEBUG: ALL sessions for instructor ===')
-    console.log('Total sessions:', allSessions?.length || 0)
-    if (allSessions && allSessions.length > 0) {
-      // Show first 10 sessions for debugging
-      console.log('First 10 session dates:', allSessions.slice(0, 10).map(s => ({
-        id: s.id,
-        start_time: s.start_time,
-        start_time_iso: new Date(s.start_time).toISOString(),
-        start_time_pst: new Date(s.start_time).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
-        status: s.status,
-        has_booking: !!s.bookings?.[0]?.swimmer_id
-      })))
-    }
-
-    console.log('🔍 UTC date range for filtering:')
-    console.log('startOfDayUTC:', startOfDayUTC)
-    console.log('endOfDayUTC:', endOfDayUTC)
-    console.log('Local date for reference:', dateStr)
-    console.log('🔍 PST date range equivalent:')
-    console.log('Start of day PST:', new Date(startOfDayUTC).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }))
-    console.log('End of day PST:', new Date(endOfDayUTC).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }))
-
-    // Now filter for today's sessions using UTC range (sessions are stored in UTC with 8-hour offset)
-    const sessions = allSessions?.filter(session => {
-      const sessionTime = session.start_time
-      const isToday = sessionTime >= startOfDayUTC && sessionTime < endOfDayUTC
-
-      if (!isToday) {
-        console.log('❌ Session filtered out:', {
-          start_time: session.start_time,
-          sessionTime_UTC: sessionTime,
-          startOfDayUTC,
-          endOfDayUTC,
-          sessionDate: new Date(sessionTime).toISOString(),
-          sessionLocal: new Date(sessionTime).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
+    const sessions =
+      (rawSessions as SessionRow[] | null)
+        ?.map((session) => {
+          const booking = pickUsableBooking(session.bookings)
+          if (!booking) return null
+          return {
+            id: session.id,
+            start_time: session.start_time,
+            status: session.status,
+            bookings: [booking],
+          }
         })
-      }
+        .filter((s): s is NonNullable<typeof s> => s !== null) ?? []
 
-      return isToday
-    }) || []
-
-    console.log('=== DEBUG: Filtered to today (NEW CODE v2) ===')
-    console.log('Today\'s sessions:', sessions.length)
-    console.log('Session times (UTC):', sessions.map(s => s.start_time))
-    console.log('Session times (PST):', sessions.map(s =>
-      new Date(s.start_time).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
-    ))
-
-
-    console.log('=== DEBUG: Sessions found ===')
-    console.log('Number of sessions:', sessions?.length || 0)
-    if (sessions && sessions.length > 0) {
-      console.log('Session times (UTC):', sessions.map(s => s.start_time))
-      console.log('Session times (PST):', sessions.map(s => new Date(s.start_time).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })))
-    } else {
-      console.log('No sessions found for this date range')
-    }
-
-    if (!sessions || sessions.length === 0) {
+    if (sessions.length === 0) {
       return []
     }
 
-    // Get swimmer IDs from bookings
-    const swimmerIds = sessions
-      .map(session => session.bookings?.[0]?.swimmer_id)
-      .filter(Boolean) as string[]
-
-    if (swimmerIds.length === 0) {
-      return []
-    }
+    const swimmerIds = sessions.map((session) => session.bookings[0].swimmer_id)
 
     // Fetch swimmers with their level information and parent contact
     const { data: swimmers, error: swimmersError } = await supabase
