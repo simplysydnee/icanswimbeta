@@ -29,48 +29,50 @@ interface NavItem {
   title: string
   href: string
   icon: React.ReactNode
+  openInNewTab: boolean
   roles?: string[]
 }
 
 const adminNavItems: NavItem[] = [
-  { title: 'Dashboard', href: '/admin', icon: <LayoutDashboard className="h-5 w-5" /> },
-  { title: 'Swimmers', href: '/admin/swimmers', icon: <Users className="h-5 w-5" /> },
-  { title: 'Schedule', href: '/admin/schedule', icon: <Calendar className="h-5 w-5" /> },
-  { title: 'Session Generator', href: '/admin/sessions/generate', icon: <CalendarPlus className="h-5 w-5" /> },
-  { title: 'Complete Assessment', href: '/admin/assessments/complete', icon: <CheckCircle className="h-5 w-5" /> },
-  { title: 'Session Management', href: '/admin/sessions', icon: <ClipboardList className="h-5 w-5" /> },
-  { title: 'Tasks', href: '/admin/tasks', icon: <CheckSquare className="h-5 w-5" /> },
-  { title: 'Reports', href: '/admin/reports', icon: <BarChart3 className="h-5 w-5" /> },
-  { title: 'Waivers', href: '/admin/waivers', icon: <FileText className="h-5 w-5" /> },
-  { title: 'Staff Management', href: '/admin/staff', icon: <Users className="h-5 w-5" /> },
-  { title: 'Referrals', href: '/admin/referrals', icon: <FileText className="h-5 w-5" /> },
-  { title: 'Purchase Orders', href: '/admin/pos', icon: <CreditCard className="h-5 w-5" /> },
-  { title: 'Staff Mode', href: '/staff-mode', icon: <IdCard className="h-5 w-5" /> },
+  { title: 'Dashboard', href: '/admin', icon: <LayoutDashboard className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Swimmers', href: '/admin/swimmers', icon: <Users className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Schedule', href: '/admin/schedule', icon: <Calendar className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Session Generator', href: '/admin/sessions/generate', icon: <CalendarPlus className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Complete Assessment', href: '/admin/assessments/complete', icon: <CheckCircle className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Session Management', href: '/admin/sessions', icon: <ClipboardList className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Tasks', href: '/admin/tasks', icon: <CheckSquare className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Reports', href: '/admin/reports', icon: <BarChart3 className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Waivers', href: '/admin/waivers', icon: <FileText className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Staff Management', href: '/admin/staff', icon: <Users className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Referrals', href: '/admin/referrals', icon: <FileText className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Purchase Orders', href: '/admin/pos', icon: <CreditCard className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Staff Mode', href: '/staff-mode', icon: <IdCard className="h-5 w-5" />, openInNewTab: true },
   // { title: 'Billing', href: '/admin/billing', icon: <Receipt className="h-5 w-5" /> }, // TODO: Implement billing
-  { title: 'Users', href: '/admin/users', icon: <UserCog className="h-5 w-5" /> },
-  { title: 'Funding Sources', href: '/admin/funding-sources', icon: <Building2 className="h-5 w-5" /> },
-  { title: 'Settings', href: '/admin/settings', icon: <Settings className="h-5 w-5" /> },
+  { title: 'Users', href: '/admin/users', icon: <UserCog className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Funding Sources', href: '/admin/funding-sources', icon: <Building2 className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Settings', href: '/admin/settings', icon: <Settings className="h-5 w-5" />, openInNewTab: false },
 ]
 
 const parentNavItems: NavItem[] = [
-  { title: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-  { title: 'Book', href: '/parent/book', icon: <Calendar className="h-5 w-5" /> },
-  { title: 'My Swimmers', href: '/parent/swimmers', icon: <Users className="h-5 w-5" /> },
-  { title: 'My Sessions', href: '/parent/sessions', icon: <Calendar className="h-5 w-5" /> },
-  { title: 'Settings', href: '/settings', icon: <Settings className="h-5 w-5" /> },
+  { title: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Book', href: '/parent/book', icon: <Calendar className="h-5 w-5" />, openInNewTab: false },
+  { title: 'My Swimmers', href: '/parent/swimmers', icon: <Users className="h-5 w-5" />, openInNewTab: false },
+  { title: 'My Sessions', href: '/parent/sessions', icon: <Calendar className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Settings', href: '/settings', icon: <Settings className="h-5 w-5" />, openInNewTab: false },
 ]
 
 const instructorNavItems: NavItem[] = [
-  { title: 'Dashboard', href: '/instructor', icon: <LayoutDashboard className="h-5 w-5" /> },
-  { title: 'Schedule', href: '/instructor/schedule', icon: <Calendar className="h-5 w-5" /> },
-  { title: 'Settings', href: '/settings', icon: <Settings className="h-5 w-5" /> },
+  { title: 'Dashboard', href: '/instructor', icon: <LayoutDashboard className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Schedule', href: '/instructor/schedule', icon: <Calendar className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Settings', href: '/settings', icon: <Settings className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Staff Mode', href: '/staff-mode', icon: <IdCard className="h-5 w-5" />, openInNewTab: true }
 ]
 
 const coordinatorNavItems: NavItem[] = [
-  { title: 'Dashboard', href: '/coordinator', icon: <LayoutDashboard className="h-5 w-5" /> },
-  { title: 'Schedule', href: '/coordinator/schedule', icon: <Calendar className="h-5 w-5" /> },
-  { title: 'Referrals', href: '/coordinator/referrals', icon: <UserCog className="h-5 w-5" /> },
-  { title: 'Settings', href: '/settings', icon: <Settings className="h-5 w-5" /> },
+  { title: 'Dashboard', href: '/coordinator', icon: <LayoutDashboard className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Schedule', href: '/coordinator/schedule', icon: <Calendar className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Referrals', href: '/coordinator/referrals', icon: <UserCog className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Settings', href: '/settings', icon: <Settings className="h-5 w-5" />, openInNewTab: false },
 ]
 
 export function Sidebar() {
@@ -143,7 +145,14 @@ export function Sidebar() {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
 
           return (
-            <Link key={item.href} href={item.href} className="group">
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group"
+              {...(item.openInNewTab
+                ? { target: '_blank' as const, rel: 'noopener noreferrer' }
+                : {})}
+            >
               <div
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
