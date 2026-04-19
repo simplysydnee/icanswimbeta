@@ -16,16 +16,16 @@ interface Session {
   endTime: string;
   location: string;
   sessionStatus: string;
-  bookingId: string;
-  bookingStatus: string;
+  bookingId?: string | null;
+  bookingStatus?: string | null;
   swimmer: {
     id: string;
     firstName: string;
     lastName: string;
     currentLevelId: string;
-    currentLevelName: string;
-    levelColor: string;
-  };
+    currentLevelName?: string | null;
+    levelColor?: string | null;
+  } | null;
   progressNote: {
     id: string;
     lessonSummary: string;

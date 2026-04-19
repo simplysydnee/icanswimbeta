@@ -15,16 +15,16 @@ interface SessionCardProps {
     endTime: string;
     location: string;
     sessionStatus: string;
-    bookingId: string;
-    bookingStatus: string;
+    bookingId?: string | null;
+    bookingStatus?: string | null;
     swimmer: {
       id: string;
       firstName: string;
       lastName: string;
       currentLevelId: string;
-      currentLevelName: string;
-      levelColor: string;
-    };
+      currentLevelName?: string | null;
+      levelColor?: string | null;
+    } | null;
     progressNote: {
       id: string;
       lessonSummary: string;
@@ -65,6 +65,14 @@ export function SessionCard({ session }: SessionCardProps) {
   };
 
   const getLevelBadge = () => {
+    if (!session.swimmer) {
+      return (
+        <Badge variant="outline" className="text-muted-foreground font-medium">
+          No swimmer
+        </Badge>
+      );
+    }
+
     const colorMap: Record<string, string> = {
       white: 'bg-gray-100 text-gray-800',
       red: 'bg-red-100 text-red-800',
@@ -93,7 +101,9 @@ export function SessionCard({ session }: SessionCardProps) {
           <div>
             <CardTitle className="text-lg flex items-center gap-2">
               <User className="h-5 w-5 text-muted-foreground" />
-              {session.swimmer.firstName} {session.swimmer.lastName}
+              {session.swimmer
+                ? `${session.swimmer.firstName} ${session.swimmer.lastName}`
+                : 'Open slot'}
             </CardTitle>
             <div className="flex items-center gap-2 mt-2">
               {getStatusBadge()}
@@ -167,10 +177,14 @@ export function SessionCard({ session }: SessionCardProps) {
       <CardFooter className="pt-0 border-t">
         <div className="flex justify-between w-full">
           <div className="text-xs text-muted-foreground">
-            Booking: {session.bookingStatus}
+            Booking: {session.bookingStatus ?? '—'}
           </div>
           <div className="flex gap-2">
-            {hasProgressNote ? (
+            {!session.bookingId ? (
+              <Button size="sm" variant="secondary" disabled>
+                No booking yet
+              </Button>
+            ) : hasProgressNote ? (
               <>
                 <Button variant="outline" size="sm" asChild>
                   <Link href={`/instructor/progress/${session.id}?booking=${session.bookingId}`}>
