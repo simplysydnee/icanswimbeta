@@ -702,7 +702,6 @@ export function EnhancedSkillChecklist({
                                       isMastered && 'bg-green-500 hover:bg-green-600'
                                     )}
                                     onClick={() => handleSkillStatusChange(skill.id, 'mastered')}
-                                    disabled={isInProgress}
                                     aria-label={`Mark "${skill.name}" as mastered`}
                                   >
                                     Mastered
