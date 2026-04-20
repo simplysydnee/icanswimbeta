@@ -103,6 +103,62 @@ export async function notifyParentPOSDeclined(data: POSEmailData & { reason?: st
 }
 
 
+export async function notifyCoordinatorPendingRenewalPO(data: {
+  coordinatorEmail?: string;
+  coordinatorName?: string;
+  swimmerName: string;
+  fundingSourceName: string;
+  sessionsAuthorized: number;
+  startDate: string;
+  endDate: string;
+  parentPoId: string;
+  newPoId: string;
+}) {
+  const to = data.coordinatorEmail?.trim();
+  if (!to) {
+    console.warn(
+      'notifyCoordinatorPendingRenewalPO: no coordinator email on file; skipping email',
+      { swimmerName: data.swimmerName, newPoId: data.newPoId }
+    );
+    return;
+  }
+
+  const subject = `Pending PO renewal submitted — ${data.swimmerName}`;
+
+  const content = `
+    <h2 style="color: ${BRAND_MAIN}; margin-top: 0;">New renewal purchase order (pending)</h2>
+
+    <p>Hi ${data.coordinatorName || 'Coordinator'},</p>
+
+    <p>An instructor submitted a <strong>renewal</strong> purchase order for <strong>${data.swimmerName}</strong>.</p>
+
+    <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <p style="margin: 5px 0;"><strong>Funding source:</strong> ${data.fundingSourceName}</p>
+      <p style="margin: 5px 0;"><strong>Sessions authorized (requested):</strong> ${data.sessionsAuthorized}</p>
+      <p style="margin: 5px 0;"><strong>Proposed period:</strong> ${data.startDate} to ${data.endDate}</p>
+      <p style="margin: 5px 0;"><strong>Prior PO:</strong> ${data.parentPoId}</p>
+      <p style="margin: 5px 0;"><strong>New PO (pending):</strong> ${data.newPoId}</p>
+    </div>
+
+    <p>Please review the pending PO in the admin portal and set it to active when appropriate.</p>
+
+    <p>Thank you,<br><strong>I Can Swim</strong></p>
+  `;
+
+  const html = wrapEmailWithHeader(content);
+
+  try {
+    await emailService.sendEmail({
+      to,
+      templateType: 'custom',
+      customData: { subject, html },
+    });
+    console.log(`Pending renewal PO notification sent to coordinator: ${to}`);
+  } catch (error) {
+    console.error('Failed to send coordinator renewal PO notification:', error);
+  }
+}
+
 export async function notifyInstructorProgressNeeded(data: {
   instructorEmail: string;
   instructorName: string;

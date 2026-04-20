@@ -17,6 +17,8 @@ interface ProgressNoteFormProps {
   sessionId: string;
   bookingId: string;
   swimmerId: string;
+  /** When set, navigate here after a successful save instead of the default instructor progress list */
+  redirectAfterSave?: string | null;
   sessionData?: {
     startTime: string;
     endTime: string;
@@ -78,6 +80,7 @@ export function ProgressNoteForm({
   sessionId,
   bookingId,
   swimmerId,
+  redirectAfterSave,
   sessionData,
   existingNote,
 }: ProgressNoteFormProps) {
@@ -156,8 +159,13 @@ export function ProgressNoteForm({
       }
 
       setSuccess(true);
+      const safeReturn =
+        redirectAfterSave &&
+        redirectAfterSave.startsWith('/') &&
+        !redirectAfterSave.startsWith('//');
+      const nextPath = safeReturn ? redirectAfterSave : '/instructor/progress';
       setTimeout(() => {
-        router.push('/instructor/progress');
+        router.push(nextPath);
         router.refresh();
       }, 1500);
 
@@ -208,7 +216,12 @@ export function ProgressNoteForm({
         <Alert className="bg-green-50 border-green-200">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            Progress note saved successfully! Redirecting back to sessions...
+            Progress note saved successfully!
+            {redirectAfterSave &&
+            redirectAfterSave.startsWith('/') &&
+            !redirectAfterSave.startsWith('//')
+              ? ' Redirecting to the next step...'
+              : ' Redirecting back to sessions...'}
           </AlertDescription>
         </Alert>
         <div className="flex justify-center">
