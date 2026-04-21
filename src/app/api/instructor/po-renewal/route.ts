@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { addMonths, format, parseISO } from 'date-fns';
 import { notifyCoordinatorPendingRenewalPO } from '@/lib/email/pos-notifications';
 
@@ -121,6 +122,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SECRET_KEY;
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error('Missing Supabase service role config for po-renewal POST');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+    const serviceSupabase = createSupabaseClient(supabaseUrl, serviceRoleKey);
     const { user, roles, error } = await assertInstructorOrAdmin(supabase);
     if (error || !user) return error!;
 
@@ -200,7 +208,7 @@ export async function POST(request: Request) {
 
     const notes = `Next PO goals:\n${goalsNextPo.trim()}`;
 
-    const { data: inserted, error: insErr } = await supabase
+    const { data: inserted, error: insErr } = await serviceSupabase
       .from('purchase_orders')
       .insert({
         swimmer_id: parent.swimmer_id,

@@ -14,6 +14,12 @@ import {
 } from 'date-fns';
 import { ZodError } from 'zod';
 
+/** Allow long batch inserts on hosts that honor this (e.g. Vercel). */
+export const maxDuration = 120;
+
+/** PostgREST single-request payloads can time out or fail at the network layer if too large. */
+const SESSION_INSERT_CHUNK_SIZE = 200;
+
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
@@ -328,21 +334,37 @@ export async function POST(request: Request) {
       }
     }
 
-    // ========== STEP 7: Insert Into Database ==========
-    console.log(`API: Attempting to insert ${sessions.length} sessions into database...`);
+    // ========== STEP 7: Insert Into Database (chunked) ==========
+    console.log(`API: Attempting to insert ${sessions.length} sessions in chunks of ${SESSION_INSERT_CHUNK_SIZE}...`);
     console.log('API: First session sample:', sessions[0]);
 
-    const { error: insertError } = await supabase
-      .from('sessions')
-      .insert(sessions);
+    for (let offset = 0; offset < sessions.length; offset += SESSION_INSERT_CHUNK_SIZE) {
+      const chunk = sessions.slice(offset, offset + SESSION_INSERT_CHUNK_SIZE);
+      const { error: insertError } = await supabase.from('sessions').insert(chunk);
 
-    if (insertError) {
-      console.error('API: Session insert error:', insertError);
-      console.error('API: Insert error details:', insertError.details, insertError.hint);
-      return NextResponse.json(
-        { error: `Failed to create sessions: ${insertError.message}` },
-        { status: 500 }
-      );
+      if (insertError) {
+        console.error('API: Session insert error:', insertError);
+        console.error('API: Insert error details:', insertError.details, insertError.hint);
+        const { error: rollbackErr } = await supabase.from('sessions').delete().eq('batch_id', batchId);
+        if (rollbackErr) {
+          console.error('API: Rollback after failed insert failed:', rollbackErr);
+        }
+        const cause =
+          insertError && typeof insertError === 'object' && 'cause' in insertError
+            ? String((insertError as { cause?: unknown }).cause)
+            : '';
+        const detail = cause ? `${insertError.message} (${cause})` : insertError.message;
+        return NextResponse.json(
+          {
+            error: `Failed to create sessions: ${detail}`,
+            hint:
+              sessions.length > SESSION_INSERT_CHUNK_SIZE
+                ? 'If this persists, try fewer instructors, a shorter date range, or larger time slots.'
+                : undefined,
+          },
+          { status: 500 }
+        );
+      }
     }
 
     console.log(`API: Successfully inserted ${sessions.length} sessions`);

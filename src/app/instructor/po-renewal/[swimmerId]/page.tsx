@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 
 function PoRenewalForm() {
   const params = useParams();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const swimmerId = params.swimmerId as string;
@@ -117,6 +118,7 @@ function PoRenewalForm() {
       });
       setGoalsNextPo('');
       setSessionsAuthorized(String(defaultSessions));
+      router.push('/instructor');
     } catch (err) {
       toast({
         title: 'Error',
