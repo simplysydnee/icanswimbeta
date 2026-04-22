@@ -31,24 +31,22 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
   const supabase = createClient()
 
   try {
-    // Get today's date with proper timezone adjustment
-    // Sessions are stored in UTC but represent local time with 8-hour offset
+    // Build date-only boundaries (YYYY-MM-DD) for filtering.
     const today = new Date()
     const dateStr = format(today, 'yyyy-MM-dd')
-    const startOfDayUTC = `${dateStr}T08:00:00.000Z`
-    const endOfDayUTC = `${format(addDays(today, 1), 'yyyy-MM-dd')}T08:00:00.000Z`
+    const nextDateStr = format(addDays(today, 1), 'yyyy-MM-dd')
 
     console.log('=== DEBUG: Session count date range ===')
     console.log('Today:', dateStr)
-    console.log('Start (UTC):', startOfDayUTC)
-    console.log('End (UTC):', endOfDayUTC)
+    console.log('Start (date-only):', dateStr)
+    console.log('End (date-only):', nextDateStr)
 
-    // First, fetch users with instructor role from user_roles table
-    // This ensures we only show actual instructors, not coordinators or parents
+    // First, fetch users with instructor/admin role from user_roles table.
+    // Staff mode is available to both roles in middleware.
     const { data: instructorRoles, error: rolesError } = await supabase
       .from('user_roles')
       .select('user_id')
-      .eq('role', 'instructor')
+      .in('role', ['instructor', 'admin'])
 
     if (rolesError) {
       console.error('Error fetching instructor roles:', rolesError)
@@ -62,13 +60,13 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
 
     const instructorIds = instructorRoles.map(role => role.user_id)
 
-    // Fetch active instructor profiles displayed on team
+    // Fetch active staff profiles for these role IDs.
+    // Do not require display_on_team for staff mode access.
     const { data: instructors, error: instructorsError } = await supabase
       .from('profiles')
       .select('id, full_name, avatar_url, email')
       .in('id', instructorIds)
       .eq('is_active', true)
-      .eq('display_on_team', true)
       .order('full_name')
 
     if (instructorsError) {
@@ -82,27 +80,23 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
     }
 
     // Filter out test instructors (additional safety check)
-    const realInstructors = instructors.filter(instructor => !isTestEmail(instructor.email))
+    const realInstructors = instructors
+      .filter(instructor => !!instructor.email)
+      .filter(instructor => !isTestEmail(instructor.email))
 
     if (realInstructors.length === 0) {
       console.log('=== DEBUG: No real instructors found after filtering test emails')
       return []
     }
 
-    // Query sessions with bookings and status filter
-    // Use the same timezone-adjusted date range as StaffScheduleView
+    // Query sessions directly (without inner booking join) for today's date window.
+    // The previous bookings!inner join could filter out rows and return empty results.
     const { data: sessions, error: sessionsError } = await supabase
       .from('sessions')
-      .select(`
-        instructor_id,
-        bookings!inner (
-          id
-        )
-      `)
-      .gte('start_time', startOfDayUTC)
-      .lt('start_time', endOfDayUTC)
+      .select('instructor_id, status, start_time')
+      .gte('start_time', dateStr)
+      .lt('start_time', nextDateStr)
       .in('instructor_id', instructorIds)
-      .in('status', ['booked', 'open', 'available']) // Sessions that are booked or available
       .neq('status', 'cancelled')
 
     if (sessionsError) {
@@ -111,7 +105,7 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
     }
 
     console.log('=== DEBUG: Session count query results ===')
-    console.log('Number of sessions found:', sessions?.length || 0)
+    console.log('Number of sessions found:', dateStr, sessions?.length || 0)
     if (sessions && sessions.length > 0) {
       console.log('Session instructor IDs:', sessions.map(s => s.instructor_id))
     }

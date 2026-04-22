@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { Save, Loader2, CheckCircle, AlertCircle, Calendar, Clock, MapPin, User } from 'lucide-react';
@@ -17,6 +17,8 @@ interface ProgressNoteFormProps {
   sessionId: string;
   bookingId: string;
   swimmerId: string;
+  /** When set, navigate here after a successful save instead of the default instructor progress list */
+  redirectAfterSave?: string | null;
   sessionData?: {
     startTime: string;
     endTime: string;
@@ -43,10 +45,42 @@ interface ProgressNoteFormProps {
   };
 }
 
+/** Map GET /api/progress-notes row (snake_case) or camelCase into form shape */
+function mapExistingNoteInput(note: Record<string, unknown> | undefined): ProgressNoteFormProps['existingNote'] | undefined {
+  if (!note?.id) return undefined;
+  const str = (camel: string, snake: string) => {
+    const v = note[camel] ?? note[snake];
+    return typeof v === 'string' ? v : v == null ? '' : String(v);
+  };
+  const arr = (camel: string, snake: string): string[] => {
+    const v = note[camel] ?? note[snake];
+    return Array.isArray(v) ? (v as string[]) : [];
+  };
+  const bool = (camel: string, snake: string) => {
+    const v = note[camel] ?? note[snake];
+    return Boolean(v);
+  };
+  return {
+    id: String(note.id),
+    lessonSummary: str('lessonSummary', 'lesson_summary'),
+    instructorNotes: str('instructorNotes', 'instructor_notes'),
+    parentNotes: str('parentNotes', 'parent_notes'),
+    skillsWorkingOn: arr('skillsWorkingOn', 'skills_working_on'),
+    skillsMastered: arr('skillsMastered', 'skills_mastered'),
+    currentLevelId: str('currentLevelId', 'current_level_id'),
+    sharedWithParent: bool('sharedWithParent', 'shared_with_parent'),
+    attendanceStatus: str('attendanceStatus', 'attendance_status') || 'present',
+    swimmerMood: str('swimmerMood', 'swimmer_mood') || undefined,
+    waterComfort: str('waterComfort', 'water_comfort') || undefined,
+    focusLevel: str('focusLevel', 'focus_level') || undefined,
+  };
+}
+
 export function ProgressNoteForm({
   sessionId,
   bookingId,
   swimmerId,
+  redirectAfterSave,
   sessionData,
   existingNote,
 }: ProgressNoteFormProps) {
@@ -55,19 +89,36 @@ export function ProgressNoteForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  const normalizedNote = mapExistingNoteInput(existingNote as Record<string, unknown> | undefined);
+
   // Form state
-  const [lessonSummary, setLessonSummary] = useState(existingNote?.lessonSummary || '');
-  const [instructorNotes, setInstructorNotes] = useState(existingNote?.instructorNotes || '');
-  const [parentNotes, setParentNotes] = useState(existingNote?.parentNotes || '');
-  const [sharedWithParent, setSharedWithParent] = useState(existingNote?.sharedWithParent || false);
-  const [attendanceStatus, setAttendanceStatus] = useState(existingNote?.attendanceStatus || 'present');
-  const [swimmerMood, setSwimmerMood] = useState(existingNote?.swimmerMood || '');
-  const [waterComfort, setWaterComfort] = useState(existingNote?.waterComfort || '');
-  const [focusLevel, setFocusLevel] = useState(existingNote?.focusLevel || '');
+  const [lessonSummary, setLessonSummary] = useState(normalizedNote?.lessonSummary || '');
+  const [instructorNotes, setInstructorNotes] = useState(normalizedNote?.instructorNotes || '');
+  const [parentNotes, setParentNotes] = useState(normalizedNote?.parentNotes || '');
+  const [sharedWithParent, setSharedWithParent] = useState(normalizedNote?.sharedWithParent || false);
+  const [attendanceStatus, setAttendanceStatus] = useState(normalizedNote?.attendanceStatus || 'present');
+  const [swimmerMood, setSwimmerMood] = useState(normalizedNote?.swimmerMood || '');
+  const [waterComfort, setWaterComfort] = useState(normalizedNote?.waterComfort || '');
+  const [focusLevel, setFocusLevel] = useState(normalizedNote?.focusLevel || '');
 
   // Skill tracking
-  const [skillsWorkingOn, setSkillsWorkingOn] = useState<string[]>(existingNote?.skillsWorkingOn || []);
-  const [skillsMastered, setSkillsMastered] = useState<string[]>(existingNote?.skillsMastered || []);
+  const [skillsWorkingOn, setSkillsWorkingOn] = useState<string[]>(normalizedNote?.skillsWorkingOn || []);
+  const [skillsMastered, setSkillsMastered] = useState<string[]>(normalizedNote?.skillsMastered || []);
+
+  useEffect(() => {
+    const n = mapExistingNoteInput(existingNote as Record<string, unknown> | undefined);
+    if (!n) return;
+    setLessonSummary(n.lessonSummary);
+    setInstructorNotes(n.instructorNotes);
+    setParentNotes(n.parentNotes);
+    setSharedWithParent(n.sharedWithParent);
+    setAttendanceStatus(n.attendanceStatus || 'present');
+    setSwimmerMood(n.swimmerMood || '');
+    setWaterComfort(n.waterComfort || '');
+    setFocusLevel(n.focusLevel || '');
+    setSkillsWorkingOn(n.skillsWorkingOn);
+    setSkillsMastered(n.skillsMastered);
+  }, [existingNote?.id]);
 
   const handleSkillsChange = (workingOn: string[], mastered: string[]) => {
     setSkillsWorkingOn(workingOn);
@@ -108,8 +159,13 @@ export function ProgressNoteForm({
       }
 
       setSuccess(true);
+      const safeReturn =
+        redirectAfterSave &&
+        redirectAfterSave.startsWith('/') &&
+        !redirectAfterSave.startsWith('//');
+      const nextPath = safeReturn ? redirectAfterSave : '/instructor/progress';
       setTimeout(() => {
-        router.push('/instructor/progress');
+        router.push(nextPath);
         router.refresh();
       }, 1500);
 
@@ -160,7 +216,12 @@ export function ProgressNoteForm({
         <Alert className="bg-green-50 border-green-200">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            Progress note saved successfully! Redirecting back to sessions...
+            Progress note saved successfully!
+            {redirectAfterSave &&
+            redirectAfterSave.startsWith('/') &&
+            !redirectAfterSave.startsWith('//')
+              ? ' Redirecting to the next step...'
+              : ' Redirecting back to sessions...'}
           </AlertDescription>
         </Alert>
         <div className="flex justify-center">
@@ -299,10 +360,9 @@ export function ProgressNoteForm({
       {/* Skill Checklist */}
       <SkillChecklist
         swimmerId={swimmerId}
-        currentLevelId={sessionData?.swimmer.currentLevelId}
         onSkillsChange={handleSkillsChange}
-        initialWorkingOn={existingNote?.skillsWorkingOn}
-        initialMastered={existingNote?.skillsMastered}
+        initialWorkingOn={normalizedNote?.skillsWorkingOn}
+        initialMastered={normalizedNote?.skillsMastered}
       />
 
       {/* Lesson Summary Card */}
@@ -395,7 +455,7 @@ export function ProgressNoteForm({
 
           <div className="flex justify-between items-center pt-4 border-t">
             <div className="text-sm text-muted-foreground">
-              {existingNote ? 'Updating existing progress note' : 'Creating new progress note'}
+              {normalizedNote ? 'Updating existing progress note' : 'Creating new progress note'}
             </div>
             <Button type="submit" disabled={saving || !lessonSummary.trim()}>
               {saving ? (
@@ -406,7 +466,7 @@ export function ProgressNoteForm({
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  {existingNote ? 'Update Progress Note' : 'Save Progress Note'}
+                  {normalizedNote ? 'Update Progress Note' : 'Save Progress Note'}
                 </>
               )}
             </Button>

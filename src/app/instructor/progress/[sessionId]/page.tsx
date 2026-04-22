@@ -13,7 +13,9 @@ function SessionProgressContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const sessionId = params.sessionId as string;
-  const bookingId = searchParams.get('booking') as string;
+  const bookingId =
+    (searchParams.get('booking') || searchParams.get('bookingId') || '') as string;
+  const returnTo = searchParams.get('returnTo');
   const editMode = searchParams.get('edit') === 'true';
 
   const [loading, setLoading] = useState(true);
@@ -38,8 +40,20 @@ function SessionProgressContent() {
         throw new Error('Failed to fetch session data');
       }
 
-      const sessionData = await sessionResponse.json();
-      const currentSession = sessionData.sessions.find((s) => s.id === sessionId && s.bookingId === bookingId);
+      const sessionData = (await sessionResponse.json()) as {
+        sessions: Array<{
+          id: string;
+          bookingId?: string;
+          startTime: string;
+          endTime: string;
+          location: string;
+          swimmer: { id: string; firstName: string; lastName: string; currentLevelId: string };
+          progressNote?: { id: string } | null;
+        }>;
+      };
+      const currentSession = sessionData.sessions.find(
+        (s) => s.id === sessionId && s.bookingId === bookingId
+      );
 
       if (!currentSession) {
         throw new Error('Session not found');
@@ -141,7 +155,7 @@ function SessionProgressContent() {
 
           {existingNote && !editMode && (
             <Button asChild>
-              <Link href={`?booking=${bookingId}&edit=true`}>
+              <Link href={`?booking=${encodeURIComponent(bookingId)}&edit=true${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ''}`}>
                 Edit Note
               </Link>
             </Button>
@@ -154,6 +168,7 @@ function SessionProgressContent() {
         sessionId={sessionId}
         bookingId={bookingId}
         swimmerId={sessionData.swimmer.id}
+        redirectAfterSave={returnTo}
         sessionData={sessionData}
         existingNote={editMode ? existingNote : undefined}
       />

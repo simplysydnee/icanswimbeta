@@ -333,7 +333,7 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
   const { toast } = useToast()
   const { role } = useAuth()
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState('progress')
+  const [activeTab, setActiveTab] = useState('profile')
   const [showEditNotesModal, setShowEditNotesModal] = useState(false)
   const [showWaiverEmailModal, setShowWaiverEmailModal] = useState(false)
 

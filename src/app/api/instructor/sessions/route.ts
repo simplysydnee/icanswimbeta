@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { format, startOfDay, endOfDay } from 'date-fns';
+import { startOfDay, endOfDay } from 'date-fns';
 
 export async function GET(request: Request) {
   try {
@@ -37,73 +37,78 @@ export async function GET(request: Request) {
     const { data: sessions, error } = await supabase
       .from('sessions')
       .select(`
-        id as session_id,
+        id,
         start_time,
         end_time,
         location,
-        status as session_status,
+        status,
         instructor_id,
-        bookings!inner(
-          id as booking_id,
+        bookings(
+          id,
           swimmer_id,
-          status as booking_status,
-          swimmers!inner(
+          status,
+          swimmers(
             id,
             first_name,
             last_name,
             current_level_id,
             swim_levels!current_level_id(
-              name as current_level_name,
-              color as level_color
+              name,
+              color
             )
           )
         ),
-        progress_notes!left(
-          id as progress_note_id,
+        progress_notes(
+          id,
           lesson_summary,
           shared_with_parent,
-          created_at as note_created_at
+          created_at
         )
       `)
       .eq('instructor_id', user.id)
-      .gte('start_time', startOfTargetDate.toISOString())
-      .lte('start_time', endOfTargetDate.toISOString())
-      .in('status', ['open', 'booked', 'confirmed', 'completed'])
+      //.gte('start_time', startOfTargetDate.toISOString())
+      //.lte('start_time', endOfTargetDate.toISOString())
+      //.in('status', ['open', 'booked', 'confirmed', 'completed'])
       .order('start_time', { ascending: true });
-
+        console.log("Sessions...", sessions, user.id);
     if (error) {
       console.error('Error fetching instructor sessions:', error);
       return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
     }
 
+    const firstRel = <T,>(v: T | T[] | null | undefined): T | undefined => {
+      if (v == null) return undefined;
+      return Array.isArray(v) ? v[0] : v;
+    };
+
     // Transform data for frontend
-    const transformedSessions = sessions.map(session => {
+    const transformedSessions = (sessions ?? []).map(session => {
       const booking = session.bookings?.[0];
-      const swimmer = booking?.swimmers?.[0];
-      const level = swimmer?.swim_levels?.[0];
+      const swimmer = firstRel(booking?.swimmers);
+      const level = firstRel(swimmer?.swim_levels);
       const progressNote = session.progress_notes?.[0];
 
       return {
-        id: session.session_id,
+        id: session.id,
         startTime: session.start_time,
         endTime: session.end_time,
         location: session.location,
-        sessionStatus: session.session_status,
-        bookingId: booking?.booking_id,
-        bookingStatus: booking?.booking_status,
+        sessionStatus: session.status,
+        bookingId: booking?.id,
+        bookingStatus: booking?.status,
         swimmer: swimmer ? {
           id: swimmer.id,
           firstName: swimmer.first_name,
           lastName: swimmer.last_name,
           currentLevelId: swimmer.current_level_id,
-          currentLevelName: level?.current_level_name,
-          levelColor: level?.level_color,
+          currentLevelName: level?.name,
+          levelColor: level?.color,
         } : null,
         progressNote: progressNote ? {
-          id: progressNote.progress_note_id,
+          id: progressNote.id,
           lessonSummary: progressNote.lesson_summary,
           sharedWithParent: progressNote.shared_with_parent,
-          createdAt: progressNote.note_created_at,
+          createdAt: progressNote.created_at,
         } : null,
       };
     });

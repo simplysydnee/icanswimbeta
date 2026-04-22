@@ -11,6 +11,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
+
+async function skillsApiAuthHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await createClient().auth.getSession();
+  if (session?.access_token) {
+    return { Authorization: `Bearer ${session.access_token}` };
+  }
+  return {};
+}
 
 interface SwimLevel {
   id: string;
@@ -81,7 +90,10 @@ export function SkillChecklist({
       setLevelPromoted(false);
       setNewLevel(null);
 
-      const response = await fetch(`/api/swimmers/${swimmerId}/skills`);
+      const response = await fetch(`/api/swimmers/${swimmerId}/skills`, {
+        credentials: 'include',
+        headers: await skillsApiAuthHeaders(),
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch skills');
       }
@@ -199,7 +211,11 @@ export function SkillChecklist({
       // Send update to API
       const response = await fetch(`/api/swimmers/${swimmerId}/skills`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(await skillsApiAuthHeaders()),
+        },
         body: JSON.stringify({
           skills: [{
             skillId,
@@ -548,7 +564,6 @@ export function SkillChecklist({
                                     isMastered && 'bg-green-500 hover:bg-green-600'
                                   )}
                                   onClick={() => handleStatusChange(skill.id, 'mastered')}
-                                  disabled={isInProgress}
                                   aria-label={`Mark "${skill.name}" as mastered`}
                                 >
                                   Mastered
