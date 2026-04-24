@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
 import { EnrollmentFormData } from '../schemas/enrollmentSchema';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-const { createClient } = await import('@/lib/supabase/client')
-        const supabase = createClient()
+import { createClient } from '@/lib/supabase/client';
+
+const FUNDED_COORDINATOR_ID = 'de449236-c9f9-482d-85d5-52aae5434e13';
 
 interface UseEnrollmentSubmitOptions {
   onSuccess?: (swimmerId: string) => void;
@@ -16,8 +16,12 @@ export function useEnrollmentSubmit(options?: UseEnrollmentSubmitOptions) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  const supabase = createClient();
+
   return useMutation({
     mutationFn: async (data: EnrollmentFormData) => {
+      const paymentType = data.payment_type === 'private_pay' ? 'private_pay' : 'funding_source';
+
       // Transform form data to API format
       const swimmerData = {
         // Child Information
@@ -26,21 +30,13 @@ export function useEnrollmentSubmit(options?: UseEnrollmentSubmitOptions) {
         date_of_birth: data.child_date_of_birth,
         gender: data.child_gender,
 
-        // Parent Information
-        parent_name: data.parent_name,
-        parent_email: data.parent_email,
-        parent_phone: data.parent_phone,
-        parent_address: data.parent_address,
-        parent_city: data.parent_city,
-        parent_state: data.parent_state,
-        parent_zip: data.parent_zip,
-
         // Payment Information
-        payment_type: data.payment_type === 'private_pay' ? 'private_pay' : 'funding_source',
+        payment_type: paymentType,
         funding_source_id: data.funding_source_id || null,
         funding_coordinator_name: data.funding_coordinator_name || null,
         funding_coordinator_email: data.funding_coordinator_email || null,
         funding_coordinator_phone: data.funding_coordinator_phone || null,
+        coordinator_id: paymentType === 'funding_source' ? FUNDED_COORDINATOR_ID : null,
 
         // Medical Information
         has_allergies: data.has_allergies,
@@ -91,9 +87,6 @@ export function useEnrollmentSubmit(options?: UseEnrollmentSubmitOptions) {
         photo_release_signature: data.photo_release_signature || null,
         cancellation_policy_agreement: data.cancellation_policy_agreement,
         cancellation_policy_signature: data.cancellation_policy_signature || null,
-        emergency_contact_name: data.emergency_contact_name,
-        emergency_contact_phone: data.emergency_contact_phone,
-        emergency_contact_relationship: data.emergency_contact_relationship,
 
         // New consent fields
         terms_of_service_agreed: data.terms_of_service_agreed,

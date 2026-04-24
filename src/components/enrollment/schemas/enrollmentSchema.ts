@@ -211,7 +211,12 @@ export const enrollmentSchema = z.object({
   ...schedulingSchema.shape,
   ...consentBaseSchema.shape,
 }).superRefine((data, ctx) => {
-  consentSchema.parse(data); // reuse validation
+  const result = consentSchema.safeParse(data);
+  if (!result.success) {
+    for (const issue of result.error.issues) {
+      ctx.addIssue(issue);
+    }
+  }
 });
 
 export type EnrollmentFormData = z.infer<typeof enrollmentSchema>;
