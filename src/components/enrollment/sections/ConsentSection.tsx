@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -11,13 +12,24 @@ import { LiabilityWaiverModal, CancellationPolicyModal } from '@/components/enro
 import { EnrollmentFormData } from '../schemas/enrollmentSchema';
 
 export function ConsentSection() {
-  const { control, setValue, watch } = useFormContext<EnrollmentFormData>();
+  const { control, setValue, watch, formState } = useFormContext<EnrollmentFormData>();
+  const [quizQ1, setQuizQ1] = useState<string | null>(null);
+  const [quizQ2, setQuizQ2] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Don't trigger validation here — that would mark every required consent
+    // field as invalid on mount. Validation happens on submit (or when the
+    // user interacts with each field directly).
+    const passed = quizQ1 === '24' && quizQ2 === 'drop';
+    setValue('cancellation_quiz_passed', passed);
+  }, [quizQ1, quizQ2, setValue]);
   const electronicConsent = watch('electronic_consent');
   const signedWaiver = watch('signed_waiver');
   const photoRelease = watch('photo_release');
   const cancellationPolicyAgreement = watch('cancellation_policy_agreement');
   const termsOfServiceAgreed = watch('terms_of_service_agreed');
   const privacyPolicyAgreed = watch('privacy_policy_agreed');
+  const quizError = formState.errors.cancellation_quiz_passed?.message as string | undefined;
 
   // Capture signature metadata
   const captureSignatureMetadata = () => {
@@ -335,8 +347,9 @@ export function ConsentSection() {
                   type="radio"
                   name="cancellation_quiz_q1"
                   value="12"
+                  checked={quizQ1 === '12'}
                   className="mr-2"
-                  onChange={() => setValue('cancellation_quiz_passed', false)}
+                  onChange={() => setQuizQ1('12')}
                 />
                 <span>12 hours</span>
               </label>
@@ -345,14 +358,9 @@ export function ConsentSection() {
                   type="radio"
                   name="cancellation_quiz_q1"
                   value="24"
+                  checked={quizQ1 === '24'}
                   className="mr-2"
-                  onChange={() => {
-                    // Check if both answers are correct
-                    const q2Correct = document.querySelector('input[name="cancellation_quiz_q2"]:checked')?.value === 'drop';
-                    if (q2Correct) {
-                      setValue('cancellation_quiz_passed', true);
-                    }
-                  }}
+                  onChange={() => setQuizQ1('24')}
                 />
                 <span>24 hours ✓</span>
               </label>
@@ -361,8 +369,9 @@ export function ConsentSection() {
                   type="radio"
                   name="cancellation_quiz_q1"
                   value="48"
+                  checked={quizQ1 === '48'}
                   className="mr-2"
-                  onChange={() => setValue('cancellation_quiz_passed', false)}
+                  onChange={() => setQuizQ1('48')}
                 />
                 <span>48 hours</span>
               </label>
@@ -377,8 +386,9 @@ export function ConsentSection() {
                   type="radio"
                   name="cancellation_quiz_q2"
                   value="nothing"
+                  checked={quizQ2 === 'nothing'}
                   className="mr-2"
-                  onChange={() => setValue('cancellation_quiz_passed', false)}
+                  onChange={() => setQuizQ2('nothing')}
                 />
                 <span>Nothing, it is fine</span>
               </label>
@@ -387,8 +397,9 @@ export function ConsentSection() {
                   type="radio"
                   name="cancellation_quiz_q2"
                   value="warning"
+                  checked={quizQ2 === 'warning'}
                   className="mr-2"
-                  onChange={() => setValue('cancellation_quiz_passed', false)}
+                  onChange={() => setQuizQ2('warning')}
                 />
                 <span>I receive a warning only</span>
               </label>
@@ -397,20 +408,24 @@ export function ConsentSection() {
                   type="radio"
                   name="cancellation_quiz_q2"
                   value="drop"
+                  checked={quizQ2 === 'drop'}
                   className="mr-2"
-                  onChange={() => {
-                    // Check if both answers are correct
-                    const q1Correct = document.querySelector('input[name="cancellation_quiz_q1"]:checked')?.value === '24';
-                    if (q1Correct) {
-                      setValue('cancellation_quiz_passed', true);
-                    }
-                  }}
+                  onChange={() => setQuizQ2('drop')}
                 />
                 <span>My swimmer may be subject to being dropped from the program ✓</span>
               </label>
             </div>
           </div>
         </div>
+
+        {quizError && (
+          <p
+            data-field="cancellation_quiz_passed"
+            className="text-sm font-medium text-destructive"
+          >
+            {quizError}
+          </p>
+        )}
 
         <div className="space-y-3">
           <FormField
