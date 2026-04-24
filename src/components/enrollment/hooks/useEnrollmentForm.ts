@@ -1,8 +1,7 @@
-import { useForm, UseFormReturn } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { enrollmentSchema, stepSchemas, EnrollmentFormData } from '../schemas/enrollmentSchema';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface UseEnrollmentFormOptions {
@@ -16,7 +15,7 @@ interface UseEnrollmentFormOptions {
 }
 
 export function useEnrollmentForm(options?: UseEnrollmentFormOptions) {
-  const { user, loading: authLoading, profile } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   const form = useForm<EnrollmentFormData>({
@@ -27,15 +26,6 @@ export function useEnrollmentForm(options?: UseEnrollmentFormOptions) {
       child_last_name: options?.queryParams?.lastName || '',
       child_date_of_birth: options?.queryParams?.dob || '',
       child_gender: '',
-
-      // Parent Information
-      parent_name: '',
-      parent_email: '',
-      parent_phone: '',
-      parent_address: '',
-      parent_city: '',
-      parent_state: 'CA',
-      parent_zip: '',
 
       // Payment Information
       payment_type: options?.preSelectedPaymentType || undefined,
@@ -67,7 +57,7 @@ export function useEnrollmentForm(options?: UseEnrollmentFormOptions) {
       swim_goals: [],
 
       // Scheduling
-      availability_slots: [],
+      availability: [],
       other_availability: '',
       flexible_swimmer: false,
 
@@ -82,33 +72,23 @@ export function useEnrollmentForm(options?: UseEnrollmentFormOptions) {
       photo_release_signature: '',
       cancellation_policy_agreement: false,
       cancellation_policy_signature: '',
-      emergency_contact_name: '',
-      emergency_contact_phone: '',
-      emergency_contact_relationship: '',
+      terms_of_service_agreed: false,
+      terms_of_service_signature: '',
+      cancellation_quiz_passed: false,
+      cancellation_acknowledged_24hr: false,
+      cancellation_acknowledged_consequences: false,
+      privacy_policy_agreed: false,
+      privacy_policy_signature: '',
+      sms_consent_given: false,
+      guardian_relationship: '',
     },
     mode: 'onSubmit', // Validate on blur for better UX
 
   });
 
-  // Auto-fill parent info when user is authenticated
-  useEffect(() => {
-    if (profile && !authLoading) {
-      const currentValues = form.getValues();
-
-      // Only set values if they're currently empty to avoid overwriting user edits
-      if (!currentValues.parent_name && profile.full_name) {
-        form.setValue('parent_name', profile.full_name);
-      }
-      if (!currentValues.parent_email && (profile.email || user?.email)) {
-        form.setValue('parent_email', profile.email || user?.email || '');
-      }
-      if (!currentValues.parent_phone && profile.phone) {
-        form.setValue('parent_phone', profile.phone);
-      }
-      // Note: Address fields might not be in the profile table yet
-      // We can add them later if needed
-    }
-  }, [profile, authLoading, user, form]);
+  // Parent info is resolved server-side from the authed user's profile; the
+  // enrollment schema no longer includes parent fields so there's nothing to
+  // auto-fill here.
 
   // Validate specific step
   const validateStep = async (step: number): Promise<boolean> => {

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useEnrollmentForm } from './hooks/useEnrollmentForm';
 import { useEnrollmentSubmit } from './hooks/useEnrollmentSubmit';
 import { EnrollmentStepIndicator } from './EnrollmentStepIndicator';
+import { useToast } from '@/hooks/use-toast';
 
 // Import section components
 import {
@@ -47,6 +48,7 @@ export function UnifiedEnrollmentForm({
 }: UnifiedEnrollmentFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [queryParams, setQueryParams] = useState<{ firstName?: string; lastName?: string; dob?: string }>({});
+  const { toast } = useToast();
 
   // Read query parameters on component mount
   useEffect(() => {
@@ -93,9 +95,33 @@ export function UnifiedEnrollmentForm({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSubmit = form.handleSubmit((data) => {
-    submitEnrollment(data);
-  });
+  const handleSubmit = form.handleSubmit(
+    (data) => {
+      submitEnrollment(data);
+    },
+    (errors) => {
+      const firstErrorField = Object.keys(errors)[0];
+      const firstErrorMessage =
+        (errors[firstErrorField as keyof typeof errors] as { message?: string })?.message;
+      toast({
+        title: 'Please fix the highlighted fields',
+        description:
+          firstErrorMessage ||
+          'Some required information is missing or invalid. Scroll up to review.',
+        variant: 'destructive',
+      });
+
+      if (typeof document !== 'undefined' && firstErrorField) {
+        const el =
+          (document.querySelector(`[name="${firstErrorField}"]`) as HTMLElement | null) ||
+          (document.querySelector(`[data-field="${firstErrorField}"]`) as HTMLElement | null);
+        if (el?.scrollIntoView) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.focus?.();
+        }
+      }
+    }
+  );
 
   const CurrentStepComponent = STEPS[currentStep - 1].component;
 
