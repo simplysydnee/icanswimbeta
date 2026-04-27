@@ -37,14 +37,14 @@ export default function EnrollmentPage() {
     gender: '',
     paymentType: '' as '' | 'private_pay' | 'regional_center',
     selectedFundingSourceId: null as string | null,
-    coordinatorName: '',
-    coordinatorEmail: '',
-    coordinatorPhone: '',
+    coordinatorId: null as string | null,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fundingSources, setFundingSources] = useState<FundingSource[]>([]);
   const [fundingSourcesLoading, setFundingSourcesLoading] = useState(true);
+  const [coordinators, setCoordinators] = useState<Array<{ id: string; full_name: string }>>([]);
+  const [coordinatorsLoading, setCoordinatorsLoading] = useState(false);
 
   useEffect(() => {
     const fetchFundingSources = async () => {
@@ -86,6 +86,37 @@ export default function EnrollmentPage() {
     fetchFundingSources();
   }, [supabase]);
 
+  useEffect(() => {
+    const fundingSourceId = formData.selectedFundingSourceId;
+    setCoordinators([]);
+    setFormData(prev => ({ ...prev, coordinatorId: null }));
+
+    if (!fundingSourceId) return;
+    const selectedSource = fundingSources.find(s => s.id === fundingSourceId);
+    if (!selectedSource?.requires_coordinator) return;
+
+    let cancelled = false;
+    setCoordinatorsLoading(true);
+    fetch(`/api/funding-sources/${fundingSourceId}/coordinators`)
+      .then(async (res) => {
+        const payload = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(payload?.error || 'Failed to load coordinators');
+        if (cancelled) return;
+        setCoordinators(payload.coordinators || []);
+      })
+      .catch((err) => {
+        console.error('Error fetching coordinators:', err);
+        if (!cancelled) setCoordinators([]);
+      })
+      .finally(() => {
+        if (!cancelled) setCoordinatorsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [formData.selectedFundingSourceId, fundingSources]);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error for this field when user starts typing
@@ -108,18 +139,10 @@ export default function EnrollmentPage() {
       // Check if selected funding source requires coordinator
       const selectedSource = fundingSources.find(s => s.id === formData.selectedFundingSourceId);
       if (selectedSource?.requires_coordinator) {
-        if (!formData.coordinatorName?.trim()) {
+        if (!formData.coordinatorId) {
           toast({
-            title: 'Coordinator Name Required',
-            description: 'Please enter your funding source coordinator\'s name.',
-            variant: 'destructive'
-          });
-          return false;
-        }
-        if (!formData.coordinatorEmail?.trim()) {
-          toast({
-            title: 'Coordinator Email Required',
-            description: 'Please enter your funding source coordinator\'s email.',
+            title: 'Coordinator Required',
+            description: 'Please select your funding source coordinator from the dropdown.',
             variant: 'destructive'
           });
           return false;
@@ -215,10 +238,8 @@ export default function EnrollmentPage() {
         if (selectedSource) {
           queryParams.append('fundingSourceName', selectedSource.name);
         }
-        queryParams.append('coordinatorName', formData.coordinatorName);
-        queryParams.append('coordinatorEmail', formData.coordinatorEmail);
-        if (formData.coordinatorPhone) {
-          queryParams.append('coordinatorPhone', formData.coordinatorPhone);
+        if (formData.coordinatorId) {
+          queryParams.append('coordinatorId', formData.coordinatorId);
         }
         // const targetPath = `/enroll/vmrc?${queryParams.toString()}`;
         const targetPath = `/enroll/funded?${queryParams.toString()}`;
@@ -226,9 +247,7 @@ export default function EnrollmentPage() {
         if (!user) {
           // Save coordinator info to localStorage before signup
           const coordinatorInfo = {
-            coordinatorName: formData.coordinatorName,
-            coordinatorEmail: formData.coordinatorEmail,
-            coordinatorPhone: formData.coordinatorPhone,
+            coordinatorId: formData.coordinatorId,
             selectedFundingSourceId: formData.selectedFundingSourceId,
             childFirstName: formData.firstName,
             childLastName: formData.lastName,
@@ -283,7 +302,7 @@ export default function EnrollmentPage() {
       // Check if selected funding source requires coordinator
       const selectedSource = fundingSources.find(s => s.id === formData.selectedFundingSourceId);
       if (selectedSource?.requires_coordinator) {
-        if (!formData.coordinatorName.trim() || !formData.coordinatorEmail.trim()) {
+        if (!formData.coordinatorId) {
           return false;
         }
       }
@@ -410,10 +429,11 @@ export default function EnrollmentPage() {
                     handleInputChange('paymentType', value as '' | 'private_pay' | 'regional_center');
                     // Clear dependent fields when payment type changes
                     if (value !== 'regional_center') {
-                      handleInputChange('selectedFundingSourceId', '');
-                      handleInputChange('coordinatorName', '');
-                      handleInputChange('coordinatorEmail', '');
-                      handleInputChange('coordinatorPhone', '');
+                      setFormData(prev => ({
+                        ...prev,
+                        selectedFundingSourceId: null,
+                        coordinatorId: null,
+                      }));
                     }
                   }}
                   className="space-y-3"
@@ -484,56 +504,45 @@ export default function EnrollmentPage() {
                             )}
                           </div>
 
-                          {/* Coordinator Information - Only show if funding source requires coordinator */}
+                          {/* Coordinator Selection - Only show if funding source requires coordinator */}
                           {(() => {
                             const selectedSource = fundingSources.find(s => s.id === formData.selectedFundingSourceId);
-                            if (selectedSource?.requires_coordinator) {
-                              return (
-                                <div className="space-y-3">
-                                  <div>
-                                    <Label htmlFor="coordinatorName" className="text-sm font-medium">
-                                      Coordinator Name <span className="text-red-500">*</span>
-                                    </Label>
-                                    <Input
-                                      id="coordinatorName"
-                                      placeholder="Coordinator's full name"
-                                      value={formData.coordinatorName}
-                                      onChange={(e) => handleInputChange('coordinatorName', e.target.value)}
-                                      className="mt-1.5"
-                                    />
-                                  </div>
+                            if (!selectedSource?.requires_coordinator) return null;
 
-                                  <div>
-                                    <Label htmlFor="coordinatorEmail" className="text-sm font-medium">
-                                      Coordinator Email <span className="text-red-500">*</span>
-                                    </Label>
-                                    <Input
-                                      id="coordinatorEmail"
-                                      type="email"
-                                      placeholder="coordinator@fundingsource.org"
-                                      value={formData.coordinatorEmail}
-                                      onChange={(e) => handleInputChange('coordinatorEmail', e.target.value)}
-                                      className="mt-1.5"
-                                    />
+                            return (
+                              <div>
+                                <Label htmlFor="coordinator_select" className="text-sm font-medium">
+                                  Select your coordinator <span className="text-red-500">*</span>
+                                </Label>
+                                {coordinatorsLoading ? (
+                                  <div className="mt-1.5 p-3 border rounded-md bg-gray-50">
+                                    <p className="text-sm text-gray-700">Loading coordinators...</p>
                                   </div>
-
-                                  <div>
-                                    <Label htmlFor="coordinatorPhone" className="text-sm font-medium">
-                                      Coordinator Phone (Optional)
-                                    </Label>
-                                    <Input
-                                      id="coordinatorPhone"
-                                      type="tel"
-                                      placeholder="(555) 123-4567"
-                                      value={formData.coordinatorPhone}
-                                      onChange={(e) => handleInputChange('coordinatorPhone', e.target.value)}
-                                      className="mt-1.5"
-                                    />
+                                ) : coordinators.length === 0 ? (
+                                  <div className="mt-1.5 p-3 border rounded-md bg-gray-50">
+                                    <p className="text-sm text-gray-700">
+                                      No coordinators available for this funding source. Please contact your funding source.
+                                    </p>
                                   </div>
-                                </div>
-                              );
-                            }
-                            return null;
+                                ) : (
+                                  <Select
+                                    value={formData.coordinatorId || ''}
+                                    onValueChange={(value) => handleInputChange('coordinatorId', value)}
+                                  >
+                                    <SelectTrigger className="mt-1.5">
+                                      <SelectValue placeholder="Choose your coordinator..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {coordinators.map((coordinator) => (
+                                        <SelectItem key={coordinator.id} value={coordinator.id}>
+                                          {coordinator.full_name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              </div>
+                            );
                           })()}
                         </div>
                       )}
