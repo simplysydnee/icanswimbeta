@@ -316,6 +316,45 @@ export async function POST(req: Request) {
       );
     }
 
+    // When a coordinator is selected, derive name/email/phone from their profile
+    // (and verify the coordinator belongs to the supplied funding source)
+    let derivedCoordinatorName: string | null = null;
+    let derivedCoordinatorEmail: string | null = null;
+    let derivedCoordinatorPhone: string | null = null;
+    if (value.payment_type === 'funding_source' && value.coordinator_id) {
+      const { data: coordinatorProfile, error: coordinatorErr } = await supabase
+        .from('profiles')
+        .select('full_name, email, phone, funding_source_id')
+        .eq('id', value.coordinator_id)
+        .maybeSingle();
+
+      if (coordinatorErr) {
+        return NextResponse.json(
+          { error: 'Failed to verify coordinator', details: coordinatorErr.message },
+          { status: 500 }
+        );
+      }
+      if (!coordinatorProfile) {
+        return NextResponse.json(
+          { error: 'Selected coordinator not found' },
+          { status: 400 }
+        );
+      }
+      if (
+        value.funding_source_id &&
+        coordinatorProfile.funding_source_id &&
+        coordinatorProfile.funding_source_id !== value.funding_source_id
+      ) {
+        return NextResponse.json(
+          { error: 'Selected coordinator does not belong to the selected funding source' },
+          { status: 400 }
+        );
+      }
+      derivedCoordinatorName = coordinatorProfile.full_name ?? null;
+      derivedCoordinatorEmail = coordinatorProfile.email ?? null;
+      derivedCoordinatorPhone = coordinatorProfile.phone ?? null;
+    }
+
     const payload: Record<string, any> = {
       parent_id: user.id ?? null,
       first_name: value.first_name,
@@ -379,13 +418,14 @@ export async function POST(req: Request) {
       payment_type: value.payment_type ?? 'private_pay',
 
       funding_source_id: value.funding_source_id ?? null,
-      funding_coordinator_name: value.funding_coordinator_name ?? null,
+      funding_coordinator_name: derivedCoordinatorName ?? value.funding_coordinator_name ?? null,
       funding_coordinator_email:
-        value.funding_coordinator_email &&
+        derivedCoordinatorEmail ??
+        (value.funding_coordinator_email &&
         String(value.funding_coordinator_email).trim() !== ''
           ? String(value.funding_coordinator_email).trim()
-          : null,
-      funding_coordinator_phone: value.funding_coordinator_phone ?? null,
+          : null),
+      funding_coordinator_phone: derivedCoordinatorPhone ?? value.funding_coordinator_phone ?? null,
       coordinator_id: value.coordinator_id ?? null,
 
       enrollment_status: value.enrollment_status ?? 'waitlist',

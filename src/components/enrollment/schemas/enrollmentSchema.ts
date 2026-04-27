@@ -7,9 +7,7 @@ export const childInfoSchema = z.object({
   child_date_of_birth: z.string().min(1, "Date of birth is required"),
   child_gender: z.string().min(1, 'Gender is required'),
   funding_source_id: z.string().optional(),
-  funding_coordinator_name: z.string().optional(),
-  funding_coordinator_email: z.string().optional(),
-  funding_coordinator_phone: z.string().optional(),
+  funding_coordinator_id: z.string().uuid().optional(),
 });
 
 // Parent Information Schema

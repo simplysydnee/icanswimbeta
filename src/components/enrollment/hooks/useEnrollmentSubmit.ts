@@ -4,8 +4,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
-const FUNDED_COORDINATOR_ID = 'de449236-c9f9-482d-85d5-52aae5434e13';
-
 interface UseEnrollmentSubmitOptions {
   onSuccess?: (swimmerId: string) => void;
   redirectTo?: string;
@@ -33,10 +31,7 @@ export function useEnrollmentSubmit(options?: UseEnrollmentSubmitOptions) {
         // Payment Information
         payment_type: paymentType,
         funding_source_id: data.funding_source_id || null,
-        funding_coordinator_name: data.funding_coordinator_name || null,
-        funding_coordinator_email: data.funding_coordinator_email || null,
-        funding_coordinator_phone: data.funding_coordinator_phone || null,
-        coordinator_id: paymentType === 'funding_source' ? FUNDED_COORDINATOR_ID : null,
+        coordinator_id: data.funding_coordinator_id || null,
 
         // Medical Information
         has_allergies: data.has_allergies,

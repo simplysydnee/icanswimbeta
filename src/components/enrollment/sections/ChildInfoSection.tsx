@@ -9,7 +9,7 @@ import { HelpTooltip } from '@/components/ui/help-tooltip';
 import { EnrollmentFormData } from '../schemas/enrollmentSchema';
 
 export function ChildInfoSection() {
-  const { control, setValue, getValues } = useFormContext<EnrollmentFormData>();
+  const { control, setValue } = useFormContext<EnrollmentFormData>();
   const searchParams = useSearchParams();
    useEffect(() => {
     if (!searchParams) return;
@@ -19,12 +19,7 @@ export function ChildInfoSection() {
     const paramDob = searchParams.get('dob');
     let paramGender = searchParams.get('gender');
     const selectedFundingSourceId = searchParams.get('selectedFundingSourceId');
-    const coordinatorName = searchParams.get('coordinatorName');
-    const coordinatorEmail = searchParams.get('coordinatorEmail');
-    const coordinatorPhone = searchParams.get('coordinatorPhone')
-    
-    
-    
+    const coordinatorId = searchParams.get('coordinatorId');
 
     if (paramFirst) {
       setValue('child_first_name', paramFirst, { shouldDirty: true, shouldValidate: true });
@@ -37,26 +32,16 @@ export function ChildInfoSection() {
       setValue('child_date_of_birth', paramDob, { shouldDirty: true, shouldValidate: true });
     }
     if (paramGender) {
-      console.log(paramGender)
       setValue('child_gender', paramGender, { shouldDirty: true, shouldValidate: true });
     }
     if (selectedFundingSourceId) {
       setValue('funding_source_id', selectedFundingSourceId, { shouldDirty: true, shouldValidate: true });
     }
-    if (coordinatorName) {
-      setValue('funding_coordinator_name', coordinatorName, { shouldDirty: true, shouldValidate: true });
-    }
-    if (coordinatorEmail) {
-      setValue('funding_coordinator_email', coordinatorEmail, { shouldDirty: true, shouldValidate: true });
-    }
-    if (coordinatorPhone) {
-      setValue('funding_coordinator_phone', coordinatorPhone, { shouldDirty: true, shouldValidate: true });
+    if (coordinatorId) {
+      setValue('funding_coordinator_id', coordinatorId, { shouldDirty: true, shouldValidate: true });
     }
   // only run once on mount or when searchParams object changes
   }, [searchParams, setValue]);
-
-  // console.log('.................', getValues('child_first_name'), getValues('child_last_name'), getValues('child_date_of_birth'), getValues('child_gender'), )
-  console.log('.................', getValues('funding_coordinator_phone'), getValues('funding_coordinator_email'), getValues('funding_coordinator_name'), getValues('funding_source_id') )
   // Function to format name fields on blur
   const handleNameBlur = (fieldName: 'child_first_name' | 'child_last_name') => {
     return (event: React.FocusEvent<HTMLInputElement>) => {
