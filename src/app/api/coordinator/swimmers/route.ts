@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
 
 const SORT_FIELDS = new Set([
   'first_name',
@@ -17,9 +18,10 @@ function escapeIlike(value: string): string {
 async function resolveCoordinatorScope(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
+  userEmail: string | null | undefined,
   searchParams: URLSearchParams
 ): Promise<
-  | { ok: true; coordinatorId: string }
+  | { ok: true; coordinatorId: string; coordinatorEmail: string }
   | { ok: false; status: number; error: string }
 > {
   const { data: roles, error } = await supabase
@@ -41,7 +43,11 @@ async function resolveCoordinatorScope(
   }
 
   if (isCoordinator && !isAdmin) {
-    return { ok: true, coordinatorId: userId };
+    return {
+      ok: true,
+      coordinatorId: userId,
+      coordinatorEmail: (userEmail ?? '').toLowerCase().trim(),
+    };
   }
 
   const paramId = searchParams.get('coordinator_id');
@@ -53,7 +59,17 @@ async function resolveCoordinatorScope(
     };
   }
 
-  return { ok: true, coordinatorId: paramId };
+  const { data: targetProfile } = await supabase
+    .from('profiles')
+    .select('email')
+    .eq('id', paramId)
+    .maybeSingle();
+
+  return {
+    ok: true,
+    coordinatorId: paramId,
+    coordinatorEmail: (targetProfile?.email ?? '').toLowerCase().trim(),
+  };
 }
 
 /** GET — list swimmers assigned to the logged-in coordinator (or admin viewing a coordinator via ?coordinator_id=) */
@@ -69,10 +85,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const scope = await resolveCoordinatorScope(supabase, user.id, request.nextUrl.searchParams);
+    const scope = await resolveCoordinatorScope(
+      supabase,
+      user.id,
+      user.email,
+      request.nextUrl.searchParams
+    );
     if (!scope.ok) {
       return NextResponse.json({ error: scope.error }, { status: scope.status });
     }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SECRET_KEY;
+    if (!supabaseUrl || !serviceKey) {
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+    const admin = createSupabaseAdmin(supabaseUrl, serviceKey);
 
     const { searchParams } = request.nextUrl;
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
@@ -86,7 +114,7 @@ export async function GET(request: NextRequest) {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    let query = supabase
+    let query = admin
       .from('swimmers')
       .select(
         `
@@ -107,9 +135,15 @@ export async function GET(request: NextRequest) {
         )
       `,
         { count: 'exact' }
-      )
-      //.eq('coordinator_id', scope.coordinatorId);
-      .eq('funding_coordinator_email', user.email);
+      );
+
+    const ownershipFilters = [`coordinator_id.eq.${scope.coordinatorId}`];
+    if (scope.coordinatorEmail) {
+      ownershipFilters.push(
+        `funding_coordinator_email.ilike.${escapeIlike(scope.coordinatorEmail)}`
+      );
+    }
+    query = query.or(ownershipFilters.join(','));
 
     if (search) {
       const cleaned = search.replace(/,/g, ' ').trim();
@@ -122,7 +156,6 @@ export async function GET(request: NextRequest) {
     query = query.order(sortBy, { ascending: sortOrder }).range(from, to);
 
     const { data, error, count } = await query;
-    console.log("Data............", data);
     if (error) {
       console.error('GET /api/coordinator/swimmers:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createSupabaseAdmin } from '@supabase/supabase-js';
 import { emailService } from '@/lib/email-service';
 
 type ApprovalDecision = 'approved' | 'declined';
@@ -48,7 +49,14 @@ export async function PATCH(
       );
     }
 
-    const { data: swimmer, error: fetchError } = await supabase
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SECRET_KEY;
+    if (!supabaseUrl || !serviceKey) {
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+    const admin = createSupabaseAdmin(supabaseUrl, serviceKey);
+
+    const { data: swimmer, error: fetchError } = await admin
       .from('swimmers')
       .select(
         `
@@ -76,7 +84,11 @@ export async function PATCH(
       return NextResponse.json({ error: 'Swimmer not found' }, { status: 404 });
     }
 
-    if (!isAdmin && swimmer.funding_coordinator_email !== user.email) {
+    const meEmail = (user.email ?? '').toLowerCase().trim();
+    const swimmerEmail = (swimmer.funding_coordinator_email ?? '').toLowerCase().trim();
+    const ownsByEmail = meEmail !== '' && swimmerEmail === meEmail;
+    const ownsById = swimmer.coordinator_id === user.id;
+    if (!isAdmin && !ownsById && !ownsByEmail) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -97,7 +109,7 @@ export async function PATCH(
       //updatePayload.enrollment_status = 'waitlist';
     } 
 
-    const { data: updatedRows, error: updateError } = await supabase
+    const { data: updatedRows, error: updateError } = await admin
       .from('swimmers')
       .update(updatePayload)
       .eq('id', swimmerId)
@@ -108,29 +120,16 @@ export async function PATCH(
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
-    let updated = updatedRows?.[0];
-    // PostgREST sometimes returns no rows from RETURNING even when the row updated (RLS on SELECT).
-    if (!updated) {
-      const { data: refetched } = await supabase
-        .from('swimmers')
-        .select('id, approval_status, enrollment_status')
-        .eq('id', swimmerId)
-        .maybeSingle();
-      if (refetched) updated = refetched;
-    }
-
+    const updated = updatedRows?.[0];
     if (!updated) {
       return NextResponse.json(
-        {
-          error:
-            'Update did not apply or no row was returned. Ensure this swimmer is assigned to you (coordinator_id) and RLS allows updates.',
-        },
+        { error: 'Update did not apply or no row was returned.' },
         { status: 409 }
       );
     }
 
     if (decision === 'declined' && parentEmail) {
-      const { data: coordProfile } = await supabase
+      const { data: coordProfile } = await admin
         .from('profiles')
         .select('full_name')
         .eq('id', user.id)

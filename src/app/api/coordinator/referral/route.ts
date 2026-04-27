@@ -213,7 +213,8 @@ export async function POST(request: NextRequest) {
       gender: value.child_gender,
       coordinator_id: user.id,
 //      funding_source_id: fundingSourceId,
-      funding_coordinator_email: coordProfile.email ?? null,
+      funding_coordinator_email:
+        (coordProfile.email ?? user.email ?? '').toLowerCase().trim() || null,
       funding_coordinator_phone: coordProfile.phone ?? null,
       funding_coordinator_name: coordProfile.full_name ?? null,
       payment_type: 'funding_source',
