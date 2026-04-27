@@ -58,6 +58,7 @@ const parentNavItems: NavItem[] = [
   { title: 'Book', href: '/parent/book', icon: <Calendar className="h-5 w-5" />, openInNewTab: false },
   { title: 'My Swimmers', href: '/parent/swimmers', icon: <Users className="h-5 w-5" />, openInNewTab: false },
   { title: 'My Sessions', href: '/parent/sessions', icon: <Calendar className="h-5 w-5" />, openInNewTab: false },
+  { title: 'Progress', href: '/parent/progress', icon: <FileText className="h-5 w-5" />, openInNewTab: false },
   { title: 'Settings', href: '/settings', icon: <Settings className="h-5 w-5" />, openInNewTab: false },
 ]
 
