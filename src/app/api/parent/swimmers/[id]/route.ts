@@ -1,12 +1,58 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
-// Fields that parents are allowed to update (emergency contact only)
+// Fields that parents are allowed to update.
+// Excludes funding (payment_type, funding_source_id, funding_coordinator_*),
+// waiver/consent signatures, and staff-only operational fields
+// (enrollment_status, approval_status, current_level_id, authorized_sessions_*).
 const ALLOWED_PARENT_FIELDS = [
+  // Demographics
+  'first_name',
+  'last_name',
+  'date_of_birth',
+  'gender',
+
   // Emergency contact
   'emergency_contact_name',
   'emergency_contact_phone',
   'emergency_contact_relationship',
+
+  // Medical
+  'has_allergies',
+  'allergies_description',
+  'has_medical_conditions',
+  'medical_conditions_description',
+  'diagnosis',
+  'history_of_seizures',
+  'seizures_description',
+  'toilet_trained',
+  'non_ambulatory',
+
+  // Behavioral
+  'self_injurious_behavior',
+  'self_injurious_behavior_description',
+  'aggressive_behavior',
+  'aggressive_behavior_description',
+  'elopement_history',
+  'elopement_history_description',
+  'has_behavior_plan',
+
+  // Fundamental
+  'communication_type',
+  'strengths_interests',
+  'motivators',
+  'other_therapies',
+  'therapies_description',
+
+  // Swim background
+  'previous_swim_lessons',
+  'previous_swim_lessons_description',
+  'comfortable_in_water',
+  'swim_goals',
+
+  // Scheduling
+  'availability',
+  'flexible_swimmer',
 ];
 
 export async function PUT(

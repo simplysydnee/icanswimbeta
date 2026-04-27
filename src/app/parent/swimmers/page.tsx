@@ -14,6 +14,9 @@ interface Swimmer {
   first_name: string
   last_name: string
   date_of_birth?: string
+  gender?: string
+  height?: string | number
+  weight?: string | number
   photo_url?: string
   enrollment_status: string
   current_level?: {
@@ -24,18 +27,51 @@ interface Swimmer {
   payment_type?: string
   funding_source_id?: boolean
   funding_source_name?: string
+  funding_coordinator_name?: string
+  funding_coordinator_email?: string
+  funding_coordinator_phone?: string
+  authorized_sessions_used?: number
+  authorized_sessions_total?: number
   lessons_completed?: number
   next_session?: {
     start_time?: string
     instructor_name?: string
   }
-  // Additional fields for expanded view
+  // Medical
   diagnosis?: string[]
-  swim_goals?: string[]
   has_allergies?: boolean
   allergies_description?: string
   has_medical_conditions?: boolean
   medical_conditions_description?: string
+  history_of_seizures?: boolean
+  seizures_description?: string
+  toilet_trained?: string
+  non_ambulatory?: boolean
+  // Behavioral
+  self_injurious_behavior?: boolean
+  self_injurious_behavior_description?: string
+  aggressive_behavior?: boolean
+  aggressive_behavior_description?: string
+  elopement_history?: boolean
+  elopement_history_description?: string
+  has_behavior_plan?: boolean
+  restraint_history?: boolean
+  restraint_history_description?: string
+  // Fundamental
+  communication_type?: string | string[]
+  strengths_interests?: string
+  other_therapies?: boolean
+  therapies_description?: string
+  // Swim background
+  swim_goals?: string[]
+  previous_swim_lessons?: boolean
+  comfortable_in_water?: string
+  // Scheduling
+  flexible_swimmer?: boolean
+  // Emergency contact
+  emergency_contact_name?: string
+  emergency_contact_phone?: string
+  emergency_contact_relationship?: string
   // Parent contact info (for reference)
   parent_phone?: string
   parent_email?: string
@@ -46,6 +82,9 @@ interface ApiSwimmer {
   firstName: string
   lastName: string
   dateOfBirth?: string
+  gender?: string
+  height?: string | number
+  weight?: string | number
   photoUrl?: string
   enrollmentStatus: string
   currentLevel?: {
@@ -56,17 +95,45 @@ interface ApiSwimmer {
   paymentType?: string
   fundingSourceId?: string
   fundingSourceName?: string
+  coordinatorName?: string
+  coordinatorEmail?: string
+  coordinatorPhone?: string
+  authorizedSessionsUsed?: number
+  authorizedSessionsTotal?: number
   lessonsCompleted?: number
   nextSession?: {
     startTime?: string
     instructorName?: string
   }
   diagnosis?: string[]
-  swimGoals?: string[]
   hasAllergies?: boolean
   allergiesDescription?: string
   hasMedicalConditions?: boolean
   medicalConditionsDescription?: string
+  historyOfSeizures?: boolean
+  seizuresDescription?: string
+  toiletTrained?: string
+  nonAmbulatory?: boolean
+  selfInjuriousBehavior?: boolean
+  selfInjuriousBehaviorDescription?: string
+  aggressiveBehavior?: boolean
+  aggressiveBehaviorDescription?: string
+  elopementHistory?: boolean
+  elopementHistoryDescription?: string
+  hasBehaviorPlan?: boolean
+  restraintHistory?: boolean
+  restraintHistoryDescription?: string
+  communicationType?: string | string[]
+  strengthsInterests?: string
+  otherTherapies?: boolean
+  therapiesDescription?: string
+  swimGoals?: string[]
+  previousSwimLessons?: boolean
+  comfortableInWater?: string
+  flexibleSwimmer?: boolean
+  emergencyContactName?: string
+  emergencyContactPhone?: string
+  emergencyContactRelationship?: string
 }
 
 export default function SwimmersPage() {
@@ -100,14 +167,23 @@ export default function SwimmersPage() {
         if (!response.ok) {
           throw new Error('Failed to fetch swimmers')
         }
-        const data = await response.json()
+        const json = await response.json()
+        // API returns { transformedData, metadata } — see /api/swimmers/route.ts
+        const apiSwimmers: ApiSwimmer[] = Array.isArray(json)
+          ? json
+          : Array.isArray(json?.transformedData)
+            ? json.transformedData
+            : []
 
         // Transform API response to match SwimmerCard interface
-        const transformedData = data.map((swimmer: ApiSwimmer) => ({
+        const transformedData = apiSwimmers.map((swimmer: ApiSwimmer) => ({
           id: swimmer.id,
           first_name: swimmer.firstName,
           last_name: swimmer.lastName,
           date_of_birth: swimmer.dateOfBirth,
+          gender: swimmer.gender,
+          height: swimmer.height,
+          weight: swimmer.weight,
           photo_url: swimmer.photoUrl,
           enrollment_status: swimmer.enrollmentStatus,
           current_level: swimmer.currentLevel ? {
@@ -116,20 +192,53 @@ export default function SwimmersPage() {
             color: swimmer.currentLevel.color
           } : undefined,
           payment_type: swimmer.paymentType,
-          funding_source_id: !!swimmer.fundingSourceId, // Convert to boolean
+          funding_source_id: !!swimmer.fundingSourceId, // Convert to boolean (existing badge logic depends on this)
           funding_source_name: swimmer.fundingSourceName,
+          funding_coordinator_name: swimmer.coordinatorName,
+          funding_coordinator_email: swimmer.coordinatorEmail,
+          funding_coordinator_phone: swimmer.coordinatorPhone,
+          authorized_sessions_used: swimmer.authorizedSessionsUsed,
+          authorized_sessions_total: swimmer.authorizedSessionsTotal,
           lessons_completed: swimmer.lessonsCompleted,
           next_session: swimmer.nextSession ? {
             start_time: swimmer.nextSession.startTime,
             instructor_name: swimmer.nextSession.instructorName
           } : undefined,
-          // Additional fields for expanded view
+          // Medical
           diagnosis: swimmer.diagnosis,
-          swim_goals: swimmer.swimGoals,
           has_allergies: swimmer.hasAllergies,
           allergies_description: swimmer.allergiesDescription,
           has_medical_conditions: swimmer.hasMedicalConditions,
           medical_conditions_description: swimmer.medicalConditionsDescription,
+          history_of_seizures: swimmer.historyOfSeizures,
+          seizures_description: swimmer.seizuresDescription,
+          toilet_trained: swimmer.toiletTrained,
+          non_ambulatory: swimmer.nonAmbulatory,
+          // Behavioral
+          self_injurious_behavior: swimmer.selfInjuriousBehavior,
+          self_injurious_behavior_description: swimmer.selfInjuriousBehaviorDescription,
+          aggressive_behavior: swimmer.aggressiveBehavior,
+          aggressive_behavior_description: swimmer.aggressiveBehaviorDescription,
+          elopement_history: swimmer.elopementHistory,
+          elopement_history_description: swimmer.elopementHistoryDescription,
+          has_behavior_plan: swimmer.hasBehaviorPlan,
+          restraint_history: swimmer.restraintHistory,
+          restraint_history_description: swimmer.restraintHistoryDescription,
+          // Fundamental
+          communication_type: swimmer.communicationType,
+          strengths_interests: swimmer.strengthsInterests,
+          other_therapies: swimmer.otherTherapies,
+          therapies_description: swimmer.therapiesDescription,
+          // Swim background
+          swim_goals: swimmer.swimGoals,
+          previous_swim_lessons: swimmer.previousSwimLessons,
+          comfortable_in_water: swimmer.comfortableInWater,
+          // Scheduling
+          flexible_swimmer: swimmer.flexibleSwimmer,
+          // Emergency contact
+          emergency_contact_name: swimmer.emergencyContactName,
+          emergency_contact_phone: swimmer.emergencyContactPhone,
+          emergency_contact_relationship: swimmer.emergencyContactRelationship,
           // Parent contact info (for reference)
           parent_phone: parentPhone,
           parent_email: parentEmail
@@ -161,17 +270,49 @@ export default function SwimmersPage() {
               first_name,
               last_name,
               date_of_birth,
+              gender,
+              height,
+              weight,
               photo_url,
               enrollment_status,
               payment_type,
               funding_source_id,
+              funding_coordinator_name,
+              funding_coordinator_email,
+              funding_coordinator_phone,
+              authorized_sessions_used,
+              authorized_sessions_total,
               diagnosis,
               swim_goals,
               has_allergies,
               allergies_description,
               has_medical_conditions,
               medical_conditions_description,
-              current_level:swim_levels(name, display_name, color)
+              history_of_seizures,
+              seizures_description,
+              toilet_trained,
+              non_ambulatory,
+              self_injurious_behavior,
+              self_injurious_behavior_description,
+              aggressive_behavior,
+              aggressive_behavior_description,
+              elopement_history,
+              elopement_history_description,
+              has_behavior_plan,
+              restraint_history,
+              restraint_history_description,
+              communication_type,
+              strengths_interests,
+              other_therapies,
+              therapies_description,
+              previous_swim_lessons,
+              comfortable_in_water,
+              flexible_swimmer,
+              emergency_contact_name,
+              emergency_contact_phone,
+              emergency_contact_relationship,
+              current_level:swim_levels(name, display_name, color),
+              funding_source:funding_source_id(name)
             `)
             .eq('parent_id', user.id)
             .order('first_name')
@@ -179,9 +320,10 @@ export default function SwimmersPage() {
           if (error) throw error
 
           // Add parent contact info to each swimmer and convert funding_source_id to boolean
-          const swimmersWithParentInfo = (data || []).map((swimmer) => ({
+          const swimmersWithParentInfo = (data || []).map((swimmer: any) => ({
             ...swimmer,
             funding_source_id: !!swimmer.funding_source_id, // Convert to boolean
+            funding_source_name: swimmer.funding_source?.name,
             parent_phone: parentPhone,
             parent_email: parentEmail
           }))
