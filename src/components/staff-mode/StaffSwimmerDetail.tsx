@@ -121,7 +121,7 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
         photo_video_permission,
         photo_video_signature,
         cancellation_policy_signature,
-        swim_levels!inner (
+        swim_levels (
           name,
           sequence
         ),
@@ -138,7 +138,7 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
       console.error('Error fetching swimmer:', swimmerError)
       console.error('Full error details:', JSON.stringify(swimmerError, null, 2))
       console.error('Swimmer ID being queried:', swimmerId)
-      throw new Error('Failed to fetch swimmer details')
+      throw new Error(swimmerError.message || 'Failed to fetch swimmer details')
     }
 
     console.log('✅ Swimmer query successful:', swimmer)
@@ -251,7 +251,6 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
     // Transform the data
     console.log('🔍 fetchSwimmerDetail: swimmer.parent_email =', swimmer.parent_email);
     console.log('🔍 fetchSwimmerDetail: swimmer.parent_name =', swimmer.parent_name);
-    console.log('🔍 fetchSwimmerDetail: swimmer.parent_phone =', swimmer.parent_phone);
     const parentProfile = swimmer.profiles?.[0] || {}
     console.log('🔍 fetchSwimmerDetail: parentProfile.email =', parentProfile.email);
     console.log('🔍 fetchSwimmerDetail: parentProfile.full_name =', parentProfile.full_name);
@@ -296,7 +295,7 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
       // Parent info - prioritize direct columns from swimmers table, fall back to joined profile
       parent_id: swimmer.parent_id,
       parent_name: swimmer.parent_name || parentProfile.full_name || null,
-      parent_phone: swimmer.parent_phone || parentProfile.phone || null,
+      parent_phone: parentProfile.phone || null,
       parent_email: swimmer.parent_email || parentProfile.email || null,
 
       // Waiver status
