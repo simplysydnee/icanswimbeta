@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,17 +11,41 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Plus, Edit, Trash2, Users, ArrowRightLeft, Check, Loader2 } from 'lucide-react';
+import {
+  MoreHorizontal,
+  Plus,
+  Edit,
+  Trash2,
+  Users,
+  ArrowRightLeft,
+  Check,
+  Loader2,
+  Search,
+  ChevronsLeft,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsRight,
+} from 'lucide-react';
+
+type Role = 'parent' | 'instructor' | 'admin' | 'coordinator';
 
 interface User {
   id: string;
   email: string;
-  password: string
+  password?: string;
   full_name: string | null;
   phone: string | null;
-  role: 'parent' | 'instructor' | 'admin' | 'coordinator';
+  role: Role;
+  swimmer_count: number;
+  client_count: number;
   created_at: string;
   updated_at: string;
+}
+
+interface CoordinatorOption {
+  id: string;
+  email: string;
+  full_name: string | null;
 }
 
 interface Swimmer {
@@ -33,8 +58,31 @@ interface Swimmer {
 }
 
 export default function UsersPage() {
+  return (
+    <Suspense fallback={<div className="p-6"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+      <UsersPageInner />
+    </Suspense>
+  );
+}
+
+function UsersPageInner() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const search = searchParams.get('search') ?? '';
+  const roleFilter = (searchParams.get('role') ?? 'all') as 'all' | Role;
+  const pageParam = parseInt(searchParams.get('page') ?? '1', 10);
+  const limitParam = parseInt(searchParams.get('limit') ?? '25', 10);
+  const page = Number.isFinite(pageParam) && pageParam >= 1 ? pageParam : 1;
+  const limit = Number.isFinite(limitParam) && limitParam >= 1 ? limitParam : 25;
+
   const [users, setUsers] = useState<User[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [allSwimmers, setAllSwimmers] = useState<Swimmer[]>([]);
+  const [allCoordinators, setAllCoordinators] = useState<CoordinatorOption[]>([]);
+  const [localSearch, setLocalSearch] = useState(search);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -60,94 +108,120 @@ export default function UsersPage() {
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
-    const supabase = createClient();
-
     try {
-      console.log('Starting fetchUsers...');
-
-      // Fetch profiles with roles from user_roles table
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          email,
-          full_name,
-          phone,
-          created_at,
-          updated_at
-        `)
-        .order('created_at', { ascending: false });
-
-      console.log('Profiles fetch result:', {
-        dataCount: profilesData?.length || 0,
-        error: profilesError,
-        sampleData: profilesData?.slice(0, 2)
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
       });
+      if (search) params.set('search', search);
+      if (roleFilter !== 'all') params.set('role', roleFilter);
 
-      if (profilesError) {
-        console.error('Profiles fetch error:', profilesError);
-        throw profilesError;
-      }
+      const res = await fetch(`/api/admin/users?${params.toString()}`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || 'Failed to load users');
 
-      // Fetch roles separately
-      const { data: rolesData, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id, role');
-
-      console.log('Roles fetch result:', {
-        dataCount: rolesData?.length || 0,
-        error: rolesError,
-        sampleData: rolesData?.slice(0, 5)
-      });
-
-      if (rolesError) {
-        console.error('Roles fetch error:', rolesError);
-        throw rolesError;
-      }
-
-      // Fetch swimmers
-      const { data: swimmersData, error: swimmersError } = await supabase
-        .from('swimmers')
-        .select('id, first_name, last_name, parent_id, coordinator_id, funding_coordinator_email');
-
-      console.log('Swimmers fetch result:', {
-        dataCount: swimmersData?.length || 0,
-        error: swimmersError,
-        sampleData: swimmersData?.slice(0, 2)
-      });
-
-      if (swimmersError) {
-        console.error('Swimmers fetch error:', swimmersError);
-        // Don't throw - swimmers are optional for user display
-      }
-
-      // Merge profiles with roles
-      const usersWithRoles = (profilesData || []).map(profile => {
-        const userRole = rolesData?.find(r => r.user_id === profile.id);
-        const role = userRole?.role || 'parent'; // Default to parent if no role
-        console.log(`Profile ${profile.email} (${profile.id}) -> role: ${role}`);
-        return {
-          ...profile,
-          role: role,
-        };
-      });
-
-      console.log('Final usersWithRoles:', usersWithRoles);
-      console.log('Total users:', usersWithRoles.length);
-
-      setUsers(usersWithRoles);
-      setAllSwimmers(swimmersData || []);
+      setUsers(json.users ?? []);
+      setTotal(json.total ?? 0);
+      setTotalPages(json.totalPages ?? 0);
     } catch (error) {
       console.error('Error in fetchUsers:', error);
       alert('Error loading users. Check console for details.');
     } finally {
       setLoading(false);
     }
+  }, [page, limit, search, roleFilter]);
+
+  const fetchAuxiliary = useCallback(async () => {
+    const supabase = createClient();
+    try {
+      const [swimRes, coordRes] = await Promise.all([
+        supabase
+          .from('swimmers')
+          .select('id, first_name, last_name, parent_id, coordinator_id, funding_coordinator_email'),
+        supabase
+          .from('user_roles')
+          .select('user_id, role, profiles!inner(id, email, full_name)')
+          .eq('role', 'coordinator'),
+      ]);
+
+      if (swimRes.error) console.error('Swimmers fetch error:', swimRes.error);
+      setAllSwimmers((swimRes.data as Swimmer[] | null) ?? []);
+
+      if (coordRes.error) {
+        console.error('Coordinators fetch error:', coordRes.error);
+        setAllCoordinators([]);
+      } else {
+        const coords = (coordRes.data ?? [])
+          .map((row: any) => {
+            const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+            return profile
+              ? { id: profile.id as string, email: profile.email as string, full_name: profile.full_name as string | null }
+              : null;
+          })
+          .filter((c): c is CoordinatorOption => c !== null);
+        setAllCoordinators(coords);
+      }
+    } catch (error) {
+      console.error('Error loading auxiliary data:', error);
+    }
   }, []);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    fetchAuxiliary();
+  }, [fetchAuxiliary]);
+
+  const refreshAll = useCallback(async () => {
+    await Promise.all([fetchUsers(), fetchAuxiliary()]);
+  }, [fetchUsers, fetchAuxiliary]);
+
+  // URL filter helpers (mirror SwimmerManagementTable)
+  const createQueryString = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null) params.delete(key);
+        else params.set(key, value);
+      });
+      return params.toString();
+    },
+    [searchParams]
+  );
+
+  const updateFilter = useCallback(
+    (key: string, value: string | null, opts?: { resetPage?: boolean }) => {
+      const updates: Record<string, string | null> = { [key]: value };
+      if (opts?.resetPage !== false && key !== 'page') updates.page = '1';
+      const qs = createQueryString(updates);
+      router.push(qs ? `${pathname}?${qs}` : pathname);
+    },
+    [createQueryString, router, pathname]
+  );
+
+  // Debounced search -> URL
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch !== search) {
+        updateFilter('search', localSearch || null);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [localSearch, search, updateFilter]);
+
+  // Sync local input when URL changes externally (back/forward)
+  useEffect(() => {
+    setLocalSearch(search);
+  }, [search]);
+
+  // If the current page is now beyond the last page (e.g. after a delete), step back
+  useEffect(() => {
+    if (!loading && totalPages > 0 && page > totalPages) {
+      updateFilter('page', String(totalPages));
+    }
+  }, [loading, totalPages, page, updateFilter]);
 
   // const handleAddUser = async () => {
   //   if (!newUser.email) return;
@@ -232,7 +306,7 @@ export default function UsersPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || 'Failed to add user');
 
-      await fetchUsers();
+      await refreshAll();
       setAddDialogOpen(false);
       setNewUser({ email: '', full_name: '', phone: '', role: 'parent', password: '' });
       alert('User added successfully!');
@@ -286,10 +360,10 @@ export default function UsersPage() {
         if (roleError) throw roleError;
       }
 
-      await fetchUsers();
+      await refreshAll();
       setEditDialogOpen(false);
       setSelectedUser(null);
-      setNewUser({ email: '', full_name: '', phone: '', role: 'parent' });
+      setNewUser({ email: '', password: '', full_name: '', phone: '', role: 'parent' });
       alert('User updated successfully!');
     } catch (error) {
       console.error('Error updating user:', error);
@@ -323,7 +397,7 @@ export default function UsersPage() {
 
       if (error) throw error;
 
-      await fetchUsers();
+      await refreshAll();
       setDeleteDialogOpen(false);
       setSelectedUser(null);
       alert('User deleted successfully!');
@@ -349,7 +423,7 @@ export default function UsersPage() {
 
       if (error) throw error;
 
-      await fetchUsers();
+      await refreshAll();
       setLinkSwimmerDialogOpen(false);
       setSelectedSwimmerToLink('');
       alert('Swimmer linked successfully!');
@@ -454,7 +528,7 @@ export default function UsersPage() {
       if (updateError) throw updateError;
 
       // Refresh data
-      await fetchUsers();
+      await refreshAll();
 
       // Close dialog and reset
       setTransferDialogOpen(false);
@@ -511,6 +585,38 @@ export default function UsersPage() {
         </div>
       </div>
 
+      <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, email, or phone..."
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select
+          value={roleFilter}
+          onValueChange={(value) => updateFilter('role', value === 'all' ? null : value)}
+        >
+          <SelectTrigger className="w-full md:w-48">
+            <SelectValue placeholder="All roles" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All roles</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="instructor">Instructor</SelectItem>
+            <SelectItem value="coordinator">Coordinator</SelectItem>
+            <SelectItem value="parent">Parent</SelectItem>
+          </SelectContent>
+        </Select>
+        <div className="md:ml-auto text-sm text-muted-foreground">
+          {total === 0
+            ? 'No users'
+            : `Showing ${(page - 1) * limit + 1} to ${Math.min(page * limit, total)} of ${total} users`}
+        </div>
+      </div>
+
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -532,12 +638,12 @@ export default function UsersPage() {
               {users.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    No users found
+                    {search || roleFilter !== 'all' ? 'No users match your filters' : 'No users found'}
                   </TableCell>
                 </TableRow>
               ) : (
                 users.map((user) => (
-                  <TableRow key={user.id}>
+                  <TableRow key={`${user.id}-${user.role}`}>
                     <TableCell className="font-medium">
                       {user.full_name || '—'}
                     </TableCell>
@@ -550,12 +656,12 @@ export default function UsersPage() {
                         </Badge>
                         {user.role === 'parent' && (
                           <Badge variant="secondary" className="text-xs">
-                            {allSwimmers.filter(s => s.parent_id === user.id).length} swimmers
+                            {user.swimmer_count} swimmers
                           </Badge>
                         )}
                         {user.role === 'coordinator' && (
                           <Badge variant="secondary" className="text-xs">
-                            {allSwimmers.filter(s => s.coordinator_id === user.id).length} clients
+                            {user.client_count} clients
                           </Badge>
                         )}
                       </div>
@@ -573,7 +679,7 @@ export default function UsersPage() {
                             setSelectedUser(user);
                             setNewUser({
                               email: user.email,
-                              password: user.password,
+                              password: user.password ?? '',
                               full_name: user.full_name || '',
                               phone: user.phone || '',
                               role: user.role
@@ -623,6 +729,67 @@ export default function UsersPage() {
               )}
             </TableBody>
           </Table>
+          {total > 0 && (
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-4 py-3 border-t">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Select
+                  value={String(limit)}
+                  onValueChange={(v) => updateFilter('limit', v)}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span>per page</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground mr-2">
+                  Page {Math.min(page, Math.max(1, totalPages))} of {Math.max(1, totalPages)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => updateFilter('page', '1')}
+                  disabled={page <= 1}
+                  aria-label="First page"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => updateFilter('page', String(page - 1))}
+                  disabled={page <= 1}
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => updateFilter('page', String(page + 1))}
+                  disabled={page >= totalPages}
+                  aria-label="Next page"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => updateFilter('page', String(totalPages))}
+                  disabled={page >= totalPages}
+                  aria-label="Last page"
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -921,15 +1088,13 @@ export default function UsersPage() {
                       <SelectValue placeholder="Select coordinator..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {(() => {
-                        const coordinators = users.filter(u => u.role === 'coordinator' && u.id !== selectedUser?.id);
-                        console.log('Available coordinators for transfer:', coordinators.length, 'selectedUser:', selectedUser?.email);
-                        return coordinators.map(coord => (
+                      {allCoordinators
+                        .filter((coord) => coord.id !== selectedUser?.id)
+                        .map((coord) => (
                           <SelectItem key={coord.id} value={coord.email}>
                             {coord.full_name || coord.email}
                           </SelectItem>
-                        ));
-                      })()}
+                        ))}
                       <SelectItem value="__new__">
                         <span className="flex items-center gap-2">
                           <Plus className="h-4 w-4" />
