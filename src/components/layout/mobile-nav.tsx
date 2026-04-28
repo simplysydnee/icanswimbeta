@@ -44,6 +44,7 @@ const parentNavItems: NavItem[] = [
 const instructorNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/instructor', icon: <LayoutDashboard className="h-5 w-5" /> },
   { label: 'Schedule', href: '/instructor/schedule', icon: <Calendar className="h-5 w-5" /> },
+  { label: 'Tasks', href: '/instructor/tasks', icon: <CheckSquare className="h-5 w-5" /> },
   { label: 'Settings', href: '/settings', icon: <Settings className="h-5 w-5" /> },
 ]
 

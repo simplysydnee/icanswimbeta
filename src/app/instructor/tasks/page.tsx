@@ -2,6 +2,6 @@
 
 import { TasksPageContent } from '@/components/tasks/TasksPageContent';
 
-export default function AdminTasksPage() {
+export default function InstructorTasksPage() {
   return <TasksPageContent />;
 }
