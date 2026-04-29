@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   MoreHorizontal,
   Plus,
@@ -25,6 +26,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsRight,
+  ChevronsUpDown,
 } from 'lucide-react';
 
 type Role = 'parent' | 'instructor' | 'admin' | 'coordinator';
@@ -55,6 +57,8 @@ interface Swimmer {
   parent_id: string | null;
   coordinator_id: string | null;
   funding_coordinator_email: string | null;
+  payment_type: string | null;
+  funding_source_id: string | null;
 }
 
 export default function UsersPage() {
@@ -90,13 +94,17 @@ function UsersPageInner() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [linkSwimmerDialogOpen, setLinkSwimmerDialogOpen] = useState(false);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [reassignDialogOpen, setReassignDialogOpen] = useState(false);
 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedSwimmerToLink, setSelectedSwimmerToLink] = useState<string>('');
+  const [linkPickerOpen, setLinkPickerOpen] = useState(false);
+  const [linkSearch, setLinkSearch] = useState('');
   const [transferSwimmerId, setTransferSwimmerId] = useState<string>('');
   const [newCoordinatorEmail, setNewCoordinatorEmail] = useState('');
   const [newCoordinatorName, setNewCoordinatorName] = useState('');
   const [showNewCoordinatorForm, setShowNewCoordinatorForm] = useState(false);
+  const [reassignSwimmerId, setReassignSwimmerId] = useState<string>('');
 
   const [newUser, setNewUser] = useState({
     email: '',
@@ -137,7 +145,7 @@ function UsersPageInner() {
       const [swimRes, coordRes] = await Promise.all([
         supabase
           .from('swimmers')
-          .select('id, first_name, last_name, parent_id, coordinator_id, funding_coordinator_email'),
+          .select('id, first_name, last_name, parent_id, coordinator_id, funding_coordinator_email, payment_type, funding_source_id'),
         supabase
           .from('user_roles')
           .select('user_id, role, profiles!inner(id, email, full_name)')
@@ -173,6 +181,39 @@ function UsersPageInner() {
   useEffect(() => {
     fetchAuxiliary();
   }, [fetchAuxiliary]);
+
+  // Workaround: Radix Dialog + Portal-mounted overlays inside (Popover/Select/DropdownMenu)
+  // can leak `pointer-events: none` onto <body>, freezing the page. Clear it once all
+  // dialogs are closed and Radix's exit animation has had time to finish.
+  useEffect(() => {
+    const anyDialogOpen =
+      addDialogOpen ||
+      editDialogOpen ||
+      deleteDialogOpen ||
+      linkSwimmerDialogOpen ||
+      transferDialogOpen ||
+      reassignDialogOpen;
+    if (anyDialogOpen) return;
+
+    const clearLeak = () => {
+      if (document.body.style.pointerEvents === 'none') {
+        document.body.style.pointerEvents = '';
+      }
+    };
+    const t1 = setTimeout(clearLeak, 200);
+    const t2 = setTimeout(clearLeak, 500);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [
+    addDialogOpen,
+    editDialogOpen,
+    deleteDialogOpen,
+    linkSwimmerDialogOpen,
+    transferDialogOpen,
+    reassignDialogOpen,
+  ]);
 
   const refreshAll = useCallback(async () => {
     await Promise.all([fetchUsers(), fetchAuxiliary()]);
@@ -552,6 +593,46 @@ function UsersPageInner() {
     }
   };
 
+  const handleReassignCoordinator = async () => {
+    if (!selectedUser || !reassignSwimmerId) return;
+
+    setSaving(true);
+    const supabase = createClient();
+
+    try {
+      const { data: targetCoord, error: coordErr } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, phone, funding_source_id')
+        .eq('id', selectedUser.id)
+        .single();
+
+      if (coordErr || !targetCoord) throw coordErr ?? new Error('Coordinator not found');
+
+      const { error: updateError } = await supabase
+        .from('swimmers')
+        .update({
+          coordinator_id: targetCoord.id,
+          funding_source_id: targetCoord.funding_source_id,
+          funding_coordinator_name: targetCoord.full_name,
+          funding_coordinator_email: targetCoord.email ? String(targetCoord.email).toLowerCase() : null,
+          funding_coordinator_phone: targetCoord.phone,
+        })
+        .eq('id', reassignSwimmerId);
+
+      if (updateError) throw updateError;
+
+      await refreshAll();
+      setReassignDialogOpen(false);
+      setReassignSwimmerId('');
+      alert('Swimmer assigned successfully!');
+    } catch (error) {
+      console.error('Error assigning swimmer:', error);
+      alert('Failed to assign swimmer');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case 'admin': return 'destructive';
@@ -711,6 +792,15 @@ function UsersPageInner() {
                               </DropdownMenuItem>
                             );
                           })()}
+                          {user.role === 'coordinator' && (
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedUser(user);
+                              setReassignDialogOpen(true);
+                            }}>
+                              <Users className="h-4 w-4 mr-2" />
+                              Assign Swimmer
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             onClick={() => {
                               setSelectedUser(user);
@@ -961,8 +1051,15 @@ function UsersPageInner() {
       </Dialog>
 
       {/* Link Swimmer Dialog */}
-      <Dialog open={linkSwimmerDialogOpen} onOpenChange={setLinkSwimmerDialogOpen}>
-        <DialogContent>
+      <Dialog open={linkSwimmerDialogOpen} onOpenChange={(open) => {
+        setLinkSwimmerDialogOpen(open);
+        if (!open) {
+          setSelectedSwimmerToLink('');
+          setLinkPickerOpen(false);
+          setLinkSearch('');
+        }
+      }}>
+        <DialogContent className="max-h-[85vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Link Swimmer to Parent</DialogTitle>
             <DialogDescription>
@@ -970,7 +1067,88 @@ function UsersPageInner() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-4 space-y-4">
+          <div className="py-4 space-y-4 overflow-y-auto">
+            <div className="space-y-2">
+              <Label>Select Swimmer to Link</Label>
+              {(() => {
+                const selectedSwimmer = allSwimmers.find(s => s.id === selectedSwimmerToLink);
+                const q = linkSearch.toLowerCase().trim();
+                const filtered = q
+                  ? allSwimmers.filter(s => `${s.first_name} ${s.last_name}`.toLowerCase().includes(q))
+                  : allSwimmers;
+                return (
+                  <Popover
+                    open={linkPickerOpen}
+                    onOpenChange={(open) => {
+                      setLinkPickerOpen(open);
+                      if (!open) setLinkSearch('');
+                    }}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={linkPickerOpen}
+                        className="w-full justify-between font-normal"
+                      >
+                        <span className={selectedSwimmer ? '' : 'text-muted-foreground'}>
+                          {selectedSwimmer
+                            ? `${selectedSwimmer.first_name} ${selectedSwimmer.last_name}`
+                            : 'Select a swimmer...'}
+                        </span>
+                        <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      align="start"
+                      className="p-0 w-[var(--radix-popover-trigger-width)]"
+                    >
+                      <div className="p-2 border-b">
+                        <Input
+                          autoFocus
+                          placeholder="Search by name..."
+                          value={linkSearch}
+                          onChange={(e) => setLinkSearch(e.target.value)}
+                        />
+                      </div>
+                      <div className="max-h-64 overflow-y-auto py-1">
+                        {allSwimmers.length === 0 ? (
+                          <div className="p-3 text-sm text-muted-foreground">No swimmers in the system yet.</div>
+                        ) : filtered.length === 0 ? (
+                          <div className="p-3 text-sm text-muted-foreground">No matches.</div>
+                        ) : (
+                          filtered.map(swimmer => {
+                            const suffix = swimmer.parent_id == null
+                              ? ' — unassigned'
+                              : swimmer.parent_id === selectedUser?.id
+                                ? ' — already with this parent'
+                                : ' — linked to another parent';
+                            const isSelected = swimmer.id === selectedSwimmerToLink;
+                            return (
+                              <button
+                                key={swimmer.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedSwimmerToLink(swimmer.id);
+                                  setLinkPickerOpen(false);
+                                  setLinkSearch('');
+                                }}
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-accent flex items-center gap-2"
+                              >
+                                <Check className={`h-4 w-4 ${isSelected ? 'opacity-100' : 'opacity-0'}`} />
+                                <span>{swimmer.first_name} {swimmer.last_name}{suffix}</span>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                );
+              })()}
+            </div>
+
             {selectedUser && (
               <div>
                 <Label className="text-sm text-muted-foreground">Currently Linked Swimmers:</Label>
@@ -988,27 +1166,6 @@ function UsersPageInner() {
                 </div>
               </div>
             )}
-
-            <div className="space-y-2">
-              <Label>Select Swimmer to Link</Label>
-              <Select value={selectedSwimmerToLink} onValueChange={setSelectedSwimmerToLink}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a swimmer..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {allSwimmers
-                    .filter(s => !s.parent_id)
-                    .map(swimmer => (
-                      <SelectItem key={swimmer.id} value={swimmer.id}>
-                        {swimmer.first_name} {swimmer.last_name}
-                      </SelectItem>
-                    ))}
-                  {allSwimmers.filter(s => !s.parent_id).length === 0 && (
-                    <div className="p-2 text-sm text-muted-foreground">All swimmers are already linked</div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
           <DialogFooter>
@@ -1149,6 +1306,68 @@ function UsersPageInner() {
             >
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Transfer Client
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Swimmer to Coordinator Dialog */}
+      <Dialog open={reassignDialogOpen} onOpenChange={(open) => {
+        setReassignDialogOpen(open);
+        if (!open) setReassignSwimmerId('');
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Assign Swimmer to Coordinator</DialogTitle>
+            <DialogDescription>
+              Assign a funding-source swimmer to {selectedUser?.full_name || selectedUser?.email}. If the swimmer is currently with another coordinator, they will be removed from that coordinator.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Select Swimmer</Label>
+              {allSwimmers.filter(s => s.payment_type === 'funding_source').length === 0 ? (
+                <p className="text-sm text-muted-foreground p-3 bg-gray-50 rounded">
+                  No funding-source swimmers available to assign.
+                </p>
+              ) : (
+                <Select value={reassignSwimmerId} onValueChange={setReassignSwimmerId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a swimmer..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allSwimmers
+                      .filter(s => s.payment_type === 'funding_source')
+                      .map(swimmer => {
+                        const currentCoord = swimmer.coordinator_id
+                          ? allCoordinators.find(c => c.id === swimmer.coordinator_id)
+                          : null;
+                        const suffix = currentCoord
+                          ? ` — currently: ${currentCoord.full_name || currentCoord.email}`
+                          : ' — unassigned';
+                        return (
+                          <SelectItem key={swimmer.id} value={swimmer.id}>
+                            {swimmer.first_name} {swimmer.last_name}{suffix}
+                          </SelectItem>
+                        );
+                      })}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReassignDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleReassignCoordinator}
+              disabled={saving || !reassignSwimmerId}
+            >
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Assign
             </Button>
           </DialogFooter>
         </DialogContent>
