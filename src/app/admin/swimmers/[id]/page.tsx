@@ -1024,12 +1024,64 @@ function AdminSwimmerDetailContent() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Approval Status</p>
-                      <Badge
-                        variant={swimmer.approval_status === 'approved' ? 'default' : 'outline'}
-                        className={swimmer.approval_status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}
-                      >
-                        {swimmer.approval_status === 'approved' ? 'Approved' : 'Pending Approval'}
-                      </Badge>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge
+                          variant={swimmer.approval_status === 'approved' ? 'default' : 'outline'}
+                          className={swimmer.approval_status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}
+                        >
+                          {swimmer.approval_status === 'approved' ? 'Approved' : swimmer.approval_status === 'declined' ? 'Declined' : 'Pending Approval'}
+                        </Badge>
+                        {swimmer.approval_status === 'pending' && (
+                          <div className="flex gap-1">
+                            <Button
+                              size="sm"
+                              className="h-7 px-2 text-xs bg-green-600 hover:bg-green-700 text-white"
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch(`/api/admin/swimmers/${swimmer.id}/approve`, { method: 'POST' });
+                                  if (res.ok) {
+                                    toast({ title: 'Approved', description: 'Swimmer has been approved.' });
+                                    fetchSwimmerData();
+                                  } else {
+                                    const err = await res.json();
+                                    toast({ title: 'Error', description: err.error || 'Failed to approve', variant: 'destructive' });
+                                  }
+                                } catch (e) {
+                                  toast({ title: 'Error', description: 'Failed to approve swimmer', variant: 'destructive' });
+                                }
+                              }}
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" /> Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="h-7 px-2 text-xs"
+                              onClick={async () => {
+                                const reason = window.prompt('Optional: Provide a reason for declining:');
+                                try {
+                                  const res = await fetch(`/api/admin/swimmers/${swimmer.id}/decline`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ reason: reason || undefined }),
+                                  });
+                                  if (res.ok) {
+                                    toast({ title: 'Declined', description: 'Swimmer has been declined.' });
+                                    fetchSwimmerData();
+                                  } else {
+                                    const err = await res.json();
+                                    toast({ title: 'Error', description: err.error || 'Failed to decline', variant: 'destructive' });
+                                  }
+                                } catch (e) {
+                                  toast({ title: 'Error', description: 'Failed to decline swimmer', variant: 'destructive' });
+                                }
+                              }}
+                            >
+                              <XCircle className="h-3 w-3 mr-1" /> Decline
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Flexible Swimmer</p>

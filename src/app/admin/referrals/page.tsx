@@ -630,6 +630,11 @@ function AdminReferralsContent() {
   return (
     <RoleGuard allowedRoles={['admin']}>
       <div className="max-w-7xl mx-auto p-6">
+        {/* Info Banner */}
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+          Referrals in progress &mdash; once complete they appear in Pending Approvals for review
+        </div>
+
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Referrals</h1>

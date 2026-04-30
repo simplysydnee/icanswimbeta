@@ -44,6 +44,7 @@ interface DashboardStats {
   privatePayCount: number;
   fundedCount: number;
   sessionsToday: number;
+  pendingApprovals: number;
   pendingReferrals: number;
   pendingPOs: number;
   sessionsNeedingProgress: number;
@@ -119,11 +120,23 @@ export default function AdminDashboard() {
         .not('funding_source_id', 'is', null)
         .neq('funding_source_id', PRIVATE_PAY_FUNDING_SOURCE_ID);
 
+      // Fetch pending approval swimmers
+      const { count: pendingApprovalCount } = await supabase
+        .from('swimmers')
+        .select('*', { count: 'exact', head: true })
+        .eq('approval_status', 'pending');
+
       // Fetch pending purchase orders
       const { data: pos } = await supabase
         .from('purchase_orders')
         .select('id')
         .in('status', ['pending', 'approved_pending_auth']);
+
+      // Fetch pending referrals
+      const { count: pendingReferralCount } = await supabase
+        .from('referral_requests')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['ready_for_review', 'awaiting_parent']);
 
       // Fetch today's sessions with timezone-aware query
       // Midnight Pacific = 8 AM UTC
@@ -242,7 +255,8 @@ export default function AdminDashboard() {
         privatePayCount: privatePayCount ?? 0,
         fundedCount: fundedCount ?? 0,
         sessionsToday: sessionsTodayCount ?? 0,
-        pendingReferrals: 0, // Placeholder - referral_requests table might not exist
+        pendingApprovals: pendingApprovalCount ?? 0,
+        pendingReferrals: pendingReferralCount ?? 0,
         pendingPOs: pos?.length ?? 0,
         sessionsNeedingProgress: bookingsNeedingProgress ?? 0,
         privatePayRevenue: privatePayRevenue ?? 0,
@@ -276,7 +290,8 @@ export default function AdminDashboard() {
     }
   }, [role, user, fetchStats, router]);
 
-  const pendingCount = (stats?.pendingReferrals || 0) + (stats?.pendingPOs || 0) + (stats?.sessionsNeedingProgress || 0);
+  // Combined pending count available if needed
+  // const pendingCount = (stats?.pendingReferrals || 0) + (stats?.pendingPOs || 0) + (stats?.sessionsNeedingProgress || 0);
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -408,20 +423,60 @@ export default function AdminDashboard() {
           </Card>
         </Link>
 
-        {/* Pending Items - Links to Referrals */}
-        <Link href="/admin/referrals" className="block">
-          <Card className={`cursor-pointer hover:shadow-lg transition-shadow min-h-[136px] ${pendingCount > 0 ? 'border-orange-300 bg-orange-50 hover:border-orange-400' : 'hover:border-gray-300'}`}>
+        {/* Pending Approvals - Links to Swimmer Management */}
+        <Link href="/admin/swimmers?approval_status=pending" className="block">
+          <Card className={`cursor-pointer hover:shadow-lg transition-shadow min-h-[136px] ${(stats?.pendingApprovals || 0) > 0 ? 'border-orange-300 bg-orange-50 hover:border-orange-400' : 'hover:border-gray-300'}`}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between h-full">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-muted-foreground">Needs Attention</p>
-                  <p className="text-3xl font-bold">{pendingCount}</p>
+                  <p className="text-sm text-muted-foreground">Pending Approvals</p>
+                  <p className="text-3xl font-bold">{stats?.pendingApprovals || 0}</p>
                   <p className="text-xs text-muted-foreground mt-1 truncate">
-                    Progress updates needed
+                    Swimmers awaiting approval
                   </p>
                 </div>
-                <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ml-4 ${pendingCount > 0 ? 'bg-orange-200' : 'bg-gray-100'}`}>
-                  <AlertCircle className={`h-6 w-6 ${pendingCount > 0 ? 'text-orange-600' : 'text-gray-400'}`} />
+                <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ml-4 ${(stats?.pendingApprovals || 0) > 0 ? 'bg-orange-200' : 'bg-gray-100'}`}>
+                  <AlertTriangle className={`h-6 w-6 ${(stats?.pendingApprovals || 0) > 0 ? 'text-orange-600' : 'text-gray-400'}`} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Pending Referrals - Links to Referrals */}
+        <Link href="/admin/referrals" className="block">
+          <Card className={`cursor-pointer hover:shadow-lg transition-shadow min-h-[136px] ${(stats?.pendingReferrals || 0) > 0 ? 'border-blue-300 bg-blue-50 hover:border-blue-400' : 'hover:border-gray-300'}`}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between h-full">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-muted-foreground">Pending Referrals</p>
+                  <p className="text-3xl font-bold">{stats?.pendingReferrals || 0}</p>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                    Referrals ready for review
+                  </p>
+                </div>
+                <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ml-4 ${(stats?.pendingReferrals || 0) > 0 ? 'bg-blue-200' : 'bg-gray-100'}`}>
+                  <FileText className={`h-6 w-6 ${(stats?.pendingReferrals || 0) > 0 ? 'text-blue-600' : 'text-gray-400'}`} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* POs Needing Action - Links to Purchase Orders */}
+        <Link href="/admin/pos" className="block">
+          <Card className={`cursor-pointer hover:shadow-lg transition-shadow min-h-[136px] ${(stats?.pendingPOs || 0) > 0 ? 'border-red-300 bg-red-50 hover:border-red-400' : 'hover:border-gray-300'}`}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between h-full">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-muted-foreground">POs Needing Action</p>
+                  <p className="text-3xl font-bold">{stats?.pendingPOs || 0}</p>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">
+                    Purchase orders pending
+                  </p>
+                </div>
+                <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ml-4 ${(stats?.pendingPOs || 0) > 0 ? 'bg-red-200' : 'bg-gray-100'}`}>
+                  <AlertCircle className={`h-6 w-6 ${(stats?.pendingPOs || 0) > 0 ? 'text-red-600' : 'text-gray-400'}`} />
                 </div>
               </div>
             </CardContent>
