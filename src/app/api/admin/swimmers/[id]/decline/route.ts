@@ -3,11 +3,10 @@ import { NextResponse } from 'next/server';
 
 export async function POST(
   request: Request,
-  context: any
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { params } = await context.params;
-    const swimmerId = params.id;
+    const { id: swimmerId } = await params;
     console.log('[DECLINE] Route called for swimmer:', swimmerId);
 
     const supabase = await createClient();

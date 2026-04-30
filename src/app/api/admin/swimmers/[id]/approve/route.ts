@@ -4,11 +4,10 @@ import { emailService } from '@/lib/email-service';
 
 export async function POST(
   request: Request,
-  context: any
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { params } = await context.params;
-    const swimmerId = params.id;
+    const { id: swimmerId } = await params;
     console.log('[APPROVE] Route called for swimmer:', swimmerId);
 
     const supabase = await createClient();
@@ -77,7 +76,7 @@ export async function POST(
         approval_status: 'approved',
         approved_at: new Date().toISOString(),
         approved_by: user.id,
-        enrollment_status: 'pending_assessment', // Move to next step
+        enrollment_status: 'waitlist', // Move to waitlist after approval
       })
       .eq('id', swimmerId);
 
