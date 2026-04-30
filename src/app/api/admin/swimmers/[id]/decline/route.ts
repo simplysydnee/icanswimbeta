@@ -41,7 +41,7 @@ export async function POST(
     // ========== STEP 2.5: Create service role client for DB operations ==========
     const serviceClient = createServiceClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.SUPABASE_SECRET_KEY!
     );
 
     // ========== STEP 3: Parse optional reason ==========
@@ -85,9 +85,10 @@ export async function POST(
     });
 
   } catch (error) {
-    console.error('Unexpected error in decline swimmer API:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Unexpected error in decline swimmer API:', errorMessage);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
