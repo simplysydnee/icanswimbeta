@@ -1,23 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { SwimmerManagementTable } from '@/components/swimmers/SwimmerManagementTable';
 import { SwimmerCard } from '@/components/swimmers/SwimmerCard';
 import { SwimmerAnalyticsModal } from '@/components/admin/SwimmerAnalyticsModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Download, Filter, BarChart3, Clock, UserCheck, UserX, TrendingUp } from 'lucide-react';
+import { Users, Download, Filter, BarChart3, Clock, UserCheck, UserX, TrendingUp, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAdminSwimmers } from '@/hooks/useAdminSwimmers';
 import { calculateSwimmerKPIs } from '@/lib/admin-utils';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { Swimmer } from '@/types/swimmer';
 
-export default function AdminSwimmersPage() {
+function AdminSwimmersPageContent() {
   const { data: swimmers, isLoading: swimmersLoading, error: swimmersError, refetch } = useAdminSwimmers();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeFilter = searchParams.get('approval_status');
 
   // Calculate metrics from swimmers data
   const metrics = swimmers ? calculateSwimmerKPIs(swimmers) : null;
@@ -146,6 +151,43 @@ export default function AdminSwimmersPage() {
           </div>
         )} */}
 
+        {/* Pending Approval Alert */}
+        {!swimmersLoading && !swimmersError && metrics && metrics.pendingApproval > 0 && (
+          <Card
+            className={`cursor-pointer transition-all ${activeFilter === 'pending' ? 'ring-2 ring-orange-400 border-orange-400' : 'border-orange-200 hover:shadow-md'}`}
+            onClick={() => {
+              const params = new URLSearchParams(searchParams.toString());
+              if (activeFilter === 'pending') {
+                params.delete('approval_status');
+              } else {
+                params.set('approval_status', 'pending');
+              }
+              router.push(`/admin/swimmers?${params.toString()}`);
+            }}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                    <AlertTriangle className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-orange-900">
+                      {metrics.pendingApproval} Swimmer{metrics.pendingApproval !== 1 ? 's' : ''} Pending Approval
+                    </p>
+                    <p className="text-sm text-orange-700">
+                      {activeFilter === 'pending' ? 'Click to clear filter' : 'Click to review and take action'}
+                    </p>
+                  </div>
+                </div>
+                <Badge className="bg-orange-100 text-orange-800 border-orange-300 text-sm px-3 py-1">
+                  {activeFilter === 'pending' ? 'Filtered' : 'Action Needed'}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Main Table - Desktop, Cards - Mobile */}
         {isMobile ? (
           <div className="space-y-4">
@@ -246,5 +288,13 @@ export default function AdminSwimmersPage() {
         />
       </div>
     </RoleGuard>
+  );
+}
+
+export default function AdminSwimmersPage() {
+  return (
+    <Suspense fallback={<div className="p-6"><Skeleton className="h-8 w-64" /><Skeleton className="h-32 w-full mt-4" /></div>}>
+      <AdminSwimmersPageContent />
+    </Suspense>
   );
 }

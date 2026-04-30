@@ -9,6 +9,7 @@ export async function POST(
   try {
     const { params } = await context.params;
     const swimmerId = params.id;
+    console.log('[APPROVE] Route called for swimmer:', swimmerId);
 
     const supabase = await createClient();
 

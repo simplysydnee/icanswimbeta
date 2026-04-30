@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { CloseSessionModal } from '@/components/admin/CloseSessionModal'
+import { SessionDetailSheet } from '@/components/schedule/SessionDetailSheet'
 import {
   Select,
   SelectContent,
@@ -57,14 +58,6 @@ const INSTRUCTOR_COLORS = [
   { bg: 'bg-sky-100', border: 'border-sky-500', text: 'text-sky-800' },
 ]
 
-/** Priority swimmers listed first (top) within the same slot/day, then by start time. */
-function compareSessionsPriorityFirst(a: Session, b: Session): number {
-  const pa = a.swimmer_is_priority_booking ? 1 : 0
-  const pb = b.swimmer_is_priority_booking ? 1 : 0
-  if (pa !== pb) return pb - pa
-  return parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime()
-}
-
 interface Session {
   id: string
   start_time: string
@@ -80,7 +73,6 @@ interface Session {
   parent_email: string | null
   booking_id: string | null
   bookings_count: number
-  swimmer_is_priority_booking?: boolean
 }
 
 interface Instructor {
@@ -134,7 +126,12 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
   const [cancelReason, setCancelReason] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
 
+  // Session Detail Sheet state
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
+  const [showDetailSheet, setShowDetailSheet] = useState(false)
+
   // Filter states
+  const [activeInstructorId, setActiveInstructorId] = useState<string | null>(null)
   const [selectedInstructorFilter, setSelectedInstructorFilter] = useState<string>('all')
   const [selectedLocationFilter, setSelectedLocationFilter] = useState<string>('all')
   const [showClosedSessions, setShowClosedSessions] = useState(role === 'admin')
@@ -263,7 +260,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
         return
       }
 
-      // Fetch profiles for these instructors with display_on_team = true
+      // Fetch profiles for these instructors
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, full_name, avatar_url, email')
@@ -279,9 +276,9 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
       }
 
       if (profiles) {
-        // Filter out test accounts (@test.com emails) and map to instructor format
+        // Filter out test accounts (e.g. @test.com, .local emails) and map to instructor format
         const instructorsArray = profiles
-          .filter(profile => profile.email && !profile.email.includes('@test.com'))
+          .filter(profile => profile.email && !profile.email.includes('@test.com') && !profile.email.includes('.local'))
           .map((p, idx) => ({
             ...p,
             colorIndex: idx % INSTRUCTOR_COLORS.length
@@ -348,10 +345,20 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
     // Convert to UTC for database query (database stores timestamps in UTC)
     // Sessions are stored in UTC relative to Pacific time (UTC-8)
     // So we need to convert Pacific time to UTC
-    const PACIFIC_OFFSET_MS = -8 * 60 * 60 * 1000; // UTC-8 in milliseconds
+    const getPacificOffsetMs = (date: Date): number => {
+	      const formatter = new Intl.DateTimeFormat('en-US', {
+	        timeZone: 'America/Los_Angeles',
+	        timeZoneName: 'shortOffset'
+	      });
+	      const parts = formatter.formatToParts(date);
+	      const offsetPart = parts.find(p => p.type === 'timeZoneName')?.value ?? 'GMT-8';
+	      const match = offsetPart.match(/GMT([+-]\d+)/);
+	      const offsetHours = match ? parseInt(match[1]) : -8;
+	      return offsetHours * 60 * 60 * 1000;
+	    }
 
-    const startDateUTC = new Date(startDate.getTime() - PACIFIC_OFFSET_MS)
-    const endDateUTC = new Date(endDate.getTime() - PACIFIC_OFFSET_MS)
+    const startDateUTC = new Date(startDate.getTime() - getPacificOffsetMs(startDate))
+    const endDateUTC = new Date(endDate.getTime() - getPacificOffsetMs(endDate))
 
 
     let query = supabase
@@ -367,7 +374,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
         instructor:profiles!instructor_id(full_name, avatar_url),
         bookings(
           id,
-          swimmer:swimmers(id, first_name, last_name, parent_id, is_priority_booking),
+          swimmer:swimmers(id, first_name, last_name, parent_id),
           parent:profiles!parent_id(email)
         )
       `)
@@ -391,15 +398,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
       const formatted: Session[] = data.map((s) => {
         // Handle instructor data which might be an array or object
         const instructor = Array.isArray(s.instructor) ? s.instructor[0] : s.instructor
-        const rawBookings = s.bookings || []
-        const bookings = [...rawBookings].sort((a, b) => {
-          const swA = a.swimmer as { is_priority_booking?: boolean | null } | undefined
-          const swB = b.swimmer as { is_priority_booking?: boolean | null } | undefined
-          const pa = swA?.is_priority_booking ? 1 : 0
-          const pb = swB?.is_priority_booking ? 1 : 0
-          if (pa !== pb) return pb - pa
-          return 0
-        })
+        const bookings = s.bookings || []
         const firstBooking = bookings[0]
 
         return {
@@ -419,9 +418,6 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
           parent_email: firstBooking?.parent?.email || null,
           booking_id: firstBooking?.id || null,
           bookings_count: bookings.length,
-          swimmer_is_priority_booking: !!(
-            firstBooking?.swimmer as { is_priority_booking?: boolean | null } | undefined
-          )?.is_priority_booking,
         }
       })
       setSessions(formatted)
@@ -447,26 +443,22 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
   const getSessionsForSlot = (instructorId: string, timeSlot: string) => {
     const [slotHour, slotMinute] = timeSlot.split(':').map(Number)
 
-    return sessions
-      .filter(session => {
-        if (session.instructor_id !== instructorId) return false
+    return sessions.filter(session => {
+      if (session.instructor_id !== instructorId) return false
 
-        // Apply filters
-        if (selectedInstructorFilter !== 'all' && session.instructor_id !== selectedInstructorFilter) return false
-        if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
+      // Apply filters
+      if (selectedInstructorFilter !== 'all' && session.instructor_id !== selectedInstructorFilter) return false
+      if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
 
-        // Convert UTC session time to Pacific time for comparison
-        const { hour: sessionStartHour, minute: sessionStartMinute } = getPacificHourMinute(session.start_time)
+      // Convert UTC session time to Pacific time for comparison
+      const { hour: sessionStartHour, minute: sessionStartMinute } = getPacificHourMinute(session.start_time)
 
-        // Check if session starts in this 30-minute slot
-        // Slot represents the start of a 30-minute period (e.g., "13:00" means 1:00-1:30 PM)
-        return (
-          sessionStartHour === slotHour &&
-          sessionStartMinute >= slotMinute &&
-          sessionStartMinute < slotMinute + 30
-        )
-      })
-      .sort(compareSessionsPriorityFirst)
+      // Check if session starts in this 30-minute slot
+      // Slot represents the start of a 30-minute period (e.g., "13:00" means 1:00-1:30 PM)
+      return sessionStartHour === slotHour &&
+             sessionStartMinute >= slotMinute &&
+             sessionStartMinute < slotMinute + 30
+    })
   }
 
   // Get displayed instructors based on sessions and filters
@@ -480,6 +472,18 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
     }
     return withSessions.filter(instructor => instructor.id === selectedInstructorFilter);
   }, [instructorsWithSessions, selectedInstructorFilter])
+
+  // Set default active instructor when displayed instructors change
+  useEffect(() => {
+    if (displayedInstructors.length > 0) {
+      const currentIsStillActive = activeInstructorId && displayedInstructors.some(i => i.id === activeInstructorId)
+      if (!currentIsStillActive) {
+        setActiveInstructorId(displayedInstructors[0].id)
+      }
+    } else {
+      setActiveInstructorId(null)
+    }
+  }, [displayedInstructors])
 
   // Check if there are substitute instructors available for a given day
   const hasSubstituteInstructors = useCallback((instructorId: string) => {
@@ -669,7 +673,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
   const handlePrint = () => window.print()
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-full mx-auto overflow-x-auto" id="schedule-content">
+    <div className="p-4 md:p-6 lg:p-8 max-w-full mx-auto" id="schedule-content">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 print:hidden">
         <div>
@@ -788,50 +792,65 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
 
       {/* Instructor Color Legend */}
       {role === 'admin' && displayedInstructors.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
-          <span className="text-sm font-medium text-gray-600 mr-2">Instructors:</span>
-          {displayedInstructors.map((instructor) => {
-            const color = INSTRUCTOR_COLORS[instructor.colorIndex]
-            const hasSubstitutes = hasSubstituteInstructors(instructor.id)
-            return (
-              <div
-                key={instructor.id}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${color.bg} ${color.text}`}
-              >
-                <div className={`w-2 h-2 rounded-full ${color.border} border-2`} />
-                {instructor.full_name?.split(' ')[0]}
-                {/* Admin: Cancel or Transfer all for this instructor */}
-                <div className="flex gap-1 ml-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-5 w-5 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 print:hidden"
-                    onClick={() => handleCancelInstructorDay(instructor)}
-                    title="Cancel all sessions for this instructor"
-                  >
-                    <UserX className="h-3 w-3" />
-                  </Button>
-                  {hasSubstitutes && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-5 w-5 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 print:hidden"
-                      onClick={() => handleTransferInstructorDay(instructor)}
-                      title="Transfer all sessions to substitute instructor"
+        <div className="flex items-center gap-2 mb-4 p-3 bg-gray-50 rounded-lg overflow-x-auto">
+          <span className="text-sm font-medium text-gray-600 mr-2 shrink-0">Instructors:</span>
+          <div className="flex gap-2 flex-nowrap">
+            {displayedInstructors.map((instructor) => {
+              const color = INSTRUCTOR_COLORS[instructor.colorIndex]
+              const hasSubstitutes = hasSubstituteInstructors(instructor.id)
+              const isActive = activeInstructorId === instructor.id
+              return (
+                <div
+                  key={instructor.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setActiveInstructorId(isActive ? null : instructor.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveInstructorId(isActive ? null : instructor.id); } }}
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                    isActive
+                      ? `${color.bg} ${color.text} ring-2 ring-offset-1 ${color.border.replace('border', 'ring')}`
+                      : `${color.bg} ${color.text} opacity-70 hover:opacity-100`
+                  }`}
+                >
+                  <div className={`w-2 h-2 rounded-full ${color.border} border-2 shrink-0`} />
+                  {instructor.full_name?.split(' ')[0]}
+                  {/* Admin: Cancel or Transfer all for this instructor */}
+                  <div className="flex gap-1 ml-1">
+                    <button
+                      type="button"
+                      className="h-5 w-5 flex items-center justify-center text-red-600 hover:text-red-700 hover:bg-red-50 rounded print:hidden"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleCancelInstructorDay(instructor)
+                      }}
+                      title="Cancel all sessions for this instructor"
                     >
-                      <RefreshCw className="h-3 w-3" />
-                    </Button>
-                  )}
+                      <UserX className="h-3 w-3" />
+                    </button>
+                    {hasSubstitutes && (
+                      <button
+                        type="button"
+                        className="h-5 w-5 flex items-center justify-center text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded print:hidden"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleTransferInstructorDay(instructor)
+                        }}
+                        title="Transfer all sessions to substitute instructor"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       )}
 
       {/* Schedule Grid */}
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="p-0 w-full">
           {loading ? (
             <div className="flex justify-center items-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-[#2a5e84]" />
@@ -845,167 +864,120 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
             </div>
           ) : view === 'day' ? (
             <>
-              {/* Mobile Card View for Day View */}
-              <div className="md:hidden p-4">
+              {/* Phone Card View — Single Instructor (< 640px) */}
+              <div className="sm:hidden p-4">
                 {(() => {
-                  // Check if any time slots have sessions after filtering
-                  const hasAnySessions = timeSlots.some(slot => {
-                    const [slotHour, slotMinute] = slot.split(':').map(Number)
-                    return sessions.some(session => {
-                      // Apply instructor filter
-                      if (selectedInstructorFilter !== 'all' && session.instructor_id !== selectedInstructorFilter) return false
-                      // Apply location filter
-                      if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
+                  // Determine the instructor to show: active selection, or first available
+                  const targetInstructorId = activeInstructorId || displayedInstructors[0]?.id || null
+                  const targetInstructor = targetInstructorId
+                    ? displayedInstructors.find(i => i.id === targetInstructorId)
+                    : null
 
-                      const sessionStartUTC = parseISO(session.start_time)
-                      // Use Intl.DateTimeFormat for proper Pacific timezone conversion
-                      const formatter = new Intl.DateTimeFormat('en-US', {
-                        timeZone: 'America/Los_Angeles',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                      });
-                      const parts = formatter.formatToParts(sessionStartUTC);
-                      const sessionHour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
-                      const sessionMinute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
-                      return sessionHour === slotHour &&
-                             sessionMinute >= slotMinute &&
-                             sessionMinute < slotMinute + 30
-                    })
-                  })
+                  const instructorSessions = targetInstructorId
+                    ? filteredSessions
+                        .filter(s => {
+                          if (selectedInstructorFilter !== 'all' && s.instructor_id !== selectedInstructorFilter) return false
+                          if (selectedLocationFilter !== 'all' && s.location !== selectedLocationFilter) return false
+                          return s.instructor_id === targetInstructorId
+                        })
+                        .sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime())
+                    : []
 
-                  if (!hasAnySessions) {
+                  if (!targetInstructor || instructorSessions.length === 0) {
                     return (
                       <div className="text-center py-12 text-gray-500">
                         <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                        <p className="font-medium">No sessions found for selected filters</p>
-                        <p className="text-sm mt-1">Try changing instructor or location filters</p>
+                        <p className="font-medium">No sessions for this instructor</p>
+                        <p className="text-sm mt-1">Tap an instructor above to switch</p>
                       </div>
                     )
                   }
 
+                  const color = INSTRUCTOR_COLORS[targetInstructor.colorIndex]
+
                   return (
-                    <>
-                      {timeSlots.map((slot) => {
-                    const [slotHour, slotMinute] = slot.split(':').map(Number)
-                    const slotSessions = sessions
-                      .filter(session => {
-                        // Apply instructor filter
-                        if (selectedInstructorFilter !== 'all' && session.instructor_id !== selectedInstructorFilter) return false
-                        // Apply location filter
-                        if (selectedLocationFilter !== 'all' && session.location !== selectedLocationFilter) return false
-
-                        const sessionStartUTC = parseISO(session.start_time)
-                        // Use Intl.DateTimeFormat for proper Pacific timezone conversion
-                        const formatter = new Intl.DateTimeFormat('en-US', {
-                          timeZone: 'America/Los_Angeles',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: false
-                        });
-                        const parts = formatter.formatToParts(sessionStartUTC);
-                        const sessionHour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
-                        const sessionMinute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
-                        return sessionHour === slotHour &&
-                               sessionMinute >= slotMinute &&
-                               sessionMinute < slotMinute + 30
-                      })
-                      .sort(compareSessionsPriorityFirst)
-
-                    if (slotSessions.length === 0) return null
-
-                    return (
-                      <div key={slot} className="border rounded-lg p-4 mb-4">
-                        <h3 className="font-semibold text-lg mb-3">
-                          {formatSlotTime(slot)}
-                        </h3>
-                        <div className="space-y-3">
-                          {slotSessions.map((session) => {
-                          const instructor = instructors.find(i => i.id === session.instructor_id)
-                          const color = instructor ? INSTRUCTOR_COLORS[instructor.colorIndex] : INSTRUCTOR_COLORS[0]
-
-                          return (
-                            <div
-                              key={session.id}
-                              className={`${color.bg} ${color.border} border-l-4 rounded p-3 ${
-                                session.swimmer_is_priority_booking
-                                  ? 'ring-2 ring-amber-400 ring-offset-1 relative z-10'
-                                  : ''
-                              }`}
-                            >
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className={`font-semibold ${color.text}`}>
-                                    {session.swimmer_name || 'Open Slot'}
-                                  </p>
-                                  <p className="text-sm text-gray-600">
-                                    {format(parseISO(session.start_time), 'h:mm')} - {format(parseISO(session.end_time), 'h:mm a')}
-                                  </p>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <Avatar className="h-6 w-6">
-                                      <AvatarImage src={session.instructor_avatar || undefined} />
-                                      <AvatarFallback className={`${color.bg} ${color.text} text-xs`}>
-                                        {getInitials(session.instructor_name)}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <span className="text-sm font-medium">{session.instructor_name}</span>
-                                  </div>
-                                </div>
-                                <div className="flex flex-col items-end gap-1">
-                                  {session.swimmer_is_priority_booking && (
-                                    <Badge className="text-xs bg-amber-100 text-amber-900 border-amber-300">
-                                      Priority
-                                    </Badge>
-                                  )}
-                                  <Badge variant="outline" className="text-xs">
-                                    {session.session_type === 'assessment' ? 'Assessment' : 'Lesson'}
-                                  </Badge>
-                                  {session.location && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      {session.location}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Admin: Actions */}
-                              {role === 'admin' && (
-                                <div className="flex flex-col gap-2 mt-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="w-full"
-                                    onClick={() => handleReassignSession(session)}
-                                  >
-                                    <RefreshCw className="h-3 w-3 mr-2" />
-                                    Reassign
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    className="w-full"
-                                    onClick={() => handleCloseSession(session)}
-                                  >
-                                    <AlertTriangle className="h-3 w-3 mr-2" />
-                                    Close Session
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          )
-                        })}
+                    <div className="space-y-3">
+                      {/* Active instructor header */}
+                      <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${color.bg} ${color.text} font-semibold text-sm sticky top-0 z-10`}>
+                        <div className={`w-3 h-3 rounded-full ${color.border} border-2`} />
+                        {targetInstructor.full_name}
+                        <span className="text-xs opacity-75 ml-auto">{instructorSessions.length} session{instructorSessions.length !== 1 ? 's' : ''}</span>
                       </div>
+
+                      {instructorSessions.map((session) => (
+                        <div
+                          key={session.id}
+                          className={`${color.bg} ${color.border} border-l-4 rounded-lg p-3 cursor-pointer hover:shadow-sm transition-shadow ${
+                            session.status === 'draft' ? 'opacity-70 border-dashed' : ''
+                          }`}
+                          onClick={() => {
+                            setSelectedSessionId(session.id)
+                            setShowDetailSheet(true)
+                          }}
+                        >
+                          <div className="flex justify-between items-start gap-2">
+                            <div className="min-w-0 flex-1">
+                              <p className={`font-semibold text-sm ${color.text} truncate`}>
+                                {session.swimmer_name || 'Open Slot'}
+                              </p>
+                              <p className="text-sm text-gray-600 mt-0.5">
+                                {format(parseISO(session.start_time), 'h:mm a')} - {format(parseISO(session.end_time), 'h:mm a')}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <Badge variant="outline" className="text-xs">
+                                  {session.session_type === 'assessment' ? 'Assessment' : 'Lesson'}
+                                </Badge>
+                                {session.location && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {session.location}
+                                  </Badge>
+                                )}
+                                {session.status === 'draft' ? (
+                                  <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800 border-yellow-300">
+                                    Draft
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="default" className="text-xs capitalize">
+                                    {session.status}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Admin: Actions */}
+                          {role === 'admin' && (
+                            <div className="flex gap-2 mt-3">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 h-11 text-xs"
+                                onClick={() => handleReassignSession(session)}
+                              >
+                                <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                                Reassign
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="flex-1 h-11 text-xs"
+                                onClick={() => handleCloseSession(session)}
+                              >
+                                <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+                                Close
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  )
-                })}
-                    </>
                   )
                 })()}
               </div>
 
-              {/* Desktop Table for Day View */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full border-collapse">
+              {/* Tablet+ Table for Day View (640px+) */}
+              <div className="hidden sm:block overflow-x-auto max-w-full">
+                <table className="border-collapse min-w-[480px]" style={{ width: `${96 + displayedInstructors.length * 200}px` }}>
                   <thead>
                     <tr className="bg-gray-50">
                       <th className="border p-2 text-left w-24 text-sm font-semibold sticky left-0 bg-gray-50">Time</th>
@@ -1014,7 +986,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                         return (
                           <th
                             key={instructor.id}
-                            className={`px-4 py-3 text-center font-semibold border-b-4 ${color.border} ${color.bg}`}
+                            className={`px-4 py-3 text-center font-semibold border-b-4 min-w-[200px] ${color.border} ${color.bg}`}
                           >
                             <div className="flex flex-col items-center gap-1">
                               <Avatar className="h-8 w-8 print:hidden">
@@ -1045,11 +1017,13 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                               {slotSessions.map((session) => (
                                 <div
                                   key={session.id}
-                                  className={`${color.bg} ${color.border} border-l-4 rounded p-2 mb-1 group relative ${
-                                    session.swimmer_is_priority_booking
-                                      ? 'ring-2 ring-amber-400 ring-offset-1 z-10'
-                                      : ''
+                                  className={`${color.bg} ${color.border} border-l-4 rounded p-2 mb-1 group relative cursor-pointer hover:shadow-sm transition-shadow ${
+                                    session.status === 'draft' ? 'opacity-70 border-dashed' : ''
                                   }`}
+                                  onClick={() => {
+                                    setSelectedSessionId(session.id)
+                                    setShowDetailSheet(true)
+                                  }}
                                 >
                                   <p className={`text-sm font-semibold ${color.text}`}>
                                     {session.swimmer_name || 'Open Slot'}
@@ -1058,14 +1032,14 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                     {format(parseISO(session.start_time), 'h:mm')} - {format(parseISO(session.end_time), 'h:mm a')}
                                   </p>
                                   <div className="flex gap-1 mt-1 flex-wrap">
-                                    {session.swimmer_is_priority_booking && (
-                                      <Badge className="text-[10px] px-1 py-0 bg-amber-100 text-amber-900 border-amber-300">
-                                        Priority
-                                      </Badge>
-                                    )}
                                     <Badge variant="outline" className="text-xs">
                                       {session.session_type === 'assessment' ? 'Assessment' : 'Lesson'}
                                     </Badge>
+                                    {session.status === 'draft' && (
+                                      <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800 border-yellow-300">
+                                        Draft
+                                      </Badge>
+                                    )}
                                     {session.location && (
                                       <Badge variant="secondary" className="text-xs">
                                         {session.location}
@@ -1117,16 +1091,14 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                   const dayDate = format(day, 'MMM d')
                   const isToday = isSameDay(day, new Date())
 
-                  const daySessions = sessions
-                    .filter(s => {
-                      // Apply instructor filter
-                      if (selectedInstructorFilter !== 'all' && s.instructor_id !== selectedInstructorFilter) return false
-                      // Apply location filter
-                      if (selectedLocationFilter !== 'all' && s.location !== selectedLocationFilter) return false
-                      // Check if session is on this day
-                      return isSameDay(parseISO(s.start_time), day)
-                    })
-                    .sort(compareSessionsPriorityFirst)
+                  const daySessions = sessions.filter(s => {
+                    // Apply instructor filter
+                    if (selectedInstructorFilter !== 'all' && s.instructor_id !== selectedInstructorFilter) return false
+                    // Apply location filter
+                    if (selectedLocationFilter !== 'all' && s.location !== selectedLocationFilter) return false
+                    // Check if session is on this day
+                    return isSameDay(parseISO(s.start_time), day)
+                  })
 
                   if (daySessions.length === 0) return null
 
@@ -1152,14 +1124,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                           const color = instructor ? INSTRUCTOR_COLORS[instructor.colorIndex] : INSTRUCTOR_COLORS[0]
 
                           return (
-                            <div
-                              key={session.id}
-                              className={`${color.bg} ${color.border} border-l-4 rounded p-3 ${
-                                session.swimmer_is_priority_booking
-                                  ? 'ring-2 ring-amber-400 ring-offset-1 relative z-10'
-                                  : ''
-                              }`}
-                            >
+                            <div key={session.id} className={`${color.bg} ${color.border} border-l-4 rounded p-3`}>
                               <div className="flex justify-between items-start">
                                 <div>
                                   <p className={`font-semibold ${color.text}`}>
@@ -1179,11 +1144,6 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                   </div>
                                 </div>
                                 <div className="flex flex-col items-end gap-1">
-                                  {session.swimmer_is_priority_booking && (
-                                    <Badge className="text-xs bg-amber-100 text-amber-900 border-amber-300">
-                                      Priority
-                                    </Badge>
-                                  )}
                                   <Badge variant="outline" className="text-xs">
                                     {session.session_type === 'assessment' ? 'Assessment' : 'Lesson'}
                                   </Badge>
@@ -1277,7 +1237,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                           {displayedInstructors.map((instructor) => {
                             const instructorDaySessions = daySessions
                               .filter(s => s.instructor_id === instructor.id)
-                              .sort(compareSessionsPriorityFirst)
+                              .sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime())
                             const color = INSTRUCTOR_COLORS[instructor.colorIndex]
 
                             return (
@@ -1289,11 +1249,11 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                     {instructorDaySessions.map((session) => (
                                       <div
                                         key={session.id}
-                                        className={`${color.bg} ${color.border} border-l-2 rounded p-1.5 text-xs group relative cursor-pointer hover:shadow-sm ${
-                                          session.swimmer_is_priority_booking
-                                            ? 'ring-2 ring-amber-400 ring-offset-1 z-10'
-                                            : ''
-                                        }`}
+                                        className={`${color.bg} ${color.border} border-l-2 rounded p-1.5 text-xs group relative cursor-pointer hover:shadow-sm`}
+                                        onClick={() => {
+                                          setSelectedSessionId(session.id)
+                                          setShowDetailSheet(true)
+                                        }}
                                       >
                                         <div className="flex justify-between items-start">
                                           <span className={`font-semibold ${color.text}`}>
@@ -1313,12 +1273,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                         <p className="text-gray-700 truncate font-medium">
                                           {session.swimmer_name || 'Open'}
                                         </p>
-                                        <div className="flex gap-1 mt-1 flex-wrap">
-                                          {session.swimmer_is_priority_booking && (
-                                            <Badge className="text-[10px] px-1 py-0 bg-amber-100 text-amber-900 border-amber-300">
-                                              Priority
-                                            </Badge>
-                                          )}
+                                        <div className="flex gap-1 mt-1">
                                           <Badge variant="outline" className="text-[10px] px-1 py-0">
                                             {session.session_type === 'assessment' ? 'Assess' : 'Lesson'}
                                           </Badge>
@@ -1490,6 +1445,17 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Session Detail Sheet */}
+      <SessionDetailSheet
+        sessionId={selectedSessionId}
+        open={showDetailSheet}
+        onOpenChange={(open) => {
+          setShowDetailSheet(open)
+          if (!open) setSelectedSessionId(null)
+        }}
+        onDataChange={fetchSessions}
+      />
 
       {/* Close Session Dialog (Admin only) */}
       {role === 'admin' && (

@@ -15,13 +15,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Sidebar />
         </aside>
 
-        {/* Main content area */}
-        <div className="flex flex-col">
+        {/* Main content area — min-w-0 allows grid cell to shrink below content */}
+        <div className="flex flex-col min-w-0">
           {/* Responsive header - always visible */}
           <ResponsiveHeader />
 
           {/* Page content with responsive padding */}
-          <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-full overflow-x-auto">
+          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
             <ErrorBoundary>
               {children}
             </ErrorBoundary>
@@ -35,7 +35,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <ResponsiveHeader />
 
         {/* Page content with responsive padding */}
-        <main className="p-4 md:p-6 lg:p-8 max-w-full overflow-x-auto">
+        <main className="p-4 md:p-6 lg:p-8 overflow-x-hidden">
           <ErrorBoundary>
             {children}
           </ErrorBoundary>

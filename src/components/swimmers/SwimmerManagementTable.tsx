@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useToast } from '@/hooks/use-toast';
 
 // Types
 export interface Swimmer {
@@ -194,6 +195,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   // State
   const [swimmers, setSwimmers] = useState<Swimmer[]>([]);
@@ -306,8 +308,8 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
         console.log('First swimmer currentLevel:', data[0].currentLevel);
       }
 
-      setSwimmers(data.transformedData);
-      setTotal(data.length);
+      setSwimmers(data.transformedData || []);
+      setTotal(data.metadata?.total || 0);
     } catch (err) {
       console.error('Error fetching swimmers:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch swimmers');
@@ -416,11 +418,22 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
         method: 'POST',
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        fetchSwimmers(); // Refresh the list
+        toast({ title: 'Swimmer approved', description: `${swimmer.firstName} ${swimmer.lastName} has been approved.` });
+        fetchSwimmers();
         setIsModalOpen(false);
+      } else {
+        toast({
+          title: 'Failed to approve',
+          description: data.error || `Error ${response.status}: ${response.statusText}`,
+          variant: 'destructive',
+        });
+        console.error('Approve failed:', response.status, data);
       }
     } catch (error) {
+      toast({ title: 'Error', description: 'Could not connect to server', variant: 'destructive' });
       console.error('Error approving swimmer:', error);
     }
   };
@@ -432,11 +445,22 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
         method: 'POST',
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        fetchSwimmers(); // Refresh the list
+        toast({ title: 'Swimmer declined', description: `${swimmer.firstName} ${swimmer.lastName} has been declined.` });
+        fetchSwimmers();
         setIsModalOpen(false);
+      } else {
+        toast({
+          title: 'Failed to decline',
+          description: data.error || `Error ${response.status}: ${response.statusText}`,
+          variant: 'destructive',
+        });
+        console.error('Decline failed:', response.status, data);
       }
     } catch (error) {
+      toast({ title: 'Error', description: 'Could not connect to server', variant: 'destructive' });
       console.error('Error declining swimmer:', error);
     }
   };
