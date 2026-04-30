@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { emailService } from '@/lib/email-service';
 
@@ -38,8 +39,14 @@ export async function POST(
       );
     }
 
+    // ========== STEP 2.5: Create service role client for DB operations ==========
+    const serviceClient = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     // ========== STEP 3: Get Swimmer Details ==========
-    const { data: swimmer, error: swimmerError } = await supabase
+    const { data: swimmer, error: swimmerError } = await serviceClient
       .from('swimmers')
       .select(`
         id,
@@ -70,7 +77,7 @@ export async function POST(
     }
 
     // ========== STEP 4: Update Swimmer Approval Status ==========
-    const { error: updateError } = await supabase
+    const { error: updateError } = await serviceClient
       .from('swimmers')
       .update({
         approval_status: 'approved',

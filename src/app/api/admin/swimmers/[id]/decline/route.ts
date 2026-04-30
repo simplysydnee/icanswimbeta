@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 
 export async function POST(
@@ -37,6 +38,12 @@ export async function POST(
       );
     }
 
+    // ========== STEP 2.5: Create service role client for DB operations ==========
+    const serviceClient = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     // ========== STEP 3: Parse optional reason ==========
     let reason: string | undefined;
     try {
@@ -57,7 +64,7 @@ export async function POST(
       updateData.decline_reason = reason;
     }
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await serviceClient
       .from('swimmers')
       .update(updateData)
       .eq('id', swimmerId);
