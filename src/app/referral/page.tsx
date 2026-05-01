@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api-client';
-import { emailService } from '@/lib/email-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -256,17 +255,9 @@ export default function ReferralPage() {
         additional_info: data.additional_info,
       };
 
-      await apiClient.createVmrcReferralRequest(apiData);
+      const result = await apiClient.createVmrcReferralRequest(apiData);
 
-      // Send enrollment email to parent
-      const emailResult = await emailService.sendEnrollmentInvite({
-        parentEmail: data.parent_email,
-        parentName: data.parent_name,
-        childName: `${data.child_first_name} ${data.child_last_name}`,
-        coordinatorName: data.coordinator_name,
-      });
-
-      if (emailResult.success) {
+      if (result.email_sent) {
         setSubmitResult({
           success: true,
           message: `Referral submitted successfully! Email sent to ${data.parent_email} to complete enrollment.`,

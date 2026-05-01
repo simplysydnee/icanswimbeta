@@ -16,7 +16,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import { Calendar, Clock, MapPin, User, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
-import { emailService } from '@/lib/email-service'
+
 import { InstructorAvatar } from '@/components/ui/instructor-avatar'
 
 interface Session {
@@ -191,23 +191,6 @@ export function AssessmentTab({ selectedSwimmerId, onBookingComplete }: Assessme
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to book assessment')
-      }
-
-      // Send confirmation email
-      if (result.emailData) {
-        const emailResult = await emailService.sendAssessmentBooking({
-          parentEmail: result.emailData.parentEmail,
-          parentName: result.emailData.parentName,
-          childName: result.emailData.childName,
-          date: format(new Date(result.emailData.date), 'EEEE, MMMM d, yyyy'),
-          time: format(new Date(result.emailData.time), 'h:mm a'),
-          location: result.emailData.location,
-          instructor: result.emailData.instructor,
-        })
-
-        if (!emailResult.success) {
-          console.warn('Confirmation email may be delayed')
-        }
       }
 
       // Show success

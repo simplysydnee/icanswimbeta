@@ -261,10 +261,25 @@ export async function POST(request: NextRequest) {
       console.error('Coordinator referral email:', emailErr);
     }
 
+    let enrollmentInviteSent = false;
+    try {
+      await emailService.sendEnrollmentInvite({
+        parentEmail: parentEmailNorm,
+        parentName: parentDisplayName,
+        childName: `${swimmer.first_name} ${swimmer.last_name}`,
+        coordinatorName: coordProfile.full_name || user.email || 'Coordinator',
+      });
+      enrollmentInviteSent = true;
+    } catch (enrollErr) {
+      console.error('Error sending enrollment invite:', enrollErr);
+      // Non-fatal — do not fail the request
+    }
+
     return NextResponse.json({
       success: true,
       swimmer_id: swimmer.id,
       parent_created: parentCreated,
+      email_sent: enrollmentInviteSent,
     });
   } catch (e) {
     console.error('POST /api/coordinator/referral', e);

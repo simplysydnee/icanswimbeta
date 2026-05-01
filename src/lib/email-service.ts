@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@supabase/supabase-js'
 import { generateReferralRequestEmail, generateReferralConfirmationEmail, generateAssessmentBookingEmail, generateLessonBookingEmail, generateRecurringBookingEmail, generateCancellationEmail, generateParentInvitationEmail, generateWelcomeEmail, generateAccountCreatedEmail, generateEnrollmentRejectionEmail, generateCoordinatorReferralNewParentEmail, generateCoordinatorReferralExistingParentEmail, wrapEmailWithHeader } from '@/lib/emails'
 
 type EmailTemplate =
@@ -47,7 +47,10 @@ interface SendEmailParams {
 }
 
 export async function sendEmail(params: SendEmailParams): Promise<{ success: boolean; error?: string }> {
-  const supabase = createClient()
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SECRET_KEY!
+  )
 
   try {
     const { data: _data, error } = await supabase.functions.invoke('send-booking-email', {
