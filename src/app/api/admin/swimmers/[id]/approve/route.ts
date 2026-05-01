@@ -55,7 +55,7 @@ export async function POST(
         payment_type,
         funding_source_id,
         parent_id,
-        parent:profiles(
+        parent:profiles!swimmers_parent_id_fkey(
           id,
           full_name,
           email
@@ -68,10 +68,11 @@ export async function POST(
       .eq('id', swimmerId)
       .single();
 
+    console.log('[APPROVE] Query result:', JSON.stringify(swimmer), 'Error:', JSON.stringify(swimmerError));
     if (swimmerError || !swimmer) {
       console.error('Error fetching swimmer:', swimmerError);
       return NextResponse.json(
-        { error: 'Swimmer not found' },
+        { error: `Swimmer not found: ${swimmerError?.message || 'No data returned'}` },
         { status: 404 }
       );
     }
