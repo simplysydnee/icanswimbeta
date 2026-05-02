@@ -34,7 +34,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import { emailService } from '@/lib/email-service'
+
 import { format } from 'date-fns'
 import {
   CheckCircle,
@@ -349,164 +349,53 @@ function AdminReferralsContent() {
   const handleApprove = async (referral: Referral) => {
     setProcessing(true)
     try {
-      // 1. Get current admin user from useAuth hook
       if (!user) {
         throw new Error('Admin not authenticated')
       }
 
-      // 2. Get parent's user ID if they have an account
-      const { data: parentProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', referral.parent_email)
-        .single()
+      const response = await fetch(`/api/admin/referrals/${referral.id}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      const data = await response.json()
 
-      // 3. Create swimmer record
-      const { data: swimmer, error: swimmerError } = await supabase
-        .from('swimmers')
-        .insert({
-          parent_id: parentProfile?.id || null,
-          first_name: referral.child_name.split(' ')[0],
-          last_name: referral.child_name.split(' ').slice(1).join(' ') || '',
-          date_of_birth: referral.child_date_of_birth,
-          gender: referral.gender?.toLowerCase() || null,
-          diagnosis: referral.diagnosis,
-          height: referral.height,
-          weight: referral.weight,
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to approve referral')
+      }
 
-          // Medical
-          has_medical_conditions: referral.has_medical_conditions,
-          medical_conditions_description: referral.medical_conditions_description,
-          has_allergies: referral.has_allergies,
-          allergies_description: referral.allergies_description,
-          history_of_seizures: referral.history_of_seizures,
-          toilet_trained: referral.toilet_trained,
-          non_ambulatory: referral.non_ambulatory,
-
-          // Behavioral
-          comfortable_in_water: referral.comfortable_in_water ? 'very' : 'not_at_all', // Convert boolean to text
-          self_injurious_behavior: referral.self_injurious_behavior,
-          self_injurious_behavior_description: referral.self_injurious_behavior_description,
-          aggressive_behavior: referral.aggressive_behavior,
-          aggressive_behavior_description: referral.aggressive_behavior_description,
-          elopement_history: referral.elopement_behavior,
-          elopement_history_description: referral.elopement_behavior_description,
-          has_behavior_plan: referral.has_behavior_plan,
-          // Note: behavior_plan_description field doesn't exist in database
-          // behavior_plan_description: referral.behavior_plan_description,
-
-          // From parent completion
-          swim_goals: referral.swim_goals,
-          availability: referral.availability, // Changed from availability_general to availability
-          strengths_interests: referral.strengths_interests,
-
-          // Funding source info - check if referral has funding_source_id
-          payment_type: 'funding_source',
-          coordinator_id: referral.coordinator_id,
-          funding_coordinator_name: referral.coordinator_name,
-          funding_coordinator_email: referral.coordinator_email,
-
-          // Signatures - match swimmers table schema
-          signed_waiver: referral.liability_waiver_signed, // Use signed_waiver instead of signed_liability
-          signed_liability: referral.liability_waiver_signed,
-          liability_waiver_signature: referral.liability_waiver_signed ? referral.parent_name : null,
-          cancellation_policy_signature: referral.cancellation_policy_signed ? referral.parent_name : null,
-          photo_video_permission: referral.photo_release_signed, // Use photo_video_permission instead of photo_release
-          photo_video_signature: referral.photo_release_signed ? referral.parent_name : null,
-
-          // Status
-          enrollment_status: 'pending_assessment',
-          assessment_status: 'not_scheduled',
-          approval_status: 'approved',
-          approved_at: new Date().toISOString(),
-        })
-        .select()
-        .single()
-
-      if (swimmerError) throw swimmerError
-
-      // 3. Update referral status
-      const { error: updateError } = await supabase
-        .from('referral_requests')
-        .update({
-          status: 'approved',
-          reviewed_at: new Date().toISOString(),
-          swimmer_id: swimmer.id,
-        })
-        .eq('id', referral.id)
-
-      if (updateError) throw updateError
-
-      // 4. Create parent invitation if parent doesn't have an account yet
-      let invitationId = null
-      if (!parentProfile?.id && referral.parent_email) {
-        const { data: invitation, error: inviteError } = await supabase
-          .from('parent_invitations')
-          .insert({
-            swimmer_id: swimmer.id,
-            parent_email: referral.parent_email.toLowerCase(),
-            parent_name: referral.parent_name,
-            status: 'pending',
-            created_by: user.id,
-            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+      // Create parent invitation if parent doesn't have an account yet
+      if (referral.parent_email) {
+        try {
+          const inviteResponse = await fetch('/api/invitations/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              swimmer_id: data.swimmer_id,
+              parent_email: referral.parent_email.toLowerCase(),
+              parent_name: referral.parent_name,
+            }),
           })
-          .select()
-          .single()
-
-        if (inviteError) {
-          console.error('Error creating parent invitation:', inviteError)
-          // Don't fail the whole approval if invitation creation fails
-        } else {
-          invitationId = invitation.id
-
-          // Send invitation email via API
-          try {
-            const response = await fetch('/api/invitations/send', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                swimmer_id: swimmer.id,
-                parent_email: referral.parent_email.toLowerCase(),
-                parent_name: referral.parent_name,
-              }),
-            })
-
-            if (!response.ok) {
-              console.error('Failed to send invitation email:', await response.text())
-            }
-          } catch (emailError) {
-            console.error('Error sending invitation email:', emailError)
+          if (!inviteResponse.ok) {
+            console.error('Failed to send invitation email:', await inviteResponse.text())
           }
+        } catch (inviteError) {
+          console.error('Error creating parent invitation:', inviteError)
         }
       }
 
-      // 5. Send approval email to parent
-      const emailResult = await emailService.sendApprovalNotification({
-        parentEmail: referral.parent_email,
-        parentName: referral.parent_name,
-        childName: referral.child_name,
-      })
+      const approvalSent = data.emails_sent?.approval
+      const welcomeSent = data.emails_sent?.welcome
 
-      // 6. Send welcome enrollment email for funded swimmer
-      const welcomeEmailResult = await emailService.sendWelcomeEnrollment({
-        parentEmail: referral.parent_email,
-        parentName: referral.parent_name,
-        childName: referral.child_name,
-        isPrivatePay: false,
-        fundingSourceName: 'Regional Center', // Default for funded swimmers
-      })
-
-      if (emailResult.success && welcomeEmailResult.success) {
+      if (approvalSent && welcomeSent) {
         toast({
           title: 'Referral Approved! ✅',
-          description: `Swimmer record created and welcome email sent to ${referral.parent_email}.`,
+          description: `Swimmer created and welcome email sent to ${referral.parent_email}.`,
         })
-      } else if (emailResult.success) {
+      } else if (approvalSent) {
         toast({
           title: 'Referral Approved! ✅',
-          description: `Swimmer record created and approval email sent to ${referral.parent_email}.`,
+          description: `Swimmer created and approval email sent to ${referral.parent_email}.`,
         })
       } else {
         toast({
@@ -516,29 +405,10 @@ function AdminReferralsContent() {
       }
 
       setIsDetailOpen(false)
-      fetchReferrals(true) // Force refresh after approval
+      fetchReferrals(true)
     } catch (err) {
-      console.error('Error approving referral:', err)
-      console.error('Error details:', {
-        message: err instanceof Error ? err.message : String(err),
-        stack: err instanceof Error ? err.stack : undefined
-      })
-
-      // Get better error message
-      let errorMessage = 'Unknown error'
-      if (err instanceof Error) {
-        errorMessage = err.message
-      } else if (typeof err === 'object' && err !== null) {
-        // Try to extract error message from Supabase error
-        const supabaseErr = err as { message?: string; details?: string; hint?: string }
-        if (supabaseErr.message) {
-          errorMessage = supabaseErr.message
-        } else if (supabaseErr.details) {
-          errorMessage = supabaseErr.details
-        } else if (supabaseErr.hint) {
-          errorMessage = supabaseErr.hint
-        }
-      }
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      console.error('Error approving referral:', errorMessage)
 
       toast({
         title: 'Approval Failed',
