@@ -469,11 +469,6 @@ export function SwimmerDetailModal({
     }
   }, [isOpen, swimmer?.id, fetchAdditionalData]);
 
-  // Update admin notes when swimmer changes
-  useEffect(() => {
-    setAdminNotes(swimmer?.admin_notes || '');
-  }, [swimmer?.admin_notes]);
-
   // Reset assessment report when swimmer changes or modal closes
   useEffect(() => {
     if (!isOpen || !swimmer?.id) {
