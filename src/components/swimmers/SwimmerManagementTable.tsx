@@ -498,7 +498,6 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
-          {/*
           <div className="flex-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -510,10 +509,8 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
               />
             </div>
           </div>
-          */}
           {/* Filter dropdowns */}
           <div className="flex flex-wrap gap-2">
-            {/*
             <Select value={status} onValueChange={(value) => updateFilter('status', value)}>
               <SelectTrigger className="w-[150px]">
                 <Filter className="h-4 w-4 mr-2" />
@@ -541,7 +538,6 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
                 ))}
               </SelectContent>
             </Select>
-            */}
             <Select value={funding} onValueChange={(value) => updateFilter('payment_type', value)}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Funding" />
