@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { MessageSquare, Loader2 } from 'lucide-react';
+import { MessageSquare, Loader2, Pencil, Trash2, X, Check } from 'lucide-react';
 
 interface Note {
   id: string;
@@ -26,11 +26,23 @@ export function InternalNotesTab({ swimmerId }: InternalNotesTabProps) {
   const [loading, setLoading] = useState(true);
   const [newNote, setNewNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [savingEditId, setSavingEditId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const supabase = createClient();
 
-  // Get current user for created_by
+  // Get current user on mount
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setCurrentUserId(user?.id || null);
+    });
+  }, [supabase]);
+
+  // Get current user for created_by (used when adding notes)
   const getCurrentUserId = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     return user?.id || null;
@@ -81,7 +93,7 @@ export function InternalNotesTab({ swimmerId }: InternalNotesTabProps) {
 
     setSubmitting(true);
     try {
-      const currentUserId = await getCurrentUserId();
+      const userId = await getCurrentUserId();
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
@@ -89,7 +101,7 @@ export function InternalNotesTab({ swimmerId }: InternalNotesTabProps) {
         .insert({
           swimmer_id: swimmerId,
           note_text: newNote.trim(),
-          created_by: currentUserId,
+          created_by: userId,
         })
         .select(`
           id,
@@ -128,6 +140,61 @@ export function InternalNotesTab({ swimmerId }: InternalNotesTabProps) {
       });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleEdit = async (noteId: string) => {
+    if (!editText.trim()) return;
+
+    setSavingEditId(noteId);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('swimmer_notes')
+        .update({ note_text: editText.trim(), updated_at: new Date().toISOString() })
+        .eq('id', noteId);
+
+      if (error) throw error;
+
+      setNotes(prev => prev.map(n => n.id === noteId ? { ...n, note_text: editText.trim() } : n));
+      setEditingId(null);
+      setEditText('');
+      toast({ title: 'Note updated' });
+    } catch (err) {
+      console.error('Error updating note:', err);
+      toast({
+        title: 'Failed to update note',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingEditId(null);
+    }
+  };
+
+  const handleDelete = async (noteId: string) => {
+    setSavingEditId(noteId);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('swimmer_notes')
+        .delete()
+        .eq('id', noteId);
+
+      if (error) throw error;
+
+      setNotes(prev => prev.filter(n => n.id !== noteId));
+      setDeletingId(null);
+      toast({ title: 'Note deleted' });
+    } catch (err) {
+      console.error('Error deleting note:', err);
+      toast({
+        title: 'Failed to delete note',
+        description: err instanceof Error ? err.message : 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingEditId(null);
     }
   };
 
@@ -193,26 +260,124 @@ export function InternalNotesTab({ swimmerId }: InternalNotesTabProps) {
           </div>
         ) : (
           <div className="space-y-3">
-            {notes.map((note) => (
-              <div
-                key={note.id}
-                className="border rounded-lg p-4 space-y-1"
-              >
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold">
-                    {note.created_by ? note.author_name || 'Admin' : 'Airtable'}
-                  </span>
-                  <span className="text-muted-foreground text-xs">
-                    {formatNoteDate(
-                      note.created_by
-                        ? note.created_at
-                        : (note.airtable_comment_date || note.created_at)
+            {notes.map((note) => {
+              const isOwned = note.created_by !== null && note.created_by === currentUserId;
+              const isEditing = editingId === note.id;
+              const isDeleting = deletingId === note.id;
+              const isSaving = savingEditId === note.id;
+
+              return (
+                <div
+                  key={note.id}
+                  className="border rounded-lg p-4 space-y-1 group relative"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 text-sm min-w-0">
+                      <span className="font-semibold shrink-0">
+                        {note.created_by ? note.author_name || 'Admin' : 'Airtable'}
+                      </span>
+                      <span className="text-muted-foreground text-xs shrink-0">
+                        {formatNoteDate(
+                          note.created_by
+                            ? note.created_at
+                            : (note.airtable_comment_date || note.created_at)
+                        )}
+                      </span>
+                    </div>
+
+                    {/* Action buttons — owned notes only */}
+                    {isOwned && !isEditing && !isDeleting && (
+                      <div className="flex items-center gap-0.5 shrink-0
+                        md:opacity-0 md:group-hover:opacity-100
+                        transition-opacity"
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                          onClick={() => { setEditingId(note.id); setEditText(note.note_text); }}
+                          aria-label="Edit note"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          onClick={() => setDeletingId(note.id)}
+                          aria-label="Delete note"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     )}
-                  </span>
+                  </div>
+
+                  {/* Edit mode */}
+                  {isEditing ? (
+                    <div className="space-y-2 mt-2">
+                      <Textarea
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        rows={3}
+                      />
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => { setEditingId(null); setEditText(''); }}
+                          disabled={isSaving}
+                        >
+                          <X className="h-3.5 w-3.5 mr-1" />
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleEdit(note.id)}
+                          disabled={!editText.trim() || isSaving}
+                        >
+                          {isSaving ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                          ) : (
+                            <Check className="h-3.5 w-3.5 mr-1" />
+                          )}
+                          Save
+                        </Button>
+                      </div>
+                    </div>
+                  ) : isDeleting ? (
+                    /* Delete confirmation */
+                    <div className="space-y-2 mt-2">
+                      <p className="text-sm text-muted-foreground">Delete this note?</p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDeletingId(null)}
+                          disabled={isSaving}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(note.id)}
+                          disabled={isSaving}
+                        >
+                          {isSaving ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                          ) : null}
+                          Confirm
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Read-only text */
+                    <p className="text-sm whitespace-pre-wrap mt-1">{note.note_text}</p>
+                  )}
                 </div>
-                <p className="text-sm whitespace-pre-wrap">{note.note_text}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </CardContent>
