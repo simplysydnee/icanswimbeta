@@ -3,7 +3,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { emailService } from '@/lib/email-service'
 import type { AuthContextType, AuthUser, LoginCredentials, RegisterCredentials, ResetPasswordRequest, UserWithRole, UserRole, Profile, UserRoleRecord } from '@/types/auth'
 
 interface ExtendedAuthContextType extends AuthContextType {
@@ -487,15 +486,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Continue anyway - user will get default role from fetchUserProfile
         }
 
-        // Send account created email (for users with no swimmers enrolled yet)
+        // Send account created email (server-side, non-fatal)
         try {
-          await emailService.sendAccountCreated({
-            parentEmail: email,
-            parentName: name || 'there',
+          await fetch('/api/auth/welcome-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              parentEmail: email,
+              parentName: name || 'there',
+            }),
           })
         } catch (emailError) {
-          console.error('Failed to send account created email:', emailError)
-          // Don't fail signup if email fails
+          console.error('Welcome email failed:', emailError)
+          // Non-fatal — do not block signup
         }
 
         // Wait for session to be fully established and database transaction to complete
