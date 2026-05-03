@@ -17,7 +17,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { StatusBadge } from './StatusBadge';
 import { EmailComposerModal } from '@/components/email/EmailComposerModal';
@@ -26,7 +25,7 @@ import EditImportantNotesModal from '@/components/staff-mode/modals/EditImportan
 import { EnhancedSkillChecklist } from '@/components/instructor/EnhancedSkillChecklist';
 import { LevelSelector } from './LevelSelector';
 import { StatusSelector } from './StatusSelector';
-import { AssessmentReportTab } from './AssessmentReportTab';
+import { InternalNotesTab } from '@/components/admin/InternalNotesTab';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -37,7 +36,6 @@ import {
   Mail,
   Phone,
   DollarSign,
-  Building2,
   Award as AwardIcon,
   HelpCircle,
   AlertCircle,
@@ -49,7 +47,7 @@ import {
   Users,
   Award,
   Plus,
-  MessageSquare,
+  Building2,
   ClipboardList,
   UserPlus,
   Loader2,
@@ -186,8 +184,6 @@ export function SwimmerDetailModal({
     name: string;
     type: 'coordinator' | 'parent';
   } | null>(null);
-  const [adminNotes, setAdminNotes] = useState(swimmer?.admin_notes || '');
-  const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [progressModalOpen, setProgressModalOpen] = useState(false);
   const [selectedBookingForProgress, setSelectedBookingForProgress] = useState<any>(null);
   const [showImportantNotesModal, setShowImportantNotesModal] = useState(false);
@@ -588,27 +584,6 @@ export function SwimmerDetailModal({
     onClose();
     const viewPath = isAdmin ? `/admin/swimmers/${swimmer.id}` : `/parent/swimmers/${swimmer.id}`;
     router.push(viewPath);
-  };
-
-  const handleSaveAdminNotes = async () => {
-    if (!swimmer?.id) return;
-
-    setIsSavingNotes(true);
-    try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from('swimmers')
-        .update({ admin_notes: adminNotes })
-        .eq('id', swimmer.id);
-
-      if (error) throw error;
-      toast({ title: 'Internal notes saved' });
-    } catch (error) {
-      console.error('Failed to save notes:', error);
-      toast({ title: 'Failed to save notes', variant: 'destructive' });
-    } finally {
-      setIsSavingNotes(false);
-    }
   };
 
   const handleInviteParent = async () => {
@@ -2139,36 +2114,7 @@ export function SwimmerDetailModal({
           {/* Internal Notes Tab - Admin Only */}
           {isAdmin && (
             <TabsContent value="notes" className="space-y-4">
-              <section>
-                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Internal Notes
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Staff-only notes about this swimmer (not visible to parents)
-                </p>
-
-                <div className="space-y-4">
-                  <Textarea
-                    value={adminNotes}
-                    onChange={(e) => setAdminNotes(e.target.value)}
-                    placeholder="Add internal notes (e.g., parent communications, scheduling issues, special considerations, behavior observations...)"
-                    className="min-h-[200px]"
-                  />
-
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-muted-foreground">
-                      {adminNotes?.length || 0} characters
-                    </p>
-                    <Button
-                      onClick={handleSaveAdminNotes}
-                      disabled={isSavingNotes}
-                    >
-                      {isSavingNotes ? 'Saving...' : 'Save Notes'}
-                    </Button>
-                  </div>
-                </div>
-              </section>
+              <InternalNotesTab swimmerId={swimmer.id} />
             </TabsContent>
           )}
 
