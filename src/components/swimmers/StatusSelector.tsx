@@ -80,6 +80,28 @@ export function StatusSelector({
 
       if (error) throw error;
 
+      if (field === 'approval_status' && value === 'approved') {
+        try {
+          const res = await fetch(
+            `/api/admin/swimmers/${swimmerId}/send-welcome-email`,
+            {
+              method: 'POST',
+            }
+          );
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.error('Welcome email failed:', err);
+            toast({
+              title: 'Status updated, but email failed',
+              description: err.error || 'Parent was not notified.',
+              variant: 'destructive',
+            });
+          }
+        } catch (emailErr) {
+          console.error('Welcome email request error:', emailErr);
+        }
+      }
+
       toast({
         title: 'Status Updated',
         description: `${field.replace('_', ' ')} changed to ${value}`,
