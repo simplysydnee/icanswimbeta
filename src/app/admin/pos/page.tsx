@@ -189,6 +189,7 @@ function POSPageContent() {
   const [fundingSourceFilter, setFundingSourceFilter] = useState<string>('all');
   const [selectedFundingSource, setSelectedFundingSource] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
+  const [monthOptions, setMonthOptions] = useState<{ value: string; label: string }[]>([]);
 
   // Funding source detail modal state
   const [fundingSourceDetailOpen, setFundingSourceDetailOpen] = useState(false);
@@ -257,6 +258,48 @@ function POSPageContent() {
     }
   }, []);
 
+  const fetchMonthRange = useCallback(async () => {
+    const supabase = createClient();
+    try {
+      const { data: minData } = await supabase
+        .from('purchase_orders')
+        .select('start_date')
+        .order('start_date', { ascending: true })
+        .limit(1);
+
+      const { data: maxData } = await supabase
+        .from('purchase_orders')
+        .select('end_date')
+        .order('end_date', { ascending: false })
+        .limit(1);
+
+      const minDate = minData?.[0]?.start_date;
+      const maxDate = maxData?.[0]?.end_date;
+      if (!minDate || !maxDate) return;
+
+      const start = new Date(minDate);
+      const end = new Date(maxDate);
+      const twelveMonthsFromNow = new Date();
+      twelveMonthsFromNow.setMonth(twelveMonthsFromNow.getMonth() + 12);
+      const effectiveEnd = end > twelveMonthsFromNow ? end : twelveMonthsFromNow;
+
+      const options: { value: string; label: string }[] = [];
+      const current = new Date(effectiveEnd.getFullYear(), effectiveEnd.getMonth(), 1);
+      const startFirstOfMonth = new Date(start.getFullYear(), start.getMonth(), 1);
+
+      while (current >= startFirstOfMonth) {
+        options.push({
+          value: format(current, 'yyyy-MM'),
+          label: format(current, 'MMMM yyyy'),
+        });
+        current.setMonth(current.getMonth() - 1);
+      }
+      setMonthOptions(options);
+    } catch (error) {
+      console.error('Error fetching month range:', error);
+    }
+  }, []);
+
   const fetchPurchaseOrders = useCallback(async () => {
     setLoading(true);
     try {
@@ -305,7 +348,8 @@ function POSPageContent() {
   useEffect(() => {
     fetchPurchaseOrders();
     fetchFundingSources();
-  }, [fetchPurchaseOrders, fetchFundingSources]);
+    fetchMonthRange();
+  }, [fetchPurchaseOrders, fetchFundingSources, fetchMonthRange]);
 
   const handleApprove = async () => {
     if (!selectedPO) return;
@@ -587,12 +631,11 @@ function POSPageContent() {
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="border rounded-md px-3 py-2 bg-white text-sm"
               >
-                <option value="2025-12">December 2025</option>
-                <option value="2025-11">November 2025</option>
-                <option value="2025-10">October 2025</option>
-                <option value="2025-09">September 2025</option>
-                <option value="2025-08">August 2025</option>
-                <option value="2025-07">July 2025</option>
+                {monthOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </div>
           )}
