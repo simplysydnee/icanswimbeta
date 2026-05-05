@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,6 +25,12 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Progress } from '@/components/ui/progress';
+import {
   FileText,
   Search,
   CheckCircle,
@@ -36,18 +42,16 @@ import {
   Filter,
   Download,
   RefreshCw,
-  DollarSign,
   Calendar,
-  Mail,
   Plus,
   Bell,
-  AlertTriangle
+  AlertTriangle,
+  Check,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { POBillingModal } from '@/components/admin/POBillingModal';
-import { FundingSourceSummary } from '@/components/admin/FundingSourceSummary';
 import { FundingSourceDetailModal } from '@/components/admin/FundingSourceDetailModal';
 import { PostTabs, POSTab } from '@/components/admin/pos/PostTabs';
 import { MonthlyBillingTab } from '@/components/admin/pos/MonthlyBillingTab';
@@ -117,13 +121,17 @@ interface FundingSourceStats {
   overdueCount: number;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800 border-yellow-300', icon: Clock },
-  approved_pending_auth: { label: 'Approved (Need Auth#)', color: 'bg-orange-100 text-orange-800 border-orange-300', icon: AlertCircle },
-  active: { label: 'Active', color: 'bg-green-100 text-green-800 border-green-300', icon: CheckCircle },
-  completed: { label: 'Completed', color: 'bg-blue-100 text-blue-800 border-blue-300', icon: CheckCircle },
-  expired: { label: 'Expired', color: 'bg-gray-100 text-gray-600 border-gray-300', icon: XCircle },
-  cancelled: { label: 'Cancelled', color: 'bg-red-100 text-red-800 border-red-300', icon: XCircle },
+const getStatusBadge = (po: PurchaseOrder) => {
+  const today = new Date();
+  const end = po.end_date ? new Date(po.end_date) : null;
+  const days = end ? Math.floor((end.getTime() - today.getTime()) / 86400000) : null;
+  const exhausted = po.sessions_authorized > 0 && po.sessions_used >= po.sessions_authorized;
+
+  if (exhausted) return { label: 'Sessions Exhausted', color: 'red' };
+  if (days === null) return { label: 'Active', color: 'green' };
+  if (days > 30) return { label: 'Active', color: 'green' };
+  if (days >= 0) return { label: 'Expires Soon', color: 'yellow' };
+  return { label: 'Expired', color: 'red' };
 };
 
 type PoSwimmerSessionEntry = NonNullable<
@@ -190,6 +198,16 @@ function POSPageContent() {
   const [selectedFundingSource, setSelectedFundingSource] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [monthOptions, setMonthOptions] = useState<{ value: string; label: string }[]>([]);
+
+  // Inline notes editing state
+  const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
+  const [editingNotesValue, setEditingNotesValue] = useState('');
+  const [savingNotesId, setSavingNotesId] = useState<string | null>(null);
+  const [notesSavedId, setNotesSavedId] = useState<string | null>(null);
+
+  // Attention banner filter toggles
+  const [showExhausted, setShowExhausted] = useState(false);
+  const [showExpiring, setShowExpiring] = useState(false);
 
   // Funding source detail modal state
   const [fundingSourceDetailOpen, setFundingSourceDetailOpen] = useState(false);
@@ -500,6 +518,34 @@ function POSPageContent() {
     }
   };
 
+  const handleNotesSave = async (poId: string) => {
+    setSavingNotesId(poId);
+    const supabase = createClient();
+    try {
+      const { error } = await supabase
+        .from('purchase_orders')
+        .update({ notes: editingNotesValue })
+        .eq('id', poId);
+      if (error) throw error;
+      setNotesSavedId(poId);
+      setTimeout(() => setNotesSavedId(null), 2000);
+      setPurchaseOrders((prev) =>
+        prev.map((po) =>
+          po.id === poId ? { ...po, notes: editingNotesValue } : po
+        )
+      );
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      toast({
+        title: 'Failed to save notes',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingNotesId(null);
+      setEditingNotesId(null);
+    }
+  };
+
   const openCancelLessonModal = (po: PurchaseOrder) => {
     const bookings = getActiveLessonBookings(po);
     const firstId = bookings[0]?.booking_id ?? '';
@@ -588,7 +634,19 @@ function POSPageContent() {
     const matchesFundingSource = fundingSourceFilter === 'all' || po.funding_source?.id === fundingSourceFilter;
     const matchesSelectedFundingSource = !selectedFundingSource || po.funding_source?.id === selectedFundingSource;
 
-    return matchesSearch && matchesStatus && matchesBillingStatus && matchesPoType && matchesFundingSource && matchesSelectedFundingSource;
+    const matchesExhaustedFilter = !showExhausted || (
+      po.sessions_authorized > 0 && po.sessions_used >= po.sessions_authorized
+    );
+    const todayForFilter = new Date();
+    const matchesExpiringFilter = !showExpiring || (
+      po.status === 'active' && !!po.end_date && (() => {
+        const end = new Date(po.end_date);
+        const d = Math.floor((end.getTime() - todayForFilter.getTime()) / 86400000);
+        return d >= 0 && d <= 30;
+      })()
+    );
+
+    return matchesSearch && matchesStatus && matchesBillingStatus && matchesPoType && matchesFundingSource && matchesSelectedFundingSource && matchesExhaustedFilter && matchesExpiringFilter;
   });
 
   const getFundingSources = () => {
@@ -665,28 +723,51 @@ function POSPageContent() {
       {/* Tabs */}
       <PostTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {activeTab === 'purchase-orders' && attentionNeeds && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
-            <div>
-              <p className="font-medium">Showing purchase orders that need attention</p>
-              <p className="text-amber-900/80 text-xs mt-0.5">
-                Pending or need auth, ending within 30 days, or inactive PO with an upcoming confirmed booking.
-              </p>
-            </div>
+      {/* Needs Attention Banner */}
+      {(() => {
+        const exhaustedCount = purchaseOrders.filter(
+          (po) => po.sessions_authorized > 0 && po.sessions_used >= po.sessions_authorized
+        ).length;
+        const expiringCount = purchaseOrders.filter(
+          (po) => po.status === 'active' && !!po.end_date && (() => {
+            const d = Math.floor((new Date(po.end_date).getTime() - new Date().getTime()) / 86400000);
+            return d >= 0 && d <= 30;
+          })()
+        ).length;
+        if (exhaustedCount === 0 && expiringCount === 0) return null;
+        return (
+          <div className="flex flex-wrap items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
+            {exhaustedCount > 0 && (
+              <button
+                onClick={() => { setShowExhausted(!showExhausted); setShowExpiring(false); }}
+                className={`font-medium underline-offset-2 hover:underline ${showExhausted ? 'text-amber-700' : ''}`}
+              >
+                ⚠️ {exhaustedCount} {exhaustedCount === 1 ? 'client has' : 'clients have'} exhausted sessions
+              </button>
+            )}
+            {exhaustedCount > 0 && expiringCount > 0 && <span className="text-amber-400">·</span>}
+            {expiringCount > 0 && (
+              <button
+                onClick={() => { setShowExpiring(!showExpiring); setShowExhausted(false); }}
+                className={`font-medium underline-offset-2 hover:underline ${showExpiring ? 'text-amber-700' : ''}`}
+              >
+                ⚠️ {expiringCount} {expiringCount === 1 ? 'PO expires' : 'POs expire'} within 30 days
+              </button>
+            )}
+            {(showExhausted || showExpiring) && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-amber-300 ml-auto"
+                onClick={() => { setShowExhausted(false); setShowExpiring(false); }}
+              >
+                Clear filter
+              </Button>
+            )}
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="border-amber-300 shrink-0 self-start sm:self-center"
-            onClick={() => router.replace('/admin/pos')}
-          >
-            Clear filter
-          </Button>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Conditional Content */}
       {activeTab === 'purchase-orders' ? (
@@ -859,205 +940,168 @@ function POSPageContent() {
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 font-semibold text-left whitespace-nowrap">Swimmer</th>
-                <th className="px-4 py-3 font-semibold text-left whitespace-nowrap">Type</th>
-                <th className="px-4 py-3 font-semibold text-left whitespace-nowrap">Status</th>
-                <th className="px-4 py-3 font-semibold text-left whitespace-nowrap">Funding / Auth #</th>
-                <th className="px-4 py-3 font-semibold text-left whitespace-nowrap">Dates</th>
-                <th className="px-4 py-3 font-semibold text-left whitespace-nowrap">Coordinator</th>
-                <th className="px-4 py-3 font-semibold text-right whitespace-nowrap">Sessions Used</th>
-                <th className="px-4 py-3 font-semibold text-right whitespace-nowrap">Sessions Authorized</th>
-                {/*<th className="px-4 py-3 font-semibold text-right whitespace-nowrap">Booked</th>*/}
-                <th className="px-4 py-3 font-semibold text-left whitespace-nowrap">Actions</th>
+                <th className="px-3 py-3 font-semibold text-left whitespace-nowrap">Swimmer</th>
+                <th className="px-3 py-3 font-semibold text-left whitespace-nowrap">Type</th>
+                <th className="px-3 py-3 font-semibold text-left whitespace-nowrap">Status</th>
+                <th className="px-3 py-3 font-semibold text-left whitespace-nowrap">Auth #</th>
+                <th className="px-3 py-3 font-semibold text-left whitespace-nowrap">Sessions</th>
+                <th className="px-3 py-3 font-semibold text-left whitespace-nowrap">Dates</th>
+                <th className="px-3 py-3 font-semibold text-left whitespace-nowrap">Notes</th>
+                <th className="px-3 py-3 font-semibold text-center whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredPOs.map((po) => {
-                const statusConfig = STATUS_CONFIG[po.status] || STATUS_CONFIG.pending;
-                const StatusIcon = statusConfig.icon;
-                const isExpired = po.status === 'expired' || (po.status === 'active' && new Date(po.end_date) < new Date());
-                const isNearExpiry = po.status === 'active' && new Date(po.end_date) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+                const badge = getStatusBadge(po);
 
-                const billingConfig = BILLING_STATUS_CONFIG[po.billing_status] || BILLING_STATUS_CONFIG.unbilled;
-                const BillingIcon = billingConfig.icon;
+                const colorMap: Record<string, { bg: string; text: string; dot: string }> = {
+                  green: { bg: 'bg-green-100 text-green-800 border-green-300', text: 'text-green-800', dot: 'bg-green-500' },
+                  yellow: { bg: 'bg-yellow-100 text-yellow-800 border-yellow-300', text: 'text-yellow-800', dot: 'bg-yellow-500' },
+                  red: { bg: 'bg-red-100 text-red-800 border-red-300', text: 'text-red-800', dot: 'bg-red-500' },
+                };
+                const bc = colorMap[badge.color] || colorMap.green;
+
+                const pct = po.sessions_authorized > 0
+                  ? Math.min(100, Math.round((po.sessions_used / po.sessions_authorized) * 100))
+                  : 0;
+                const progressColor = pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-yellow-500' : 'bg-cyan-600';
+                const isEditing = editingNotesId === po.id;
 
                 return (
-                  <tr
-                    key={po.id}
-                    className={`${isExpired ? 'bg-red-50' : isNearExpiry ? 'bg-yellow-50' : ''} group hover:bg-cyan-50 transition-colors`}
-                  >
+                  <tr key={po.id} className="group hover:bg-cyan-50 transition-colors">
                     {/* Swimmer */}
-                    <td className="px-4 py-2 whitespace-nowrap font-medium">
-                      <div className="flex items-center gap-2">
-                        <span>{po.swimmer?.first_name} {po.swimmer?.last_name}</span>
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      <div className="font-medium text-sm">
+                        {po.swimmer?.first_name} {po.swimmer?.last_name}
                       </div>
                     </td>
                     {/* Type */}
-                    <td className="px-4 py-2 whitespace-nowrap">
+                    <td className="px-3 py-2.5 whitespace-nowrap">
                       <Badge variant="outline" className="text-xs">
                         {po.po_type === 'assessment' ? 'Assessment' : 'Lessons'}
                       </Badge>
                     </td>
                     {/* Status */}
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      <div className="flex items-center gap-1">
-                        <div className={`h-6 w-6 rounded-full flex items-center justify-center ${statusConfig.color.split(' ')[0]}`}>
-                          <StatusIcon className={`h-3 w-3 ${statusConfig.color.split(' ')[1]}`} />
-                        </div>
-                        <Badge className={`${statusConfig.color} border text-xs ml-1`}>
-                          {statusConfig.label}
-                        </Badge>
-                        {isNearExpiry && po.status === 'active' && (
-                          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs ml-1">
-                            Expires Soon
-                          </Badge>
-                        )}
-                        {isExpired && po.status === 'active' && (
-                          <Badge className="bg-red-100 text-red-800 border-red-300 text-xs ml-1">
-                            Expired
-                          </Badge>
-                        )}
-                      </div>
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${bc.bg} ${bc.text}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${bc.dot}`} />
+                        {badge.label}
+                      </span>
                     </td>
-                    {/* Funding/ Auth */}
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      <div>
-                        <div className="font-medium">{po.funding_source?.short_name || 'Unknown'}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {po.authorization_number ? `Auth: ${po.authorization_number}` : 'No auth#'}
+                    {/* Auth # */}
+                    <td className="px-3 py-2.5 whitespace-nowrap font-mono text-xs text-gray-600">
+                      {po.authorization_number || <span className="text-gray-300">—</span>}
+                    </td>
+                    {/* Sessions */}
+                    <td className="px-3 py-2.5 whitespace-nowrap min-w-[120px]">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-medium tabular-nums ${pct >= 100 ? 'text-red-600' : ''}`}>
+                          {po.sessions_used}
+                          <span className="text-gray-400"> / {po.sessions_authorized}</span>
+                        </span>
+                      </div>
+                      <div className="mt-1 w-24">
+                        <div className="relative h-1.5 w-full rounded-full bg-gray-200">
+                          <div
+                            className={`absolute inset-y-0 left-0 rounded-full transition-all ${progressColor}`}
+                            style={{ width: `${pct}%` }}
+                          />
                         </div>
                       </div>
                     </td>
                     {/* Dates */}
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      <div className="text-xs">{po.start_date ? format(new Date(po.start_date), 'MMM d, yyyy') : '-'}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {po.end_date ? format(new Date(po.end_date), 'MMM d, yyyy') : '-'}
-                      </div>
+                    <td className="px-3 py-2.5 whitespace-nowrap text-xs text-gray-600">
+                      {po.start_date ? format(new Date(po.start_date), 'M/d/yy') : '—'}
+                      <span className="text-gray-300 mx-1">→</span>
+                      {po.end_date ? format(new Date(po.end_date), 'M/d/yy') : '—'}
                     </td>
-                    {/* Coordinator */}
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      <div className="text-xs">{po.coordinator?.full_name || <span className="text-gray-400">Unassigned</span>}</div>
+                    {/* Notes (inline editable) */}
+                    <td className="px-3 py-2.5 max-w-[180px]">
+                      {isEditing ? (
+                        <div className="flex items-start gap-1">
+                          <textarea
+                            className="w-full text-xs border rounded px-2 py-1 resize-none focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                            rows={2}
+                            value={editingNotesValue}
+                            onChange={(e) => setEditingNotesValue(e.target.value)}
+                            onBlur={() => handleNotesSave(po.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Escape') setEditingNotesId(null);
+                            }}
+                            autoFocus
+                          />
+                          {savingNotesId === po.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin text-gray-400 shrink-0 mt-1" />
+                          ) : notesSavedId === po.id ? (
+                            <Check className="h-3 w-3 text-green-500 shrink-0 mt-1" />
+                          ) : null}
+                        </div>
+                      ) : (
+                        <button
+                          className="w-full text-left text-xs text-gray-600 truncate hover:bg-gray-100 rounded px-1 py-0.5 -ml-1 transition"
+                          onClick={() => {
+                            setEditingNotesId(po.id);
+                            setEditingNotesValue(po.notes || '');
+                          }}
+                          title={po.notes || 'Click to add notes'}
+                        >
+                          {(po.notes || '').length > 40
+                            ? `${(po.notes || '').slice(0, 40)}…`
+                            : (po.notes || <span className="text-gray-300 italic">Add notes</span>)}
+                        </button>
+                      )}
                     </td>
-                    {/* Sessions */}
-                    <td className="px-4 py-2 whitespace-nowrap text-right">
-                      <span className="font-medium">{po.sessions_used}</span>
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-right">
-                      <span className="font-medium">{po.sessions_authorized}</span>
-                    </td>
-                    {/* Booked 
-                    <td className="px-4 py-2 whitespace-nowrap text-right text-xs text-muted-foreground">
-                      {po.sessions_booked} booked
-                    </td>*/}
                     {/* Actions */}
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      <div className="relative">
-                        <details className="group">
-                          <summary className="flex items-center gap-1 cursor-pointer list-none border rounded-full w-8 h-8 justify-center hover:bg-gray-100 transition">
-                            <svg
-                              className="w-5 h-5 text-gray-500"
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                            >
-                              <circle cx="5" cy="12" r="1.5" />
-                              <circle cx="12" cy="12" r="1.5" />
-                              <circle cx="19" cy="12" r="1.5" />
-                            </svg>
-                          </summary>
-                          <div className="absolute z-10 mt-2 w-44 right-0 bg-white border border-gray-200 rounded shadow-lg text-sm py-1">
-                            {/* 
-                            {(po.status === 'pending' || po.status === 'approved_pending_auth') && (
-                              <button
-                                onClick={() => openApprovalDialog(po)}
-                                className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100"
-                              >
-                                {po.status === 'pending' ? 'Review' : 'Add Auth#'}
-                              </button>
-                            )}
-                            {po.status === 'active' && (
-                              <>
-                                <button
-                                  onClick={() => openApprovalDialog(po)}
-                                  className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
-                                >
-                                  <Eye className="h-4 w-4 mr-1" /> View
-                                </button>
-                                {po.sessions_used >= po.sessions_authorized && (
-                                  <button
-                                    onClick={() => handleMarkComplete(po)}
-                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100"
-                                  >
-                                    Mark Complete
-                                  </button>
-                                )}
-                              </>
-                            )}
-                            {po.status === 'completed' && (
-                              <button
-                                onClick={() => openApprovalDialog(po)}
-                                className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
-                              >
-                                <Eye className="h-4 w-4 mr-1" /> View
-                              </button>
-                            )}
-                            <button
-                              onClick={() => openBillingModal(po)}
-                              className="w-full text-left px-4 py-2 border-t border-gray-100 hover:bg-gray-100 focus:bg-gray-100 text-cyan-700 flex items-center"
-                            >
-                              <DollarSign className="h-4 w-4 mr-1" /> Billing
-                            </button>
-                            */}
-                            <button
-                                  onClick={() => openApprovalDialog(po)}
-                                  className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
-                                >
-                                  <Eye className="h-4 w-4 mr-1" /> View
-                                </button>
-                          <button
-                            type="button"
-                            onClick={() => handleReminder(po)}
-                            disabled={remindingPoId === po.id}
-                            className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center disabled:opacity-50"
-                          >
-                            {remindingPoId === po.id ? (
-                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                            ) : (
-                              <Bell className="h-4 w-4 mr-1" />
-                            )}{' '}
-                            Remind
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleWarning(po)}
-                            disabled={warningPoId === po.id}
-                            className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center disabled:opacity-50"
-                          >
-                            {warningPoId === po.id ? (
-                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                            ) : (
-                              <AlertTriangle className="h-4 w-4 mr-1" />
-                            )}{' '}
-                            Warn
-                          </button>
-                          {canShowCancelLesson(po) && (
+                    <td className="px-3 py-2.5 whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-1">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
                             <button
                               type="button"
-                              onClick={() => openCancelLessonModal(po)}
-                              className="w-full text-left px-4 py-2 hover:bg-gray-100 focus:bg-gray-100 flex items-center"
+                              onClick={() => handleReminder(po)}
+                              disabled={remindingPoId === po.id}
+                              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-amber-600 disabled:opacity-40 transition"
                             >
-                              <XCircle className="h-4 w-4 mr-1" /> Cancel Lesson
+                              {remindingPoId === po.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Bell className="h-4 w-4" />
+                              )}
                             </button>
-                          )}
-                     
-                          </div>
-                        </details>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Send reminder to coordinator</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={() => handleWarning(po)}
+                              disabled={warningPoId === po.id}
+                              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-red-600 disabled:opacity-40 transition"
+                            >
+                              {warningPoId === po.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <AlertTriangle className="h-4 w-4" />
+                              )}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Send warning to coordinator &amp; parent</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              onClick={() => openApprovalDialog(po)}
+                              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-blue-600 transition"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">View / edit details</TooltipContent>
+                        </Tooltip>
                       </div>
                     </td>
-               
                   </tr>
                 );
               })}
