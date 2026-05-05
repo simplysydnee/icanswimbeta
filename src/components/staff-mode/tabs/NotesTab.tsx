@@ -50,7 +50,7 @@ async function fetchProgressNotes(swimmerId: string): Promise<ProgressNote[]> {
         )
       `)
       .eq('swimmer_id', swimmerId)
-      .order('created_at', { ascending: false })
+      .order('lesson_date', { ascending: false })
 
     if (notesError) {
       console.error('Error fetching progress notes:', notesError)
@@ -142,7 +142,7 @@ export default function NotesTab({
       if (diffDays === 0) return 'Today'
       if (diffDays === 1) return 'Yesterday'
       if (diffDays < 7) return `${diffDays} days ago`
-      return format(date, 'MMM d')
+      return format(date, 'EEE, MMM d')
     } catch {
       return dateString
     }
@@ -322,7 +322,7 @@ export default function NotesTab({
                         </div>
                         <span className="text-gray-400">•</span>
                         <span className="text-sm text-gray-500">
-                          {formatRelativeDate(note.created_at)}
+                          {formatRelativeDate(note.lesson_date)}
                         </span>
                       </div>
                     </div>
@@ -337,12 +337,6 @@ export default function NotesTab({
                       </Badge>
                     )}
                   </div>
-                </div>
-
-                {/* Lesson Summary */}
-                <div className="mb-6">
-                  <h5 className="font-semibold text-gray-900 mb-2">Lesson Summary</h5>
-                  <p className="text-gray-700 whitespace-pre-line">{note.lesson_summary}</p>
                 </div>
 
                 {/* Mood and Water Comfort */}
@@ -412,11 +406,11 @@ export default function NotesTab({
                 {/* Notes Sections */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Instructor Notes */}
-                  {note.instructor_notes && (
+                  {(note.instructor_notes || note.lesson_summary) && (
                     <div>
                       <h5 className="font-semibold text-gray-900 mb-2">Instructor Notes</h5>
                       <div className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-700 whitespace-pre-line">{note.instructor_notes}</p>
+                        <p className="text-sm text-gray-700 whitespace-pre-line">{note.instructor_notes || note.lesson_summary}</p>
                       </div>
                     </div>
                   )}
