@@ -121,7 +121,7 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
         photo_video_permission,
         photo_video_signature,
         cancellation_policy_signature,
-        swim_levels (
+        swim_levels!swimmers_current_level_id_fkey (
           name,
           sequence
         ),

@@ -142,7 +142,7 @@ async function fetchTodaySessions(instructorId: string): Promise<SessionWithSwim
           phone,
           email
         ),
-        swim_levels (
+        swim_levels!swimmers_current_level_id_fkey (
           name,
           sequence
         )
@@ -321,9 +321,22 @@ export default function StaffScheduleView() {
         throw new Error(error.error || 'Failed to update booking status')
       }
 
+      // If no_show, also invoke the parent notification edge function
+      if (status === 'no_show') {
+        const supabase = createClient()
+        const { error: fnError } = await supabase.functions.invoke('no-show-notification', {
+          body: { booking_id: bookingId }
+        })
+
+        if (fnError) {
+          console.error('Error calling no-show-notification:', fnError)
+          throw new Error('Failed to record no show')
+        }
+      }
+
       toast({
         title: 'Success',
-        description: `Attendance marked as ${status === 'completed' ? 'Present' : 'No Show'}`,
+        description: status === 'completed' ? 'Attendance marked as Present' : 'No show recorded — parent notified',
       })
 
       // Invalidate the query to refresh data with server state
@@ -348,7 +361,9 @@ export default function StaffScheduleView() {
 
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to update attendance',
+        description: status === 'no_show'
+          ? 'Failed to record no show'
+          : (error instanceof Error ? error.message : 'Failed to update attendance'),
         variant: 'destructive',
       })
     } finally {
