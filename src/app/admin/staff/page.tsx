@@ -42,7 +42,6 @@ import {
   Users,
   Loader2
 } from 'lucide-react'
-import Image from 'next/image'
 import { useToast } from '@/hooks/use-toast'
 import { AvatarUpload } from '@/components/profile/AvatarUpload'
 
@@ -386,19 +385,19 @@ export default function StaffManagementPage() {
                   <TableRow key={member.id} className={!member.is_active ? 'opacity-50' : ''}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        {member.avatar_url ? (
-                          <Image
-                            src={member.avatar_url}
-                            alt={member.full_name}
-                            width={40}
-                            height={40}
-                            className="rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                            <User className="w-5 h-5 text-gray-400" />
-                          </div>
-                        )}
+                        <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-muted">
+                          {member.avatar_url ? (
+                            <img
+                              src={member.avatar_url}
+                              alt={member.full_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <User className="w-5 h-5 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
                         <div>
                           <p className="font-medium">{member.full_name}</p>
                           <p className="text-sm text-gray-500">{member.email}</p>
@@ -457,13 +456,13 @@ export default function StaffManagementPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               {editingMember?.avatar_url ? (
-                <Image
-                  src={editingMember.avatar_url}
-                  alt={editingMember.full_name}
-                  width={40}
-                  height={40}
-                  className="rounded-full"
-                />
+                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-muted">
+                  <img
+                    src={editingMember.avatar_url}
+                    alt={editingMember.full_name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               ) : (
                 <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
                   <User className="w-5 h-5 text-gray-400" />

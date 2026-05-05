@@ -2,7 +2,6 @@
 
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Camera, Loader2, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
@@ -128,12 +127,19 @@ export function AvatarUpload({
   return (
     <div className="flex items-center gap-4">
       <div className="relative">
-        <Avatar className="h-20 w-20">
-          <AvatarImage src={avatarUrl || undefined} alt={userName} />
-          <AvatarFallback className="bg-[#0077B6] text-white text-xl">
-            {getInitials(userName)}
-          </AvatarFallback>
-        </Avatar>
+        <div className="w-24 h-24 rounded-full overflow-hidden flex-shrink-0 bg-muted">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={userName || 'Profile photo'}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-2xl font-semibold text-muted-foreground">
+              {getInitials(userName)}
+            </div>
+          )}
+        </div>
 
         {uploading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
