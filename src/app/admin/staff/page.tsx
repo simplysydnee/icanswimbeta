@@ -44,6 +44,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 import { useToast } from '@/hooks/use-toast'
+import { AvatarUpload } from '@/components/profile/AvatarUpload'
 
 interface StaffMember {
   id: string
@@ -111,11 +112,11 @@ export default function StaffManagementPage() {
     try {
       setLoading(true)
 
-      // Get users with instructor or admin role
+      // Get users with instructor role
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('user_id')
-        .in('role', ['instructor', 'admin'])
+        .eq('role', 'instructor')
 
       if (roleError) throw roleError
 
@@ -183,6 +184,32 @@ export default function StaffManagementPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  // Toggle active/inactive with specific toast
+  const toggleActive = async (member: StaffMember) => {
+    const newValue = !member.is_active
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_active: newValue })
+      .eq('id', member.id)
+
+    if (error) {
+      console.error('Error toggling active status:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to update status',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    toast({
+      title: 'Success',
+      description: `${member.full_name} marked as ${newValue ? 'active' : 'inactive'}`
+    })
+
+    fetchStaffMembers()
   }
 
   // Create new instructor
@@ -394,9 +421,7 @@ export default function StaffManagementPage() {
                     <TableCell className="text-center">
                       <Switch
                         checked={member.is_active !== false}
-                        onCheckedChange={(checked) =>
-                          updateStaffMember({ id: member.id, is_active: checked })
-                        }
+                        onCheckedChange={() => toggleActive(member)}
                       />
                     </TableCell>
                     <TableCell className="text-center">
@@ -473,6 +498,22 @@ export default function StaffManagementPage() {
 
               {/* Profile Tab */}
               <TabsContent value="profile" className="space-y-4 mt-4">
+                {/* Photo Upload */}
+                <div className="flex items-center justify-center p-4 bg-gray-50 rounded-lg">
+                  <AvatarUpload
+                    userId={editingMember.id}
+                    currentAvatarUrl={editingMember.avatar_url}
+                    userName={editingMember.full_name}
+                    onUploadComplete={(url) => {
+                      setEditingMember({
+                        ...editingMember,
+                        avatar_url: url || null
+                      })
+                      fetchStaffMembers()
+                    }}
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="full_name">Full Name</Label>

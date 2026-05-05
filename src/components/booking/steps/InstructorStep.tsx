@@ -198,7 +198,7 @@ export default function InstructorStep({
                   />
                   <div>
                     <p className="font-medium">{instructor.fullName}</p>
-                    <p className="font-medium">{instructor.id}</p>
+                    <p className="text-sm text-muted-foreground">Instructor</p>
                   </div>
                 </div>
                 <div

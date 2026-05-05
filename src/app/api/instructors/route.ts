@@ -54,10 +54,18 @@ export async function GET() {
 
     let instructorList = profiles || [];
 
-    // Filter out test accounts (@test.com emails)
-    instructorList = instructorList.filter(profile =>
-      profile.email && !profile.email.includes('@test.com')
-    );
+    // Filter to only icanswim209.com domain instructors, exclude test/staff accounts
+    instructorList = instructorList.filter(profile => {
+      if (!profile.email) return false;
+      const email = profile.email.toLowerCase();
+      const name = (profile.full_name || '').toLowerCase();
+      return (
+        email.includes('@icanswim209.com') &&
+        !email.includes('@test.com') &&
+        !name.includes('staff') &&
+        !name.includes('test')
+      );
+    });
 
     // Sort by full_name client-side
     instructorList.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
