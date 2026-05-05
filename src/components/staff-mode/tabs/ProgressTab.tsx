@@ -39,95 +39,87 @@ async function fetchSwimmerSkills(swimmerId: string): Promise<SkillsByLevel[]> {
   const supabase = createClient()
 
   try {
-    // Fetch all skills with their level info
-    const { data: allSkills, error: skillsError } = await supabase
-      .from('skills')
-      .select(`
-        id,
-        name,
-        description,
-        level_id,
-        swim_levels!inner (
-          name,
-          sequence
-        )
-      `)
-      .order('swim_levels(sequence)')
-      .order('name')
-
-    if (skillsError) {
-      console.error('Error fetching skills:', skillsError)
-      throw new Error('Failed to fetch skills')
-    }
-
-    // Fetch this swimmer's skill statuses
-    const { data: swimmerSkills, error: swimmerSkillsError } = await supabase
+    // Fetch ONLY skills this swimmer has records for
+    const { data: swimmerSkills, error: ssError } = await supabase
       .from('swimmer_skills')
-      .select('skill_id, status, date_mastered, instructor_notes')
+      .select('id, skill_id, status, date_started, date_mastered, instructor_notes')
       .eq('swimmer_id', swimmerId)
 
-    if (swimmerSkillsError) {
-      console.error('Error fetching swimmer skills:', swimmerSkillsError)
-      throw new Error('Failed to fetch swimmer skill statuses')
+    if (ssError) {
+      console.error('Error fetching swimmer skills:', ssError)
+      throw new Error('Failed to fetch swimmer skills')
     }
 
-    // Create a map of swimmer skill statuses
-    const skillStatusMap = new Map<string, {
-      status: 'not_started' | 'in_progress' | 'mastered',
-      date_mastered: string | null,
-      instructor_notes: string | null
-    }>(
-      swimmerSkills?.map(skill => [
-        skill.skill_id,
-        {
-          status: skill.status as 'not_started' | 'in_progress' | 'mastered',
-          date_mastered: skill.date_mastered,
-          instructor_notes: skill.instructor_notes
-        }
-      ]) || []
-    )
+    if (!swimmerSkills || swimmerSkills.length === 0) {
+      return []
+    }
 
-    // Group skills by level
+    // Get unique skill IDs
+    const skillIds = [...new Set(swimmerSkills.map((s) => s.skill_id))]
+
+    // Fetch skill and level info for those skills
+    const { data: skillsData, error: skError } = await supabase
+      .from('skills')
+      .select(`
+        id, name, description, sequence, level_id,
+        swim_levels!inner (
+          name,
+          sequence,
+          color
+        )
+      `)
+      .in('id', skillIds)
+      .order('name')
+
+    if (skError) {
+      console.error('Error fetching skill details:', skError)
+      throw new Error('Failed to fetch skill details')
+    }
+
+    // Build a lookup map for skill details
+    const skillInfoMap = new Map<string, typeof skillsData[0]>()
+    skillsData?.forEach((s) => skillInfoMap.set(s.id, s))
+
+    // Group by level
     const levelsMap = new Map<string, SkillsByLevel>()
 
-    allSkills?.forEach(skill => {
-      const levelId = skill.level_id
-      const levelName = skill.swim_levels?.name || 'Unknown'
-      const levelSequence = skill.swim_levels?.sequence || 0
+    swimmerSkills.forEach((record) => {
+      const skillInfo = skillInfoMap.get(record.skill_id)
+      if (!skillInfo) return
+
+      const levelId = skillInfo.level_id
+      const levelName = skillInfo.swim_levels?.name || 'Unknown'
+      const levelSequence = skillInfo.swim_levels?.sequence || 0
 
       if (!levelsMap.has(levelId)) {
         levelsMap.set(levelId, {
           level_name: levelName,
           level_sequence: levelSequence,
-          skills: []
+          skills: [],
         })
       }
 
-      const skillStatus = skillStatusMap.get(skill.id) || {
-        status: 'not_started' as const,
-        date_mastered: null,
-        instructor_notes: null
-      }
-
       levelsMap.get(levelId)!.skills.push({
-        id: skill.id,
-        name: skill.name,
-        description: skill.description,
-        level_id: skill.level_id,
+        id: record.skill_id,
+        name: skillInfo.name,
+        description: skillInfo.description,
+        level_id: levelId,
         level_name: levelName,
         level_sequence: levelSequence,
-        status: skillStatus.status,
-        date_mastered: skillStatus.date_mastered,
-        instructor_notes: skillStatus.instructor_notes
+        status: record.status as 'not_started' | 'in_progress' | 'mastered',
+        date_mastered: record.date_mastered,
+        instructor_notes: record.instructor_notes,
       })
     })
 
-    // Convert map to array and sort by level sequence
+    // Sort by level sequence, then by skill name within each level
     const levelsArray = Array.from(levelsMap.values())
     levelsArray.sort((a, b) => a.level_sequence - b.level_sequence)
+    levelsArray.forEach((level) => {
+      level.skills.sort((a, b) => a.name.localeCompare(b.name))
+    })
 
     return levelsArray
-
   } catch (error) {
     console.error('Error in fetchSwimmerSkills:', error)
     throw error
@@ -373,31 +365,25 @@ export default function ProgressTab({
   }
 
 
-  // Define level groups
-  const BEGINNER_LEVELS = ['white', 'red']
-  const INTERMEDIATE_LEVELS = ['yellow', 'green', 'blue']
+  // Compute stats directly from the swimmer's actual skills (only levels they have records for)
+  const allSwimmerSkills = (skillsByLevel?.flatMap(level => level.skills) || [])
+  const masteredCount = allSwimmerSkills.filter(skill => skill.status === 'mastered').length
+  const inProgressCount = allSwimmerSkills.filter(skill => skill.status === 'in_progress').length
+  const notStartedCount = allSwimmerSkills.filter(skill => skill.status === 'not_started').length
+  const totalSwimmerSkills = allSwimmerSkills.length
+  const progressPercentage = totalSwimmerSkills > 0 ? Math.round((masteredCount / totalSwimmerSkills) * 100) : 0
 
-  // Determine which group the swimmer belongs to based on current level
-  const currentLevelLower = levelName?.toLowerCase() || ''
-  const isBeginnerGroup = BEGINNER_LEVELS.includes(currentLevelLower)
-  const levelGroup = isBeginnerGroup ? BEGINNER_LEVELS : INTERMEDIATE_LEVELS
-
-  // Filter skills to only show levels in the appropriate group
-  const filteredSkillsByLevel = skillsByLevel?.filter(level => {
-    const levelNameLower = level.level_name.toLowerCase()
-    return levelGroup.some(groupLevel => levelNameLower.includes(groupLevel))
-  }) || []
-
-  // Recalculate stats based on filtered skills
-  const filteredAllSkills = filteredSkillsByLevel.flatMap(level => level.skills) || []
-  const filteredMasteredCount = filteredAllSkills.filter(skill => skill.status === 'mastered').length
-  const filteredInProgressCount = filteredAllSkills.filter(skill => skill.status === 'in_progress').length
-  const filteredNotStartedCount = filteredAllSkills.filter(skill => skill.status === 'not_started').length
-  const filteredTotalSkills = filteredAllSkills.length
-  const filteredProgressPercentage = filteredTotalSkills > 0 ? Math.round((filteredMasteredCount / filteredTotalSkills) * 100) : 0
-
-  // Level group badge
-  const levelGroupBadge = isBeginnerGroup ? '🔴⚪' : '🟡🟢🔵'
+  // Dynamic level badges — only show levels this swimmer actually has skills for
+  const getLevelEmoji = (levelName: string) => {
+    const lower = levelName.toLowerCase()
+    if (lower.includes('white')) return '⚪'
+    if (lower.includes('red')) return '🔴'
+    if (lower.includes('yellow')) return '🟡'
+    if (lower.includes('green')) return '🟢'
+    if (lower.includes('blue')) return '🔵'
+    return '⚪'
+  }
+  const levelBadges = skillsByLevel?.map(l => getLevelEmoji(l.level_name)).join(' ') || ''
 
   if (isLoading) {
     return (
@@ -441,24 +427,24 @@ export default function ProgressTab({
       <div className="bg-white p-4 rounded-lg border border-gray-200">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Progress: {filteredProgressPercentage}% ({filteredMasteredCount}/{filteredTotalSkills} skills)</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Progress: {progressPercentage}% ({masteredCount}/{totalSwimmerSkills} skills)</h2>
             <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="text-sm text-gray-600">{filteredMasteredCount} mastered</span>
+                <span className="text-sm text-gray-600">{masteredCount} mastered</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                <span className="text-sm text-gray-600">{filteredInProgressCount} in progress</span>
+                <span className="text-sm text-gray-600">{inProgressCount} in progress</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-gray-300"></div>
-                <span className="text-sm text-gray-600">{filteredNotStartedCount} not started</span>
+                <span className="text-sm text-gray-600">{notStartedCount} not started</span>
               </div>
             </div>
           </div>
           <div className="text-3xl">
-            {levelGroupBadge}
+            {levelBadges}
           </div>
         </div>
       </div>
@@ -466,8 +452,8 @@ export default function ProgressTab({
 
       {/* Skills by Level */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        {filteredSkillsByLevel.map(level => {
-          const levelMasteredCount = level.skills.filter(s => s.status === 'mastered').length
+        {skillsByLevel?.map(level => {
+          const levelMasteredCount = level.skills.filter((s: { status: string }) => s.status === 'mastered').length
           const levelTotalCount = level.skills.length
 
           // Get level emoji based on level name
@@ -553,7 +539,7 @@ export default function ProgressTab({
       </div>
 
       {/* Empty State */}
-      {filteredSkillsByLevel.length === 0 && (
+      {(!skillsByLevel || skillsByLevel.length === 0) && (
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
