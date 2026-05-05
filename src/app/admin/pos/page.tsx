@@ -47,6 +47,7 @@ import {
   Bell,
   AlertTriangle,
   Check,
+  Pencil,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
@@ -204,6 +205,16 @@ function POSPageContent() {
   const [editingNotesValue, setEditingNotesValue] = useState('');
   const [savingNotesId, setSavingNotesId] = useState<string | null>(null);
   const [notesSavedId, setNotesSavedId] = useState<string | null>(null);
+
+  // Generic inline cell editing (status, dates, sessions_authorized, auth#)
+  const [editCell, setEditCell] = useState<{ field: string; poId: string } | null>(null);
+  const [editCellValue, setEditCellValue] = useState('');
+  const [savingCell, setSavingCell] = useState<string | null>(null);
+  const [savedCell, setSavedCell] = useState<string | null>(null);
+
+  // Cancel PO confirmation
+  const [confirmCancelPoId, setConfirmCancelPoId] = useState<string | null>(null);
+  const [cancellingPo, setCancellingPo] = useState(false);
 
   // Attention banner filter toggles
   const [showExhausted, setShowExhausted] = useState(false);
@@ -546,6 +557,81 @@ function POSPageContent() {
     }
   };
 
+  const handleCellSave = async (poId: string, field: string, displayLabel: string) => {
+    const key = `${field}:${poId}`;
+    setSavingCell(key);
+    const supabase = createClient();
+    try {
+      const val = field === 'sessions_authorized' ? parseInt(editCellValue, 10) : editCellValue;
+      const { error } = await supabase
+        .from('purchase_orders')
+        .update({ [field]: val })
+        .eq('id', poId);
+      if (error) throw error;
+      setPurchaseOrders((prev) =>
+        prev.map((po) => {
+          if (po.id !== poId) return po;
+          if (field === 'sessions_authorized') return { ...po, sessions_authorized: val as number };
+          if (field === 'status') return { ...po, status: val as string };
+          if (field === 'start_date') return { ...po, start_date: val as string };
+          if (field === 'end_date') return { ...po, end_date: val as string };
+          if (field === 'authorization_number') return { ...po, authorization_number: val as string };
+          return po;
+        })
+      );
+      setSavedCell(key);
+      setTimeout(() => setSavedCell(null), 2000);
+      toast({ title: `${displayLabel} updated` });
+    } catch (error) {
+      console.error(`Error saving ${field}:`, error);
+      toast({
+        title: `Failed to update ${displayLabel}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingCell(null);
+      setEditCell(null);
+    }
+  };
+
+  const handlePOCancel = async (po: PurchaseOrder) => {
+    setCancellingPo(true);
+    const supabase = createClient();
+    try {
+      // Update PO status
+      const { error: poError } = await supabase
+        .from('purchase_orders')
+        .update({ status: 'cancelled' })
+        .eq('id', po.id);
+      if (poError) throw poError;
+
+      // Cancel future confirmed bookings for this swimmer
+      if (po.swimmer?.id) {
+        const { error: bookingError } = await supabase
+          .from('bookings')
+          .update({ status: 'cancelled' })
+          .eq('swimmer_id', po.swimmer.id)
+          .gte('session_date', new Date().toISOString().split('T')[0])
+          .eq('status', 'confirmed');
+        if (bookingError) throw bookingError;
+      }
+
+      setPurchaseOrders((prev) =>
+        prev.map((p) => (p.id === po.id ? { ...p, status: 'cancelled' } : p))
+      );
+      toast({ title: 'PO cancelled' });
+    } catch (error) {
+      console.error('Error cancelling PO:', error);
+      toast({
+        title: 'Failed to cancel PO',
+        variant: 'destructive',
+      });
+    } finally {
+      setCancellingPo(false);
+      setConfirmCancelPoId(null);
+    }
+  };
+
   const openCancelLessonModal = (po: PurchaseOrder) => {
     const bookings = getActiveLessonBookings(po);
     const firstId = bookings[0]?.booking_id ?? '';
@@ -619,8 +705,11 @@ function POSPageContent() {
     if (attentionNeeds && !isPurchaseOrderNeedingAttention(po)) {
       return false;
     }
+    const swimmerName = po.swimmer
+      ? `${po.swimmer.first_name} ${po.swimmer.last_name}`.toLowerCase()
+      : 'unassigned';
     const matchesSearch = searchTerm === '' ||
-      `${po.swimmer?.first_name} ${po.swimmer?.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      swimmerName.includes(searchTerm.toLowerCase()) ||
       po.authorization_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       po.coordinator?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       po.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -971,9 +1060,13 @@ function POSPageContent() {
                   <tr key={po.id} className="group hover:bg-cyan-50 transition-colors">
                     {/* Swimmer */}
                     <td className="px-3 py-2.5 whitespace-nowrap">
-                      <div className="font-medium text-sm">
-                        {po.swimmer?.first_name} {po.swimmer?.last_name}
-                      </div>
+                      {po.swimmer ? (
+                        <div className="font-medium text-sm">
+                          {po.swimmer.first_name} {po.swimmer.last_name}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-400 italic">Unassigned</div>
+                      )}
                     </td>
                     {/* Type */}
                     <td className="px-3 py-2.5 whitespace-nowrap">
@@ -981,39 +1074,204 @@ function POSPageContent() {
                         {po.po_type === 'assessment' ? 'Assessment' : 'Lessons'}
                       </Badge>
                     </td>
-                    {/* Status */}
+                    {/* Status (inline editable) */}
                     <td className="px-3 py-2.5 whitespace-nowrap">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${bc.bg} ${bc.text}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${bc.dot}`} />
-                        {badge.label}
-                      </span>
+                      {editCell?.field === 'status' && editCell?.poId === po.id ? (
+                        <div className="flex items-center gap-1">
+                          <select
+                            className="text-xs border rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                            value={editCellValue}
+                            onChange={(e) => setEditCellValue(e.target.value)}
+                            autoFocus
+                            onBlur={() => handleCellSave(po.id, 'status', 'Status')}
+                          >
+                            <option value="active">Active</option>
+                            <option value="expired">Expired</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="pending">Pending</option>
+                          </select>
+                          {savingCell === `status:${po.id}` ? (
+                            <Loader2 className="h-3 w-3 animate-spin text-gray-400" />
+                          ) : savedCell === `status:${po.id}` ? (
+                            <Check className="h-3 w-3 text-green-500" />
+                          ) : null}
+                        </div>
+                      ) : (
+                        <button
+                          className="group/ed relative"
+                          onClick={() => {
+                            setEditCell({ field: 'status', poId: po.id });
+                            setEditCellValue(po.status);
+                          }}
+                        >
+                          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${bc.bg} ${bc.text}`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${bc.dot}`} />
+                            {badge.label}
+                          </span>
+                          <Pencil className="h-3 w-3 ml-1 inline-block opacity-0 group-hover/ed:opacity-100 transition-opacity text-gray-400" />
+                        </button>
+                      )}
                     </td>
-                    {/* Auth # */}
+                    {/* Auth # (inline editable) */}
                     <td className="px-3 py-2.5 whitespace-nowrap font-mono text-xs text-gray-600">
-                      {po.authorization_number || <span className="text-gray-300">—</span>}
+                      {editCell?.field === 'authorization_number' && editCell?.poId === po.id ? (
+                        <div className="flex items-center gap-1">
+                          <input
+                            className="w-24 text-xs border rounded px-1.5 py-1 font-mono focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                            value={editCellValue}
+                            onChange={(e) => setEditCellValue(e.target.value)}
+                            onBlur={() => handleCellSave(po.id, 'authorization_number', 'Auth number')}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Escape') setEditCell(null);
+                              if (e.key === 'Enter') handleCellSave(po.id, 'authorization_number', 'Auth number');
+                            }}
+                            autoFocus
+                          />
+                          {savingCell === `authorization_number:${po.id}` ? (
+                            <Loader2 className="h-3 w-3 animate-spin text-gray-400 shrink-0" />
+                          ) : savedCell === `authorization_number:${po.id}` ? (
+                            <Check className="h-3 w-3 text-green-500 shrink-0" />
+                          ) : null}
+                        </div>
+                      ) : (
+                        <button
+                          className="group/ed relative flex items-center gap-1"
+                          onClick={() => {
+                            setEditCell({ field: 'authorization_number', poId: po.id });
+                            setEditCellValue(po.authorization_number || '');
+                          }}
+                        >
+                          <span>{po.authorization_number || <span className="text-gray-300">—</span>}</span>
+                          <Pencil className="h-3 w-3 opacity-0 group-hover/ed:opacity-100 transition-opacity text-gray-400 shrink-0" />
+                        </button>
+                      )}
                     </td>
-                    {/* Sessions */}
+                    {/* Sessions (inline editable) */}
                     <td className="px-3 py-2.5 whitespace-nowrap min-w-[120px]">
                       <div className="flex items-center gap-2">
-                        <span className={`text-sm font-medium tabular-nums ${pct >= 100 ? 'text-red-600' : ''}`}>
+                        <span className={`text-sm font-medium tabular-nums ${pct > 100 ? 'text-amber-600' : pct >= 100 ? 'text-red-600' : ''}`}>
                           {po.sessions_used}
-                          <span className="text-gray-400"> / {po.sessions_authorized}</span>
+                          <span className="text-gray-400"> / </span>
+                          {editCell?.field === 'sessions_authorized' && editCell?.poId === po.id ? (
+                            <span className="inline-flex items-center gap-1">
+                              <input
+                                type="number"
+                                min="1"
+                                className="w-14 text-xs border rounded px-1.5 py-0.5 text-right focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                                value={editCellValue}
+                                onChange={(e) => setEditCellValue(e.target.value)}
+                                onBlur={() => handleCellSave(po.id, 'sessions_authorized', 'Sessions authorized')}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Escape') setEditCell(null);
+                                  if (e.key === 'Enter') handleCellSave(po.id, 'sessions_authorized', 'Sessions authorized');
+                                }}
+                                autoFocus
+                              />
+                              {savingCell === `sessions_authorized:${po.id}` ? (
+                                <Loader2 className="h-3 w-3 animate-spin text-gray-400 shrink-0" />
+                              ) : savedCell === `sessions_authorized:${po.id}` ? (
+                                <Check className="h-3 w-3 text-green-500 shrink-0" />
+                              ) : null}
+                            </span>
+                          ) : (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  className="group/ed inline relative"
+                                  onClick={() => {
+                                    setEditCell({ field: 'sessions_authorized', poId: po.id });
+                                    setEditCellValue(String(po.sessions_authorized));
+                                  }}
+                                >
+                                  <span className={`${pct > 100 ? 'text-amber-600 font-bold' : ''}`}>
+                                    {po.sessions_authorized}
+                                  </span>
+                                  <Pencil className="h-3 w-3 ml-0.5 inline-block opacity-0 group-hover/ed:opacity-100 transition-opacity text-gray-400" />
+                                </button>
+                              </TooltipTrigger>
+                              {pct > 100 && (
+                                <TooltipContent side="top">
+                                  Client attended more sessions than authorized — update PO or create new auth
+                                </TooltipContent>
+                              )}
+                            </Tooltip>
+                          )}
                         </span>
                       </div>
                       <div className="mt-1 w-24">
                         <div className="relative h-1.5 w-full rounded-full bg-gray-200">
                           <div
-                            className={`absolute inset-y-0 left-0 rounded-full transition-all ${progressColor}`}
-                            style={{ width: `${pct}%` }}
+                            className={`absolute inset-y-0 left-0 rounded-full transition-all ${pct > 100 ? 'bg-amber-500' : progressColor}`}
+                            style={{ width: `${Math.min(pct, 100)}%` }}
                           />
                         </div>
                       </div>
                     </td>
-                    {/* Dates */}
+                    {/* Dates (inline editable) */}
                     <td className="px-3 py-2.5 whitespace-nowrap text-xs text-gray-600">
-                      {po.start_date ? format(new Date(po.start_date), 'M/d/yy') : '—'}
-                      <span className="text-gray-300 mx-1">→</span>
-                      {po.end_date ? format(new Date(po.end_date), 'M/d/yy') : '—'}
+                      <div className="flex items-center gap-0.5">
+                        {/* Start date */}
+                        {editCell?.field === 'start_date' && editCell?.poId === po.id ? (
+                          <span className="inline-flex items-center gap-1">
+                            <input
+                              type="date"
+                              className="w-28 text-xs border rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                              value={editCellValue}
+                              onChange={(e) => setEditCellValue(e.target.value)}
+                              onBlur={() => handleCellSave(po.id, 'start_date', 'Start date')}
+                              onKeyDown={(e) => { if (e.key === 'Escape') setEditCell(null); }}
+                              autoFocus
+                            />
+                            {savingCell === `start_date:${po.id}` ? (
+                              <Loader2 className="h-3 w-3 animate-spin text-gray-400 shrink-0" />
+                            ) : savedCell === `start_date:${po.id}` ? (
+                              <Check className="h-3 w-3 text-green-500 shrink-0" />
+                            ) : null}
+                          </span>
+                        ) : (
+                          <button
+                            className="group/ed relative hover:bg-gray-100 rounded px-0.5 -ml-0.5 transition"
+                            onClick={() => {
+                              setEditCell({ field: 'start_date', poId: po.id });
+                              setEditCellValue(po.start_date ? po.start_date.slice(0, 10) : '');
+                            }}
+                          >
+                            {po.start_date ? format(new Date(po.start_date), 'M/d/yy') : '—'}
+                            <Pencil className="h-2.5 w-2.5 ml-0.5 inline-block opacity-0 group-hover/ed:opacity-100 transition-opacity text-gray-400" />
+                          </button>
+                        )}
+                        <span className="text-gray-300 mx-0.5">→</span>
+                        {/* End date */}
+                        {editCell?.field === 'end_date' && editCell?.poId === po.id ? (
+                          <span className="inline-flex items-center gap-1">
+                            <input
+                              type="date"
+                              className="w-28 text-xs border rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                              value={editCellValue}
+                              onChange={(e) => setEditCellValue(e.target.value)}
+                              onBlur={() => handleCellSave(po.id, 'end_date', 'End date')}
+                              onKeyDown={(e) => { if (e.key === 'Escape') setEditCell(null); }}
+                              autoFocus
+                            />
+                            {savingCell === `end_date:${po.id}` ? (
+                              <Loader2 className="h-3 w-3 animate-spin text-gray-400 shrink-0" />
+                            ) : savedCell === `end_date:${po.id}` ? (
+                              <Check className="h-3 w-3 text-green-500 shrink-0" />
+                            ) : null}
+                          </span>
+                        ) : (
+                          <button
+                            className="group/ed relative hover:bg-gray-100 rounded px-0.5 -ml-0.5 transition"
+                            onClick={() => {
+                              setEditCell({ field: 'end_date', poId: po.id });
+                              setEditCellValue(po.end_date ? po.end_date.slice(0, 10) : '');
+                            }}
+                          >
+                            {po.end_date ? format(new Date(po.end_date), 'M/d/yy') : '—'}
+                            <Pencil className="h-2.5 w-2.5 ml-0.5 inline-block opacity-0 group-hover/ed:opacity-100 transition-opacity text-gray-400" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                     {/* Notes (inline editable) */}
                     <td className="px-3 py-2.5 max-w-[180px]">
@@ -1038,69 +1296,112 @@ function POSPageContent() {
                         </div>
                       ) : (
                         <button
-                          className="w-full text-left text-xs text-gray-600 truncate hover:bg-gray-100 rounded px-1 py-0.5 -ml-1 transition"
+                          className="group/ed w-full text-left text-xs text-gray-600 truncate hover:bg-gray-100 rounded px-1 py-0.5 -ml-1 transition flex items-center gap-1"
                           onClick={() => {
                             setEditingNotesId(po.id);
                             setEditingNotesValue(po.notes || '');
                           }}
                           title={po.notes || 'Click to add notes'}
                         >
-                          {(po.notes || '').length > 40
-                            ? `${(po.notes || '').slice(0, 40)}…`
-                            : (po.notes || <span className="text-gray-300 italic">Add notes</span>)}
+                          <span className="truncate">
+                            {(po.notes || '').length > 40
+                              ? `${(po.notes || '').slice(0, 40)}…`
+                              : (po.notes || <span className="text-gray-300 italic">Add notes</span>)}
+                          </span>
+                          <Pencil className="h-3 w-3 shrink-0 opacity-0 group-hover/ed:opacity-100 transition-opacity text-gray-400" />
                         </button>
                       )}
                     </td>
                     {/* Actions */}
                     <td className="px-3 py-2.5 whitespace-nowrap">
-                      <div className="flex items-center justify-center gap-1">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              onClick={() => handleReminder(po)}
-                              disabled={remindingPoId === po.id}
-                              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-amber-600 disabled:opacity-40 transition"
-                            >
-                              {remindingPoId === po.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Bell className="h-4 w-4" />
-                              )}
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">Send reminder to coordinator</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              onClick={() => handleWarning(po)}
-                              disabled={warningPoId === po.id}
-                              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-red-600 disabled:opacity-40 transition"
-                            >
-                              {warningPoId === po.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <AlertTriangle className="h-4 w-4" />
-                              )}
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">Send warning to coordinator &amp; parent</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              onClick={() => openApprovalDialog(po)}
-                              className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-blue-600 transition"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">View / edit details</TooltipContent>
-                        </Tooltip>
-                      </div>
+                      {confirmCancelPoId === po.id ? (
+                        <div className="flex items-center justify-center gap-1.5 text-xs">
+                          <span className="text-gray-600 whitespace-nowrap">Cancel this PO?</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                            onClick={() => setConfirmCancelPoId(null)}
+                            disabled={cancellingPo}
+                          >
+                            No
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                            onClick={() => handlePOCancel(po)}
+                            disabled={cancellingPo}
+                          >
+                            {cancellingPo ? (
+                              <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                            ) : null}
+                            Confirm
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-0.5">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={() => handleReminder(po)}
+                                disabled={remindingPoId === po.id}
+                                className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-amber-600 disabled:opacity-40 transition"
+                              >
+                                {remindingPoId === po.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Bell className="h-4 w-4" />
+                                )}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Send reminder to coordinator</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={() => handleWarning(po)}
+                                disabled={warningPoId === po.id}
+                                className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-red-600 disabled:opacity-40 transition"
+                              >
+                                {warningPoId === po.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <AlertTriangle className="h-4 w-4" />
+                                )}
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Send warning to coordinator &amp; parent</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={() => openApprovalDialog(po)}
+                                className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-blue-600 transition"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">View / edit details</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmCancelPoId(po.id)}
+                                disabled={cancellingPo}
+                                className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-red-600 disabled:opacity-40 transition"
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Cancel this PO</TooltipContent>
+                          </Tooltip>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
