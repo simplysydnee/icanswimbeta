@@ -320,14 +320,14 @@ export default function ParentSessionsPage() {
 
   return (
     <RoleGuard allowedRoles={['parent']}>
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="w-full max-w-4xl mx-auto px-4 py-6 md:p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">My Sessions</h1>
           <p className="text-gray-600">View and manage your swim lesson bookings</p>
         </div>
 
         <Tabs defaultValue="upcoming" className="w-full">
-          <TabsList className="grid w-full grid-cols-1 md:grid-cols-3">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="upcoming">
               Upcoming ({upcomingBookings.length})
             </TabsTrigger>

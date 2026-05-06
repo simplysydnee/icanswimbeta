@@ -257,6 +257,53 @@ export default function ParentDashboard() {
     }
   }
 
+  // Helper to determine per-swimmer empty state action
+  const getSwimmerEmptyAction = (swimmer: Swimmer) => {
+    if (swimmer.assessment_status === 'not_scheduled' || swimmer.assessment_status === 'not_started') {
+      return {
+        title: "Hasn't had their assessment yet",
+        buttonText: `Book an assessment for ${swimmer.first_name}`,
+        buttonHref: `/parent/book?swimmerId=${swimmer.id}&type=assessment`,
+        description: '',
+        showButton: true,
+      }
+    }
+    if (swimmer.has_active_po) {
+      return {
+        title: 'No upcoming lessons',
+        buttonText: `Book a lesson for ${swimmer.first_name}`,
+        buttonHref: `/parent/book?swimmerId=${swimmer.id}`,
+        description: '',
+        showButton: true,
+      }
+    }
+    if (swimmer.funding_source && !swimmer.funding_source.requires_authorization) {
+      return {
+        title: 'No upcoming lessons',
+        buttonText: `Book a lesson for ${swimmer.first_name}`,
+        buttonHref: `/parent/book?swimmerId=${swimmer.id}`,
+        description: '',
+        showButton: true,
+      }
+    }
+    if (swimmer.funding_source?.requires_authorization) {
+      return {
+        title: 'Awaiting authorization',
+        buttonText: '',
+        buttonHref: '',
+        description: "We'll notify you when lessons are ready to book",
+        showButton: false,
+      }
+    }
+    return {
+      title: 'No upcoming lessons',
+      buttonText: `Book a lesson for ${swimmer.first_name}`,
+      buttonHref: `/parent/book?swimmerId=${swimmer.id}`,
+      description: '',
+      showButton: true,
+    }
+  }
+
   // Group bookings by swimmer for empty states
   const bookingsBySwimmer = bookings.reduce((acc, booking) => {
     const swimmerId = booking.swimmer.id
@@ -306,7 +353,7 @@ export default function ParentDashboard() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6 max-w-md">
+      <div className="w-full max-w-2xl mx-auto px-4 py-6">
         <div className="animate-pulse">
           {/* Header skeleton */}
           <div className="h-32 bg-gray-200 rounded-lg mb-6"></div>
@@ -329,18 +376,18 @@ export default function ParentDashboard() {
     )
   }
 
-  const firstName = profile?.full_name?.split(' ')[0] || 'Parent'
+  const firstName = profile?.full_name?.split(' ')[0] || ''
   const today = format(new Date(), 'EEEE, MMMM d')
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* STEP 1: Header - Dark navy background */}
-      <div className="bg-[#1a3a4f] text-white p-6">
-        <div className="max-w-md mx-auto">
+      <div className="bg-[#1a3a4f] text-white px-4 py-6 md:p-6">
+        <div className="w-full max-w-2xl mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <p className="text-sm text-gray-300">{today}</p>
-              <h1 className="text-2xl font-bold mt-1">Welcome back, {firstName}!</h1>
+              <h1 className="text-2xl font-bold mt-1">Welcome back{firstName ? `, ${firstName}` : ''}!</h1>
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" className="text-white hover:bg-white/10" asChild>
@@ -361,7 +408,7 @@ export default function ParentDashboard() {
       </div>
 
       {/* Main content */}
-      <div className="max-w-md mx-auto p-6 space-y-8">
+      <div className="w-full max-w-2xl mx-auto px-4 py-6 md:p-8 space-y-8">
         {/* Pending alerts */}
         <PendingEnrollmentAlert />
         <PendingParentReferrals />
@@ -383,207 +430,223 @@ export default function ParentDashboard() {
           </div>
 
           {bookings.length === 0 ? (
-            <div className="text-center py-8">
-              <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No upcoming lessons</h3>
-              <p className="text-gray-500 mb-4">Book your first lesson to get started</p>
-              <Button className="bg-[#23a1c0] hover:bg-[#1d8ba6] text-white" asChild>
-                <Link href="/parent/book">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Book a lesson
-                </Link>
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {bookings.map((booking) => {
-                const canCancel = canCancelBooking(booking.session.start_time)
-                const isCanceling = cancelingBookingId === booking.id
-                const showConfirm = showCancelConfirm === booking.id
-                const showLateMessage = showLateCancelMessage === booking.id
-
-                return (
-                  <Card key={booking.id} className="border border-gray-200">
-                    <CardContent className="p-4">
-                      {/* Lesson card header */}
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10 bg-[#2a5e84]">
-                            <AvatarFallback className="bg-[#2a5e84] text-white">
-                              {getSwimmerInitials(booking.swimmer.first_name, booking.swimmer.last_name)}
+            swimmers.length === 0 ? (
+              /* No swimmers at all — minimal empty state */
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">No upcoming lessons</h3>
+                <p className="text-gray-500">Add a swimmer first to book lessons</p>
+              </div>
+            ) : (
+              /* Per-swimmer action cards — no generic "No upcoming lessons" */
+              <div className="space-y-4">
+                {swimmers.map((swimmer) => {
+                  const buttonConfig = getSwimmerEmptyAction(swimmer)
+                  return (
+                    <Card key={swimmer.id} className="border border-dashed border-gray-300">
+                      <CardContent className="p-5">
+                        <div className="flex items-start gap-3">
+                          <Avatar className="h-10 w-10 bg-[#2a5e84] shrink-0">
+                            <AvatarFallback className="bg-[#2a5e84] text-white text-sm">
+                              {getSwimmerInitials(swimmer.first_name, swimmer.last_name)}
                             </AvatarFallback>
                           </Avatar>
-                          <div>
-                            <div className="font-medium">
-                              {booking.swimmer.first_name} {booking.swimmer.last_name}
-                            </div>
-                            <div className="text-sm text-gray-500 flex items-center gap-2">
-                              <User className="h-3 w-3" />
-                              {booking.session.instructor?.full_name || 'Instructor TBD'}
-                              <span className="mx-1">•</span>
-                              <MapPin className="h-3 w-3" />
-                              {booking.session.location}
-                            </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium">
+                              {swimmer.first_name} {swimmer.last_name}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-0.5">{buttonConfig.title}</p>
+                            {buttonConfig.description && (
+                              <p className="text-sm text-gray-500 mt-0.5">{buttonConfig.description}</p>
+                            )}
+                            {buttonConfig.showButton && (
+                              <Button
+                                size="sm"
+                                className="mt-3 bg-[#23a1c0] hover:bg-[#1d8ba6] text-white"
+                                asChild
+                              >
+                                <Link href={buttonConfig.buttonHref}>
+                                  <Calendar className="h-4 w-4 mr-2" />
+                                  {buttonConfig.buttonText}
+                                </Link>
+                              </Button>
+                            )}
                           </div>
                         </div>
-                        {getSessionTypeBadge(booking.session.session_type)}
-                      </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            )
+          ) : (
+            <>
+              <div className="space-y-4">
+                {bookings.map((booking) => {
+                  const canCancel = canCancelBooking(booking.session.start_time)
+                  const isCanceling = cancelingBookingId === booking.id
+                  const showConfirm = showCancelConfirm === booking.id
+                  const showLateMessage = showLateCancelMessage === booking.id
 
-                      {/* Info pills */}
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <Badge variant="outline" className="bg-gray-50">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {formatDate(booking.session.start_time)}
-                        </Badge>
-                        <Badge variant="outline" className="bg-gray-50">
-                          {formatTime(booking.session.start_time)}
-                        </Badge>
-                      </div>
-
-                      {/* Cancel button or confirmation */}
-                      {showLateMessage ? (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                          <div className="flex items-start gap-3">
-                            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
-                            <div className="flex-1">
-                              <h4 className="font-medium text-red-800 mb-1">Cannot cancel online</h4>
-                              <p className="text-sm text-red-700 mb-3">
-                                This lesson is within 24 hours and cannot be cancelled online.
-                                Cancellations within 24 hours may result in being removed from the program.
-                              </p>
-                              <div className="space-y-2">
-                                <a
-                                  href="sms:2096437969"
-                                  className="flex items-center justify-center w-full px-4 py-2 text-sm border border-red-300 text-red-700 hover:bg-red-100 rounded-md transition-colors"
-                                >
-                                  <MessageSquare className="h-4 w-4 mr-2" />
-                                  Text 209-643-7969
-                                </a>
-                                <a
-                                  href="tel:2097787877"
-                                  className="flex items-center justify-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 rounded-md transition-colors"
-                                >
-                                  <Phone className="h-4 w-4 mr-2" />
-                                  Call (209) 778-7877
-                                </a>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="w-full text-gray-600 hover:bg-gray-100"
-                                  onClick={() => setShowLateCancelMessage(null)}
-                                >
-                                  Dismiss
-                                </Button>
+                  return (
+                    <Card key={booking.id} className="border border-gray-200">
+                      <CardContent className="p-4">
+                        {/* Lesson card header */}
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <Avatar className="h-10 w-10 bg-[#2a5e84] shrink-0">
+                              <AvatarFallback className="bg-[#2a5e84] text-white">
+                                {getSwimmerInitials(booking.swimmer.first_name, booking.swimmer.last_name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <div className="font-medium truncate">
+                                {booking.swimmer.first_name} {booking.swimmer.last_name}
+                              </div>
+                              <div className="text-sm text-gray-500 flex items-center gap-2">
+                                <User className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{booking.session.instructor?.full_name || 'Instructor TBD'}</span>
+                                <span className="mx-1 shrink-0">•</span>
+                                <MapPin className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{booking.session.location}</span>
                               </div>
                             </div>
                           </div>
+                          {getSessionTypeBadge(booking.session.session_type)}
                         </div>
-                      ) : showConfirm ? (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                          <h4 className="font-medium text-yellow-800 mb-2">Cancel this lesson?</h4>
-                          <p className="text-sm text-yellow-700 mb-3">
-                            Are you sure you want to cancel this lesson?
-                          </p>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="flex-1 border-gray-300"
-                              onClick={() => setShowCancelConfirm(null)}
-                              disabled={isCanceling}
-                            >
-                              Keep lesson
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="flex-1"
-                              onClick={() => handleCancelBooking(booking.id)}
-                              disabled={isCanceling}
-                            >
-                              {isCanceling ? 'Cancelling...' : 'Yes, cancel'}
-                            </Button>
+
+                        {/* Info pills */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <Badge variant="outline" className="bg-gray-50">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {formatDate(booking.session.start_time)}
+                          </Badge>
+                          <Badge variant="outline" className="bg-gray-50">
+                            {formatTime(booking.session.start_time)}
+                          </Badge>
+                        </div>
+
+                        {/* Cancel button or confirmation */}
+                        {showLateMessage ? (
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div className="flex items-start gap-3">
+                              <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-red-800 mb-1">Cannot cancel online</h4>
+                                <p className="text-sm text-red-700 mb-3">
+                                  This lesson is within 24 hours and cannot be cancelled online.
+                                  Cancellations within 24 hours may result in being removed from the program.
+                                </p>
+                                <div className="space-y-2">
+                                  <a
+                                    href="sms:2096437969"
+                                    className="flex items-center justify-center w-full px-4 py-2 text-sm border border-red-300 text-red-700 hover:bg-red-100 rounded-md transition-colors"
+                                  >
+                                    <MessageSquare className="h-4 w-4 mr-2" />
+                                    Text 209-643-7969
+                                  </a>
+                                  <a
+                                    href="tel:2097787877"
+                                    className="flex items-center justify-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                                  >
+                                    <Phone className="h-4 w-4 mr-2" />
+                                    Call (209) 778-7877
+                                  </a>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="w-full text-gray-600 hover:bg-gray-100"
+                                    onClick={() => setShowLateCancelMessage(null)}
+                                  >
+                                    Dismiss
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
                           </div>
+                        ) : showConfirm ? (
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <h4 className="font-medium text-yellow-800 mb-2">Cancel this lesson?</h4>
+                            <p className="text-sm text-yellow-700 mb-3">
+                              Are you sure you want to cancel this lesson?
+                            </p>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1 border-gray-300"
+                                onClick={() => setShowCancelConfirm(null)}
+                                disabled={isCanceling}
+                              >
+                                Keep lesson
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                className="flex-1"
+                                onClick={() => handleCancelBooking(booking.id)}
+                                disabled={isCanceling}
+                              >
+                                {isCanceling ? 'Cancelling...' : 'Yes, cancel'}
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                            onClick={() => setShowCancelConfirm(booking.id)}
+                            disabled={isCanceling}
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Cancel lesson
+                          </Button>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+
+              {/* Per-swimmer empty states for swimmers without bookings */}
+              {swimmers.filter(s => !bookingsBySwimmer[s.id]?.length).map((swimmer) => {
+                const buttonConfig = getSwimmerEmptyAction(swimmer)
+                return (
+                  <Card key={swimmer.id} className="border border-dashed border-gray-300 mt-4">
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-3">
+                        <Avatar className="h-10 w-10 bg-[#2a5e84] shrink-0">
+                          <AvatarFallback className="bg-[#2a5e84] text-white text-sm">
+                            {getSwimmerInitials(swimmer.first_name, swimmer.last_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium">{swimmer.first_name} {swimmer.last_name}</h3>
+                          <p className="text-sm text-gray-500 mt-0.5">{buttonConfig.title}</p>
+                          {buttonConfig.description && (
+                            <p className="text-sm text-gray-500 mt-0.5">{buttonConfig.description}</p>
+                          )}
+                          {buttonConfig.showButton && (
+                            <Button
+                              size="sm"
+                              className="mt-3 bg-[#23a1c0] hover:bg-[#1d8ba6] text-white"
+                              asChild
+                            >
+                              <Link href={buttonConfig.buttonHref}>
+                                <Calendar className="h-4 w-4 mr-2" />
+                                {buttonConfig.buttonText}
+                              </Link>
+                            </Button>
+                          )}
                         </div>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
-                          onClick={() => setShowCancelConfirm(booking.id)}
-                          disabled={isCanceling}
-                        >
-                          <X className="h-4 w-4 mr-2" />
-                          Cancel lesson
-                        </Button>
-                      )}
+                      </div>
                     </CardContent>
                   </Card>
                 )
               })}
-            </div>
+            </>
           )}
-
-          {/* STEP 3: Empty states per swimmer */}
-          {swimmers.map((swimmer) => {
-            const swimmerBookings = bookingsBySwimmer[swimmer.id] || []
-            if (swimmerBookings.length === 0) {
-              // Determine empty state based on swimmer status
-              let title = ''
-              let description = ''
-              let buttonText = ''
-              let buttonHref = ''
-              let showButton = true
-
-              if (swimmer.assessment_status === 'not_scheduled' || swimmer.assessment_status === 'not_started') {
-                title = `${swimmer.first_name} hasn't had their assessment yet`
-                buttonText = `Book an assessment for ${swimmer.first_name}`
-                buttonHref = `/parent/book?swimmerId=${swimmer.id}&type=assessment`
-              } else if (swimmer.has_active_po) {
-                title = `${swimmer.first_name} has no upcoming lessons`
-                buttonText = `Book a lesson for ${swimmer.first_name}`
-                buttonHref = `/parent/book?swimmerId=${swimmer.id}`
-              } else if (swimmer.funding_source && !swimmer.funding_source.requires_authorization) {
-                title = `${swimmer.first_name} has no upcoming lessons`
-                buttonText = `Book a lesson for ${swimmer.first_name}`
-                buttonHref = `/parent/book?swimmerId=${swimmer.id}`
-              } else if (swimmer.funding_source?.requires_authorization) {
-                title = `${swimmer.first_name} is awaiting authorization`
-                description = "We'll notify you when lessons are ready to book"
-                showButton = false
-              } else {
-                title = `${swimmer.first_name} has no upcoming lessons`
-                buttonText = `Book a lesson for ${swimmer.first_name}`
-                buttonHref = `/parent/book?swimmerId=${swimmer.id}`
-              }
-
-              return (
-                <Card key={swimmer.id} className="border border-dashed border-gray-300 mt-4">
-                  <CardContent className="p-6 text-center">
-                    <Users className="h-8 w-8 text-gray-400 mx-auto mb-3" />
-                    <h3 className="font-medium mb-1">{title}</h3>
-                    {description && (
-                      <p className="text-sm text-gray-500 mb-4">{description}</p>
-                    )}
-                    {showButton && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-[#23a1c0] text-[#23a1c0] hover:bg-[#23a1c0]/10"
-                        asChild
-                      >
-                        <Link href={buttonHref}>
-                          <Calendar className="h-4 w-4 mr-2" />
-                          {buttonText}
-                        </Link>
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              )
-            }
-            return null
-          })}
         </div>
 
         {/* STEP 4: My swimmers section */}
@@ -622,7 +685,7 @@ export default function ParentDashboard() {
                 >
                   <Card className="border border-gray-200 hover:border-[#23a1c0] transition-colors cursor-pointer">
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <Avatar className="h-12 w-12 bg-[#2a5e84]">
                             <AvatarFallback className="bg-[#2a5e84] text-white">

@@ -3,8 +3,10 @@
 import { useEffect, useState, Suspense } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { RequireAuthRedirect } from '@/components/auth/RequireAuthRedirect';
 import { Calendar } from 'lucide-react';
+import Link from 'next/link';
 import { format } from 'date-fns';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { BookingCard } from '@/components/bookings/BookingCard';
@@ -59,9 +61,9 @@ function ParentScheduleContent() {
           <CardContent className="py-8 text-center text-muted-foreground">
             <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>No upcoming sessions scheduled.</p>
-            <a href="/parent/book" className="text-cyan-600 hover:underline mt-2 inline-block">
-              Book a session →
-            </a>
+            <Button asChild className="mt-4">
+              <Link href="/parent/book">Book a session</Link>
+            </Button>
           </CardContent>
         </Card>
       ) : isMobile ? (
