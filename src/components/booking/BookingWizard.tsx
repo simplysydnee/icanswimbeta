@@ -395,6 +395,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
             selectedRecurringSessions={selectedRecurringSessions.map(s => s.id)}
             swimmerId={selectedSwimmer?.id || null} // Pass swimmerId for flexible_swimmer check
             isAssessmentBooking={selectedSwimmer?.enrollmentStatus === 'waitlist'}
+            isRecurring={sessionType === 'single' ? false : sessionType === 'recurring' ? true : undefined}
             onSelectSession={(session) => {
               setSelectedSessionId(session.id);
               setSelectedSession(session);

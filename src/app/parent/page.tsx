@@ -194,6 +194,7 @@ export default function ParentDashboard() {
   const getEnrollmentStatusBadge = (status: string) => {
     const statusMap: Record<string, string> = {
       'waitlist': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      'pending_enrollment': 'bg-gray-100 text-gray-800 border-gray-200',
       'pending': 'bg-blue-100 text-blue-800 border-blue-200',
       'enrolled': 'bg-green-100 text-green-800 border-green-200',
       'dropped': 'bg-red-100 text-red-800 border-red-200',
@@ -204,6 +205,7 @@ export default function ParentDashboard() {
   const getEnrollmentStatusDisplay = (status: string) => {
     const statusMap: Record<string, string> = {
       'waitlist': 'Waitlist',
+      'pending_enrollment': 'Pending',
       'pending': 'Pending',
       'enrolled': 'Enrolled',
       'dropped': 'Dropped',
@@ -259,6 +261,36 @@ export default function ParentDashboard() {
 
   // Helper to determine per-swimmer empty state action
   const getSwimmerEmptyAction = (swimmer: Swimmer) => {
+    // Waitlist swimmers — no lesson-related language
+    if (swimmer.enrollment_status === 'waitlist') {
+      if (swimmer.assessment_status === 'not_scheduled' || swimmer.assessment_status === 'not_started') {
+        return {
+          title: 'Awaiting Initial Assessment',
+          buttonText: `Book ${swimmer.first_name}'s Assessment`,
+          buttonHref: `/parent/book?swimmerId=${swimmer.id}&type=assessment`,
+          description: '',
+          showButton: true,
+        }
+      }
+      if (swimmer.funding_source?.requires_authorization) {
+        return {
+          title: 'Awaiting Authorization',
+          buttonText: '',
+          buttonHref: '',
+          description: "We'll notify you when lessons are ready to book",
+          showButton: false,
+        }
+      }
+      return {
+        title: 'Awaiting Enrollment',
+        description: "We'll notify you when enrollment is complete",
+        buttonText: '',
+        buttonHref: '',
+        showButton: false,
+      }
+    }
+
+    // Enrolled / non-waitlist swimmers
     if (swimmer.assessment_status === 'not_scheduled' || swimmer.assessment_status === 'not_started') {
       return {
         title: "Hasn't had their assessment yet",
@@ -288,7 +320,7 @@ export default function ParentDashboard() {
     }
     if (swimmer.funding_source?.requires_authorization) {
       return {
-        title: 'Awaiting authorization',
+        title: 'Awaiting Authorization',
         buttonText: '',
         buttonHref: '',
         description: "We'll notify you when lessons are ready to book",
@@ -353,7 +385,7 @@ export default function ParentDashboard() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-2xl mx-auto px-4 py-6">
+      <div className="w-full px-4 py-6 max-w-2xl">
         <div className="animate-pulse">
           {/* Header skeleton */}
           <div className="h-32 bg-gray-200 rounded-lg mb-6"></div>
@@ -383,7 +415,7 @@ export default function ParentDashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* STEP 1: Header - Dark navy background */}
       <div className="bg-[#1a3a4f] text-white px-4 py-6 md:p-6">
-        <div className="w-full max-w-2xl mx-auto">
+        <div className="w-full max-w-2xl">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <p className="text-sm text-gray-300">{today}</p>
@@ -408,7 +440,7 @@ export default function ParentDashboard() {
       </div>
 
       {/* Main content */}
-      <div className="w-full max-w-2xl mx-auto px-4 py-6 md:p-8 space-y-8">
+      <div className="w-full px-4 py-6 md:px-6 max-w-2xl space-y-8">
         {/* Pending alerts */}
         <PendingEnrollmentAlert />
         <PendingParentReferrals />

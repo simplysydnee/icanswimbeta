@@ -109,7 +109,7 @@ export async function GET(req: Request) {
         swim_goals,
         strengths_interests,
         swim_levels:current_level_id(name, display_name, color),
-        funding_source:funding_source_id(id, name, short_name, type, price_cents, requires_authorization),
+        funding_source:funding_sources(id, name, price_cents, requires_authorization, type),
         photo_video_signature,
         cancellation_policy_signature,
         liability_waiver_signature,

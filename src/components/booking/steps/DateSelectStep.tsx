@@ -41,6 +41,8 @@ interface DateSelectStepProps {
   swimmerId: string | null; // Add swimmerId for flexible_swimmer check
   /** Drives `/api/sessions/available` sessionType filter: assessment vs lesson */
   isAssessmentBooking: boolean;
+  /** Controls is_recurring filter: true=recurring only, false=single only, undefined=both (assessment) */
+  isRecurring?: boolean;
   swimmerEnrollmentStatus?: EnrollmentStatus | null;
   onSelectSession: (session: AvailableSession) => void;
   onSetRecurring: (opts: {
@@ -64,6 +66,7 @@ export function DateSelectStep({
   selectedRecurringSessions,
   swimmerId,
   isAssessmentBooking = false,
+  isRecurring,
   onSelectSession,
   onSetRecurring,
 }: DateSelectStepProps) {
@@ -110,7 +113,7 @@ export function DateSelectStep({
     queryKey: [
       'available-dates',
       sessionsApiSessionType,
-      isAssessmentBooking,
+      isRecurring,
       instructorId,
       calendarMonth.toISOString(),
     ],
@@ -123,8 +126,8 @@ export function DateSelectStep({
         sessionType: sessionsApiSessionType,
         datesOnly: 'true',
       });
-      if (!isAssessmentBooking) {
-        params.append('isRecurring', 'false');
+      if (isRecurring !== undefined) {
+        params.append('isRecurring', String(isRecurring));
       }
       if (instructorId) {
         params.append('instructorId', instructorId);
@@ -149,7 +152,7 @@ export function DateSelectStep({
       currentWeekStart.toISOString(),
       swimmerId,
       sessionsApiSessionType,
-      'single',
+      isRecurring,
     ],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -157,8 +160,8 @@ export function DateSelectStep({
         endDate: weekEnd.toISOString(),
         sessionType: sessionsApiSessionType,
       });
-      if (!isAssessmentBooking) {
-        params.append('isRecurring', 'false');
+      if (isRecurring !== undefined) {
+        params.append('isRecurring', String(isRecurring));
       }
       if (instructorId) {
         params.append('instructorId', instructorId);
@@ -205,6 +208,7 @@ export function DateSelectStep({
       localEndDate?.toISOString(),
       swimmerId,
       sessionsApiSessionType,
+      isRecurring,
     ],
     queryFn: async () => {
       if (!localStartDate || !localEndDate) return [];
@@ -214,8 +218,8 @@ export function DateSelectStep({
         endDate: localEndDate.toISOString(),
         sessionType: sessionsApiSessionType,
       });
-      if (!isAssessmentBooking) {
-        params.append('isRecurring', 'true');
+      if (isRecurring !== undefined) {
+        params.append('isRecurring', String(isRecurring));
       }
       if (instructorId) {
         params.append('instructorId', instructorId);
