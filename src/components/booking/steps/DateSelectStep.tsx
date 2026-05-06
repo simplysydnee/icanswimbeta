@@ -80,6 +80,9 @@ export function DateSelectStep({
   const [localEndDate, setLocalEndDate] = useState<Date | null>(recurringEndDate);
   const [selectedMonth, setSelectedMonth] = useState(() => startOfMonth(new Date()));
 
+  // Single mode calendar month tracking
+  const [calendarMonth, setCalendarMonth] = useState(() => startOfMonth(new Date()));
+
   // Update local state when props change (do not clear when parent passes null)
   useEffect(() => {
     if (recurringStartDate != null) setLocalStartDate(recurringStartDate);
@@ -101,6 +104,40 @@ export function DateSelectStep({
 
   // Calculate week range for single mode
   const weekEnd = endOfWeek(currentWeekStart);
+
+  // Fetch available dates for the calendar month (disable dates with no sessions)
+  const { data: availableDates = [], isLoading: isLoadingDates } = useQuery({
+    queryKey: [
+      'available-dates',
+      sessionsApiSessionType,
+      isAssessmentBooking,
+      instructorId,
+      calendarMonth.toISOString(),
+    ],
+    queryFn: async () => {
+      const mStart = startOfMonth(calendarMonth);
+      const mEnd = endOfMonth(calendarMonth);
+      const params = new URLSearchParams({
+        startDate: mStart.toISOString(),
+        endDate: mEnd.toISOString(),
+        sessionType: sessionsApiSessionType,
+        datesOnly: 'true',
+      });
+      if (!isAssessmentBooking) {
+        params.append('isRecurring', 'false');
+      }
+      if (instructorId) {
+        params.append('instructorId', instructorId);
+      }
+      const response = await fetch(`/api/sessions/available?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch available dates');
+      const data = await response.json();
+      return data.dates || [];
+    },
+    enabled: sessionType === 'single',
+  });
+
+  const availableDatesSet = useMemo(() => new Set(availableDates), [availableDates]);
   // Note: weekDays is no longer used in the new Calendly-style design
   // const weekDays = eachDayOfInterval({ start: currentWeekStart, end: weekEnd });
 
@@ -348,9 +385,14 @@ export function DateSelectStep({
         {/* Date selection */}
         <div className="space-y-4">
           <h4 className="font-medium">1. Select Date</h4>
+          {isLoadingDates && (
+            <p className="text-xs text-muted-foreground">Checking availability...</p>
+          )}
           <div className="border rounded-lg p-4">
             <Calendar
               mode="single"
+              month={calendarMonth}
+              onMonthChange={setCalendarMonth}
               selected={selectedDate || undefined}
               onSelect={(date) => {
                 const newDate = date || null;
@@ -361,8 +403,9 @@ export function DateSelectStep({
                 }
               }}
               disabled={(date) => {
-                // Disable dates before today
-                return isBefore(date, startOfDay(new Date()));
+                if (isBefore(date, startOfDay(new Date()))) return true;
+                if (isLoadingDates) return false;
+                return !availableDatesSet.has(format(date, 'yyyy-MM-dd'));
               }}
               className="w-full"
               required={false}

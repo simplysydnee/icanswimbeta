@@ -27,6 +27,49 @@ export async function GET(request: NextRequest) {
     const excludeSessionId = searchParams.get('excludeSessionId')
     const isRecurring = searchParams.get('isRecurring')
 
+    // Early return: datesOnly mode — return distinct date strings
+    if (searchParams.get('datesOnly') === 'true') {
+      let dd = supabase
+        .from('sessions')
+        .select('start_time')
+        .or('status.eq.available,status.eq.open')
+        .neq('status', 'closed')
+        .eq('is_full', false)
+      if (startDate && endDate) {
+        dd = dd.gte('start_time', startDate).lte('start_time', endDate)
+      }
+      if (sessionType) dd = dd.eq('session_type', sessionType)
+      if (isRecurring === 'true') dd = dd.eq('is_recurring', true)
+      else if (isRecurring === 'false') dd = dd.eq('is_recurring', false)
+      if (instructorId) dd = dd.eq('instructor_id', instructorId)
+      const { data: rows, error: ddError } = await dd
+      if (ddError) {
+        return NextResponse.json({ error: 'Failed to fetch available dates' }, { status: 500 })
+      }
+      const dates = [...new Set((rows || []).map(r => r.start_time.slice(0, 10)))].sort()
+      return NextResponse.json({ dates })
+    }
+
+    // Early return: instructorsOnly mode — return distinct instructor IDs
+    if (searchParams.get('instructorsOnly') === 'true') {
+      let iq = supabase
+        .from('sessions')
+        .select('instructor_id')
+        .or('status.eq.available,status.eq.open')
+        .neq('status', 'closed')
+        .eq('is_full', false)
+        .gte('start_time', new Date().toISOString())
+      if (sessionType) iq = iq.eq('session_type', sessionType)
+      if (isRecurring === 'true') iq = iq.eq('is_recurring', true)
+      else if (isRecurring === 'false') iq = iq.eq('is_recurring', false)
+      const { data: rows, error: iqError } = await iq
+      if (iqError) {
+        return NextResponse.json({ error: 'Failed to fetch instructors' }, { status: 500 })
+      }
+      const instructorIds = [...new Set((rows || []).map(r => r.instructor_id))]
+      return NextResponse.json({ instructorIds })
+    }
+
     // Build query for available sessions (not full, status available/open)
     let query = supabase
       .from('sessions')

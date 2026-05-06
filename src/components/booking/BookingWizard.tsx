@@ -367,6 +367,8 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
             selectedInstructorId={selectedInstructorId}
             instructorPreference={instructorPreference}
             swimmerId={selectedSwimmer?.id || null}
+            sessionType={selectedSwimmer?.enrollmentStatus === 'waitlist' ? 'assessment' : 'lesson'}
+            isRecurring={sessionType === 'single' ? false : sessionType === 'recurring' ? true : undefined}
             onSelectInstructor={(id, preference, instructorName) => {
               setSelectedInstructorId(id);
               setInstructorPreference(preference);

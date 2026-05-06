@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Users, User, AlertCircle, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useQuery } from '@tanstack/react-query'
 import { useInstructors } from '@/hooks/useInstructors'
 import { useInstructorsBySwimmer } from '@/hooks/useInstructorsBySwimmer'
 
@@ -20,6 +21,8 @@ interface InstructorStepProps {
   selectedInstructorId: string | null
   instructorPreference: 'any' | 'specific'
   swimmerId?: string | null
+  sessionType: 'assessment' | 'lesson'
+  isRecurring?: boolean
   onSelectInstructor: (id: string | null, preference: 'any' | 'specific', instructorName?: string) => void
 }
 
@@ -27,10 +30,30 @@ export default function InstructorStep({
   selectedInstructorId,
   instructorPreference,
   swimmerId,
+  sessionType = 'lesson',
+  isRecurring,
   onSelectInstructor,
 }: InstructorStepProps) {
   const { data: instructorData, isLoading, error } = useInstructors()
   const { data: instructorsBySwimmer } = useInstructorsBySwimmer(swimmerId ?? null)
+
+  // Fetch which instructors have available sessions matching the booking context
+  const { data: availableInstructorIds = [], isLoading: isLoadingAvailability } = useQuery({
+    queryKey: ['available-instructors', sessionType, isRecurring],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        sessionType,
+        instructorsOnly: 'true',
+      })
+      if (isRecurring !== undefined) {
+        params.append('isRecurring', String(isRecurring))
+      }
+      const response = await fetch(`/api/sessions/available?${params}`)
+      if (!response.ok) throw new Error('Failed to fetch available instructors')
+      const data = await response.json()
+      return data.instructorIds || []
+    },
+  })
 
   const baseInstructors = instructorData || []
   const preferredIds =
@@ -174,7 +197,8 @@ export default function InstructorStep({
           const isSelected =
             instructorPreference === 'specific' &&
             selectedInstructorId === instructor.id
-          const isDisabled = restrictToPreferred && !instructor.isPreferred
+          const hasNoAvailability = !isLoadingAvailability && availableInstructorIds.length > 0 && !availableInstructorIds.includes(instructor.id)
+          const isDisabled = (restrictToPreferred && !instructor.isPreferred) || hasNoAvailability
 
           return (
             <button
@@ -198,7 +222,9 @@ export default function InstructorStep({
                   />
                   <div>
                     <p className="font-medium">{instructor.fullName}</p>
-                    <p className="text-sm text-muted-foreground">Instructor</p>
+                    <p className="text-sm text-muted-foreground">
+                      {hasNoAvailability ? 'No availability' : 'Instructor'}
+                    </p>
                   </div>
                 </div>
                 <div
