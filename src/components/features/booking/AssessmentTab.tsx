@@ -47,9 +47,10 @@ interface Swimmer {
 interface AssessmentTabProps {
   selectedSwimmerId?: string
   onBookingComplete?: () => void
+  onSessionSelected?: (sessionId: string) => void
 }
 
-export function AssessmentTab({ selectedSwimmerId, onBookingComplete }: AssessmentTabProps) {
+export function AssessmentTab({ selectedSwimmerId, onBookingComplete, onSessionSelected }: AssessmentTabProps) {
   const { user } = useAuth()
   const { toast } = useToast()
   const supabase = createClient()
@@ -334,7 +335,10 @@ export function AssessmentTab({ selectedSwimmerId, onBookingComplete }: Assessme
             {sessions.slice(0, 10).map((session) => (
               <div
                 key={session.id}
-                onClick={() => setSelectedSession(session.id)}
+                onClick={() => {
+                  setSelectedSession(session.id);
+                  onSessionSelected?.(session.id);
+                }}
                 className={`p-4 border rounded-lg cursor-pointer transition-all ${
                   selectedSession === session.id
                     ? 'border-[#2a5e84] bg-[#2a5e84]/5 ring-2 ring-[#2a5e84]'

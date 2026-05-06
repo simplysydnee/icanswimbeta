@@ -2,8 +2,8 @@
 
 import { Calendar, Repeat, Check, AlertCircle } from 'lucide-react';
 import { SessionType } from '@/types/booking';
-import { PRICING } from '@/lib/constants';
 import { formatPrice, cn, canBookRegularLessons, needsAssessment as needsAssessmentCheck, isPendingApproval } from '@/lib/utils';
+import { isSwimmerFunded } from '@/lib/booking-utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -47,7 +47,7 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
     );
   }
 
-  const isFunded = paymentType === 'funded' || paymentType === 'scholarship' || !!fundingSourceName;
+  const isFunded = isSwimmerFunded({ paymentType, fundingSourceId: null });
   // Check swimmer status using utility functions
   const swimmer = enrollmentStatus ? {
     enrollmentStatus: enrollmentStatus as 'waitlist' | 'pending_enrollment' | 'enrolled' | 'active' | 'inactive' | 'declined' | 'pending_assessment',
@@ -72,8 +72,8 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
 
   // Use assessment price for waitlist swimmers, otherwise use regular lesson price
   const sessionPrice = isWaitlist
-    ? PRICING.ASSESSMENT
-    : (isFunded ? PRICING.FUNDING_SOURCE_LESSON : PRICING.LESSON_PRIVATE_PAY);
+    ? 17500
+    : 9000;
 
   // Get funding source display name
   const getFundingSourceName = () => {
@@ -84,11 +84,9 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
     return 'Private Pay';
   };
 
-  const priceDisplay = isWaitlist
-    ? formatPrice(sessionPrice) // Show actual price for assessments
-    : (isFunded
-      ? `Covered by ${getFundingSourceName()}`
-      : formatPrice(sessionPrice));
+  const priceDisplay = isFunded
+    ? `Covered by ${getFundingSourceName()}`
+    : `Starting at ${formatPrice(sessionPrice)}`;
 
   // Determine which session types to show based on swimmer status
   const sessionTypes = [];

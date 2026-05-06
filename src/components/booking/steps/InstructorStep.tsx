@@ -20,7 +20,7 @@ interface InstructorStepProps {
   selectedInstructorId: string | null
   instructorPreference: 'any' | 'specific'
   swimmerId?: string | null
-  onSelectInstructor: (id: string | null, preference: 'any' | 'specific') => void
+  onSelectInstructor: (id: string | null, preference: 'any' | 'specific', instructorName?: string) => void
 }
 
 export default function InstructorStep({
@@ -181,7 +181,7 @@ export default function InstructorStep({
               key={instructor.id}
               type="button"
               disabled={isDisabled}
-              onClick={() => !isDisabled && onSelectInstructor(instructor.id, 'specific')}
+              onClick={() => !isDisabled && onSelectInstructor(instructor.id, 'specific', instructor.fullName)}
               className={cn(
                 'w-full text-left border rounded-lg p-4 transition-all hover:border-primary hover:bg-primary/5',
                 isSelected && 'border-primary bg-primary/5 ring-2 ring-primary/20',

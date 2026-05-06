@@ -109,10 +109,12 @@ export async function GET(req: Request) {
         swim_goals,
         strengths_interests,
         swim_levels:current_level_id(name, display_name, color),
-        funding_source:funding_source_id(id, name, short_name, type),
+        funding_source:funding_source_id(id, name, short_name, type, price_cents, requires_authorization),
         photo_video_signature,
         cancellation_policy_signature,
         liability_waiver_signature,
+        signed_waiver,
+        photo_release,
         bookings(
           id,
           status,
@@ -160,8 +162,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: `Failed to fetch swimmers: ${error.message || error.details || error.hint || 'Unknown error'}` }, { status: 500 });
     }
 
-    // Transform snake_case to camelCase and extract nested data
-    const transformedData = data.map((swimmer: any) => {
+    // Enrich raw data with computed fields while keeping snake_case
+    const enrichedData = data.map((swimmer: any) => {
       // Calculate lessons completed
       const completedBookings = swimmer.bookings?.filter((b: any) => b.status === 'completed') || [];
       const lessonsCompleted = completedBookings.length;
@@ -180,87 +182,28 @@ export async function GET(req: Request) {
       )[0];
 
       return {
-        id: swimmer.id,
-        parentId: swimmer.parent_id,
-        firstName: swimmer.first_name,
-        lastName: swimmer.last_name,
-        dateOfBirth: swimmer.date_of_birth,
-        gender: swimmer.gender,
-        height: swimmer.height,
-        weight: swimmer.weight,
-        enrollmentStatus: swimmer.enrollment_status,
-        assessmentStatus: swimmer.assessment_status,
-        approvalStatus: swimmer.approval_status,
-        currentLevelId: swimmer.current_level_id,
-        currentLevel: swimmer.swim_levels?.[0] ? {
+        ...swimmer,
+        current_level: swimmer.swim_levels?.[0] ? {
           name: swimmer.swim_levels[0].name,
-          displayName: swimmer.swim_levels[0].display_name,
+          display_name: swimmer.swim_levels[0].display_name,
           color: swimmer.swim_levels[0].color
         } : null,
-        paymentType: swimmer.payment_type,
-        fundingSourceId: swimmer.funding_source_id,
-        fundingSourceName: swimmer.funding_source?.[0]?.name || swimmer.funding_coordinator_name || null,
-        fundingSourceShortName: swimmer.funding_source?.[0]?.short_name || null,
-        fundingSourceType: swimmer.funding_source?.[0]?.type || null,
-        flexibleSwimmer: swimmer.flexible_swimmer || false,
-        authorizedSessionsUsed: swimmer.authorized_sessions_used,
-        authorizedSessionsTotal: swimmer.authorized_sessions_total,
-        lessonsCompleted,
-        nextSession: nextBooking?.session?.[0] ? {
-          startTime: nextBooking.session[0].start_time,
-          instructorName: nextBooking.session[0].instructor?.[0]?.full_name
+        funding_source: swimmer.funding_source?.[0] || null,
+        next_session: nextBooking?.session?.[0] ? {
+          start_time: nextBooking.session[0].start_time,
+          instructor_name: nextBooking.session[0].instructor?.[0]?.full_name
         } : null,
-        // Medical & Safety
-        hasAllergies: swimmer.has_allergies,
-        allergiesDescription: swimmer.allergies_description,
-        hasMedicalConditions: swimmer.has_medical_conditions,
-        medicalConditionsDescription: swimmer.medical_conditions_description,
-        diagnosis: swimmer.diagnosis,
-        historyOfSeizures: swimmer.history_of_seizures,
-        seizuresDescription: swimmer.seizures_description,
-        // Care needs
-        toiletTrained: swimmer.toilet_trained,
-        nonAmbulatory: swimmer.non_ambulatory,
-        communicationType: swimmer.communication_type,
-        otherTherapies: swimmer.other_therapies,
-        therapiesDescription: swimmer.therapies_description,
-        // Behavioral
-        selfInjuriousBehavior: swimmer.self_injurious_behavior,
-        selfInjuriousBehaviorDescription: swimmer.self_injurious_behavior_description,
-        aggressiveBehavior: swimmer.aggressive_behavior,
-        aggressiveBehaviorDescription: swimmer.aggressive_behavior_description,
-        elopementHistory: swimmer.elopement_history,
-        elopementHistoryDescription: swimmer.elopement_history_description,
-        hasBehaviorPlan: swimmer.has_behavior_plan,
-        restraintHistory: swimmer.restraint_history,
-        restraintHistoryDescription: swimmer.restraint_history_description,
-        // Swimming background
-        previousSwimLessons: swimmer.previous_swim_lessons,
-        comfortableInWater: swimmer.comfortable_in_water,
-        swimGoals: swimmer.swim_goals,
-        strengthsInterests: swimmer.strengths_interests,
-        // Coordinator info
-        coordinatorName: swimmer.funding_coordinator_name,
-        coordinatorEmail: swimmer.funding_coordinator_email,
-        coordinatorPhone: swimmer.funding_coordinator_phone,
-        // Emergency contact
-        emergencyContactName: swimmer.emergency_contact_name,
-        emergencyContactPhone: swimmer.emergency_contact_phone,
-        emergencyContactRelationship: swimmer.emergency_contact_relationship,
-        photo_video_signature: swimmer.photo_video_signature,
-        cancellation_policy_signature: swimmer.cancellation_policy_signature,
-        liability_waiver_signature: swimmer.liability_waiver_signature,
+        lessons_completed: lessonsCompleted,
       };
     });
 
-//    return NextResponse.json(transformedData);
     return NextResponse.json({
-      transformedData,
+      swimmers: enrichedData,
       metadata: {
         page,
         limit,
         total: count,
-        totalPages: Math.ceil(count ?? 0 / limit),
+        totalPages: Math.ceil((count ?? 0) / (limit || 1)),
       },
     });
     

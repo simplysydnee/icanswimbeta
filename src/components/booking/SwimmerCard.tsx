@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from './StatusBadge';
 import type { Swimmer } from '@/types/booking';
 import { cn, getSwimmerStatusBadge } from '@/lib/utils';
+import { isSwimmerFunded } from '@/lib/booking-utils';
 
 interface SwimmerCardProps {
   swimmer: Swimmer;
@@ -90,7 +91,7 @@ export function SwimmerCard({ swimmer, isSelected, disabled, onClick }: SwimmerC
           )}
 
           {/* Funding source session info */}
-          {swimmer.fundingSourceId && swimmer.sessionsAuthorized && (
+          {isSwimmerFunded(swimmer) && swimmer.sessionsAuthorized && (
             <span className="text-xs text-muted-foreground">
               {swimmer.sessionsUsed || 0}/{swimmer.sessionsAuthorized} sessions
             </span>

@@ -126,11 +126,49 @@ export default function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .eq('approval_status', 'pending');
 
-      // Fetch pending purchase orders
-      const { data: pos } = await supabase
-        .from('purchase_orders')
-        .select('id')
-        .in('status', ['pending', 'approved_pending_auth']);
+      // Fetch POs Needing Action — active POs where sessions are exhausted
+      // and the swimmer has future bookings
+      let pendingPOs = 0;
+      try {
+        // Step 1: Get active POs with authorized sessions
+        const { data: activePos } = await supabase
+          .from('purchase_orders')
+          .select('id, swimmer_id, sessions_used, sessions_authorized')
+          .eq('status', 'active')
+          .gt('sessions_authorized', 0);
+
+        if (activePos && activePos.length > 0) {
+          // Step 2: Filter in JS (Supabase doesn't support column-to-column comparison)
+          const exhaustedPos = activePos.filter(
+            (po) => po.sessions_used >= po.sessions_authorized
+          );
+
+          if (exhaustedPos.length > 0) {
+            // Step 3: Get unique swimmer IDs
+            const swimmerIds = [...new Set(exhaustedPos.map((po) => po.swimmer_id))];
+
+            // Step 4: Check which have future confirmed/pending_auth bookings
+            const today = new Date().toISOString().split('T')[0];
+            const { data: futureBookings } = await supabase
+              .from('bookings')
+              .select('swimmer_id')
+              .in('swimmer_id', swimmerIds)
+              .in('status', ['confirmed', 'pending_auth'])
+              .gte('session_date', today);
+
+            const swimmersWithFutureBookings = new Set(
+              (futureBookings || []).map((b) => b.swimmer_id)
+            );
+
+            // Step 5: Count distinct POs whose swimmers have future bookings
+            pendingPOs = exhaustedPos.filter((po) =>
+              swimmersWithFutureBookings.has(po.swimmer_id)
+            ).length;
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching POs needing action:', error);
+      }
 
       // Fetch pending referrals
       const { count: pendingReferralCount } = await supabase
@@ -257,7 +295,7 @@ export default function AdminDashboard() {
         sessionsToday: sessionsTodayCount ?? 0,
         pendingApprovals: pendingApprovalCount ?? 0,
         pendingReferrals: pendingReferralCount ?? 0,
-        pendingPOs: pos?.length ?? 0,
+        pendingPOs,
         sessionsNeedingProgress: bookingsNeedingProgress ?? 0,
         privatePayRevenue: privatePayRevenue ?? 0,
         fundedRevenue: fundedRevenue ?? 0,

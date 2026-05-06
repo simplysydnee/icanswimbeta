@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
-import { ChevronLeft, ChevronRight, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
 
 import type { Swimmer, AvailableSession, BookingStep, SessionType } from '@/types/booking';
 import { SwimmerSelectStep } from './steps/SwimmerSelectStep';
@@ -367,13 +367,13 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
             selectedInstructorId={selectedInstructorId}
             instructorPreference={instructorPreference}
             swimmerId={selectedSwimmer?.id || null}
-            onSelectInstructor={(id, preference) => {
+            onSelectInstructor={(id, preference, instructorName) => {
               setSelectedInstructorId(id);
               setInstructorPreference(preference);
-              // We'll need to fetch instructor name if specific
-              // For now, set a placeholder name
-              if (id && preference === 'specific') {
-                setInstructorName('Instructor Name');
+              if (preference === 'specific' && instructorName) {
+                setInstructorName(instructorName);
+              } else {
+                setInstructorName('Any Available Instructor');
               }
               setTimeout(() => handleNext(), 150);
             }}
@@ -392,7 +392,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
             recurringEndDate={recurringEndDate}
             selectedRecurringSessions={selectedRecurringSessions.map(s => s.id)}
             swimmerId={selectedSwimmer?.id || null} // Pass swimmerId for flexible_swimmer check
-            swimmerEnrollmentStatus={selectedSwimmer?.enrollmentStatus ?? null}
+            isAssessmentBooking={selectedSwimmer?.enrollmentStatus === 'waitlist'}
             onSelectSession={(session) => {
               setSelectedSessionId(session.id);
               setSelectedSession(session);
@@ -413,6 +413,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
         return (
           <AssessmentTab
             selectedSwimmerId={selectedSwimmer?.id}
+            onSessionSelected={(sessionId) => setSelectedSessionId(sessionId)}
             onBookingComplete={() => {
               // After assessment is booked, move to confirmation
               setTimeout(() => handleNext(), 150);
@@ -421,7 +422,6 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
         );
 
       case 'confirm':
-        const isAssessment = selectedSwimmer?.enrollmentStatus === 'waitlist';
         const isPending = selectedSwimmer?.enrollmentStatus === 'pending_enrollment';
 
         if (isPending) {

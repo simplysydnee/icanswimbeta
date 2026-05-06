@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const sessionType =
       searchParams.get('sessionType') ?? searchParams.get('session_type')
     const excludeSessionId = searchParams.get('excludeSessionId')
-    const bookingType = searchParams.get('bookingType')
+    const isRecurring = searchParams.get('isRecurring')
 
     // Build query for available sessions (not full, status available/open)
     let query = supabase
@@ -74,8 +74,10 @@ export async function GET(request: NextRequest) {
       query = query.eq('instructor_id', instructorId)
     }
 
-    if (bookingType === 'recurring') {
+    if (isRecurring === 'true') {
       query = query.eq('is_recurring', true)
+    } else if (isRecurring === 'false') {
+      query = query.eq('is_recurring', false)
     }
 
     if (sessionType) {

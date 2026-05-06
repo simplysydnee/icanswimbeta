@@ -1,15 +1,14 @@
 'use client';
 
 import { format, parseISO } from 'date-fns';
-import { User, Calendar, Clock, MapPin, CreditCard } from 'lucide-react';
+import { User, Calendar, Clock, MapPin } from 'lucide-react';
 
 import type { Swimmer, AvailableSession } from '@/types/booking';
 import { StatusBadge } from './StatusBadge';
 import { InstructorAvatar } from '@/components/ui/instructor-avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { formatPrice } from '@/lib/utils';
-import { PRICING } from '@/lib/constants';
+import { isSwimmerFunded } from '@/lib/booking-utils';
 
 // Helper constants
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -48,16 +47,13 @@ export function BookingSummary({
   recurringStartDate,
   recurringEndDate,
 }: BookingSummaryProps) {
-  // Calculate session count and total price
+  // Calculate session count
   const sessionCount = sessionType === 'single'
     ? (selectedSession ? 1 : 0)
     : selectedRecurringSessions.length;
 
-  const hasFundingSource = !!swimmer?.fundingSourceId;
+  const funded = swimmer ? isSwimmerFunded(swimmer) : false;
   const fundingSourceName = swimmer?.fundingSourceName || swimmer?.fundingSourceShortName;
-  // TODO: Get session price from funding source instead of hardcoded
-  const sessionPrice = hasFundingSource ? 0 : PRICING.LESSON_PRIVATE_PAY;
-  const totalPrice = sessionCount * sessionPrice;
 
   // Helper to format date range
   const formatDateRange = () => {
@@ -95,7 +91,7 @@ export function BookingSummary({
             </div>
             <div className="flex items-center gap-2">
               <StatusBadge status={swimmer.enrollmentStatus} size="sm" />
-              {hasFundingSource && (
+              {funded && (
                 <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                   {fundingSourceName ? `${fundingSourceName} Funded` : 'Funding Source'}
                 </Badge>
@@ -197,45 +193,10 @@ export function BookingSummary({
         {/* Separator */}
         {swimmer && sessionType && <div className="border-t" />}
 
-        {/* Pricing Section */}
-        {swimmer && sessionType && sessionCount > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">Payment</span>
-            </div>
-
-            {hasFundingSource ? (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">{fundingSourceName || 'Funding Source'} Funded</span>
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    ${(sessionPrice / 100).toFixed(2)}
-                  </Badge>
-                </div>
-                {swimmer.sessionsUsed !== undefined && swimmer.sessionsAuthorized !== undefined && (
-                  <div className="text-xs text-muted-foreground">
-                    {sessionCount} of {swimmer.sessionsAuthorized} authorized sessions will be used
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">
-                    {sessionCount} × {formatPrice(PRICING.LESSON_PRIVATE_PAY)}
-                  </span>
-                  <span className="font-medium">{formatPrice(totalPrice)}</span>
-                </div>
-
-                <div className="border-t" />
-
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Total</span>
-                  <span className="text-2xl font-bold">{formatPrice(totalPrice)}</span>
-                </div>
-              </div>
-            )}
+        {/* Invoice notice for private pay only */}
+        {swimmer && sessionType && sessionCount > 0 && !funded && (
+          <div className="text-xs text-muted-foreground">
+            An invoice will be sent to your email.
           </div>
         )}
       </CardContent>

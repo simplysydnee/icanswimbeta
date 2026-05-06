@@ -50,6 +50,9 @@ export interface Swimmer {
   fundingSourceId?: string | null;
   fundingSourceName?: string;
   fundingSourceShortName?: string;
+  fundingSourcePriceCents?: number;
+  fundingSourceType?: string;
+  fundingSourceRequiresAuth?: boolean;
   coordinatorId?: string;
   coordinatorName?: string;
   coordinatorEmail?: string;

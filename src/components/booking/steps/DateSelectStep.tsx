@@ -39,7 +39,8 @@ interface DateSelectStepProps {
   recurringEndDate: Date | null;
   selectedRecurringSessions: string[];
   swimmerId: string | null; // Add swimmerId for flexible_swimmer check
-  /** Drives `/api/sessions/available` sessionType filter: waitlist → assessment, else lesson */
+  /** Drives `/api/sessions/available` sessionType filter: assessment vs lesson */
+  isAssessmentBooking: boolean;
   swimmerEnrollmentStatus?: EnrollmentStatus | null;
   onSelectSession: (session: AvailableSession) => void;
   onSetRecurring: (opts: {
@@ -62,12 +63,11 @@ export function DateSelectStep({
   recurringEndDate,
   selectedRecurringSessions,
   swimmerId,
-  swimmerEnrollmentStatus = null,
+  isAssessmentBooking = false,
   onSelectSession,
   onSetRecurring,
 }: DateSelectStepProps) {
-  const sessionsApiSessionType =
-    swimmerEnrollmentStatus === 'waitlist' ? 'assessment' : 'lesson';
+  const sessionsApiSessionType = isAssessmentBooking ? 'assessment' : 'lesson';
   // Single session mode state
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const inSevenDays = new Date();
@@ -118,9 +118,11 @@ export function DateSelectStep({
       const params = new URLSearchParams({
         startDate: currentWeekStart.toISOString(),
         endDate: weekEnd.toISOString(),
-        bookingType: 'single', // Specify booking type
         sessionType: sessionsApiSessionType,
       });
+      if (!isAssessmentBooking) {
+        params.append('isRecurring', 'false');
+      }
       if (instructorId) {
         params.append('instructorId', instructorId);
       }
@@ -173,9 +175,11 @@ export function DateSelectStep({
       const params = new URLSearchParams({
         startDate: localStartDate.toISOString(),
         endDate: localEndDate.toISOString(),
-        bookingType: 'recurring', // Specify booking type
         sessionType: sessionsApiSessionType,
       });
+      if (!isAssessmentBooking) {
+        params.append('isRecurring', 'true');
+      }
       if (instructorId) {
         params.append('instructorId', instructorId);
       }
@@ -341,13 +345,6 @@ export function DateSelectStep({
 
     return (
       <div className="space-y-6">
-        <div className="space-y-2">
-          <h3 className="font-semibold">Select Date & Time</h3>
-          <p className="text-sm text-muted-foreground">
-            Choose a date, then select an available time slot
-          </p>
-        </div>
-
         {/* Date selection */}
         <div className="space-y-4">
           <h4 className="font-medium">1. Select Date</h4>
