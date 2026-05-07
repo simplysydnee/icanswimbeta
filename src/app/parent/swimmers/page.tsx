@@ -168,11 +168,11 @@ export default function SwimmersPage() {
           throw new Error('Failed to fetch swimmers')
         }
         const json = await response.json()
-        // API returns { transformedData, metadata } — see /api/swimmers/route.ts
+        // API returns { swimmers, metadata }
         const apiSwimmers: ApiSwimmer[] = Array.isArray(json)
           ? json
-          : Array.isArray(json?.transformedData)
-            ? json.transformedData
+          : Array.isArray(json?.swimmers)
+            ? json.swimmers
             : []
 
         // Transform API response to match SwimmerCard interface

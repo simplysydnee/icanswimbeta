@@ -16,6 +16,28 @@ interface SwimmerMetricsResponse {
     pending_approval: number;
     pending_assessment: number;
   };
+  // Additional breakdowns for the swimmer management page
+  vmrcClients: number;
+  privatePayClients: number;
+  enrollmentExpired: number;
+  declined: number;
+  dropped: number;
+  pendingVmrcReferral: number;
+  floating: number;
+  noEnrollmentStatus: number;
+  activeSwimmers: number;
+  flexibleSwimmers: number;
+  signedWaivers: number;
+  // Approval status counts
+  approved: number;
+  pendingApproval: number;
+  declinedApproval: number;
+  noApprovalStatus: number;
+  // Assessment status counts
+  assessmentNotStarted: number;
+  assessmentScheduled: number;
+  assessmentCompleted: number;
+  posAuthorizationNeeded: number;
 }
 
 export async function GET() {
@@ -167,20 +189,96 @@ export async function GET() {
 
     const averageLessons = swimmersWithData > 0 ? totalLessons / swimmersWithData : 0;
 
-    // ========== STEP 4: Prepare Response ==========
+    // ========== STEP 4: Additional Status Counts ==========
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    const [
+      { count: vmrcClients },
+      { count: enrollmentExpired },
+      { count: declined },
+      { count: dropped },
+      { count: pendingVmrcReferral },
+      { count: floating },
+      { count: noEnrollmentStatus },
+      { count: flexibleSwimmers },
+      { count: signedWaivers },
+      { count: approved },
+      { count: pendingApproval },
+      { count: declinedApproval },
+      { count: noApprovalStatus },
+      { count: assessmentScheduled },
+      { count: assessmentCompleted },
+      { count: posAuthorizationNeeded },
+    ] = await Promise.all([
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).eq('is_vmrc_client', true),
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).eq('enrollment_status', 'enrollment_expired'),
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).eq('enrollment_status', 'declined'),
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).eq('enrollment_status', 'dropped'),
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).eq('enrollment_status', 'pending_vmrc_referral'),
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).eq('enrollment_status', 'floating'),
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).or('enrollment_status.is.null,enrollment_status.eq.'),
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).eq('flexible_swimmer', true),
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).eq('signed_waiver', true),
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).eq('approval_status', 'approved'),
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).eq('approval_status', 'pending'),
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).eq('approval_status', 'declined'),
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).is('approval_status', null),
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).eq('assessment_status', 'scheduled'),
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).eq('assessment_status', 'completed'),
+      supabase.from('swimmers').select('*', { count: 'exact', head: true }).eq('assessment_status', 'pos_authorization_needed'),
+    ]);
+
+    // Assessment not started: count NULL or 'not_started'
+    const { count: assessmentNotStarted } = await supabase
+      .from('swimmers')
+      .select('*', { count: 'exact', head: true })
+      .or('assessment_status.is.null,assessment_status.eq.not_started');
+
+    // Active swimmers: distinct swimmer_ids with confirmed bookings in last 30 days
+    const { data: recentBookings } = await supabase
+      .from('bookings')
+      .select('swimmer_id')
+      .gte('created_at', thirtyDaysAgo.toISOString());
+
+    const activeSwimmers = recentBookings
+      ? new Set(recentBookings.filter(b => b.swimmer_id).map(b => b.swimmer_id)).size
+      : 0;
+
+    // ========== STEP 5: Prepare Response ==========
+    const privatePayClients = (totalSwimmers || 0) - (vmrcClients || 0);
+
     const metrics: SwimmerMetricsResponse = {
       totalSwimmers: totalSwimmers || 0,
       waitlistedSwimmers: waitlistedSwimmers || 0,
       activeEnrolledSwimmers: activeEnrolledSwimmers || 0,
-      averageLessons: parseFloat(averageLessons.toFixed(1)), // Round to 1 decimal place
+      averageLessons: parseFloat(averageLessons.toFixed(1)),
       regionalCenterClients: regionalCenterClients || 0,
       lastUpdated: new Date().toISOString(),
       waitlistBreakdown: {
         waitlist: waitlistedSwimmers || 0,
         pending_enrollment: pendingEnrollmentCount || 0,
         pending_approval: pendingApprovalCount || 0,
-        pending_assessment: pendingAssessmentCount || 0
-      }
+        pending_assessment: pendingAssessmentCount || 0,
+      },
+      vmrcClients: vmrcClients || 0,
+      privatePayClients,
+      enrollmentExpired: enrollmentExpired || 0,
+      declined: declined || 0,
+      dropped: dropped || 0,
+      pendingVmrcReferral: pendingVmrcReferral || 0,
+      floating: floating || 0,
+      noEnrollmentStatus: noEnrollmentStatus || 0,
+      activeSwimmers,
+      flexibleSwimmers: flexibleSwimmers || 0,
+      signedWaivers: signedWaivers || 0,
+      approved: approved || 0,
+      pendingApproval: pendingApproval || 0,
+      declinedApproval: declinedApproval || 0,
+      noApprovalStatus: noApprovalStatus || 0,
+      assessmentNotStarted: assessmentNotStarted || 0,
+      assessmentScheduled: assessmentScheduled || 0,
+      assessmentCompleted: assessmentCompleted || 0,
+      posAuthorizationNeeded: posAuthorizationNeeded || 0,
     };
 
     console.log(`✅ Admin fetched swimmer metrics:`, {

@@ -64,8 +64,8 @@ interface User {
 
 interface Swimmer {
   id: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   client_number: string;
 }
 
@@ -406,7 +406,7 @@ export function TasksPageContent() {
                     <SelectItem value="all">All swimmers</SelectItem>
                     {swimmers.map(swimmer => (
                       <SelectItem key={swimmer.id} value={swimmer.id} className="text-xs sm:text-sm">
-                        {swimmer.first_name} {swimmer.last_name}
+                        {swimmer.firstName} {swimmer.lastName}
                       </SelectItem>
                     ))}
                   </SelectContent>

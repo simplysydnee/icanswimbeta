@@ -144,26 +144,29 @@ export default function AdminDashboard() {
           );
 
           if (exhaustedPos.length > 0) {
-            // Step 3: Get unique swimmer IDs
-            const swimmerIds = [...new Set(exhaustedPos.map((po) => po.swimmer_id))];
+            // Step 3: Get unique swimmer IDs (filter out nulls — PostgREST rejects null in IN())
+            const swimmerIds = [...new Set(exhaustedPos.map((po) => po.swimmer_id))]
+              .filter((id): id is string => id != null)
 
             // Step 4: Check which have future confirmed/pending_auth bookings
-            const today = new Date().toISOString().split('T')[0];
-            const { data: futureBookings } = await supabase
-              .from('bookings')
-              .select('swimmer_id')
-              .in('swimmer_id', swimmerIds)
-              .in('status', ['confirmed', 'pending_auth'])
-              .gte('session_date', today);
+            if (swimmerIds.length > 0) {
+              const today = new Date().toISOString().split('T')[0];
+              const { data: futureBookings } = await supabase
+                .from('bookings')
+                .select('swimmer_id')
+                .in('swimmer_id', swimmerIds)
+                .in('status', ['confirmed', 'pending_auth'])
+                .gte('session_date', today);
 
-            const swimmersWithFutureBookings = new Set(
-              (futureBookings || []).map((b) => b.swimmer_id)
-            );
+              const swimmersWithFutureBookings = new Set(
+                (futureBookings || []).map((b) => b.swimmer_id)
+              );
 
-            // Step 5: Count distinct POs whose swimmers have future bookings
-            pendingPOs = exhaustedPos.filter((po) =>
-              swimmersWithFutureBookings.has(po.swimmer_id)
-            ).length;
+              // Step 5: Count distinct POs whose swimmers have future bookings
+              pendingPOs = exhaustedPos.filter((po) =>
+                swimmersWithFutureBookings.has(po.swimmer_id)
+              ).length;
+            }
           }
         }
       } catch (error) {

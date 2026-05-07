@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAdminSwimmers } from '@/hooks/useAdminSwimmers';
-import { calculateSwimmerKPIs } from '@/lib/admin-utils';
+import { useSwimmerMetrics } from '@/hooks/useSwimmerMetrics';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { Swimmer } from '@/types/swimmer';
@@ -24,10 +24,8 @@ function AdminSwimmersPageContent() {
   const searchParams = useSearchParams();
   const activeFilter = searchParams.get('approval_status');
 
-  // Calculate metrics from swimmers data
-  const metrics = swimmers ? calculateSwimmerKPIs(swimmers) : null;
-  const metricsLoading = swimmersLoading;
-  const metricsError = swimmersError;
+  // Calculate metrics from dedicated stats endpoint (server-side counts)
+  const { data: metrics, isLoading: metricsLoading, error: metricsError } = useSwimmerMetrics();
 
   return (
     <RoleGuard allowedRoles={['admin']}>
@@ -63,7 +61,7 @@ function AdminSwimmersPageContent() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.total.toLocaleString()}
+                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.totalSwimmers.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
                 {metrics && !metricsLoading && !metricsError ? `${metrics.vmrcClients} Funded, ${metrics.privatePayClients} Private` : 'All clients'}
@@ -79,25 +77,25 @@ function AdminSwimmersPageContent() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.waitlist.toLocaleString()}
+                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.waitlistedSwimmers.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                {metricsLoading || metricsError ? <Skeleton className="h-4 w-20" /> : `${Math.round((metrics!.waitlist / metrics!.total) * 100)}% of total`}
+                {metricsLoading || metricsError ? <Skeleton className="h-4 w-20" /> : `${Math.round((metrics!.waitlistedSwimmers / metrics!.totalSwimmers) * 100)}% of total`}
               </div>
               {!metricsLoading && !metricsError && metrics && (
                 <div className="mt-2 pt-2 border-t border-gray-100">
                   <div className="text-xs text-muted-foreground space-y-1">
                     <div className="flex justify-between">
                       <span>Waitlist:</span>
-                      <span className="font-medium">{metrics.waitlist}</span>
+                      <span className="font-medium">{metrics.waitlistBreakdown.waitlist}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Pending Enrollment:</span>
-                      <span className="font-medium">{metrics.pendingEnrollment}</span>
+                      <span className="font-medium">{metrics.waitlistBreakdown.pending_enrollment}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Pending Approval:</span>
-                      <span className="font-medium">{metrics.pendingApprovalEnrollment}</span>
+                      <span className="font-medium">{metrics.waitlistBreakdown.pending_approval}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Enrollment Expired:</span>
@@ -117,10 +115,10 @@ function AdminSwimmersPageContent() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.enrolled.toLocaleString()}
+                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.activeEnrolledSwimmers.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                {metricsLoading || metricsError ? <Skeleton className="h-4 w-20" /> : `${Math.round((metrics!.enrolled / metrics!.total) * 100)}% of total`}
+                {metricsLoading || metricsError ? <Skeleton className="h-4 w-20" /> : `${Math.round((metrics!.activeEnrolledSwimmers / metrics!.totalSwimmers) * 100)}% of total`}
               </div>
             </CardContent>
           </Card>
@@ -231,12 +229,14 @@ function AdminSwimmersPageContent() {
                     key={swimmer.id}
                     swimmer={{
                       id: swimmer.id,
-                      first_name: swimmer.first_name,
-                      last_name: swimmer.last_name,
-                      photo_url: swimmer.photo_url,
-                      enrollment_status: swimmer.enrollment_status,
-                      current_level: swimmer.current_level?.display_name || swimmer.current_level?.name,
-                      payment_type: swimmer.is_vmrc_client ? 'funding_source' : 'private_pay'
+                      first_name: swimmer.firstName,
+                      last_name: swimmer.lastName,
+                      photo_url: swimmer.photoUrl,
+                      enrollment_status: swimmer.enrollmentStatus,
+                      current_level: swimmer.currentLevel
+                        ? { name: swimmer.currentLevel.displayName || swimmer.currentLevel.name }
+                        : undefined,
+                      payment_type: swimmer.isVmrcClient ? 'funding_source' : 'private_pay'
                     }}
                     onClick={() => {
                       // Navigate to swimmer detail page

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { Swimmer } from '@/types/booking';
 
 function transformSwimmer(raw: Record<string, unknown>): Swimmer {
-  const fundingSource = raw.funding_source as Record<string, unknown> | null;
+  const fundingSource = raw.fundingSource as Record<string, unknown> | null;
 
   const paymentTypeMap: Record<string, string> = {
     private_pay: 'private_pay',
@@ -12,30 +12,30 @@ function transformSwimmer(raw: Record<string, unknown>): Swimmer {
   };
 
   return {
-    approvalStatus: (raw.approval_status as string) || '',
+    approvalStatus: (raw.approvalStatus as string) || '',
     id: raw.id as string,
-    firstName: raw.first_name as string,
-    lastName: raw.last_name as string,
-    dateOfBirth: raw.date_of_birth as string,
-    enrollmentStatus: raw.enrollment_status as Swimmer['enrollmentStatus'],
-    assessmentStatus: (raw.assessment_status as string) || null,
-    currentLevelId: (raw.current_level_id as string) || null,
-    currentLevelName: (raw.current_level as Record<string, unknown>)?.name as string | undefined,
-    paymentType: (paymentTypeMap[raw.payment_type as string] as Swimmer['paymentType']) || 'private_pay',
-    isFundedClient: raw.payment_type === 'funding_source' || !!fundingSource,
-    flexibleSwimmer: raw.flexible_swimmer as boolean || false,
-    fundingSourceId: (fundingSource?.id as string) || (raw.funding_source_id as string) || null,
+    firstName: raw.firstName as string,
+    lastName: raw.lastName as string,
+    dateOfBirth: raw.dateOfBirth as string,
+    enrollmentStatus: raw.enrollmentStatus as Swimmer['enrollmentStatus'],
+    assessmentStatus: (raw.assessmentStatus as string) || null,
+    currentLevelId: (raw.currentLevelId as string) || null,
+    currentLevelName: (raw.currentLevel as Record<string, unknown>)?.displayName as string | undefined,
+    paymentType: (paymentTypeMap[raw.paymentType as string] as Swimmer['paymentType']) || 'private_pay',
+    isFundedClient: raw.paymentType === 'funding_source' || !!fundingSource,
+    flexibleSwimmer: raw.flexibleSwimmer as boolean || false,
+    fundingSourceId: (fundingSource?.id as string) || (raw.fundingSourceId as string) || null,
     fundingSourceName: fundingSource?.name as string | undefined,
     fundingSourceShortName: fundingSource?.short_name as string | undefined,
     fundingSourcePriceCents: fundingSource?.price_cents as number | undefined,
     fundingSourceType: fundingSource?.type as string | undefined,
     fundingSourceRequiresAuth: fundingSource?.requires_authorization as boolean | undefined,
-    sessionsUsed: (raw.authorized_sessions_used as number) || 0,
-    sessionsAuthorized: (raw.authorized_sessions_total as number) || 0,
-    photoUrl: raw.photo_url as string | undefined,
-    coordinatorName: raw.funding_coordinator_name as string | undefined,
-    coordinatorEmail: raw.funding_coordinator_email as string | undefined,
-    coordinatorPhone: raw.funding_coordinator_phone as string | undefined,
+    sessionsUsed: (raw.authorizedSessionsUsed as number) || 0,
+    sessionsAuthorized: (raw.authorizedSessionsTotal as number) || 0,
+    photoUrl: raw.photoUrl as string | undefined,
+    coordinatorName: raw.fundingCoordinatorName as string | undefined,
+    coordinatorEmail: raw.fundingCoordinatorEmail as string | undefined,
+    coordinatorPhone: raw.fundingCoordinatorPhone as string | undefined,
   };
 }
 

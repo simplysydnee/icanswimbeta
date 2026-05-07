@@ -14,6 +14,28 @@ export interface SwimmerMetrics {
     pending_approval: number;
     pending_assessment: number;
   };
+  // Additional breakdowns for the swimmer management page
+  vmrcClients: number;
+  privatePayClients: number;
+  enrollmentExpired: number;
+  declined: number;
+  dropped: number;
+  pendingVmrcReferral: number;
+  floating: number;
+  noEnrollmentStatus: number;
+  activeSwimmers: number;
+  flexibleSwimmers: number;
+  signedWaivers: number;
+  // Approval status counts
+  approved: number;
+  pendingApproval: number;
+  declinedApproval: number;
+  noApprovalStatus: number;
+  // Assessment status counts
+  assessmentNotStarted: number;
+  assessmentScheduled: number;
+  assessmentCompleted: number;
+  posAuthorizationNeeded: number;
 }
 
 async function fetchSwimmerMetrics(): Promise<SwimmerMetrics> {
@@ -30,7 +52,7 @@ export function useSwimmerMetrics() {
   return useQuery({
     queryKey: ['swimmer-metrics'],
     queryFn: fetchSwimmerMetrics,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 2, // 2 minutes
     refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
   });
 }

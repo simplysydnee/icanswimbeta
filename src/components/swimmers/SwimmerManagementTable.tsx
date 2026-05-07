@@ -308,7 +308,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
         console.log('First swimmer currentLevel:', data[0].currentLevel);
       }
 
-      setSwimmers(data.transformedData || []);
+      setSwimmers(data.swimmers || []);
       setTotal(data.metadata?.total || 0);
     } catch (err) {
       console.error('Error fetching swimmers:', err);
@@ -357,8 +357,10 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
   };
 
   // Get initials for avatar
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  const getInitials = (firstName?: string | null, lastName?: string | null) => {
+    const first = firstName?.charAt(0) ?? '';
+    const last = lastName?.charAt(0) ?? '';
+    return (first + last).toUpperCase() || '?';
   };
 
   // Calculate age from date of birth

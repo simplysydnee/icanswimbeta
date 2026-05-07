@@ -83,7 +83,7 @@ export default function AdminNewPOPage() {
           return;
         }
         const data = await res.json();
-        const rows = (data.transformedData || []) as {
+        const rows = (data.swimmers || []) as {
           id: string;
           firstName: string;
           lastName: string;

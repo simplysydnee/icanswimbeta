@@ -28,10 +28,10 @@ import { cn } from '@/lib/utils';
 
 interface Swimmer {
   id: string;
-  first_name: string;
-  last_name: string;
-  funding_source_id: string | null;
-  funding_source?: {
+  firstName: string;
+  lastName: string;
+  fundingSourceId: string | null;
+  fundingSource?: {
     id: string;
     name: string;
     short_name: string;
@@ -79,7 +79,7 @@ export function CreatePODialog({ open, onClose, onSuccess }: CreatePODialogProps
     if (selectedSwimmer) {
       const swimmer = swimmers.find(s => s.id === selectedSwimmer);
       if (swimmer?.funding_source_id) {
-        setSelectedFundingSource(swimmer.funding_source_id);
+        setSelectedFundingSource(swimmer.fundingSourceId);
       }
     }
   }, [selectedSwimmer, swimmers]);
@@ -101,7 +101,7 @@ export function CreatePODialog({ open, onClose, onSuccess }: CreatePODialogProps
       // Fetch swimmers with funding sources
       const swimmersRes = await fetch('/api/swimmers?funded=true');
       const swimmersData = await swimmersRes.json();
-      setSwimmers(swimmersData.data || []);
+      setSwimmers(swimmersData.swimmers || []);
 
       // Fetch funding sources
       const fundingRes = await fetch('/api/funding-sources');
@@ -193,8 +193,8 @@ export function CreatePODialog({ open, onClose, onSuccess }: CreatePODialogProps
                 <SelectContent>
                   {swimmers.map((swimmer) => (
                     <SelectItem key={swimmer.id} value={swimmer.id}>
-                      {swimmer.first_name} {swimmer.last_name}
-                      {swimmer.funding_source?.short_name && ` (${swimmer.funding_source.short_name})`}
+                      {swimmer.firstName} {swimmer.lastName}
+                      {swimmer.fundingSource?.short_name && ` (${swimmer.fundingSource.short_name})`}
                     </SelectItem>
                   ))}
                 </SelectContent>
