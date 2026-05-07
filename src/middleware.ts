@@ -29,34 +29,45 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet: Cookie[]) {
+          // First set on request cookies for subsequent middleware/route reads
           cookiesToSet.forEach(({ name, value, options }) => {
-            // Set cookie options
-            // Note: Using token flow for password reset, not PKCE
-            // So cookies are less critical for password reset flow
             const isProduction = process.env.NODE_ENV === 'production'
             const cookieOptions: CookieOptions = {
               ...options,
               sameSite: 'lax',
               secure: isProduction,
-              httpOnly: true, // Protect from XSS
-              path: '/', // Available on all paths
+              httpOnly: true,
+              path: '/',
             }
-
-            // Set domain for production if needed
             if (isProduction) {
               const hostname = request.nextUrl.hostname
-              // Only set domain for production domains, not localhost
               if (!hostname.includes('localhost') && !hostname.includes('127.0.0.1')) {
                 cookieOptions.domain = hostname
               }
             }
-
             request.cookies.set({ name, value, ...cookieOptions })
-            response = NextResponse.next({
-              request: {
-                headers: request.headers,
-              },
-            })
+          })
+
+          // Create ONE response from the updated request, then set all cookies on it
+          // Do NOT create a new response per cookie — that drops all but the last one.
+          response = NextResponse.next({
+            request: { headers: request.headers },
+          })
+          cookiesToSet.forEach(({ name, value, options }) => {
+            const isProduction = process.env.NODE_ENV === 'production'
+            const cookieOptions: CookieOptions = {
+              ...options,
+              sameSite: 'lax',
+              secure: isProduction,
+              httpOnly: true,
+              path: '/',
+            }
+            if (isProduction) {
+              const hostname = request.nextUrl.hostname
+              if (!hostname.includes('localhost') && !hostname.includes('127.0.0.1')) {
+                cookieOptions.domain = hostname
+              }
+            }
             response.cookies.set({ name, value, ...cookieOptions })
           })
         },
@@ -223,5 +234,6 @@ export const config = {
     '/forgot-password',
     '/auth/callback',
     '/auth/confirm',
+    '/api/:path*',
   ],
 }
