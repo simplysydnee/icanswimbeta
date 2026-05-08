@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useState, useCallback } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { LiabilityWaiverSection } from './sections';
 import { PhotoPermissionSection } from './sections';
 import { CancellationPolicySection } from './sections';
@@ -16,6 +16,68 @@ interface WaiverUpdateFormProps {
   onComplete: () => void;
 }
 
+type WaiverFieldName =
+  | 'liabilitySignature'
+  | 'emergencyContactName'
+  | 'emergencyContactPhone'
+  | 'emergencyContactRelationship'
+  | 'liabilityConsent'
+  | 'cancellationSignature'
+  | 'cancellationAgreed'
+  | 'photoSignature'
+  | 'photoSignatureConsent';
+
+type WaiverFormData = {
+  liabilitySignature: string;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+  emergencyContactRelationship: string;
+  liabilityConsent: boolean;
+  photoPermission: boolean;
+  photoSignature: string;
+  photoSignatureConsent: boolean;
+  cancellationSignature: string;
+  cancellationAgreed: boolean;
+};
+
+export type WaiverFieldErrors = Partial<Record<WaiverFieldName, string>>;
+
+function getWaiverErrors(data: WaiverFormData): WaiverFieldErrors {
+  const errors: WaiverFieldErrors = {};
+
+  if (data.liabilitySignature.length < 3) {
+    errors.liabilitySignature = 'Please type your full name to sign (at least 3 characters)';
+  }
+  if (data.emergencyContactName.length < 2) {
+    errors.emergencyContactName = 'Emergency contact name is required';
+  }
+  if (data.emergencyContactPhone.length < 10) {
+    errors.emergencyContactPhone = 'Enter a valid phone number (at least 10 digits)';
+  }
+  if (data.emergencyContactRelationship.length < 2) {
+    errors.emergencyContactRelationship = 'Relationship to swimmer is required';
+  }
+  if (data.liabilityConsent !== true) {
+    errors.liabilityConsent = 'You must consent to the Liability Waiver to continue';
+  }
+  if (data.cancellationSignature.length < 3) {
+    errors.cancellationSignature = 'Please type your full name to sign (at least 3 characters)';
+  }
+  if (data.cancellationAgreed !== true) {
+    errors.cancellationAgreed = 'You must agree to the Cancellation Policy to continue';
+  }
+  if (data.photoPermission) {
+    if (data.photoSignature.length < 3) {
+      errors.photoSignature = 'Photo release signature is required (at least 3 characters)';
+    }
+    if (data.photoSignatureConsent !== true) {
+      errors.photoSignatureConsent = 'You must consent to the electronic signature for the photo release';
+    }
+  }
+
+  return errors;
+}
+
 export function WaiverUpdateForm({
   token,
   swimmerId,
@@ -23,6 +85,7 @@ export function WaiverUpdateForm({
   onComplete
 }: WaiverUpdateFormProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
     // Liability Waiver
@@ -93,6 +156,8 @@ export function WaiverUpdateForm({
         description: `All waivers for ${swimmerName} have been saved.`
       });
 
+      queryClient.invalidateQueries({ queryKey: ['swimmers-needing-waivers', token] });
+
       // Short delay to show success message, then navigate
       setTimeout(() => onComplete(), 500);
     },
@@ -105,28 +170,30 @@ export function WaiverUpdateForm({
     }
   });
 
+  const [touched, setTouched] = useState<Partial<Record<WaiverFieldName, boolean>>>({});
+
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleCheckboxChange = (field: string, checked: boolean) => {
     setFormData(prev => ({ ...prev, [field]: checked }));
+    setTouched(prev => ({ ...prev, [field]: true }));
   };
 
-  const isValid =
-    // Liability Waiver: signature + all emergency contact fields + consent
-    formData.liabilitySignature.length >= 3 &&
-    formData.emergencyContactName.length >= 2 &&
-    formData.emergencyContactPhone.length >= 10 &&
-    formData.emergencyContactRelationship.length >= 2 &&
-    formData.liabilityConsent === true &&
+  const handleBlur = useCallback((field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+  }, []);
 
-    // Cancellation Policy: signature required + agreement
-    formData.cancellationSignature.length >= 3 &&
-    formData.cancellationAgreed === true &&
+  const allErrors = getWaiverErrors(formData);
+  const isValid = Object.keys(allErrors).length === 0;
 
-    // Photo Release: if permission granted, signature required + consent required
-    (!formData.photoPermission || (formData.photoSignature && formData.photoSignature.length >= 3 && formData.photoSignatureConsent === true));
+  const visibleErrors: WaiverFieldErrors = {};
+  (Object.keys(allErrors) as WaiverFieldName[]).forEach(field => {
+    if (touched[field]) {
+      visibleErrors[field] = allErrors[field];
+    }
+  });
 
   return (
     <div className="space-y-6">
@@ -142,6 +209,8 @@ export function WaiverUpdateForm({
           }}
           handleChange={handleChange}
           handleCheckboxChange={handleCheckboxChange}
+          errors={visibleErrors}
+          onBlur={handleBlur}
         />
       </Card>
 
@@ -155,6 +224,8 @@ export function WaiverUpdateForm({
           }}
           handleChange={handleChange}
           handleCheckboxChange={handleCheckboxChange}
+          errors={visibleErrors}
+          onBlur={handleBlur}
         />
       </Card>
 
@@ -167,6 +238,8 @@ export function WaiverUpdateForm({
           }}
           handleChange={handleChange}
           handleCheckboxChange={handleCheckboxChange}
+          errors={visibleErrors}
+          onBlur={handleBlur}
         />
       </Card>
 
