@@ -19,36 +19,7 @@ export default function SwimmerWaiverPage({
   const { data, isLoading, error } = useSwimmersNeedingWaivers(token, true);
 
   const handleComplete = () => {
-    // Find next incomplete swimmer
-    const swimmers: SwimmerWaiverStatus[] = data?.swimmers || [];
-    const currentIndex = swimmers.findIndex((s: SwimmerWaiverStatus) => s.id === swimmerId);
-
-    // Look for next incomplete swimmer after current position
-    let nextSwimmer: SwimmerWaiverStatus | null = null;
-    for (let i = currentIndex + 1; i < swimmers.length; i++) {
-      if (!swimmers[i].isComplete) {
-        nextSwimmer = swimmers[i];
-        break;
-      }
-    }
-
-    // If not found after current position, check from beginning
-    if (!nextSwimmer) {
-      for (let i = 0; i < currentIndex; i++) {
-        if (!swimmers[i].isComplete) {
-          nextSwimmer = swimmers[i];
-          break;
-        }
-      }
-    }
-
-    if (nextSwimmer) {
-      // Navigate to next incomplete swimmer
-      router.push(`/update-waivers/${token}/${nextSwimmer.id}`);
-    } else {
-      // All swimmers complete, go back to main page
-      router.push(`/update-waivers/${token}`);
-    }
+    router.push(`/update-waivers/${token}`);
   };
 
   // Find the specific swimmer

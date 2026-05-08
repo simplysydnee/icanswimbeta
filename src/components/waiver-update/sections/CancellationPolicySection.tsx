@@ -13,9 +13,18 @@ interface CancellationPolicySectionProps {
   };
   handleChange: (field: string, value: string) => void;
   handleCheckboxChange?: (field: string, checked: boolean) => void;
+  errors?: {
+    cancellationSignature?: string;
+    cancellationAgreed?: string;
+  };
+  onBlur?: (field: string) => void;
 }
 
-export function CancellationPolicySection({ formData, handleChange, handleCheckboxChange }: CancellationPolicySectionProps) {
+const baseInputClasses = 'block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm';
+const inputClasses = (error?: string) =>
+  `${baseInputClasses} ${error ? 'border-red-500' : 'border-gray-300'}`;
+
+export function CancellationPolicySection({ formData, handleChange, handleCheckboxChange, errors = {}, onBlur }: CancellationPolicySectionProps) {
   const [viewerOpen, setViewerOpen] = useState(false);
 
   return (
@@ -54,13 +63,17 @@ export function CancellationPolicySection({ formData, handleChange, handleCheckb
               type="checkbox"
               checked={formData.cancellationAgreed || false}
               onChange={(e) => handleCheckboxChange ? handleCheckboxChange('cancellationAgreed', e.target.checked) : handleChange('cancellationAgreed', e.target.checked.toString())}
-              className="h-4 w-4 text-blue-600"
+              aria-invalid={!!errors.cancellationAgreed}
+              className={`h-4 w-4 text-blue-600 ${errors.cancellationAgreed ? 'ring-2 ring-red-500 ring-offset-1' : ''}`}
               required
             />
             <span className="ml-2 text-sm text-gray-700">
               I consent to use electronic signatures under the California Uniform Electronic Transactions Act (UETA) and agree to the Cancellation Policy terms above.
             </span>
           </label>
+          {errors.cancellationAgreed && (
+            <p className="text-red-500 text-sm mt-1">{errors.cancellationAgreed}</p>
+          )}
         </div>
 
         <div>
@@ -73,10 +86,15 @@ export function CancellationPolicySection({ formData, handleChange, handleCheckb
             name="cancellationSignature"
             value={formData.cancellationSignature}
             onChange={(e) => handleChange('cancellationSignature', e.target.value)}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            onBlur={() => onBlur?.('cancellationSignature')}
+            aria-invalid={!!errors.cancellationSignature}
+            className={inputClasses(errors.cancellationSignature)}
             placeholder="Type your full name to sign"
             required
           />
+          {errors.cancellationSignature && (
+            <p className="text-red-500 text-sm mt-1">{errors.cancellationSignature}</p>
+          )}
           <p className="text-xs text-gray-500 mt-2">
             By typing your name above, you electronically agree to the full Cancellation Policy document.
           </p>
