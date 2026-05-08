@@ -16,9 +16,21 @@ interface LiabilityWaiverSectionProps {
   };
   handleChange: (field: string, value: string) => void;
   handleCheckboxChange?: (field: string, checked: boolean) => void;
+  errors?: {
+    liabilitySignature?: string;
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
+    emergencyContactRelationship?: string;
+    liabilityConsent?: string;
+  };
+  onBlur?: (field: string) => void;
 }
 
-export function LiabilityWaiverSection({ formData, handleChange, handleCheckboxChange }: LiabilityWaiverSectionProps) {
+const baseInputClasses = 'block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm';
+const inputClasses = (error?: string) =>
+  `${baseInputClasses} ${error ? 'border-red-500' : 'border-gray-300'}`;
+
+export function LiabilityWaiverSection({ formData, handleChange, handleCheckboxChange, errors = {}, onBlur }: LiabilityWaiverSectionProps) {
   const [viewerOpen, setViewerOpen] = useState(false);
 
   return (
@@ -69,10 +81,15 @@ export function LiabilityWaiverSection({ formData, handleChange, handleCheckboxC
                 name="emergencyContactName"
                 value={formData.emergencyContactName}
                 onChange={(e) => handleChange('emergencyContactName', e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                onBlur={() => onBlur?.('emergencyContactName')}
+                aria-invalid={!!errors.emergencyContactName}
+                className={inputClasses(errors.emergencyContactName)}
                 placeholder="Emergency contact's full name"
                 required
               />
+              {errors.emergencyContactName && (
+                <p className="text-red-500 text-sm mt-1">{errors.emergencyContactName}</p>
+              )}
             </div>
 
             <div>
@@ -85,10 +102,15 @@ export function LiabilityWaiverSection({ formData, handleChange, handleCheckboxC
                 name="emergencyContactPhone"
                 value={formData.emergencyContactPhone}
                 onChange={(e) => handleChange('emergencyContactPhone', e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                onBlur={() => onBlur?.('emergencyContactPhone')}
+                aria-invalid={!!errors.emergencyContactPhone}
+                className={inputClasses(errors.emergencyContactPhone)}
                 placeholder="(209) 555-1234"
                 required
               />
+              {errors.emergencyContactPhone && (
+                <p className="text-red-500 text-sm mt-1">{errors.emergencyContactPhone}</p>
+              )}
             </div>
           </div>
 
@@ -102,10 +124,15 @@ export function LiabilityWaiverSection({ formData, handleChange, handleCheckboxC
               name="emergencyContactRelationship"
               value={formData.emergencyContactRelationship}
               onChange={(e) => handleChange('emergencyContactRelationship', e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              onBlur={() => onBlur?.('emergencyContactRelationship')}
+              aria-invalid={!!errors.emergencyContactRelationship}
+              className={inputClasses(errors.emergencyContactRelationship)}
               placeholder="Parent, Guardian, Relative, etc."
               required
             />
+            {errors.emergencyContactRelationship && (
+              <p className="text-red-500 text-sm mt-1">{errors.emergencyContactRelationship}</p>
+            )}
           </div>
         </div>
 
@@ -115,7 +142,8 @@ export function LiabilityWaiverSection({ formData, handleChange, handleCheckboxC
               type="checkbox"
               checked={formData.liabilityConsent || false}
               onChange={(e) => handleCheckboxChange ? handleCheckboxChange('liabilityConsent', e.target.checked) : handleChange('liabilityConsent', e.target.checked.toString())}
-              className="h-4 w-4 text-blue-600"
+              aria-invalid={!!errors.liabilityConsent}
+              className={`h-4 w-4 text-blue-600 ${errors.liabilityConsent ? 'ring-2 ring-red-500 ring-offset-1' : ''}`}
               required
             />
             <span className="ml-2 text-sm text-gray-700">
@@ -123,6 +151,9 @@ export function LiabilityWaiverSection({ formData, handleChange, handleCheckboxC
               and agree to the Liability Waiver terms above.
             </span>
           </label>
+          {errors.liabilityConsent && (
+            <p className="text-red-500 text-sm mt-1">{errors.liabilityConsent}</p>
+          )}
         </div>
 
         {/* Signature Field */}
@@ -136,10 +167,15 @@ export function LiabilityWaiverSection({ formData, handleChange, handleCheckboxC
             name="liabilitySignature"
             value={formData.liabilitySignature}
             onChange={(e) => handleChange('liabilitySignature', e.target.value)}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            onBlur={() => onBlur?.('liabilitySignature')}
+            aria-invalid={!!errors.liabilitySignature}
+            className={inputClasses(errors.liabilitySignature)}
             placeholder="Type your full name to sign"
             required
           />
+          {errors.liabilitySignature && (
+            <p className="text-red-500 text-sm mt-1">{errors.liabilitySignature}</p>
+          )}
           <p className="text-xs text-gray-500 mt-2">
             By typing your name above, you electronically sign the full Liability Waiver document.
           </p>
