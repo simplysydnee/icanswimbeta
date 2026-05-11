@@ -47,7 +47,8 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
     );
   }
 
-  const isFunded = isSwimmerFunded({ paymentType, fundingSourceId: null });
+  const isFunded = isSwimmerFunded({ paymentType });
+  const isScholarship = paymentType === 'scholarship';
   // Check swimmer status using utility functions
   const swimmer = enrollmentStatus ? {
     enrollmentStatus: enrollmentStatus as 'waitlist' | 'pending_enrollment' | 'enrolled' | 'active' | 'inactive' | 'declined' | 'pending_assessment',
@@ -86,6 +87,8 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
 
   const priceDisplay = isFunded
     ? `Covered by ${getFundingSourceName()}`
+    : isScholarship
+    ? `Covered by Scholarship — ${formatPrice(0)}`
     : `Starting at ${formatPrice(sessionPrice)}`;
 
   // Determine which session types to show based on swimmer status

@@ -90,7 +90,7 @@ export interface Swimmer {
 
 // Helper function to check if swimmer is funded
 export function isFundedSwimmer(swimmer: Swimmer): boolean {
-  return swimmer.payment_type === 'funded' || !!swimmer.funding_source_id;
+  return swimmer.payment_type === 'funded' || swimmer.payment_type === 'funding_source';
 }
 
 // Helper function to get funding source display name
