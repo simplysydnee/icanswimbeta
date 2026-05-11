@@ -45,7 +45,7 @@ interface ConfirmationStepProps {
   isSubmitting: boolean;
   bookingResult?: {
     success: boolean;
-    confirmationNumber?: string;
+    bookingId?: string;
     error?: string;
   };
 }
@@ -234,10 +234,10 @@ export function ConfirmationStep({
           </p>
         </div>
 
-        {bookingResult.confirmationNumber && (
-          <div className="bg-gray-50 rounded-lg p-4 inline-block">
-            <p className="text-sm text-muted-foreground">Confirmation Number</p>
-            <p className="text-xl font-mono font-bold">{bookingResult.confirmationNumber}</p>
+        {bookingResult.bookingId && (
+          <div className="bg-gray-50 rounded-lg p-4 inline-block max-w-full">
+            <p className="text-sm text-muted-foreground">Booking ID</p>
+            <p className="text-xl font-mono font-bold break-all">{bookingResult.bookingId}</p>
           </div>
         )}
 
