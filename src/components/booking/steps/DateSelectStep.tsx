@@ -2,17 +2,24 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format, addMonths, addWeeks, startOfWeek, endOfWeek, parseISO, isBefore, startOfDay, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, addDays } from 'date-fns';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, User } from 'lucide-react';
+import { format, addMonths, addWeeks, startOfWeek, endOfWeek, isBefore, startOfDay, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, User } from 'lucide-react';
 import type { AvailableSession, EnrollmentStatus } from '@/types/booking';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { InstructorAvatar } from '@/components/ui/instructor-avatar';
 import { cn } from '@/lib/utils';
+import {
+  studioDateString,
+  studioTime12,
+  studioTime24,
+  studioDayOfWeek,
+  studioMonthString,
+  studioFullDate,
+  studioShortDate,
+} from '@/lib/timezone';
 
 // Convert "16:00" to "4:00 PM"
 const formatTime12Hour = (time24: string): string => {
@@ -20,11 +27,6 @@ const formatTime12Hour = (time24: string): string => {
   const period = hours >= 12 ? 'PM' : 'AM';
   const hours12 = hours % 12 || 12;
   return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
-};
-
-// Extract time string "HH:mm" from ISO datetime
-const getTimeFromISO = (isoString: string): string => {
-  return format(parseISO(isoString), 'HH:mm');
 };
 
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -183,7 +185,7 @@ export function DateSelectStep({
         id: session.id,
         startTime: session.start_time,
         endTime: session.end_time,
-        dayOfWeek: new Date(session.start_time).getDay(),
+        dayOfWeek: studioDayOfWeek(session.start_time),
         instructorId: session.instructor_id,
         instructorName: session.instructor?.full_name || 'Unknown Instructor',
         instructorAvatarUrl: session.instructor?.avatar_url || null,
@@ -241,7 +243,7 @@ export function DateSelectStep({
         id: session.id,
         startTime: session.start_time,
         endTime: session.end_time,
-        dayOfWeek: new Date(session.start_time).getDay(),
+        dayOfWeek: studioDayOfWeek(session.start_time),
         instructorId: session.instructor_id,
         instructorName: session.instructor?.full_name || 'Unknown Instructor',
         instructorAvatarUrl: session.instructor?.avatar_url || null,
@@ -270,14 +272,12 @@ export function DateSelectStep({
   const matchedSessionsInMonth = useMemo(() => {
     if (recurringDay === null || recurringTime === null || !rangeSessions.length) return [];
 
-    return rangeSessions.filter(session => {
-      const sessionDate = parseISO(session.startTime);
-      return (
-        sessionDate.getDay() === recurringDay &&
-        getTimeFromISO(session.startTime) === recurringTime &&
-        isSameMonth(sessionDate, monthStart)
-      );
-    });
+    const targetMonth = studioMonthString(monthStart);
+    return rangeSessions.filter(session => (
+      studioDayOfWeek(session.startTime) === recurringDay &&
+      studioTime24(session.startTime) === recurringTime &&
+      studioMonthString(session.startTime) === targetMonth
+    ));
   }, [rangeSessions, recurringDay, recurringTime, monthStart]);
 
   useEffect(() => {
@@ -311,15 +311,17 @@ export function DateSelectStep({
   //   return acc;
   // }, {} as Record<string, AvailableSession[]>);
 
-  // Get unique days from range sessions for recurring mode
-  const uniqueDays = Array.from(new Set(rangeSessions.map(s => s.dayOfWeek))).sort();
+  // Get unique days from range sessions for recurring mode (day-of-week in studio TZ)
+  const uniqueDays = Array.from(
+    new Set(rangeSessions.map(s => studioDayOfWeek(s.startTime)))
+  ).sort();
 
-  // Get unique times for selected day in recurring mode
+  // Get unique times for selected day in recurring mode (studio TZ HH:mm)
   const uniqueTimes = recurringDay !== null
     ? Array.from(new Set(
         rangeSessions
-          .filter(s => s.dayOfWeek === recurringDay)
-          .map(s => getTimeFromISO(s.startTime))
+          .filter(s => studioDayOfWeek(s.startTime) === recurringDay)
+          .map(s => studioTime24(s.startTime))
       )).sort()
     : [];
 
@@ -365,23 +367,24 @@ export function DateSelectStep({
 
   if (sessionType === 'single') {
 
-    // Filter sessions for selected date
+    // Filter sessions whose studio-TZ calendar date matches the tile the user clicked.
+    // format(selectedDate, 'yyyy-MM-dd') reads the tile's labeled day (selectedDate is
+    // local midnight from react-day-picker), and studioDateString resolves the session's
+    // start instant to its studio-TZ date — so both sides speak the same calendar.
+    const selectedDateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
     const sessionsForSelectedDate = selectedDate
-      ? weekSessions.filter(session =>
-          format(parseISO(session.startTime), 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
-        )
+      ? weekSessions.filter(session => studioDateString(session.startTime) === selectedDateStr)
       : [];
 
-    // Group sessions by time for better display
+    // Group sessions by studio-TZ time so the picker shows when the lesson actually starts.
     const timeSlots = sessionsForSelectedDate.reduce((acc, session) => {
-      const timeKey = format(parseISO(session.startTime), 'h:mm a');
+      const timeKey = studioTime12(session.startTime);
       if (!acc[timeKey]) {
         acc[timeKey] = [];
       }
       acc[timeKey].push(session);
       return acc;
     }, {} as Record<string, AvailableSession[]>);
-
     const hasAnySessions = weekSessions.length > 0;
 
     return (
@@ -540,8 +543,8 @@ export function DateSelectStep({
               <div className="flex-1">
                 <h4 className="font-medium text-green-800">Session Selected</h4>
                 <p className="text-sm text-green-700">
-                  {format(parseISO(selectedSession.startTime), 'EEEE, MMMM d, yyyy')} at{' '}
-                  {format(parseISO(selectedSession.startTime), 'h:mm a')}
+                  {studioFullDate(selectedSession.startTime)} at{' '}
+                  {studioTime12(selectedSession.startTime)}
                 </p>
                 <div className="flex items-center gap-2 mt-2">
                   <InstructorAvatar
@@ -731,8 +734,8 @@ export function DateSelectStep({
                 >
                   <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
                   <span>
-                    {format(parseISO(session.startTime), 'EEE, MMM d')} at{' '}
-                    {format(parseISO(session.startTime), 'h:mm a')}
+                    {studioShortDate(session.startTime)} at{' '}
+                    {studioTime12(session.startTime)}
                   </span>
                   {session.instructorName && (
                     <span className="text-xs text-muted-foreground ml-auto">

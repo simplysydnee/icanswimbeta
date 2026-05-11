@@ -47,7 +47,8 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
     );
   }
 
-  const isFunded = isSwimmerFunded({ paymentType, fundingSourceId: null });
+  const isFunded = isSwimmerFunded({ paymentType });
+  const isScholarship = paymentType === 'scholarship';
   // Check swimmer status using utility functions
   const swimmer = enrollmentStatus ? {
     enrollmentStatus: enrollmentStatus as 'waitlist' | 'pending_enrollment' | 'enrolled' | 'active' | 'inactive' | 'declined' | 'pending_assessment',
@@ -86,6 +87,8 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
 
   const priceDisplay = isFunded
     ? `Covered by ${getFundingSourceName()}`
+    : isScholarship
+    ? `Covered by Scholarship — ${formatPrice(0)}`
     : `Starting at ${formatPrice(sessionPrice)}`;
 
   // Determine which session types to show based on swimmer status
@@ -201,7 +204,7 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
       <div className="space-y-2">
         <h3 className="text-lg font-semibold">Select Session Type</h3>
         <p className="text-sm text-muted-foreground">
-          Choose how you&apos;d like to schedule lessons
+          Choose how you&apos;d like to schedule {swimmerNeedsAssessment ? 'assessments' : 'lessons'}
         </p>
       </div>
 

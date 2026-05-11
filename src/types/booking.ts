@@ -27,7 +27,7 @@ export type SessionType =
 // Booking wizard step progression
 export type BookingStep =
   | 'select-swimmer'
-  | 'assessment'
+  // | 'assessment'
   | 'session-type'
   | 'select-instructor'
   | 'select-date'

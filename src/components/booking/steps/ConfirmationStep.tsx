@@ -45,7 +45,7 @@ interface ConfirmationStepProps {
   isSubmitting: boolean;
   bookingResult?: {
     success: boolean;
-    confirmationNumber?: string;
+    bookingId?: string;
     error?: string;
   };
 }
@@ -234,10 +234,10 @@ export function ConfirmationStep({
           </p>
         </div>
 
-        {bookingResult.confirmationNumber && (
-          <div className="bg-gray-50 rounded-lg p-4 inline-block">
-            <p className="text-sm text-muted-foreground">Confirmation Number</p>
-            <p className="text-xl font-mono font-bold">{bookingResult.confirmationNumber}</p>
+        {bookingResult.bookingId && (
+          <div className="bg-gray-50 rounded-lg p-4 inline-block max-w-full">
+            <p className="text-sm text-muted-foreground">Booking ID</p>
+            <p className="text-xl font-mono font-bold break-all">{bookingResult.bookingId}</p>
           </div>
         )}
 
@@ -285,6 +285,16 @@ export function ConfirmationStep({
   // Confirmation review state
   return (
     <div className="space-y-6">
+      {isSubmitting && !bookingResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg shadow-xl p-6 flex flex-col items-center gap-3 max-w-sm mx-4">
+            <Loader2 className="h-8 w-8 animate-spin text-cyan-600" />
+            <p className="text-sm font-medium text-gray-800 text-center">
+              Please wait, checking for conflicts.
+            </p>
+          </div>
+        </div>
+      )}
       <div>
         <h2 className="text-xl font-semibold">Confirm Your Booking</h2>
         <p className="text-muted-foreground">Please review the details below before confirming.</p>

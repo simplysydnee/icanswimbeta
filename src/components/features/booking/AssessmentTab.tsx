@@ -46,7 +46,7 @@ interface Swimmer {
 
 interface AssessmentTabProps {
   selectedSwimmerId?: string
-  onBookingComplete?: () => void
+  onBookingComplete?: (bookingId?: string) => void
   onSessionSelected?: (sessionId: string) => void
 }
 
@@ -221,7 +221,7 @@ export function AssessmentTab({ selectedSwimmerId, onBookingComplete, onSessionS
       setSelectedSwimmer(null)
 
       // Call the completion callback
-      onBookingComplete?.()
+      onBookingComplete?.(result?.booking?.id)
 
     } catch (error) {
       console.error('Booking error:', error)

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { studioDateString } from '@/lib/timezone'
 
 export async function GET(request: NextRequest) {
   try {
@@ -46,7 +47,9 @@ export async function GET(request: NextRequest) {
       if (ddError) {
         return NextResponse.json({ error: 'Failed to fetch available dates' }, { status: 500 })
       }
-      const dates = [...new Set((rows || []).map(r => r.start_time.slice(0, 10)))].sort()
+      // Bucket by studio-TZ date so the calendar's enabled/disabled state matches
+      // what users see on the time-slot picker (which renders in studio TZ).
+      const dates = [...new Set((rows || []).map(r => studioDateString(r.start_time)))].sort()
       return NextResponse.json({ dates })
     }
 
@@ -151,7 +154,7 @@ export async function GET(request: NextRequest) {
     const sessionsByDate: Record<string, any[]> = {}
 
     sessions?.forEach(session => {
-      const date = new Date(session.start_time).toISOString().split('T')[0]
+      const date = studioDateString(session.start_time)
       if (!sessionsByDate[date]) {
         sessionsByDate[date] = []
       }

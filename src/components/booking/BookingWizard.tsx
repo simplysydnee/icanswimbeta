@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
-import { ChevronLeft, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 
 import type { Swimmer, AvailableSession, BookingStep, SessionType } from '@/types/booking';
 import { SwimmerSelectStep } from './steps/SwimmerSelectStep';
@@ -77,28 +77,20 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
   const [error, setError] = useState<string | null>(null);
   const [bookingResult, setBookingResult] = useState<{
     success: boolean;
-    confirmationNumber?: string;
+    bookingId?: string;
     error?: string;
   } | null>(null);
 
   // Step flow logic
   const getStepNumber = (step: BookingStep): number => {
-    const isWaitlist = selectedSwimmer?.enrollmentStatus === 'waitlist';
-
-    if (isWaitlist) {
-      // Waitlist flow: select-swimmer → assessment → confirm
-      const waitlistSteps = ['select-swimmer', 'assessment', 'confirm'];
-      return waitlistSteps.indexOf(step) + 1;
-    } else {
-      // Enrolled flow: select-swimmer → session-type → select-instructor → select-date → confirm
-      const enrolledSteps = ['select-swimmer', 'session-type', 'select-instructor', 'select-date', 'confirm'];
-      return enrolledSteps.indexOf(step) + 1;
-    }
+    const steps: BookingStep[] = ['select-swimmer', 'session-type', 'select-instructor', 'select-date', 'confirm'];
+    return steps.indexOf(step) + 1;
   };
 
   const getTotalSteps = (): number => {
-    const isWaitlist = selectedSwimmer?.enrollmentStatus === 'waitlist';
-    return isWaitlist ? 3 : 5;
+    // const isWaitlist = selectedSwimmer?.enrollmentStatus === 'waitlist';
+    // return isWaitlist ? 3 : 5;
+    return 5;
   };
 
   const getProgress = (): number => {
@@ -111,15 +103,8 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
     const isPending = selectedSwimmer?.enrollmentStatus === 'pending_enrollment';
 
     switch (currentStep) {
-      case 'select-swimmer':
-        if (isWaitlist) {
-          setCurrentStep('assessment');
-        } else if (isPending) {
-          // For pending approval, skip to confirmation with message
-          setCurrentStep('confirm');
-        } else {
-          setCurrentStep('session-type');
-        }
+      case 'select-swimmer': 
+        setCurrentStep('session-type');
         break;
       case 'session-type':
         setCurrentStep('select-instructor');
@@ -128,7 +113,6 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
         setCurrentStep('select-date');
         break;
       case 'select-date':
-      case 'assessment':
         setCurrentStep('confirm');
         break;
     }
@@ -149,11 +133,11 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
       case 'select-date':
         setCurrentStep('select-instructor');
         break;
-      case 'assessment':
-        setCurrentStep('select-swimmer');
-        break;
+      // case 'assessment':
+      //   setCurrentStep('select-swimmer');
+      //   break;
       case 'confirm':
-        setCurrentStep(isWaitlist ? 'assessment' : 'select-date');
+        setCurrentStep('select-date');
         break;
     }
     // Scroll to top on step change
@@ -191,7 +175,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
       'session-type': { title: 'Session Type', description: 'Choose single or recurring sessions' },
       'select-instructor': { title: 'Select Instructor', description: 'Choose your preferred instructor' },
       'select-date': { title: 'Select Date & Time', description: 'Pick your session schedule' },
-      'assessment': { title: 'Book Assessment', description: 'Schedule your initial assessment' },
+   //   'assessment': { title: 'Book Assessment', description: 'Schedule your initial assessment' },
       'confirm': { title: 'Confirm Booking', description: 'Review and confirm your booking' },
     };
     return stepInfo[step];
@@ -287,16 +271,14 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
         throw new Error(result.error || 'Failed to create booking');
       }
 
-      // Generate confirmation number (format: ICS-YYYYMMDD-XXXXX)
-      const today = new Date();
-      const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
-      const randomNum = Math.floor(10000 + Math.random() * 90000);
-      const confirmationNumber = `ICS-${dateStr}-${randomNum}`;
+      // Single  -> result.booking.id
+      // Recurring -> result.bookings[0].id
+      const bookingId: string | undefined =
+        result?.booking?.id ?? result?.bookings?.[0]?.id;
 
-      // Set success result
       setBookingResult({
         success: true,
-        confirmationNumber,
+        bookingId,
       });
 
     } catch (err) {
@@ -310,24 +292,6 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const resetWizard = () => {
-    setCurrentStep('select-swimmer');
-    setSelectedSwimmer(null);
-    setSessionType(null);
-    setSelectedInstructorId(null);
-    setInstructorPreference('any');
-    setInstructorName(null);
-    setSelectedSessionId(null);
-    setSelectedSession(null);
-    setRecurringDay(null);
-    setRecurringTime(null);
-    setRecurringStartDate(null);
-    setRecurringEndDate(null);
-    setSelectedRecurringSessions([]);
-    setError(null);
-    setBookingResult(null);
   };
 
   // Render step function
@@ -417,8 +381,8 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
           <AssessmentTab
             selectedSwimmerId={selectedSwimmer?.id}
             onSessionSelected={(sessionId) => setSelectedSessionId(sessionId)}
-            onBookingComplete={() => {
-              // After assessment is booked, move to confirmation
+            onBookingComplete={(bookingId) => {
+              setBookingResult({ success: true, bookingId });
               setTimeout(() => handleNext(), 150);
             }}
           />
@@ -465,48 +429,10 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
               </div>
             </div>
           );
-        } 
-        /*else if (isAssessment) {
-          // Assessment confirmation (keep existing for now)
-          return (
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 text-green-600">
-                <CheckCircle2 className="h-6 w-6" />
-                <div>
-                  <p className="font-semibold">Assessment Booked Successfully! 🎉</p>
-                  <p className="text-sm text-muted-foreground">
-                    Your assessment has been scheduled. Check your email for confirmation.
-                  </p>
-                </div>
-              </div>
-
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <p className="font-medium mb-1">What happens next:</p>
-                  <ul className="list-disc list-inside space-y-1 text-sm">
-                    <li>You'll receive a confirmation email with assessment details</li>
-                    <li>Our team will review and approve the assessment</li>
-                    <li>Once approved, you can book regular lessons</li>
-                    <li>For regional center clients: Coordinator approval is required</li>
-                  </ul>
-                </AlertDescription>
-              </Alert>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold text-blue-900 mb-2">Assessment Details</h3>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• 30-minute one-on-one evaluation</li>
-                  <li>• Assessment of current swimming abilities</li>
-                  <li>• Personalized lesson plan recommendation</li>
-                  <li>• Required before starting regular swim lessons</li>
-                </ul>
-              </div>
-            </div>
-          );
-        } */
-       else {
+        } else {
           // Regular booking confirmation using ConfirmationStep
+          const isWaitlist = selectedSwimmer?.enrollmentStatus === 'waitlist';
+          const effectiveSessionType = isWaitlist ? 'assessment' : (sessionType || 'single');
           const sessions = sessionType === 'single' && selectedSession
             ? [selectedSession]
             : selectedRecurringSessions;
@@ -515,7 +441,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
             <ConfirmationStep
               swimmer={selectedSwimmer!}
               sessions={sessions}
-              sessionType={sessionType || 'single'}
+              sessionType={effectiveSessionType}
               onConfirm={handleSubmit}
               onBack={handleBack}
               isSubmitting={isSubmitting}
@@ -603,32 +529,30 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
 
             {/* Navigation buttons */}
             <div className="flex justify-between mt-8 pt-6 border-t">
-              <Button
-                variant="outline"
-                onClick={handleBack}
-                disabled={currentStep === 'select-swimmer' || isSubmitting || (currentStep === 'confirm' && selectedSwimmer?.enrollmentStatus !== 'waitlist')}
-              >
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
+              
+              {currentStep === 'confirm' ? (
+                <div />
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={handleBack}
+                  disabled={currentStep === 'select-swimmer' || isSubmitting}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              )}
 
               {currentStep === 'confirm' ? (
-                selectedSwimmer?.enrollmentStatus === 'waitlist' ? (
-                  // For assessments, show "Done" button
-                  <Button onClick={() => resetWizard()}>
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Done
-                  </Button>
-                ) : (
-                  // For regular bookings, ConfirmationStep has its own buttons
-                  // Show empty div to maintain layout
-                  <div></div>
-                )
+                // ConfirmationStep owns its own buttons (review state) and CTAs (success state)
+                <div></div>
               ) : (
-                <Button onClick={handleNext} disabled={!canProceed}>
-                  Continue
-                  <ChevronRight className="h-4 w-4 ml-2" />
-                </Button>
+                <>
+                  <Button onClick={handleNext} disabled={!canProceed}>
+                    Continue
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </>
               )}
             </div>
           </CardContent>
