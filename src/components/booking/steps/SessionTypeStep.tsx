@@ -204,7 +204,7 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
       <div className="space-y-2">
         <h3 className="text-lg font-semibold">Select Session Type</h3>
         <p className="text-sm text-muted-foreground">
-          Choose how you&apos;d like to schedule lessons
+          Choose how you&apos;d like to schedule {swimmerNeedsAssessment ? 'assessments' : 'lessons'}
         </p>
       </div>
 
