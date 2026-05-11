@@ -83,22 +83,14 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
 
   // Step flow logic
   const getStepNumber = (step: BookingStep): number => {
-    const isWaitlist = selectedSwimmer?.enrollmentStatus === 'waitlist';
-
-    if (isWaitlist) {
-      // Waitlist flow: select-swimmer → assessment → confirm
-      const waitlistSteps = ['select-swimmer', 'assessment', 'confirm'];
-      return waitlistSteps.indexOf(step) + 1;
-    } else {
-      // Enrolled flow: select-swimmer → session-type → select-instructor → select-date → confirm
-      const enrolledSteps = ['select-swimmer', 'session-type', 'select-instructor', 'select-date', 'confirm'];
-      return enrolledSteps.indexOf(step) + 1;
-    }
+    const steps: BookingStep[] = ['select-swimmer', 'session-type', 'select-instructor', 'select-date', 'confirm'];
+    return steps.indexOf(step) + 1;
   };
 
   const getTotalSteps = (): number => {
-    const isWaitlist = selectedSwimmer?.enrollmentStatus === 'waitlist';
-    return isWaitlist ? 3 : 5;
+    // const isWaitlist = selectedSwimmer?.enrollmentStatus === 'waitlist';
+    // return isWaitlist ? 3 : 5;
+    return 5;
   };
 
   const getProgress = (): number => {
@@ -111,15 +103,8 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
     const isPending = selectedSwimmer?.enrollmentStatus === 'pending_enrollment';
 
     switch (currentStep) {
-      case 'select-swimmer':
-        if (isWaitlist) {
-          setCurrentStep('assessment');
-        } else if (isPending) {
-          // For pending approval, skip to confirmation with message
-          setCurrentStep('confirm');
-        } else {
-          setCurrentStep('session-type');
-        }
+      case 'select-swimmer': 
+        setCurrentStep('session-type');
         break;
       case 'session-type':
         setCurrentStep('select-instructor');
@@ -128,7 +113,6 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
         setCurrentStep('select-date');
         break;
       case 'select-date':
-      case 'assessment':
         setCurrentStep('confirm');
         break;
     }
@@ -149,11 +133,11 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
       case 'select-date':
         setCurrentStep('select-instructor');
         break;
-      case 'assessment':
-        setCurrentStep('select-swimmer');
-        break;
+      // case 'assessment':
+      //   setCurrentStep('select-swimmer');
+      //   break;
       case 'confirm':
-        setCurrentStep(isWaitlist ? 'assessment' : 'select-date');
+        setCurrentStep('select-date');
         break;
     }
     // Scroll to top on step change
@@ -191,7 +175,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
       'session-type': { title: 'Session Type', description: 'Choose single or recurring sessions' },
       'select-instructor': { title: 'Select Instructor', description: 'Choose your preferred instructor' },
       'select-date': { title: 'Select Date & Time', description: 'Pick your session schedule' },
-      'assessment': { title: 'Book Assessment', description: 'Schedule your initial assessment' },
+   //   'assessment': { title: 'Book Assessment', description: 'Schedule your initial assessment' },
       'confirm': { title: 'Confirm Booking', description: 'Review and confirm your booking' },
     };
     return stepInfo[step];
@@ -545,27 +529,30 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
 
             {/* Navigation buttons */}
             <div className="flex justify-between mt-8 pt-6 border-t">
-              <Button
-                variant="outline"
-                onClick={handleBack}
-                disabled={
-                  currentStep === 'select-swimmer' ||
-                  isSubmitting ||
-                  (currentStep === 'confirm' && (bookingResult?.success || selectedSwimmer?.enrollmentStatus !== 'waitlist'))
-                }
-              >
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
+              
+              {currentStep === 'confirm' ? (
+                <div />
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={handleBack}
+                  disabled={currentStep === 'select-swimmer' || isSubmitting}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              )}
 
               {currentStep === 'confirm' ? (
                 // ConfirmationStep owns its own buttons (review state) and CTAs (success state)
                 <div></div>
               ) : (
-                <Button onClick={handleNext} disabled={!canProceed}>
-                  Continue
-                  <ChevronRight className="h-4 w-4 ml-2" />
-                </Button>
+                <>
+                  <Button onClick={handleNext} disabled={!canProceed}>
+                    Continue
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </>
               )}
             </div>
           </CardContent>
