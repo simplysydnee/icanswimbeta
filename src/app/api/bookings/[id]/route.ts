@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { notifyCoordinatorPendingRenewalPO } from '@/lib/email/pos-notifications'
 
 export async function GET(
   request: NextRequest,
@@ -116,10 +117,19 @@ export async function PATCH(
     const { id } = params
     const body = await request.json()
 
+    // Validate status if provided — only allow recognized values
+    const VALID_BOOKING_STATUSES = ['confirmed', 'completed', 'cancelled', 'no_show', 'pending_auth'] as const;
+    if (body.status !== undefined && !VALID_BOOKING_STATUSES.includes(body.status)) {
+      return NextResponse.json(
+        { error: `Invalid status '${body.status}'. Valid values: ${VALID_BOOKING_STATUSES.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
     // Get current booking to check session
     const { data: currentBooking } = await supabase
       .from('bookings')
-      .select('session_id, status')
+      .select('session_id, status, swimmer_id, session_date')
       .eq('id', id)
       .single()
 
@@ -168,6 +178,98 @@ export async function PATCH(
             is_full: isFull
           })
           .eq('id', currentBooking.session_id)
+      }
+    }
+
+    // If status changed to completed, check PO session exhaustion
+    if (body.status === 'completed' && currentBooking.status !== 'completed' && currentBooking.swimmer_id) {
+      try {
+        // Find active lessons PO for this swimmer
+        const { data: activePO } = await supabase
+          .from('purchase_orders')
+          .select('id, sessions_used, sessions_authorized, status, lesson_dates, end_date')
+          .eq('swimmer_id', currentBooking.swimmer_id)
+          .eq('po_type', 'lessons')
+          .in('status', ['active', 'approved_pending_auth'])
+          .lte('start_date', currentBooking.session_date || new Date().toISOString().split('T')[0])
+          .gte('end_date', currentBooking.session_date || new Date().toISOString().split('T')[0])
+          .order('start_date', { ascending: true })
+          .limit(1)
+          .single()
+
+        if (activePO) {
+          const newSessionsUsed = (activePO.sessions_used || 0) + 1
+          const newLessonDates = [...(activePO.lesson_dates || []), currentBooking.session_date || new Date().toISOString().split('T')[0]]
+          const newStatus = newSessionsUsed >= (activePO.sessions_authorized || 0) ? 'completed' : activePO.status
+
+          // Update sessions_used on the PO
+          await supabase
+            .from('purchase_orders')
+            .update({
+              sessions_used: newSessionsUsed,
+              lesson_dates: newLessonDates,
+              status: newStatus,
+            })
+            .eq('id', activePO.id)
+
+          // If PO is now exhausted (all sessions used), create renewal and notify
+          if (newSessionsUsed >= (activePO.sessions_authorized || 0)) {
+            // Check if a renewal PO already exists for this PO
+            const { data: existingRenewal } = await supabase
+              .from('purchase_orders')
+              .select('id')
+              .eq('parent_po_id', activePO.id)
+              .maybeSingle()
+
+            if (!existingRenewal) {
+              // Create a new renewal PO
+              const { data: fs } = await supabase
+                .from('purchase_orders')
+                .select('funding_source_id, coordinator_id, funding_sources(name, po_duration_months, lessons_per_po)')
+                .eq('id', activePO.id)
+                .single()
+
+              const fundingSource = fs ? (Array.isArray(fs.funding_sources) ? fs.funding_sources[0] : fs.funding_sources) : null
+              const months = (fundingSource as any)?.po_duration_months ?? 3
+              const defaultSessions = (fundingSource as any)?.lessons_per_po ?? 12
+
+              const oldEnd = activePO.end_date ? new Date(activePO.end_date) : new Date()
+              const startBase = Number.isNaN(oldEnd.getTime()) ? new Date() : oldEnd
+              const dayAfter = new Date(startBase)
+              dayAfter.setDate(dayAfter.getDate() + 1)
+              const newStartDate = dayAfter.toISOString().split('T')[0]
+              const newEnd = new Date(dayAfter)
+              newEnd.setMonth(newEnd.getMonth() + months)
+              const newEndDate = newEnd.toISOString().split('T')[0]
+
+              const { data: renewalPO } = await supabase
+                .from('purchase_orders')
+                .insert({
+                  swimmer_id: currentBooking.swimmer_id,
+                  funding_source_id: fs?.funding_source_id ?? null,
+                  coordinator_id: fs?.coordinator_id ?? null,
+                  po_type: 'lessons',
+                  parent_po_id: activePO.id,
+                  sessions_authorized: defaultSessions,
+                  sessions_booked: 0,
+                  sessions_used: 0,
+                  start_date: newStartDate,
+                  end_date: newEndDate,
+                  status: 'pending',
+                  notes: `Auto-created — previous PO ${activePO.id} exhausted (${newSessionsUsed}/${activePO.sessions_authorized} sessions used)`,
+                })
+                .select('id')
+                .single()
+
+              if (renewalPO) {
+                await notifyCoordinatorPendingRenewalPO(renewalPO.id)
+              }
+            }
+          }
+        }
+      } catch (poError) {
+        // Don't let PO processing failure break the booking completion
+        console.error('Error processing PO exhaustion for booking', id, poError)
       }
     }
 

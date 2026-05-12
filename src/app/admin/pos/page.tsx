@@ -124,7 +124,7 @@ interface FundingSourceStats {
 
 const getStatusBadge = (po: PurchaseOrder) => {
   const today = new Date();
-  const end = po.end_date ? new Date(po.end_date) : null;
+  const end = po.end_date ? parsePODate(po.end_date) : null;
   const days = end ? Math.floor((end.getTime() - today.getTime()) / 86400000) : null;
   const exhausted = po.sessions_authorized > 0 && po.sessions_used >= po.sessions_authorized;
 
@@ -183,6 +183,18 @@ const BILLING_STATUS_CONFIG: Record<string, { label: string; color: string; icon
   overdue: { label: 'Overdue', color: 'bg-red-100 text-red-800 border-red-300', icon: AlertCircle },
   disputed: { label: 'Disputed', color: 'bg-orange-100 text-orange-800 border-orange-300', icon: AlertCircle },
 };
+
+/** Parse a YYYY-MM-DD date string as local time (avoids UTC-to-PT timezone shift). */
+function parsePODate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+/** Format a YYYY-MM-DD date string for display using date-fns */
+function formatPODate(dateStr: string, fmt: string): string {
+  if (!dateStr) return '—';
+  return format(parsePODate(dateStr), fmt);
+}
 
 function POSPageContent() {
   const searchParams = useSearchParams();
@@ -307,8 +319,8 @@ function POSPageContent() {
       const maxDate = maxData?.[0]?.end_date;
       if (!minDate || !maxDate) return;
 
-      const start = new Date(minDate);
-      const end = new Date(maxDate);
+      const start = parsePODate(minDate);
+      const end = parsePODate(maxDate);
       const twelveMonthsFromNow = new Date();
       twelveMonthsFromNow.setMonth(twelveMonthsFromNow.getMonth() + 12);
       const effectiveEnd = end > twelveMonthsFromNow ? end : twelveMonthsFromNow;
@@ -719,7 +731,7 @@ function POSPageContent() {
     const matchesStatus = statusFilter === 'all' || po.status === statusFilter;
     const matchesBillingStatus = billingStatusFilter === 'all' ||
       (billingStatusFilter === 'overdue'
-        ? (po.due_date && new Date(po.due_date) < new Date() && po.billing_status !== 'paid')
+        ? (po.due_date && parsePODate(po.due_date) < new Date() && po.billing_status !== 'paid')
         : po.billing_status === billingStatusFilter);
     const matchesPoType = poTypeFilter === 'all' || po.po_type === poTypeFilter;
     const matchesFundingSource = fundingSourceFilter === 'all' || po.funding_source?.id === fundingSourceFilter;
@@ -731,7 +743,7 @@ function POSPageContent() {
     const todayForFilter = new Date();
     const matchesExpiringFilter = !showExpiring || (
       po.status === 'active' && !!po.end_date && (() => {
-        const end = new Date(po.end_date);
+        const end = parsePODate(po.end_date);
         const d = Math.floor((end.getTime() - todayForFilter.getTime()) / 86400000);
         return d >= 0 && d <= 30;
       })()
@@ -821,7 +833,7 @@ function POSPageContent() {
         ).length;
         const expiringCount = purchaseOrders.filter(
           (po) => po.status === 'active' && !!po.end_date && (() => {
-            const d = Math.floor((new Date(po.end_date).getTime() - new Date().getTime()) / 86400000);
+            const d = Math.floor((parsePODate(po.end_date).getTime() - new Date().getTime()) / 86400000);
             return d >= 0 && d <= 30;
           })()
         ).length;
@@ -1236,7 +1248,7 @@ function POSPageContent() {
                               setEditCellValue(po.start_date ? po.start_date.slice(0, 10) : '');
                             }}
                           >
-                            {po.start_date ? format(new Date(po.start_date), 'M/d/yy') : '—'}
+                            {po.start_date ? formatPODate(po.start_date, 'M/d/yy') : '—'}
                             <Pencil className="h-2.5 w-2.5 ml-0.5 inline-block opacity-0 group-hover/ed:opacity-100 transition-opacity text-gray-400" />
                           </button>
                         )}
@@ -1267,7 +1279,7 @@ function POSPageContent() {
                               setEditCellValue(po.end_date ? po.end_date.slice(0, 10) : '');
                             }}
                           >
-                            {po.end_date ? format(new Date(po.end_date), 'M/d/yy') : '—'}
+                            {po.end_date ? formatPODate(po.end_date, 'M/d/yy') : '—'}
                             <Pencil className="h-2.5 w-2.5 ml-0.5 inline-block opacity-0 group-hover/ed:opacity-100 transition-opacity text-gray-400" />
                           </button>
                         )}
@@ -1446,11 +1458,11 @@ function POSPageContent() {
               </div>
               <div>
                 <span className="text-muted-foreground">Start Date:</span>
-                <p className="font-medium">{selectedPO?.start_date ? format(new Date(selectedPO.start_date), 'MMM d, yyyy') : '-'}</p>
+                <p className="font-medium">{selectedPO?.start_date ? formatPODate(selectedPO.start_date, 'MMM d, yyyy') : '-'}</p>
               </div>
               <div>
                 <span className="text-muted-foreground">End Date:</span>
-                <p className="font-medium">{selectedPO?.end_date ? format(new Date(selectedPO.end_date), 'MMM d, yyyy') : '-'}</p>
+                <p className="font-medium">{selectedPO?.end_date ? formatPODate(selectedPO.end_date, 'MMM d, yyyy') : '-'}</p>
               </div>
             </div>
 

@@ -232,38 +232,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: insErr.message }, { status: 500 });
     }
 
-    const { data: swimmer } = await supabase
-      .from('swimmers')
-      .select(
-        'first_name, last_name, coordinator_email, coordinator_name, funding_coordinator_email, funding_coordinator_name'
-      )
-      .eq('id', parent.swimmer_id)
-      .single();
-
-    const swimmerName = swimmer
-      ? `${swimmer.first_name ?? ''} ${swimmer.last_name ?? ''}`.trim()
-      : 'Swimmer';
-
-    const coordEmail =
-      swimmer?.funding_coordinator_email?.trim() ||
-      swimmer?.coordinator_email?.trim() ||
-      undefined;
-    const coordName =
-      swimmer?.funding_coordinator_name?.trim() ||
-      swimmer?.coordinator_name?.trim() ||
-      undefined;
-
-    await notifyCoordinatorPendingRenewalPO({
-      coordinatorEmail: coordEmail,
-      coordinatorName: coordName,
-      swimmerName,
-      fundingSourceName: fs?.name ?? 'Funding source',
-      sessionsAuthorized,
-      startDate: inserted.start_date,
-      endDate: inserted.end_date,
-      parentPoId: parent.id,
-      newPoId: inserted.id,
-    });
+    await notifyCoordinatorPendingRenewalPO(inserted.id);
 
     return NextResponse.json({ data: inserted }, { status: 201 });
   } catch (e) {

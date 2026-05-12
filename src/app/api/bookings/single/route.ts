@@ -148,31 +148,60 @@ export async function POST(request: Request) {
     let currentBookingCount: number = 0;
     /** Coordinator user id from the purchase order row (profiles.id), not swimmers.coordinator_id */
     let poCoordinatorId: string | null = null;
+    let bookingStatus: string = 'confirmed';
     if (fundingSourceId && session.session_type === 'lesson') {
       console.log('Funding source requires authorization:', fundingSourceRow?.requires_authorization);
       if (fundingSourceRow?.requires_authorization) {
+        // 1. Try to find a valid (non-expired) PO covering this session
         const { data: purchaseOrders } = await serviceSupabase
           .from('purchase_orders')
           .select('id, sessions_authorized, sessions_booked, coordinator_id')
           .eq('swimmer_id', swimmerId)
-          .eq('status', 'approved')
+          .in('status', ['approved', 'active', 'approved_pending_auth'])
           .lte('start_date', session.start_time)
           .gte('end_date', session.start_time)
           .order('end_date', { ascending: true })
           .limit(1);
         console.log('Purchase orders:', purchaseOrders);
-          // In above query add sessions booked and sessions authorized to check if there are remaining sessions in the PO
-        if (!purchaseOrders || purchaseOrders.length === 0) {
-          return NextResponse.json({ error: 'No valid funding source authorization' }, { status: 400 });
-        }
 
-        const activePo = purchaseOrders[0];
-        if (activePo.sessions_booked >= activePo.sessions_authorized) {
-          return NextResponse.json({ error: 'Funding source authorization exhausted' }, { status: 400 });
+        if (purchaseOrders && purchaseOrders.length > 0) {
+          const activePo = purchaseOrders[0];
+          if (activePo.sessions_booked >= activePo.sessions_authorized) {
+            return NextResponse.json({ error: 'Funding source authorization exhausted' }, { status: 400 });
+          }
+          activePoId = activePo.id;
+          currentBookingCount = activePo.sessions_booked ?? 0;
+          poCoordinatorId = activePo.coordinator_id ?? null;
+        } else {
+          // 2. No valid PO in date range — check for an expired PO with sessions remaining
+          //    Supabase doesn't support column-to-column comparison in queries, so fetch and filter in JS
+          const { data: expiredCandidates } = await serviceSupabase
+            .from('purchase_orders')
+            .select('id, sessions_authorized, sessions_used, end_date, authorization_number, coordinator_id')
+            .eq('swimmer_id', swimmerId)
+            .eq('po_type', 'lessons')
+            .in('status', ['active', 'approved_pending_auth'])
+            .lt('end_date', session.start_time)
+            .order('end_date', { ascending: false })
+            .limit(5);
+
+          const expiredPO = (expiredCandidates ?? []).find(
+            (po: { sessions_used: number; sessions_authorized: number }) =>
+              (po.sessions_used ?? 0) < (po.sessions_authorized ?? 0)
+          );
+
+          if (expiredPO) {
+            // Send extension email to coordinator
+            const { notifyCoordinatorExpiredPO } = await import('@/lib/email/pos-notifications');
+            await notifyCoordinatorExpiredPO(expiredPO.id, session.start_time);
+
+            // Allow booking but mark as pending_auth — coordinator must extend first
+            bookingStatus = 'pending_auth';
+            poCoordinatorId = expiredPO.coordinator_id ?? null;
+          } else {
+            return NextResponse.json({ error: 'No valid funding source authorization' }, { status: 400 });
+          }
         }
-        activePoId = activePo.id;
-        currentBookingCount = activePo.sessions_booked ?? 0;
-        poCoordinatorId = activePo.coordinator_id ?? null;
       }
     }
 
@@ -183,7 +212,7 @@ export async function POST(request: Request) {
         session_id: sessionId,
         swimmer_id: swimmerId,
         parent_id: parentId,
-        status: 'confirmed',
+        status: bookingStatus,
         created_at: new Date().toISOString(),
       })
       .select()

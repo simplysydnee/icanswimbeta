@@ -107,7 +107,12 @@ export function PODetailDrawer({ poId, open, onClose }: PODetailDrawerProps) {
   const statusConfig = po ? STATUS_CONFIG[po.status] || STATUS_CONFIG.pending : STATUS_CONFIG.pending;
   const StatusIcon = statusConfig.icon;
 
-  const formatDate = (dateString: string) => format(new Date(dateString), 'MMM d, yyyy');
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '—';
+    const [year, month, day] = dateString.split('-').map(Number);
+    if (dateString.includes('T')) return format(new Date(dateString), 'MMM d, yyyy');
+    return format(new Date(year, month - 1, day), 'MMM d, yyyy');
+  };
   const formatDateTime = (dateString: string) => format(new Date(dateString), 'MMM d, yyyy h:mm a');
 
   // Calculate progress percentage
