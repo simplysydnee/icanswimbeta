@@ -263,6 +263,7 @@ function POSPageContent() {
     totalBilled: 0,
     totalPaid: 0,
     totalOutstanding: 0,
+    outstandingClients: 0,
   });
 
   const [fundingSourceStats, setFundingSourceStats] = useState<FundingSourceStats[]>([]);
@@ -365,6 +366,7 @@ function POSPageContent() {
         totalBilled: 0,
         totalPaid: 0,
         totalOutstanding: 0,
+        outstandingClients: 0,
       });
       setFundingSourceStats(result.fundingSourceStats || []);
     } catch (error) {
@@ -878,15 +880,13 @@ function POSPageContent() {
         <Card className="border-yellow-200 bg-yellow-50">
           <CardContent className="p-4">
             <div className="text-xs text-yellow-700">Pending</div>
-            <div className="text-2xl font-bold text-yellow-800">{stats.pending + stats.needAuth}</div>
+            <div className="text-2xl font-bold text-yellow-800">{stats.pending}</div>
           </CardContent>
         </Card>
         <Card className="border-red-200 bg-red-50">
           <CardContent className="p-4">
-            <div className="text-xs text-red-700">Outstanding</div>
-            <div className="text-2xl font-bold text-red-800">
-              ${(stats.totalOutstanding / 100).toFixed(2)}
-            </div>
+            <div className="text-xs text-red-700">Awaiting New PO</div>
+            <div className="text-2xl font-bold text-red-800">{stats.outstandingClients ?? 0}</div>
           </CardContent>
         </Card>
       </div>

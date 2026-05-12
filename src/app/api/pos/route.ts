@@ -64,8 +64,9 @@ export async function GET(request: NextRequest) {
     if (coordinatorId) {
       query = query.eq('coordinator_id', user.id);
     }
-    
-    const { data: poData, error } = await query;
+
+    // Remove default 1k row limit to get all POs
+    const { data: poData, error } = await query.range(0, 100000);
     
     if (error) {
       console.error('Error fetching POs:', error);
@@ -225,6 +226,56 @@ export async function GET(request: NextRequest) {
       };
     }
 
+    // ── Dedicated count queries (not subject to 1k row cap) ──
+    const { count: totalCount } = await supabase
+      .from('purchase_orders')
+      .select('*', { count: 'exact', head: true });
+
+    const { count: activeCount } = await supabase
+      .from('purchase_orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'active');
+
+    const { count: pendingCount } = await supabase
+      .from('purchase_orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending');
+
+    const { count: needAuthCount } = await supabase
+      .from('purchase_orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'approved_pending_auth');
+
+    // ── Outstanding clients: exhausted sessions + future pending_auth bookings ──
+    let outstandingClients = 0;
+    const { data: activePos } = await supabase
+      .from('purchase_orders')
+      .select('id, swimmer_id, sessions_used, sessions_authorized')
+      .eq('status', 'active')
+      .gt('sessions_authorized', 0);
+
+    if (activePos && activePos.length > 0) {
+      const exhaustedPos = activePos.filter(
+        (po) => po.sessions_used >= po.sessions_authorized
+      );
+      if (exhaustedPos.length > 0) {
+        const swimmerIds = [...new Set(exhaustedPos.map((po) => po.swimmer_id))]
+          .filter((id): id is string => id != null);
+        if (swimmerIds.length > 0) {
+          const today = new Date().toISOString().split('T')[0];
+          const { data: futurePendingAuth } = await supabase
+            .from('bookings')
+            .select('swimmer_id')
+            .in('swimmer_id', swimmerIds)
+            .eq('status', 'pending_auth')
+            .gte('session_date', today);
+          outstandingClients = new Set(
+            (futurePendingAuth || []).map((b) => b.swimmer_id)
+          ).size;
+        }
+      }
+    }
+
     let overallStats = {
       total: 0,
       pending: 0,
@@ -242,6 +293,7 @@ export async function GET(request: NextRequest) {
       totalBilled: 0,
       totalPaid: 0,
       totalOutstanding: 0,
+      outstandingClients: 0,
     };
 
     // Set up month filter for billing amounts
@@ -325,6 +377,13 @@ export async function GET(request: NextRequest) {
     });
 
     const fundingSourceStatsArray = Object.values(fundingSourceStats);
+
+    // Override accumulated stats with precise count queries
+    overallStats.total = totalCount ?? 0;
+    overallStats.active = activeCount ?? 0;
+    overallStats.pending = pendingCount ?? 0;
+    overallStats.needAuth = needAuthCount ?? 0;
+    overallStats.outstandingClients = outstandingClients;
 
     return NextResponse.json({
       data: outputData,
