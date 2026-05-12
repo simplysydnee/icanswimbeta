@@ -60,6 +60,7 @@ import {
 import { useParentInvitation } from '@/hooks/useParentInvitation';
 import { ParentInfoCard } from './ParentInfoCard';
 import { CoordinatorInfoCard } from './CoordinatorInfoCard';
+import { AssessmentReportTab } from './AssessmentReportTab';
 
 // Types
 export interface Swimmer {
