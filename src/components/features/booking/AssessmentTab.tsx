@@ -16,6 +16,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import { Calendar, Clock, MapPin, User, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import { ASSESSMENT_PRICE_CENTS } from '@/lib/booking-utils'
 
 import { InstructorAvatar } from '@/components/ui/instructor-avatar'
 
@@ -44,10 +45,17 @@ interface Swimmer {
   parent_id: string
 }
 
+export interface AssessmentSessionDetails {
+  startTime: string;
+  endTime: string;
+  location: string;
+  instructorName: string;
+}
+
 interface AssessmentTabProps {
   selectedSwimmerId?: string
   onBookingComplete?: (bookingId?: string) => void
-  onSessionSelected?: (sessionId: string) => void
+  onSessionSelected?: (sessionId: string, details?: AssessmentSessionDetails) => void
 }
 
 export function AssessmentTab({ selectedSwimmerId, onBookingComplete, onSessionSelected }: AssessmentTabProps) {
@@ -337,7 +345,12 @@ export function AssessmentTab({ selectedSwimmerId, onBookingComplete, onSessionS
                 key={session.id}
                 onClick={() => {
                   setSelectedSession(session.id);
-                  onSessionSelected?.(session.id);
+                  onSessionSelected?.(session.id, {
+                    startTime: session.start_time,
+                    endTime: session.end_time,
+                    location: session.location,
+                    instructorName: session.instructor?.full_name || 'TBD',
+                  });
                 }}
                 className={`p-4 border rounded-lg cursor-pointer transition-all ${
                   selectedSession === session.id
@@ -435,7 +448,7 @@ export function AssessmentTab({ selectedSwimmerId, onBookingComplete, onSessionS
                   {selectedSwimmerData && isRegionalCenterClient(selectedSwimmerData.funding_source_id) ? (
                     <span className="text-green-600">$0 (Regional Center)</span>
                   ) : (
-                    '$175'
+                    `$${ASSESSMENT_PRICE_CENTS / 100}`
                   )}
                 </span>
               </div>

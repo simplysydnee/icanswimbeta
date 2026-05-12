@@ -21,10 +21,20 @@ interface InstructorWithSessions {
   sessionCount: number
 }
 
-// Function to check if an email is a test email
-const isTestEmail = (email: string): boolean => {
-  const testDomains = ['test.com', 'example.com']
-  return testDomains.some(domain => email.toLowerCase().endsWith(`@${domain}`))
+// Function to check if an instructor is a real instructor (not test/admin/staff/info/unknown)
+const isRealInstructor = (instructor: { email: string; full_name: string | null }): boolean => {
+  if (!instructor.email) return false
+  if (!instructor.full_name || instructor.full_name.trim() === '') return false
+
+  const email = instructor.email.toLowerCase()
+  const name = instructor.full_name.toLowerCase()
+
+  if (email.includes('test') || name.includes('test')) return false
+  if (email.includes('info@icanswim') || name.includes('unknown')) return false
+  if (email.includes('admin') || name.includes('admin')) return false
+  if (name.includes('staff') || name.includes('sydnee')) return false
+
+  return true
 }
 
 async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessions[]> {
@@ -79,10 +89,8 @@ async function fetchInstructorsWithTodaySessions(): Promise<InstructorWithSessio
       return []
     }
 
-    // Filter out test instructors (additional safety check)
-    const realInstructors = instructors
-      .filter(instructor => !!instructor.email)
-      .filter(instructor => !isTestEmail(instructor.email))
+    // Filter out test, admin, staff, info, and unknown instructors
+    const realInstructors = instructors.filter(isRealInstructor)
 
     if (realInstructors.length === 0) {
       console.log('=== DEBUG: No real instructors found after filtering test emails')
@@ -248,7 +256,6 @@ export default function StaffInstructorSelectFiltered() {
           <IcanSwimLogo />
           <h2 className="mt-8 text-3xl font-bold text-[#2a5e84]">Select Instructor</h2>
           <p className="mt-2 text-gray-600">Choose your profile to access today's schedule</p>
-          <p className="mt-1 text-sm text-gray-500">(Test instructors filtered out)</p>
         </div>
 
         {/* Instructor grid */}
@@ -319,11 +326,6 @@ export default function StaffInstructorSelectFiltered() {
                 <p className="text-gray-500 mt-2">
                   There are no active instructors. Please contact an administrator.
                 </p>
-                <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                  <p className="text-sm text-yellow-700">
-                    <strong>Note:</strong> Test instructors (with @test.com or @example.com emails) have been filtered out.
-                  </p>
-                </div>
                 <Button
                   variant="outline"
                   className="mt-6"

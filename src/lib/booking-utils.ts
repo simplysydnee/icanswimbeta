@@ -8,3 +8,6 @@ export function isSwimmerFunded(swimmer: BookingSwimmer): boolean {
     swimmer.paymentType === 'funding_source'
   );
 }
+
+// Assessment price constant (centralized — update here when price changes)
+export const ASSESSMENT_PRICE_CENTS = 17500;

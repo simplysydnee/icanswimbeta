@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
-import { ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
+import { ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Calendar, Clock, MapPin, User } from 'lucide-react';
 
 import type { Swimmer, AvailableSession, BookingStep, SessionType } from '@/types/booking';
 import { SwimmerSelectStep } from './steps/SwimmerSelectStep';
@@ -12,6 +13,7 @@ import { DateSelectStep } from './steps/DateSelectStep';
 import { ConfirmationStep } from './steps/ConfirmationStep';
 import { BookingSummary } from './BookingSummary';
 import { AssessmentTab } from '@/components/features/booking/AssessmentTab';
+import type { AssessmentSessionDetails } from '@/components/features/booking/AssessmentTab';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -40,6 +42,9 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
   const [selectedInstructorId, setSelectedInstructorId] = useState<string | null>(null);
   const [instructorPreference, setInstructorPreference] = useState<'any' | 'specific'>('any');
   const [instructorName, setInstructorName] = useState<string | null>(null);
+
+  // Assessment session details (stored when AssessmentTab selects a session)
+  const [assessmentSessionDetails, setAssessmentSessionDetails] = useState<AssessmentSessionDetails | null>(null);
 
   // Handle preselected swimmer from URL
   useEffect(() => {
@@ -271,8 +276,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
         throw new Error(result.error || 'Failed to create booking');
       }
 
-      // Single  -> result.booking.id
-      // Recurring -> result.bookings[0].id
+      // Use booking ID from API response
       const bookingId: string | undefined =
         result?.booking?.id ?? result?.bookings?.[0]?.id;
 
@@ -315,6 +319,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
             selectedType={sessionType}
             paymentType={selectedSwimmer?.paymentType}
             fundingSourceName={selectedSwimmer?.fundingSourceName}
+            fundingSourceId={selectedSwimmer?.fundingSourceId}
             isFlexibleSwimmer={selectedSwimmer?.flexibleSwimmer || false}
             enrollmentStatus={selectedSwimmer?.enrollmentStatus}
             assessmentStatus={selectedSwimmer?.assessmentStatus}
@@ -380,7 +385,10 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
         return (
           <AssessmentTab
             selectedSwimmerId={selectedSwimmer?.id}
-            onSessionSelected={(sessionId) => setSelectedSessionId(sessionId)}
+            onSessionSelected={(sessionId, details) => {
+              setSelectedSessionId(sessionId);
+              if (details) setAssessmentSessionDetails(details);
+            }}
             onBookingComplete={(bookingId) => {
               setBookingResult({ success: true, bookingId });
               setTimeout(() => handleNext(), 150);
@@ -390,6 +398,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
 
       case 'confirm':
         const isPending = selectedSwimmer?.enrollmentStatus === 'pending_enrollment';
+        const isWaitlist = selectedSwimmer?.enrollmentStatus === 'waitlist';
 
         if (isPending) {
           // Pending approval message
@@ -425,6 +434,73 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
                   <li>• Assessment status: Not available until approved</li>
                   <li>• Booking: Not available until approved</li>
                   <li>• Contact: info@icanswim209.com or (209) 778-7877 for questions</li>
+                </ul>
+              </div>
+            </div>
+          );
+        } else if (isWaitlist) {
+          // Assessment booked — show success with stored session details
+          return (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 text-green-600">
+                <CheckCircle2 className="h-6 w-6" />
+                <div>
+                  <p className="font-semibold">Assessment Booked!</p>
+                  <p className="text-sm text-muted-foreground">
+                    We&apos;ll see you at the pool.
+                  </p>
+                </div>
+              </div>
+
+              {/* Session details from AssessmentTab selection */}
+              {assessmentSessionDetails && (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-green-600" />
+                    <span className="font-medium text-green-800">
+                      {format(new Date(assessmentSessionDetails.startTime), 'EEEE, MMMM d, yyyy')}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-green-600" />
+                    <span className="text-green-700">
+                      {format(new Date(assessmentSessionDetails.startTime), 'h:mm a')}
+                    </span>
+                  </div>
+                  {assessmentSessionDetails.location && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="h-4 w-4 text-green-600" />
+                      <span className="text-green-700">{assessmentSessionDetails.location}</span>
+                    </div>
+                  )}
+                  {assessmentSessionDetails.instructorName && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <User className="h-4 w-4 text-green-600" />
+                      <span className="text-green-700">{assessmentSessionDetails.instructorName}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <p className="font-medium mb-1">What happens next:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>You&apos;ll receive a confirmation email with assessment details</li>
+                    <li>Our team will review and approve the assessment</li>
+                    <li>Once approved, you can book regular lessons</li>
+                    <li>Cancel at least 24 hours in advance if needed</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-900 mb-2">What to Bring</h3>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Swimsuit and towel</li>
+                  <li>• Goggles (optional)</li>
+                  <li>• Arrive 10 minutes early</li>
                 </ul>
               </div>
             </div>
@@ -544,8 +620,19 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
               )}
 
               {currentStep === 'confirm' ? (
-                // ConfirmationStep owns its own buttons (review state) and CTAs (success state)
-                <div></div>
+                selectedSwimmer?.enrollmentStatus === 'waitlist' ? (
+                  // For assessments, go back to parent dashboard
+                  <Link href="/parent">
+                    <Button>
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Done
+                    </Button>
+                  </Link>
+                ) : (
+                  // For regular bookings, ConfirmationStep has its own buttons
+                  // Show empty div to maintain layout
+                  <div></div>
+                )
               ) : (
                 <>
                   <Button onClick={handleNext} disabled={!canProceed}>

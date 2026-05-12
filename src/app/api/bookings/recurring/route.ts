@@ -451,8 +451,15 @@ export async function POST(request: Request) {
       console.error('Failed to send confirmation email:', emailError);
     }
 
+    // Generate confirmation number for the response
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
+    const randomNum = Math.floor(10000 + Math.random() * 90000);
+    const confirmationNumber = `ICS-${dateStr}-${randomNum}`;
+
     return NextResponse.json({
       success: true,
+      confirmationNumber,
       until: untilDay,
       bookingsCreated: bookings.length,
       sessionDatesBooked: sessionDatesToBook,

@@ -8,7 +8,7 @@ import { CheckCircle, Calendar, Clock, User, MapPin, AlertTriangle, Loader2, Loc
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { useSessionHold } from '@/hooks/useSessionHold';
-import { isSwimmerFunded, type BookingSwimmer } from '@/lib/booking-utils';
+import { isSwimmerFunded, ASSESSMENT_PRICE_CENTS, type BookingSwimmer } from '@/lib/booking-utils';
 import { formatPrice } from '@/lib/utils';
 
 interface Session {
@@ -127,7 +127,7 @@ function PricingDisplay({ swimmer, sessions, sessionType }: { swimmer: Swimmer; 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-sm">Initial Assessment</span>
-          <span className="font-medium">{formatPrice(17500)}</span>
+          <span className="font-medium">{formatPrice(ASSESSMENT_PRICE_CENTS)}</span>
         </div>
         <div className="border-t pt-2">
           <p className="text-xs text-muted-foreground">An invoice will be sent to your email.</p>

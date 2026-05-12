@@ -277,12 +277,6 @@ export async function POST(request: Request) {
         .single();
 
       if (parentProfile?.email) {
-        // Generate confirmation number
-        const today = new Date();
-        const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
-        const randomNum = Math.floor(10000 + Math.random() * 90000);
-        const confirmationNumber = `ICS-${dateStr}-${randomNum}`;
-
         await emailService.sendSingleLessonBooking({
           parentEmail: parentProfile.email,
           parentName: parentProfile.full_name || 'Parent',
@@ -321,8 +315,15 @@ export async function POST(request: Request) {
       // Don't fail the booking if email fails
     }
 
+    // Generate confirmation number for the response
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
+    const randomNum = Math.floor(10000 + Math.random() * 90000);
+    const confirmationNumber = `ICS-${dateStr}-${randomNum}`;
+
     return NextResponse.json({
       success: true,
+      confirmationNumber,
       booking,
       session: {
         id: session.id,

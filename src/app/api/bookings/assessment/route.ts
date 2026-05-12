@@ -275,9 +275,16 @@ export async function POST(request: NextRequest) {
       // Don't fail the booking if email fails
     }
 
+    // Generate confirmation number for the response
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
+    const randomNum = Math.floor(10000 + Math.random() * 90000);
+    const confirmationNumber = `ICS-${dateStr}-${randomNum}`;
+
     // 13. Return success
     return NextResponse.json({
       success: true,
+      confirmationNumber,
       booking: booking,
       assessment: assessment,
       assessmentPO: assessmentPO,

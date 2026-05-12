@@ -3,7 +3,7 @@
 import { Calendar, Repeat, Check, AlertCircle } from 'lucide-react';
 import { SessionType } from '@/types/booking';
 import { formatPrice, cn, canBookRegularLessons, needsAssessment as needsAssessmentCheck, isPendingApproval } from '@/lib/utils';
-import { isSwimmerFunded } from '@/lib/booking-utils';
+import { isSwimmerFunded, ASSESSMENT_PRICE_CENTS } from '@/lib/booking-utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -12,6 +12,7 @@ interface SessionTypeStepProps {
   selectedType: SessionType | null;
   paymentType?: string; // 'private_pay', 'funded', 'scholarship', 'other'
   fundingSourceName?: string; // Name of funding source (e.g., "Valley Mountain Regional Center")
+  fundingSourceId?: string | null; // Actual funding source ID for isSwimmerFunded check
   isFlexibleSwimmer: boolean; // Add flexible swimmer status
   enrollmentStatus?: string; // 'waitlist', 'enrolled', 'assessment_only', etc.
   assessmentStatus?: string | null; // 'not_started', 'scheduled', 'completed', etc.
@@ -73,7 +74,7 @@ export function SessionTypeStep({ selectedType, paymentType, fundingSourceName, 
 
   // Use assessment price for waitlist swimmers, otherwise use regular lesson price
   const sessionPrice = isWaitlist
-    ? 17500
+    ? ASSESSMENT_PRICE_CENTS
     : 9000;
 
   // Get funding source display name
