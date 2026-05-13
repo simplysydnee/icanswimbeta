@@ -10,7 +10,7 @@ export interface PO_renewalTemplateData {
   swimmerName: string
   sessionsAuthorized: number
   uciNumber: string
-  neededByDate: string
+  neededByDate?: string
   startDate: string
   endDate: string
   masteredCount: number
@@ -30,7 +30,6 @@ export function renderPORenewalCoordinatorEmail(data: PO_renewalTemplateData): s
     '{{swimmer_name}}': escapeHtml(data.swimmerName),
     '{{sessions_authorized}}': String(data.sessionsAuthorized),
     '{{uci_number}}': escapeHtml(data.uciNumber),
-    '{{needed_by_date}}': escapeHtml(data.neededByDate),
     '{{start_date}}': escapeHtml(data.startDate),
     '{{end_date}}': escapeHtml(data.endDate),
     '{{mastered_count}}': String(data.masteredCount),
@@ -150,13 +149,6 @@ const TEMPLATE = `<!DOCTYPE html>
       </tr></table>
     </td></tr></table>
 
-    <!-- Deadline box -->
-    <table cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 20px;background:#fff;border:2px solid #c0392b;border-radius:10px;">
-    <tr><td style="padding:16px 18px;">
-      <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#c0392b;margin-bottom:5px;">🔴 Needed by — Next Scheduled Lesson</div>
-      <div style="font-size:18px;font-weight:600;color:#1a1a1a;">{{needed_by_date}}</div>
-      <div style="font-size:13px;color:#8a5050;margin-top:5px;font-weight:500;">By clicking Approve below, you confirm that lessons may resume and that you have submitted a POS request to your billing department for processing.</div>
-    </td></tr></table>
 
     <!-- PO details -->
     <table cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 20px;background:#f7fbfd;border-radius:8px;border:1px solid #e2eef5;">

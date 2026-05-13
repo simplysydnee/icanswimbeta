@@ -22,7 +22,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 import NeedsProgressUpdateCard from '@/components/dashboard/NeedsProgressUpdateCard';
-import { FundedPoRenewalCard } from '@/components/instructor/FundedPoRenewalCard';
 import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
 
 interface Session {
@@ -438,9 +437,6 @@ export default function InstructorDashboard() {
 
       {/* Needs Progress Update Card */}
       <NeedsProgressUpdateCard />
-
-      {/* Funded PO renewal queue (separate from daily progress reminders) */}
-      <FundedPoRenewalCard className="mt-6" />
 
       {/* Today's Schedule */}
       <Card>

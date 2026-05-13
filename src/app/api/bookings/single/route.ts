@@ -13,6 +13,16 @@ function getServiceSupabase() {
   });
 }
 
+/** Return June 30 of the fiscal year containing the given date (fiscal year = July 1 – June 30). */
+function getFiscalYearEnd(date: Date): Date {
+  // Jan–Jun (months 0–5) → fiscal year ends June 30 of same year
+  // Jul–Dec (months 6–11) → fiscal year ends June 30 of next year
+  if (date.getMonth() <= 5) {
+    return new Date(date.getFullYear(), 5, 30);
+  }
+  return new Date(date.getFullYear() + 1, 5, 30);
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
@@ -150,6 +160,7 @@ export async function POST(request: Request) {
     let poCoordinatorId: string | null = null;
     let bookingStatus: string = 'confirmed';
     let sessionsRemaining: number = 0;
+    let isNewFiscalYearPO: boolean = false;
     if (fundingSourceId && session.session_type === 'lesson') {
       console.log('Funding source requires authorization:', fundingSourceRow?.requires_authorization);
       if (fundingSourceRow?.requires_authorization) {
@@ -177,7 +188,7 @@ export async function POST(request: Request) {
           // 2. No valid PO in date range — check for a date-expired PO with sessions remaining
           const { data: expiredCandidates } = await serviceSupabase
             .from('purchase_orders')
-            .select('id, sessions_authorized, sessions_used, end_date, authorization_number, coordinator_id, notes')
+            .select('id, swimmer_id, funding_source_id, sessions_authorized, sessions_used, end_date, authorization_number, coordinator_id, notes')
             .eq('swimmer_id', swimmerId)
             .eq('po_type', 'lessons')
             .in('status', ['active', 'approved_pending_auth'])
@@ -191,31 +202,78 @@ export async function POST(request: Request) {
           );
 
           if (expiredPO) {
-            // Date-expired PO with sessions remaining → extension flow
-            const { calcExtensionEndDate } = await import('@/lib/email/pos-notifications');
-            const newEndDate = calcExtensionEndDate(expiredPO.end_date, 3);
+            // Determine if this booking crosses into a new fiscal year
+            const sessionDate = new Date(session.start_time);
+            const expiredPOFiscalYearEnd = getFiscalYearEnd(new Date(expiredPO.end_date));
+            const isNewFiscalYear = sessionDate > expiredPOFiscalYearEnd;
 
-            // Update the PO with extension fields before creating the booking
-            const oldEndDate = expiredPO.end_date;
-            await serviceSupabase
-              .from('purchase_orders')
-              .update({
-                end_date: newEndDate,
-                original_end_date: oldEndDate,
-                status: 'pending',
-                is_extension: true,
-                extension_requested_at: new Date().toISOString(),
-                notes: (
-                  (expiredPO.notes as string) ?? ''
-                ) + `\nExtension requested ${format(new Date(), 'MMM dd, yyyy')}. Original end date: ${oldEndDate}. New end date requested: ${newEndDate}`,
-              })
-              .eq('id', expiredPO.id);
+            if (isNewFiscalYear) {
+              // === Scenario B: New fiscal year — create a brand new PO ===
+              isNewFiscalYearPO = true;
+              sessionsRemaining = (expiredPO.sessions_authorized ?? 0) - (expiredPO.sessions_used ?? 0);
 
-            // Create booking as pending_auth, linked to this PO
-            bookingStatus = 'pending_auth';
-            activePoId = expiredPO.id;
-            poCoordinatorId = expiredPO.coordinator_id ?? null;
-            sessionsRemaining = (expiredPO.sessions_authorized ?? 0) - (expiredPO.sessions_used ?? 0);
+              // July 1 start date = fiscal year end + 1 day
+              const july1 = new Date(expiredPOFiscalYearEnd);
+              july1.setDate(july1.getDate() + 1);
+              const startDateStr = july1.toISOString().split('T')[0];
+
+              // End date = start + 3 months, capped at June 30
+              const endDate = new Date(july1);
+              endDate.setMonth(endDate.getMonth() + 3);
+              const fye = getFiscalYearEnd(endDate);
+              const endDateStr = endDate <= fye ? endDate.toISOString().split('T')[0] : fye.toISOString().split('T')[0];
+
+              const { data: newPO, error: newPOErr } = await serviceSupabase
+                .from('purchase_orders')
+                .insert({
+                  swimmer_id: expiredPO.swimmer_id,
+                  funding_source_id: expiredPO.funding_source_id,
+                  coordinator_id: expiredPO.coordinator_id,
+                  po_type: 'lessons',
+                  sessions_authorized: sessionsRemaining,
+                  sessions_used: 0,
+                  start_date: startDateStr,
+                  end_date: endDateStr,
+                  status: 'pending',
+                  is_extension: false,
+                  notes: `New fiscal year PO. Carrying ${sessionsRemaining} remaining sessions from PO ${expiredPO.id}. New authorization number required.`,
+                })
+                .select('id')
+                .single();
+
+              if (newPOErr || !newPO) {
+                console.error('Failed to create new fiscal year PO:', newPOErr);
+                return NextResponse.json({ error: 'Failed to create new PO' }, { status: 500 });
+              }
+
+              bookingStatus = 'pending_auth';
+              activePoId = newPO.id;
+              poCoordinatorId = expiredPO.coordinator_id ?? null;
+            } else {
+              // === Scenario A: Same fiscal year — extend existing PO ===
+              const { calcExtensionEndDate } = await import('@/lib/email/pos-notifications');
+              const newEndDate = calcExtensionEndDate(expiredPO.end_date, 3);
+
+              const oldEndDate = expiredPO.end_date;
+              await serviceSupabase
+                .from('purchase_orders')
+                .update({
+                  end_date: newEndDate,
+                  original_end_date: oldEndDate,
+                  status: 'pending',
+                  is_extension: true,
+                  extension_requested_at: new Date().toISOString(),
+                  notes: (
+                    (expiredPO.notes as string) ?? ''
+                  ) + `\nExtension requested ${format(new Date(), 'MMM dd, yyyy')}. Original end date: ${oldEndDate}. New end date requested: ${newEndDate}`,
+                })
+                .eq('id', expiredPO.id);
+
+              bookingStatus = 'pending_auth';
+              activePoId = expiredPO.id;
+              poCoordinatorId = expiredPO.coordinator_id ?? null;
+              sessionsRemaining = (expiredPO.sessions_authorized ?? 0) - (expiredPO.sessions_used ?? 0);
+            }
           } else {
             return NextResponse.json({ error: 'No valid funding source authorization' }, { status: 400 });
           }
@@ -360,57 +418,110 @@ export async function POST(request: Request) {
           }
         }
       } else if (bookingStatus === 'pending_auth' && sessionsRemaining > 0) {
-        // Extension flow — send parent notification instead of confirmation
-        if (parentProfile?.email) {
-          const extSubject = `Lesson Request Received — ${swimmer.first_name} ${swimmer.last_name}`;
-          const extContent = `
-            <h2 style="color: #2a5e84; margin-top: 0;">Lesson Request Received</h2>
-            <p>Hi ${parentProfile.full_name || 'Parent'},</p>
-            <p>We've received your lesson request for <strong>${swimmer.first_name} ${swimmer.last_name}</strong> on <strong>${format(new Date(session.start_time), 'EEEE, MMMM d, yyyy')}</strong>.</p>
-            <p>Your current service authorization has expired, but you still have <strong>${sessionsRemaining} lessons remaining</strong>. We have already contacted your coordinator to request an extension — no action is needed from you at this time.</p>
+        if (isNewFiscalYearPO) {
+          // Scenario B — new fiscal year, new authorization required
+          if (parentProfile?.email) {
+            const scBSubject = `Lesson Request Received — ${swimmer.first_name} ${swimmer.last_name}`;
+            const scBContent = `
+              <h2 style="color: #2a5e84; margin-top: 0;">Lesson Request Received</h2>
+              <p>Hi ${parentProfile.full_name || 'Parent'},</p>
+              <p>We've received your lesson request for <strong>${swimmer.first_name} ${swimmer.last_name}</strong> on <strong>${format(new Date(session.start_time), 'EEEE, MMMM d, yyyy')}</strong>.</p>
+              <p>Your current service authorization has expired and the lesson date falls in a new fiscal year. You still have <strong>${sessionsRemaining} lessons remaining</strong>, but a new authorization number is needed.</p>
 
-            <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:16px 18px;margin:18px 0;">
-              <div style="font-size:14px;font-weight:600;color:#7a5000;margin-bottom:6px;">📋 Authorization Extension Requested</div>
-              <p style="font-size:13px;color:#5a4a00;line-height:1.6;margin:0;">
-                We have submitted a request to extend ${swimmer.first_name}'s authorization to cover their remaining ${sessionsRemaining} lessons. Your lesson will be confirmed once your coordinator approves the extension.
-              </p>
-            </div>
-
-            <p style="font-size:13px;color:#5a7a8e;line-height:1.5;">
-              Please reach out to your coordinator directly as there may be documents that need to be signed on their end to process this request.
-            </p>
-
-            <div style="background:#e8f4fd;border:1px solid #b8d8f0;border-radius:8px;padding:14px 18px;margin:18px 0;">
-              <div style="font-size:14px;font-weight:600;color:#1a5a7a;margin-bottom:8px;">📅 Upcoming Lesson</div>
-              <table cellpadding="0" cellspacing="0" style="font-size:13px;color:#1a5a7a;">
-                <tr><td style="padding:2px 8px 2px 0;">📅</td><td>${format(new Date(session.start_time), 'EEEE, MMMM d, yyyy')}</td></tr>
-                <tr><td style="padding:2px 8px 2px 0;">⏰</td><td>${format(new Date(session.start_time), 'h:mm a')}</td></tr>
-                <tr><td style="padding:2px 8px 2px 0;">📍</td><td>${session.location || 'TBD'}</td></tr>
-                <tr><td style="padding:2px 8px 2px 0;">👤</td><td>${instructorProfile?.full_name || 'Any Available Instructor'}</td></tr>
-              </table>
-            </div>
-
-            <div style="background:#f0f6fa;border:1px solid #dde8f0;border-radius:8px;padding:14px 18px;margin:18px 0;">
-              <div style="font-size:14px;font-weight:600;color:#1a3347;margin-bottom:6px;">Questions? Contact us:</div>
-              <div style="font-size:13px;color:#3d5a6e;line-height:1.8;">
-                💬 Text: <a href="sms:2096437969" style="color:#23a1c0;">209-643-7969</a><br>
-                📞 Call: <a href="tel:2097787877" style="color:#23a1c0;">(209) 778-7877</a><br>
-                ✉️ <a href="mailto:info@icanswim209.com" style="color:#23a1c0;">info@icanswim209.com</a>
+              <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:16px 18px;margin:18px 0;">
+                <div style="font-size:14px;font-weight:600;color:#7a5000;margin-bottom:6px;">📋 New Authorization Required — New Fiscal Year</div>
+                <p style="font-size:13px;color:#5a4a00;line-height:1.6;margin:0;">
+                  Since this lesson falls in a new fiscal year, we have submitted a request for a new authorization for ${swimmer.first_name} covering their remaining ${sessionsRemaining} lessons. Your lesson will be confirmed once your coordinator approves the new authorization.
+                </p>
               </div>
-            </div>
-          `;
-          const extHtml = (await import('@/lib/emails/email-wrapper')).wrapEmailWithHeader(extContent);
-          await emailService.sendEmail({
-            to: parentProfile.email,
-            templateType: 'custom',
-            toName: parentProfile.full_name || undefined,
-            customData: { subject: extSubject, html: extHtml },
-          });
-        }
 
-        // Notify coordinator about the extension request
-        const { notifyCoordinatorPOExtension } = await import('@/lib/email/pos-notifications');
-        await notifyCoordinatorPOExtension(activePoId!, session.start_time);
+              <p style="font-size:13px;color:#5a7a8e;line-height:1.5;">
+                Please reach out to your coordinator directly as there may be documents that need to be signed on their end to process this request.
+              </p>
+
+              <div style="background:#e8f4fd;border:1px solid #b8d8f0;border-radius:8px;padding:14px 18px;margin:18px 0;">
+                <div style="font-size:14px;font-weight:600;color:#1a5a7a;margin-bottom:8px;">📅 Upcoming Lesson</div>
+                <table cellpadding="0" cellspacing="0" style="font-size:13px;color:#1a5a7a;">
+                  <tr><td style="padding:2px 8px 2px 0;">📅</td><td>${format(new Date(session.start_time), 'EEEE, MMMM d, yyyy')}</td></tr>
+                  <tr><td style="padding:2px 8px 2px 0;">⏰</td><td>${format(new Date(session.start_time), 'h:mm a')}</td></tr>
+                  <tr><td style="padding:2px 8px 2px 0;">📍</td><td>${session.location || 'TBD'}</td></tr>
+                  <tr><td style="padding:2px 8px 2px 0;">👤</td><td>${instructorProfile?.full_name || 'Any Available Instructor'}</td></tr>
+                </table>
+              </div>
+
+              <div style="background:#f0f6fa;border:1px solid #dde8f0;border-radius:8px;padding:14px 18px;margin:18px 0;">
+                <div style="font-size:14px;font-weight:600;color:#1a3347;margin-bottom:6px;">Questions? Contact us:</div>
+                <div style="font-size:13px;color:#3d5a6e;line-height:1.8;">
+                  💬 Text: <a href="sms:2096437969" style="color:#23a1c0;">209-643-7969</a><br>
+                  📞 Call: <a href="tel:2097787877" style="color:#23a1c0;">(209) 778-7877</a><br>
+                  ✉️ <a href="mailto:info@icanswim209.com" style="color:#23a1c0;">info@icanswim209.com</a>
+                </div>
+              </div>
+            `;
+            const scBHtml = (await import('@/lib/emails/email-wrapper')).wrapEmailWithHeader(scBContent);
+            await emailService.sendEmail({
+              to: parentProfile.email,
+              templateType: 'custom',
+              toName: parentProfile.full_name || undefined,
+              customData: { subject: scBSubject, html: scBHtml },
+            });
+          }
+
+          // Notify coordinator about the new fiscal year PO
+          const { notifyCoordinatorNewFiscalYearPO } = await import('@/lib/email/pos-notifications');
+          await notifyCoordinatorNewFiscalYearPO(activePoId!, sessionsRemaining);
+        } else {
+          // Scenario A — existing extension flow
+          if (parentProfile?.email) {
+            const extSubject = `Lesson Request Received — ${swimmer.first_name} ${swimmer.last_name}`;
+            const extContent = `
+              <h2 style="color: #2a5e84; margin-top: 0;">Lesson Request Received</h2>
+              <p>Hi ${parentProfile.full_name || 'Parent'},</p>
+              <p>We've received your lesson request for <strong>${swimmer.first_name} ${swimmer.last_name}</strong> on <strong>${format(new Date(session.start_time), 'EEEE, MMMM d, yyyy')}</strong>.</p>
+              <p>Your current service authorization has expired, but you still have <strong>${sessionsRemaining} lessons remaining</strong>. We have already contacted your coordinator to request an extension — no action is needed from you at this time.</p>
+
+              <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:16px 18px;margin:18px 0;">
+                <div style="font-size:14px;font-weight:600;color:#7a5000;margin-bottom:6px;">📋 Authorization Extension Requested</div>
+                <p style="font-size:13px;color:#5a4a00;line-height:1.6;margin:0;">
+                  We have submitted a request to extend ${swimmer.first_name}'s authorization to cover their remaining ${sessionsRemaining} lessons. Your lesson will be confirmed once your coordinator approves the extension.
+                </p>
+              </div>
+
+              <p style="font-size:13px;color:#5a7a8e;line-height:1.5;">
+                Please reach out to your coordinator directly as there may be documents that need to be signed on their end to process this request.
+              </p>
+
+              <div style="background:#e8f4fd;border:1px solid #b8d8f0;border-radius:8px;padding:14px 18px;margin:18px 0;">
+                <div style="font-size:14px;font-weight:600;color:#1a5a7a;margin-bottom:8px;">📅 Upcoming Lesson</div>
+                <table cellpadding="0" cellspacing="0" style="font-size:13px;color:#1a5a7a;">
+                  <tr><td style="padding:2px 8px 2px 0;">📅</td><td>${format(new Date(session.start_time), 'EEEE, MMMM d, yyyy')}</td></tr>
+                  <tr><td style="padding:2px 8px 2px 0;">⏰</td><td>${format(new Date(session.start_time), 'h:mm a')}</td></tr>
+                  <tr><td style="padding:2px 8px 2px 0;">📍</td><td>${session.location || 'TBD'}</td></tr>
+                  <tr><td style="padding:2px 8px 2px 0;">👤</td><td>${instructorProfile?.full_name || 'Any Available Instructor'}</td></tr>
+                </table>
+              </div>
+
+              <div style="background:#f0f6fa;border:1px solid #dde8f0;border-radius:8px;padding:14px 18px;margin:18px 0;">
+                <div style="font-size:14px;font-weight:600;color:#1a3347;margin-bottom:6px;">Questions? Contact us:</div>
+                <div style="font-size:13px;color:#3d5a6e;line-height:1.8;">
+                  💬 Text: <a href="sms:2096437969" style="color:#23a1c0;">209-643-7969</a><br>
+                  📞 Call: <a href="tel:2097787877" style="color:#23a1c0;">(209) 778-7877</a><br>
+                  ✉️ <a href="mailto:info@icanswim209.com" style="color:#23a1c0;">info@icanswim209.com</a>
+                </div>
+              </div>
+            `;
+            const extHtml = (await import('@/lib/emails/email-wrapper')).wrapEmailWithHeader(extContent);
+            await emailService.sendEmail({
+              to: parentProfile.email,
+              templateType: 'custom',
+              toName: parentProfile.full_name || undefined,
+              customData: { subject: extSubject, html: extHtml },
+            });
+          }
+
+          const { notifyCoordinatorPOExtension } = await import('@/lib/email/pos-notifications');
+          await notifyCoordinatorPOExtension(activePoId!);
+        }
       }
     } catch (emailError) {
       console.error('Failed to send confirmation email:', emailError);

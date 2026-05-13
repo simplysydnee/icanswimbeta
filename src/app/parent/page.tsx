@@ -530,6 +530,7 @@ export default function ParentDashboard() {
               <div className="space-y-4">
                 {bookings.map((booking) => {
                   const isExtensionPending = booking.status === 'pending_auth' && booking.purchase_order?.is_extension;
+                  const isNewFiscalYearPending = booking.status === 'pending_auth' && booking.purchase_order && booking.purchase_order.is_extension === false;
 
                   // Extension pending card — different visual from confirmed bookings
                   if (isExtensionPending) {
@@ -552,6 +553,44 @@ export default function ParentDashboard() {
                               </Badge>
                               <p className="text-sm text-amber-800 mt-3 leading-relaxed">
                                 An extension has been requested for {booking.swimmer.first_name}&apos;s service authorization ({sessionsRemaining} sessions remaining). Lessons will resume once your coordinator approves.
+                              </p>
+                              <div className="flex flex-wrap gap-2 mt-3">
+                                <Badge variant="outline" className="bg-amber-100/60 text-amber-800 border-amber-200">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  {formatDate(booking.session.start_time)}
+                                </Badge>
+                                <Badge variant="outline" className="bg-amber-100/60 text-amber-800 border-amber-200">
+                                  {formatTime(booking.session.start_time)}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  }
+
+                  // New fiscal year pending card — Scenario B
+                  if (isNewFiscalYearPending) {
+                    const sessionsRemaining = (booking.purchase_order?.sessions_authorized ?? 0) - (booking.purchase_order?.sessions_used ?? 0);
+                    return (
+                      <Card key={booking.id} className="border border-amber-300 bg-amber-50/40">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="h-10 w-10 bg-[#2a5e84] shrink-0">
+                              <AvatarFallback className="bg-[#2a5e84] text-white">
+                                {getSwimmerInitials(booking.swimmer.first_name, booking.swimmer.last_name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium">
+                                {booking.swimmer.first_name} {booking.swimmer.last_name}
+                              </div>
+                              <Badge className="mt-1 bg-amber-200 text-amber-900 border-amber-300">
+                                New Authorization Requested
+                              </Badge>
+                              <p className="text-sm text-amber-800 mt-3 leading-relaxed">
+                                A new authorization has been requested for {booking.swimmer.first_name} for the new fiscal year ({sessionsRemaining} sessions). Lessons will resume once your coordinator approves.
                               </p>
                               <div className="flex flex-wrap gap-2 mt-3">
                                 <Badge variant="outline" className="bg-amber-100/60 text-amber-800 border-amber-200">
