@@ -149,6 +149,7 @@ export async function POST(request: Request) {
     /** Coordinator user id from the purchase order row (profiles.id), not swimmers.coordinator_id */
     let poCoordinatorId: string | null = null;
     let bookingStatus: string = 'confirmed';
+    let sessionsRemaining: number = 0;
     if (fundingSourceId && session.session_type === 'lesson') {
       console.log('Funding source requires authorization:', fundingSourceRow?.requires_authorization);
       if (fundingSourceRow?.requires_authorization) {
@@ -173,11 +174,10 @@ export async function POST(request: Request) {
           currentBookingCount = activePo.sessions_booked ?? 0;
           poCoordinatorId = activePo.coordinator_id ?? null;
         } else {
-          // 2. No valid PO in date range — check for an expired PO with sessions remaining
-          //    Supabase doesn't support column-to-column comparison in queries, so fetch and filter in JS
+          // 2. No valid PO in date range — check for a date-expired PO with sessions remaining
           const { data: expiredCandidates } = await serviceSupabase
             .from('purchase_orders')
-            .select('id, sessions_authorized, sessions_used, end_date, authorization_number, coordinator_id')
+            .select('id, sessions_authorized, sessions_used, end_date, authorization_number, coordinator_id, notes')
             .eq('swimmer_id', swimmerId)
             .eq('po_type', 'lessons')
             .in('status', ['active', 'approved_pending_auth'])
@@ -191,13 +191,31 @@ export async function POST(request: Request) {
           );
 
           if (expiredPO) {
-            // Send extension email to coordinator
-            const { notifyCoordinatorExpiredPO } = await import('@/lib/email/pos-notifications');
-            await notifyCoordinatorExpiredPO(expiredPO.id, session.start_time);
+            // Date-expired PO with sessions remaining → extension flow
+            const { calcExtensionEndDate } = await import('@/lib/email/pos-notifications');
+            const newEndDate = calcExtensionEndDate(expiredPO.end_date, 3);
 
-            // Allow booking but mark as pending_auth — coordinator must extend first
+            // Update the PO with extension fields before creating the booking
+            const oldEndDate = expiredPO.end_date;
+            await serviceSupabase
+              .from('purchase_orders')
+              .update({
+                end_date: newEndDate,
+                original_end_date: oldEndDate,
+                status: 'pending',
+                is_extension: true,
+                extension_requested_at: new Date().toISOString(),
+                notes: (
+                  (expiredPO.notes as string) ?? ''
+                ) + `\nExtension requested ${format(new Date(), 'MMM dd, yyyy')}. Original end date: ${oldEndDate}. New end date requested: ${newEndDate}`,
+              })
+              .eq('id', expiredPO.id);
+
+            // Create booking as pending_auth, linked to this PO
             bookingStatus = 'pending_auth';
+            activePoId = expiredPO.id;
             poCoordinatorId = expiredPO.coordinator_id ?? null;
+            sessionsRemaining = (expiredPO.sessions_authorized ?? 0) - (expiredPO.sessions_used ?? 0);
           } else {
             return NextResponse.json({ error: 'No valid funding source authorization' }, { status: 400 });
           }
@@ -213,6 +231,7 @@ export async function POST(request: Request) {
         swimmer_id: swimmerId,
         parent_id: parentId,
         status: bookingStatus,
+        purchase_order_id: activePoId,
         created_at: new Date().toISOString(),
       })
       .select()
@@ -263,8 +282,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // Update funding source PO if applicable
-    if (fundingSourceId && activePoId) {
+    // Update funding source PO if applicable — only increment for confirmed bookings
+    if (fundingSourceId && activePoId && bookingStatus === 'confirmed') {
       const nextSessionsBooked = (Number(currentBookingCount) || 0) + 1;
 
       const { error: poUpdateError, data: poUpdated } = await serviceSupabase
@@ -291,7 +310,7 @@ export async function POST(request: Request) {
 
       console.log('Purchase order updated:', poUpdated);
     }
-    // Send confirmation email
+    // Send emails — branch on booking status
     try {
       const { data: parentProfile } = await serviceSupabase
         .from('profiles')
@@ -305,39 +324,93 @@ export async function POST(request: Request) {
         .eq('id', session.instructor_id)
         .single();
 
-      if (parentProfile?.email) {
-        await emailService.sendSingleLessonBooking({
-          parentEmail: parentProfile.email,
-          parentName: parentProfile.full_name || 'Parent',
-          childName: `${swimmer.first_name} ${swimmer.last_name}`,
-          date: format(new Date(session.start_time), 'EEEE, MMMM d, yyyy'),
-          time: format(new Date(session.start_time), 'h:mm a'),
-          location: session.location || 'TBD',
-          instructor: instructorProfile?.full_name || 'Instructor',
-        });
-      }
-
-      // Funded swimmers: notify coordinator from purchase_orders.coordinator_id → profiles.email
-      if (fundingSourceId && poCoordinatorId) {
-        const { data: coordinatorProfile } = await serviceSupabase
-          .from('profiles')
-          .select('email, full_name')
-          .eq('id', poCoordinatorId)
-          .maybeSingle();
-
-        if (coordinatorProfile?.email) {
-          await emailService.sendFundedSingleLessonCoordinatorNotification({
-            coordinatorEmail: coordinatorProfile.email,
-            coordinatorName: coordinatorProfile.full_name || 'Coordinator',
-            parentName: parentProfile?.full_name || 'Parent',
+      if (bookingStatus === 'confirmed') {
+        if (parentProfile?.email) {
+          await emailService.sendSingleLessonBooking({
+            parentEmail: parentProfile.email,
+            parentName: parentProfile.full_name || 'Parent',
             childName: `${swimmer.first_name} ${swimmer.last_name}`,
             date: format(new Date(session.start_time), 'EEEE, MMMM d, yyyy'),
             time: format(new Date(session.start_time), 'h:mm a'),
             location: session.location || 'TBD',
             instructor: instructorProfile?.full_name || 'Instructor',
-            fundingSourceName: fundingSourceRow?.name ?? undefined,
           });
         }
+
+        // Funded swimmers: notify coordinator
+        if (fundingSourceId && poCoordinatorId) {
+          const { data: coordinatorProfile } = await serviceSupabase
+            .from('profiles')
+            .select('email, full_name')
+            .eq('id', poCoordinatorId)
+            .maybeSingle();
+
+          if (coordinatorProfile?.email) {
+            await emailService.sendFundedSingleLessonCoordinatorNotification({
+              coordinatorEmail: coordinatorProfile.email,
+              coordinatorName: coordinatorProfile.full_name || 'Coordinator',
+              parentName: parentProfile?.full_name || 'Parent',
+              childName: `${swimmer.first_name} ${swimmer.last_name}`,
+              date: format(new Date(session.start_time), 'EEEE, MMMM d, yyyy'),
+              time: format(new Date(session.start_time), 'h:mm a'),
+              location: session.location || 'TBD',
+              instructor: instructorProfile?.full_name || 'Instructor',
+              fundingSourceName: fundingSourceRow?.name ?? undefined,
+            });
+          }
+        }
+      } else if (bookingStatus === 'pending_auth' && sessionsRemaining > 0) {
+        // Extension flow — send parent notification instead of confirmation
+        if (parentProfile?.email) {
+          const extSubject = `Lesson Request Received — ${swimmer.first_name} ${swimmer.last_name}`;
+          const extContent = `
+            <h2 style="color: #2a5e84; margin-top: 0;">Lesson Request Received</h2>
+            <p>Hi ${parentProfile.full_name || 'Parent'},</p>
+            <p>We've received your lesson request for <strong>${swimmer.first_name} ${swimmer.last_name}</strong> on <strong>${format(new Date(session.start_time), 'EEEE, MMMM d, yyyy')}</strong>.</p>
+            <p>Your current service authorization has expired, but you still have <strong>${sessionsRemaining} lessons remaining</strong>. We have already contacted your coordinator to request an extension — no action is needed from you at this time.</p>
+
+            <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:16px 18px;margin:18px 0;">
+              <div style="font-size:14px;font-weight:600;color:#7a5000;margin-bottom:6px;">📋 Authorization Extension Requested</div>
+              <p style="font-size:13px;color:#5a4a00;line-height:1.6;margin:0;">
+                We have submitted a request to extend ${swimmer.first_name}'s authorization to cover their remaining ${sessionsRemaining} lessons. Your lesson will be confirmed once your coordinator approves the extension.
+              </p>
+            </div>
+
+            <p style="font-size:13px;color:#5a7a8e;line-height:1.5;">
+              Please reach out to your coordinator directly as there may be documents that need to be signed on their end to process this request.
+            </p>
+
+            <div style="background:#e8f4fd;border:1px solid #b8d8f0;border-radius:8px;padding:14px 18px;margin:18px 0;">
+              <div style="font-size:14px;font-weight:600;color:#1a5a7a;margin-bottom:8px;">📅 Upcoming Lesson</div>
+              <table cellpadding="0" cellspacing="0" style="font-size:13px;color:#1a5a7a;">
+                <tr><td style="padding:2px 8px 2px 0;">📅</td><td>${format(new Date(session.start_time), 'EEEE, MMMM d, yyyy')}</td></tr>
+                <tr><td style="padding:2px 8px 2px 0;">⏰</td><td>${format(new Date(session.start_time), 'h:mm a')}</td></tr>
+                <tr><td style="padding:2px 8px 2px 0;">📍</td><td>${session.location || 'TBD'}</td></tr>
+                <tr><td style="padding:2px 8px 2px 0;">👤</td><td>${instructorProfile?.full_name || 'Any Available Instructor'}</td></tr>
+              </table>
+            </div>
+
+            <div style="background:#f0f6fa;border:1px solid #dde8f0;border-radius:8px;padding:14px 18px;margin:18px 0;">
+              <div style="font-size:14px;font-weight:600;color:#1a3347;margin-bottom:6px;">Questions? Contact us:</div>
+              <div style="font-size:13px;color:#3d5a6e;line-height:1.8;">
+                💬 Text: <a href="sms:2096437969" style="color:#23a1c0;">209-643-7969</a><br>
+                📞 Call: <a href="tel:2097787877" style="color:#23a1c0;">(209) 778-7877</a><br>
+                ✉️ <a href="mailto:info@icanswim209.com" style="color:#23a1c0;">info@icanswim209.com</a>
+              </div>
+            </div>
+          `;
+          const extHtml = (await import('@/lib/emails/email-wrapper')).wrapEmailWithHeader(extContent);
+          await emailService.sendEmail({
+            to: parentProfile.email,
+            templateType: 'custom',
+            toName: parentProfile.full_name || undefined,
+            customData: { subject: extSubject, html: extHtml },
+          });
+        }
+
+        // Notify coordinator about the extension request
+        const { notifyCoordinatorPOExtension } = await import('@/lib/email/pos-notifications');
+        await notifyCoordinatorPOExtension(activePoId!, session.start_time);
       }
     } catch (emailError) {
       console.error('Failed to send confirmation email:', emailError);

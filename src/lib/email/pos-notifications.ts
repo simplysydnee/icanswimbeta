@@ -301,17 +301,27 @@ function formatDate(iso: string): string {
  * Calculate a new end date by adding months, capped at June 30 of the current fiscal year.
  * Fiscal year ends June 30 — any end date past that is capped.
  */
-function calcExtensionEndDate(fromDate: string, addMonths: number = 3): string {
+export function calcExtensionEndDate(fromDate: string, addMonths: number = 3): string {
   const d = new Date(fromDate);
   d.setMonth(d.getMonth() + addMonths);
 
-  // Fiscal year end is June 30 of the year the extended date falls in
+  // Fiscal year ends June 30
   const year = d.getFullYear();
-  const fiscalYearEnd = new Date(year, 5, 30); // June 30
+  const fiscalYearEnd = new Date(year, 5, 30);
 
-  return d <= fiscalYearEnd
-    ? d.toISOString().split('T')[0]
-    : fiscalYearEnd.toISOString().split('T')[0];
+  if (d <= fiscalYearEnd) {
+    return d.toISOString().split('T')[0];
+  }
+
+  // If the extended date is past June 30, check whether we're already past this fiscal year
+  const today = new Date();
+  if (today > fiscalYearEnd) {
+    // Already in the next fiscal year — cap at following June 30
+    const nextFiscalYearEnd = new Date(year + 1, 5, 30);
+    return nextFiscalYearEnd.toISOString().split('T')[0];
+  }
+
+  return fiscalYearEnd.toISOString().split('T')[0];
 }
 
 export async function notifyCoordinatorExpiredPO(poId: string, requestedDate: string) {
@@ -435,6 +445,156 @@ export async function notifyCoordinatorExpiredPO(poId: string, requestedDate: st
           The new end date is calculated as current end date + 3 months,
           capped at June 30 of the current fiscal year per VMRC/CVRC guidelines.
         </p>
+      </div>
+    `;
+
+    const html = wrapEmailWithHeader(content);
+
+    await emailService.sendPOSNotification({
+      to: coordinatorEmail,
+      toName: coordinatorName || undefined,
+      subject,
+      html,
+    });
+
+    console.log(`Coordinator PO extension notification sent to ${coordinatorEmail} for PO ${poId}`);
+  } catch (error) {
+    console.error('Failed to send coordinator PO extension notification:', error);
+  }
+}
+
+/**
+ * notifyCoordinatorPOExtension — sends a date extension email to the coordinator
+ * Used when a PO's end_date has passed but sessions remain (different from renewal).
+ * Uses the same po-approve edge function for the approval button.
+ *
+ * Email format follows the spec: short, no progress report, prominent new end date box.
+ */
+export async function notifyCoordinatorPOExtension(poId: string, neededByDate: string) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SECRET_KEY;
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.error('notifyCoordinatorPOExtension: missing Supabase service role config');
+    return;
+  }
+  const serviceSupabase = createSupabaseClient(supabaseUrl, serviceRoleKey);
+
+  try {
+    // 1. Fetch PO + swimmer + coordinator details
+    const { data: po, error: poErr } = await serviceSupabase
+      .from('purchase_orders')
+      .select(`
+        id, swimmer_id, sessions_authorized, sessions_used, end_date, original_end_date, authorization_number,
+        swimmer:swimmers(
+          id, first_name, last_name, uci_number,
+          funding_coordinator_name, funding_coordinator_email, coordinator_email, coordinator_name
+        )
+      `)
+      .eq('id', poId)
+      .single();
+
+    if (poErr || !po) {
+      console.error('notifyCoordinatorPOExtension: PO not found', { poId, error: poErr });
+      return;
+    }
+
+    const swimmer = Array.isArray(po.swimmer) ? po.swimmer[0] : po.swimmer;
+    if (!swimmer) {
+      console.error('notifyCoordinatorPOExtension: swimmer not found for PO', { poId });
+      return;
+    }
+
+    const coordinatorEmail =
+      swimmer.funding_coordinator_email?.trim() ||
+      swimmer.coordinator_email?.trim();
+    const coordinatorName =
+      swimmer.funding_coordinator_name?.trim() ||
+      swimmer.coordinator_name?.trim();
+
+    if (!coordinatorEmail) {
+      console.warn(
+        'notifyCoordinatorPOExtension: no coordinator email on file; skipping email',
+        { poId, swimmerId: swimmer.id }
+      );
+      return;
+    }
+
+    const swimmerName = `${swimmer.first_name ?? ''} ${swimmer.last_name ?? ''}`.trim();
+    const sessionsRemaining = (po.sessions_authorized ?? 0) - (po.sessions_used ?? 0);
+    const newEndDate = calcExtensionEndDate(po.end_date, 3);
+    const neededByFormatted = formatDate(neededByDate);
+    const originalEndDateFormatted = formatDate(po.original_end_date || po.end_date);
+
+    // 2. Generate approve token + 30-day expiry
+    const token = generateApproveToken();
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    // 3. Store approve token on PO
+    const { error: updateErr } = await serviceSupabase
+      .from('purchase_orders')
+      .update({
+        approve_token: token,
+        approve_token_expires_at: expiresAt,
+      })
+      .eq('id', poId);
+
+    if (updateErr) {
+      console.error('notifyCoordinatorPOExtension: failed to store approve_token', updateErr);
+    }
+
+    const approveUrl = getApproveUrl(token);
+
+    // 4. Build extension email (short — no progress report per spec)
+    const subject = `POS Date Extension Needed — ${swimmerName} (${sessionsRemaining} sessions remaining)`;
+
+    const content = `
+      <div style="background:linear-gradient(135deg,#2A5E84 0%,#23A1C0 100%);padding:28px 36px;border-radius:8px 8px 0 0;">
+        <div style="font-family:'DM Serif Display',Georgia,serif;color:#fff;font-size:20px;line-height:1.3;">
+          <span style="display:block;font-family:Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;opacity:.7;margin-bottom:4px;">I Can Swim Adaptive Aquatics</span>
+          POS Date Extension Needed
+        </div>
+      </div>
+      <div style="padding:24px 28px;">
+        <p style="margin:0 0 14px;font-size:15px;font-weight:600;color:#1a3347;">Hi ${coordinatorName || 'Coordinator'},</p>
+        <p style="margin:0 0 18px;font-size:14px;line-height:1.7;color:#3d5a6e;">
+          I hope you're doing well! We're reaching out regarding <strong style="color:#1a3347;">${swimmerName}</strong> —
+          their current authorization has expired by date but they still have
+          <strong>${sessionsRemaining} sessions remaining</strong>. We are requesting a date
+          extension so their lessons can continue without interruption.
+        </p>
+
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7fbfd;border-radius:8px;border:1px solid #e2eef5;margin:0 0 20px;">
+          <tr><td style="padding:14px 18px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+              <tr><td style="padding:4px 8px 4px 0;color:#5a7a8e;width:45%;">Client</td><td style="padding:4px 0;font-weight:600;color:#1a3347;">${swimmerName}</td></tr>
+              <tr><td style="padding:4px 8px 4px 0;color:#5a7a8e;">UCI Number</td><td style="padding:4px 0;font-weight:600;color:#1a3347;">${swimmer.uci_number || 'Pending'}</td></tr>
+              <tr><td style="padding:4px 8px 4px 0;color:#5a7a8e;">Auth Number</td><td style="padding:4px 0;font-weight:600;color:#1a3347;">${po.authorization_number || 'Pending'}</td></tr>
+              <tr><td style="padding:4px 8px 4px 0;color:#5a7a8e;">Sessions remaining</td><td style="padding:4px 0;font-weight:600;color:#1a3347;">${sessionsRemaining} of ${po.sessions_authorized}</td></tr>
+              <tr><td style="padding:4px 8px 4px 0;color:#5a7a8e;">Original end date</td><td style="padding:4px 0;font-weight:600;color:#c0392b;">${originalEndDateFormatted} (expired)</td></tr>
+              <tr><td style="padding:4px 8px 4px 0;color:#5a7a8e;">Needed by</td><td style="padding:4px 0;font-weight:600;color:#c0392b;">${neededByFormatted}</td></tr>
+            </table>
+          </td></tr>
+        </table>
+
+        <!-- New end date box — prominent teal/green background -->
+        <div style="background:#e8f8f2;border:2px solid #1D9E75;border-radius:10px;padding:18px 20px;margin:0 0 20px;text-align:center;">
+          <div style="font-size:13px;font-weight:600;color:#0F6E56;letter-spacing:.02em;margin-bottom:4px;">📅 Requested New End Date</div>
+          <div style="font-size:24px;font-weight:700;color:#085041;">${formatDate(newEndDate)}</div>
+          <div style="font-size:12px;color:#1D9E75;margin-top:6px;">
+            This is a date extension only. The existing authorization number
+            <strong>${po.authorization_number || 'Pending'}</strong> remains valid — no new authorization number is needed.
+          </div>
+        </div>
+
+        <div style="text-align:center;margin:0 0 8px;">
+          <a href="${approveUrl}" style="display:block;background:#1D9E75;color:#fff;text-decoration:none;padding:16px 24px;border-radius:50px;font-size:15px;font-weight:700;letter-spacing:.02em;">
+            ✅ Approve Extension — I've submitted this to billing
+          </a>
+          <div style="font-size:12px;color:#a0b8c8;margin-top:10px;line-height:1.5;">
+            By clicking Approve, you confirm the date extension has been submitted to your billing department.
+            The authorization number remains the same.
+          </div>
+        </div>
       </div>
     `;
 
