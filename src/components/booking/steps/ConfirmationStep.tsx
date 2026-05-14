@@ -21,6 +21,7 @@ interface Session {
   heldBy?: string;
   heldUntil?: string;
   isHeld?: boolean;
+  priceCents?: number | null;
 }
 
 interface Swimmer extends BookingSwimmer {
@@ -51,7 +52,7 @@ interface ConfirmationStepProps {
 }
 
 function PricingDisplay({ swimmer, sessions, sessionType }: { swimmer: Swimmer; sessions: Session[]; sessionType: string }) {
-  const priceCents = swimmer.fundingSourcePriceCents;
+  const priceCents = swimmer.paymentType === 'private_pay' ? sessions[0]?.priceCents : 0;
   const requiresAuth = swimmer.fundingSourceRequiresAuth;
   const hasFundingSource = !!swimmer.fundingSourceId;
 

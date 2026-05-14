@@ -1,5 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { cancelBooking } from '@/lib/booking/cancel'
+
+function getServiceSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SECRET_KEY
+  if (!url || !key) throw new Error('Missing Supabase env (service role)')
+  return createServiceClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
 
 export async function GET(
   request: NextRequest,
@@ -130,7 +141,36 @@ export async function PATCH(
       )
     }
 
-    // Update booking
+    // Cancellation via PATCH (admin tools sometimes do this directly) must go
+    // through the shared cancellation service so it produces the same side
+    // effects as the parent /cancel endpoint: PO decrement, floating session
+    // creation on late cancel, flexible_swimmer flag, analytics row
+    // (BUG-00d + BUG-00e). Other status transitions stay on the simple path.
+    if (body.status === 'cancelled' && currentBooking.status !== 'cancelled') {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      const serviceSupabase = getServiceSupabase()
+      const result = await cancelBooking(serviceSupabase, {
+        bookingId: id,
+        source: 'admin',
+        canceledByUserId: user.id,
+        reason: body.cancel_reason ?? body.notes ?? null,
+      })
+      const { data: booking } = await serviceSupabase
+        .from('bookings')
+        .select('*')
+        .eq('id', id)
+        .single()
+      return NextResponse.json({
+        booking,
+        message: 'Booking cancelled',
+        result,
+      })
+    }
+
+    // Update booking (non-cancel paths)
     const { data: booking, error } = await supabase
       .from('bookings')
       .update({
@@ -147,28 +187,6 @@ export async function PATCH(
         { error: 'Failed to update booking' },
         { status: 500 }
       )
-    }
-
-    // If status changed to cancelled, update session booking count
-    if (body.status === 'cancelled' && currentBooking.status !== 'cancelled') {
-      const { data: session } = await supabase
-        .from('sessions')
-        .select('booking_count, max_capacity')
-        .eq('id', currentBooking.session_id)
-        .single()
-
-      if (session) {
-        const newBookingCount = Math.max(0, (session.booking_count || 0) - 1)
-        const isFull = newBookingCount >= session.max_capacity
-
-        await supabase
-          .from('sessions')
-          .update({
-            booking_count: newBookingCount,
-            is_full: isFull
-          })
-          .eq('id', currentBooking.session_id)
-      }
     }
 
     return NextResponse.json({

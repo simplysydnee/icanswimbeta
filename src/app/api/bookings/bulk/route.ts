@@ -1,5 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { cancelBooking } from '@/lib/booking/cancel'
+
+function getServiceSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SECRET_KEY
+  if (!url || !key) throw new Error('Missing Supabase env (service role)')
+  return createServiceClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +26,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Identify the actor for the analytics rows the cancel branch writes.
+    const { data: { user } } = await supabase.auth.getUser()
+
     // Get current bookings to track session updates
     const { data: bookings } = await supabase
       .from('bookings')
@@ -28,27 +42,58 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // The cancel branch goes through the shared cancellation service so that
+    // bulk cancellations have the same side effects as the parent-initiated
+    // cancel endpoint: decrements session.booking_count and PO sessions_booked,
+    // flips flexible_swimmer + creates floating_sessions for late cancellations,
+    // and writes an analytics row per booking (BUG-00e + BUG-00d).
+    if (action === 'cancel') {
+      if (!data?.reason) {
+        return NextResponse.json(
+          { error: 'Cancel reason is required' },
+          { status: 400 }
+        )
+      }
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+
+      const serviceSupabase = getServiceSupabase()
+      const results: Array<{ bookingId: string; ok: boolean; error?: string }> = []
+      let cancelledCount = 0
+
+      for (const b of bookings) {
+        if (b.status === 'cancelled') {
+          results.push({ bookingId: b.id, ok: true })
+          continue
+        }
+        try {
+          await cancelBooking(serviceSupabase, {
+            bookingId: b.id,
+            source: 'bulk',
+            canceledByUserId: user.id,
+            reason: data.reason,
+          })
+          results.push({ bookingId: b.id, ok: true })
+          cancelledCount += 1
+        } catch (e: any) {
+          console.error(`Bulk cancel failed for ${b.id}:`, e)
+          results.push({ bookingId: b.id, ok: false, error: e?.message ?? 'cancel failed' })
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `${cancelledCount} bookings cancelled`,
+        count: cancelledCount,
+        results,
+      })
+    }
+
     let updateData: any = {}
     let message = ''
 
     switch (action) {
-      case 'cancel':
-        if (!data?.reason) {
-          return NextResponse.json(
-            { error: 'Cancel reason is required' },
-            { status: 400 }
-          )
-        }
-        updateData = {
-          status: 'cancelled',
-          cancel_reason: data.reason,
-          cancel_source: 'admin',
-          canceled_at: new Date().toISOString(),
-          notes: data.notes ? `${data.notes}\n\n[Bulk cancel: ${data.reason}]` : `[Bulk cancel: ${data.reason}]`
-        }
-        message = `${bookings.length} bookings cancelled`
-        break
-
       case 'change_instructor':
         if (!data?.instructorId) {
           return NextResponse.json(
@@ -115,41 +160,6 @@ export async function POST(request: NextRequest) {
           { error: 'Failed to update bookings' },
           { status: 500 }
         )
-      }
-    }
-
-    // Update session booking counts for cancellations
-    if (action === 'cancel') {
-      const confirmedBookings = bookings.filter(b => b.status === 'confirmed')
-      const sessionCounts: Record<string, number> = {}
-
-      // Count cancellations per session
-      confirmedBookings.forEach(booking => {
-        if (booking.session_id) {
-          sessionCounts[booking.session_id] = (sessionCounts[booking.session_id] || 0) + 1
-        }
-      })
-
-      // Update each session
-      for (const [sessionId, cancelCount] of Object.entries(sessionCounts)) {
-        const { data: session } = await supabase
-          .from('sessions')
-          .select('booking_count, max_capacity')
-          .eq('id', sessionId)
-          .single()
-
-        if (session) {
-          const newBookingCount = Math.max(0, (session.booking_count || 0) - cancelCount)
-          const isFull = newBookingCount >= session.max_capacity
-
-          await supabase
-            .from('sessions')
-            .update({
-              booking_count: newBookingCount,
-              is_full: isFull
-            })
-            .eq('id', sessionId)
-        }
       }
     }
 
