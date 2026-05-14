@@ -1127,349 +1127,200 @@ export function SwimmerDetailModal({
               </div>
           </TabsContent>
 
-          {/* Progress Tab */}
-          <TabsContent value="progress" className="space-y-4">
-            <section>
-              <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
-                <AwardIcon className="h-4 w-4" />
-                Progress & Skills
-              </h3>
-
-              <div className="space-y-3">
-                {/* Level Management - Admin Only */}
-                {isAdmin && swimmer && (
-                  <Card>
-                    <CardHeader className="py-2 px-3">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <Award className="h-4 w-4 text-muted-foreground" />
-                        Current Level
-                      </CardTitle>
-                      <p className="text-xs text-muted-foreground">
-                        Manually adjust swimmer's level (admin only)
-                      </p>
-                    </CardHeader>
-                    <CardContent className="px-3 pb-3 pt-0">
-                      <LevelSelector
-                        swimmerId={swimmer.id}
-                        currentLevelId={swimmer.currentLevelId || swimmer.currentLevel?.id || null}
-                        onLevelChange={() => {
-                          // Optionally refresh swimmer data
-                          fetchAdditionalData();
-                        }}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Level Progress Summary */}
+          {/* Progress Tab - Compact Grid Layout */}
+          <TabsContent value="progress" className="mt-4 space-y-4">
+            {/* Top Row: Level + Progress Bar */}
+            <div className="chart-section">
+              <div className="flex flex-wrap items-center gap-4 mb-3">
+                {/* Current Level Display */}
                 {swimmer.currentLevel && (
-                  <Card>
-                    <CardHeader className="py-2 px-3">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <Award className="h-4 w-4 text-muted-foreground" />
-                        Level Progress
-                      </CardTitle>
-                      <CardDescription className="text-xs">
-                        {swimmer.currentLevel.displayName}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="px-3 pb-3 pt-0">
-                      {loadingData ? (
-                        <div className="space-y-2">
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-6 w-1/2" />
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="h-3 w-3 rounded-full"
-                                style={{ backgroundColor: swimmer.currentLevel.color || '#ccc' }}
-                              />
-                              <span className="text-sm font-medium">{swimmer.currentLevel.displayName}</span>
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {(() => {
-                                const mastered = swimmerSkills.filter(s => s.status === 'mastered').length;
-                                const total = swimmerSkills.length;
-                                return `${mastered}/${total} mastered`;
-                              })()}
-                            </div>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className="bg-green-500 h-2 rounded-full"
-                              style={{
-                                width: `${swimmerSkills.length > 0 ?
-                                  (swimmerSkills.filter(s => s.status === 'mastered').length / swimmerSkills.length) * 100 : 0}%`
-                              }}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: swimmer.currentLevel.color || '#ccc' }} />
+                    <span className="text-sm font-medium">{swimmer.currentLevel.displayName}</span>
+                    <span className="text-sm text-muted-foreground">
+                      ({swimmerSkills.filter(s => s.status === 'mastered').length}/{swimmerSkills.length} mastered)
+                    </span>
+                  </div>
                 )}
-
-                {/* Focus Today - In Progress Skills */}
-                {swimmer.currentLevel && swimmerSkills.length > 0 && (
-                  <Card>
-                    <CardHeader className="py-2 px-3">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <Target className="h-4 w-4 text-amber-500" />
-                        Focus Today
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
-                          {swimmerSkills.filter(s => s.status === 'in_progress').length} skills
-                        </Badge>
-                      </CardTitle>
-                      <CardDescription className="text-xs">
-                        Skills currently in progress - focus on these during the lesson
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="px-3 pb-3 pt-0">
-                      {loadingData ? (
-                        <div className="space-y-3">
-                          <Skeleton className="h-16 w-full" />
-                          <Skeleton className="h-16 w-full" />
-                        </div>
-                      ) : swimmerSkills.filter(s => s.status === 'in_progress').length === 0 ? (
-                        <div className="text-center py-4">
-                          <Target className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                          <p className="text-sm text-gray-600">No skills in progress</p>
-                          <p className="text-xs text-gray-500 mt-1">Mark skills as "In Progress" to see them here</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {swimmerSkills
-                            .filter(skill => skill.status === 'in_progress')
-                            .map((skill) => (
-                              <div key={skill.id} className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                <div className="flex items-start justify-between">
-                                  <div className="flex-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <CircleDot className="h-4 w-4 text-amber-500" />
-                                      <span className="font-medium text-sm">{skill.skill?.name}</span>
-                                    </div>
-                                    {skill.instructor_notes ? (
-                                      <div className="mt-2">
-                                        <p className="text-xs font-medium text-gray-600 mb-1">Previous Notes:</p>
-                                        <p className="text-xs text-gray-700 bg-white p-2 rounded border">{skill.instructor_notes}</p>
-                                      </div>
-                                    ) : (
-                                      <p className="text-xs text-gray-500 mt-1">No notes yet</p>
-                                    )}
-                                    {skill.date_started && (
-                                      <p className="text-xs text-gray-500 mt-2">
-                                        Started: {new Date(skill.date_started).toLocaleDateString()}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => {
-                                      // Quick status update to mastered
-                                      handleSkillUpdate(skill.id, 'mastered', skill.instructor_notes);
-                                    }}
-                                    disabled={!isAdmin && role !== 'instructor'}
-                                  >
-                                    <CheckCircle className="h-4 w-4 text-green-500" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                {/* Admin Level Selector - Inline */}
+                {isAdmin && swimmer && (
+                  <div className="flex items-center gap-2 ml-auto">
+                    <span className="text-xs text-muted-foreground">Change:</span>
+                    <LevelSelector
+                      swimmerId={swimmer.id}
+                      currentLevelId={swimmer.currentLevelId || swimmer.currentLevel?.id || null}
+                      onLevelChange={() => fetchAdditionalData()}
+                    />
+                  </div>
                 )}
+              </div>
+              {/* Progress Bar */}
+              {swimmer.currentLevel && (
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div
+                    className="bg-emerald-500 h-2 rounded-full transition-all"
+                    style={{ width: `${swimmerSkills.length > 0 ? (swimmerSkills.filter(s => s.status === 'mastered').length / swimmerSkills.length) * 100 : 0}%` }}
+                  />
+                </div>
+              )}
+            </div>
 
-                {/* Mastered Skills - Collapsible */}
-                {swimmer.currentLevel && swimmerSkills.filter(s => s.status === 'mastered').length > 0 && (
-                  <Card>
-                    <CardHeader className="py-2 px-3">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        Mastered Skills
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
-                          {swimmerSkills.filter(s => s.status === 'mastered').length}
-                        </Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-3 pb-3 pt-0">
-                      <div className="space-y-2">
-                        {swimmerSkills
-                          .filter(skill => skill.status === 'mastered')
-                          .slice(0, 3) // Show first 3, rest in expandable
-                          .map((skill) => (
-                            <div key={skill.id} className="flex items-center justify-between p-2 bg-green-50 rounded">
-                              <div className="flex items-center gap-2">
-                                <CheckCircle className="h-3 w-3 text-green-500" />
-                                <span className="text-sm">{skill.skill?.name}</span>
-                              </div>
-                              {skill.date_mastered && (
-                                <span className="text-xs text-gray-500">
-                                  {new Date(skill.date_mastered).toLocaleDateString()}
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                        {swimmerSkills.filter(s => s.status === 'mastered').length > 3 && (
-                          <Button variant="ghost" size="sm" className="w-full text-xs">
-                            Show all {swimmerSkills.filter(s => s.status === 'mastered').length} mastered skills
+            {/* Skills Grid - 3 columns */}
+            {swimmer.currentLevel && swimmerSkills.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* In Progress */}
+                <div className="bg-amber-50/50 border border-amber-200/50 rounded-lg p-3">
+                  <h4 className="text-sm font-medium text-amber-800 mb-2 flex items-center gap-1.5">
+                    <CircleDot className="h-3.5 w-3.5" />
+                    In Progress
+                    <span className="ml-auto text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+                      {swimmerSkills.filter(s => s.status === 'in_progress').length}
+                    </span>
+                  </h4>
+                  <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                    {swimmerSkills.filter(s => s.status === 'in_progress').length === 0 ? (
+                      <p className="text-xs text-amber-600/70">None in progress</p>
+                    ) : (
+                      swimmerSkills.filter(skill => skill.status === 'in_progress').map((skill) => (
+                        <div key={skill.id} className="flex items-center justify-between gap-2 p-1.5 bg-white/60 rounded text-sm">
+                          <span className="truncate">{skill.skill?.name}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 p-0 flex-shrink-0"
+                            onClick={() => handleSkillUpdate(skill.id, 'mastered', skill.instructor_notes)}
+                            disabled={!isAdmin && role !== 'instructor'}
+                          >
+                            <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
                           </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
 
-                {/* Not Started Skills - Collapsible */}
-                {swimmer.currentLevel && swimmerSkills.filter(s => s.status === 'not_started').length > 0 && (
-                  <Card>
-                    <CardHeader className="py-2 px-3">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <Circle className="h-4 w-4 text-gray-400" />
-                        Not Started
-                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 text-xs">
-                          {swimmerSkills.filter(s => s.status === 'not_started').length}
-                        </Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-3 pb-3 pt-0">
-                      <div className="space-y-2">
-                        {swimmerSkills
-                          .filter(skill => skill.status === 'not_started')
-                          .slice(0, 3) // Show first 3
-                          .map((skill) => (
-                            <div key={skill.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                              <div className="flex items-center gap-2">
-                                <Circle className="h-3 w-3 text-gray-400" />
-                                <span className="text-sm">{skill.skill?.name}</span>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 px-2 text-xs"
-                                onClick={() => {
-                                  // Quick status update to in_progress
-                                  handleSkillUpdate(skill.id, 'in_progress', '');
-                                }}
-                                disabled={!isAdmin && role !== 'instructor'}
-                              >
-                                Start
-                              </Button>
-                            </div>
-                          ))}
-                        {swimmerSkills.filter(s => s.status === 'not_started').length > 3 && (
-                          <Button variant="ghost" size="sm" className="w-full text-xs">
-                            Show all {swimmerSkills.filter(s => s.status === 'not_started').length} not started skills
+                {/* Mastered */}
+                <div className="bg-emerald-50/50 border border-emerald-200/50 rounded-lg p-3">
+                  <h4 className="text-sm font-medium text-emerald-800 mb-2 flex items-center gap-1.5">
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    Mastered
+                    <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
+                      {swimmerSkills.filter(s => s.status === 'mastered').length}
+                    </span>
+                  </h4>
+                  <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                    {swimmerSkills.filter(s => s.status === 'mastered').length === 0 ? (
+                      <p className="text-xs text-emerald-600/70">None mastered yet</p>
+                    ) : (
+                      swimmerSkills.filter(skill => skill.status === 'mastered').map((skill) => (
+                        <div key={skill.id} className="flex items-center gap-2 p-1.5 bg-white/60 rounded text-sm">
+                          <CheckCircle className="h-3 w-3 text-emerald-500 flex-shrink-0" />
+                          <span className="truncate">{skill.skill?.name}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Not Started */}
+                <div className="bg-muted/30 border border-border/30 rounded-lg p-3">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <Circle className="h-3.5 w-3.5" />
+                    Not Started
+                    <span className="ml-auto text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
+                      {swimmerSkills.filter(s => s.status === 'not_started').length}
+                    </span>
+                  </h4>
+                  <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
+                    {swimmerSkills.filter(s => s.status === 'not_started').length === 0 ? (
+                      <p className="text-xs text-muted-foreground/70">All skills started</p>
+                    ) : (
+                      swimmerSkills.filter(skill => skill.status === 'not_started').map((skill) => (
+                        <div key={skill.id} className="flex items-center justify-between gap-2 p-1.5 bg-white/60 rounded text-sm">
+                          <span className="truncate">{skill.skill?.name}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 px-1.5 text-xs flex-shrink-0"
+                            onClick={() => handleSkillUpdate(skill.id, 'in_progress', '')}
+                            disabled={!isAdmin && role !== 'instructor'}
+                          >
+                            Start
                           </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
-                {/* Swimmer Targets */}
+            {/* Targets & Strategies - Side by Side */}
+            {(swimmerTargets.length > 0 || swimmerStrategies.length > 0) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Targets */}
                 {swimmerTargets.length > 0 && (
-                  <Card>
-                    <CardHeader className="py-2 px-3">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <Target className="h-4 w-4 text-blue-500" />
-                        Targets
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
-                          {swimmerTargets.length}
-                        </Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-3 pb-3 pt-0">
-                      <div className="space-y-2">
-                        {swimmerTargets.map((target) => (
-                          <div key={target.id} className="space-y-1">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                {target.status === 'in_progress' ? (
-                                  <CircleDot className="h-3 w-3 text-yellow-500" />
-                                ) : target.status === 'met' ? (
-                                  <CheckCircle className="h-3 w-3 text-green-500" />
-                                ) : (
-                                  <Circle className="h-3 w-3 text-gray-400" />
-                                )}
-                                <span className="text-sm font-medium">{target.target_name}</span>
-                              </div>
-                              <Badge
-                                variant="outline"
-                                className={`
-                                  text-xs
-                                  ${target.status === 'in_progress' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                                    target.status === 'met' ? 'bg-green-50 text-green-700 border-green-200' :
-                                    'bg-gray-50 text-gray-700 border-gray-200'}
-                                `}
-                              >
-                                {target.status === 'in_progress' ? 'In Progress' :
-                                 target.status === 'met' ? 'Met' : 'Not Started'}
-                              </Badge>
-                            </div>
-                            {target.notes && (
-                              <p className="text-xs text-muted-foreground pl-5">{target.notes}</p>
+                  <div className="bg-blue-50/50 border border-blue-200/50 rounded-lg p-3">
+                    <h4 className="text-sm font-medium text-blue-800 mb-2 flex items-center gap-1.5">
+                      <Target className="h-3.5 w-3.5" />
+                      Targets
+                      <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                        {swimmerTargets.length}
+                      </span>
+                    </h4>
+                    <div className="space-y-1.5 max-h-[150px] overflow-y-auto">
+                      {swimmerTargets.map((target) => (
+                        <div key={target.id} className="flex items-center justify-between gap-2 p-1.5 bg-white/60 rounded text-sm">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            {target.status === 'met' ? (
+                              <CheckCircle className="h-3 w-3 text-emerald-500 flex-shrink-0" />
+                            ) : target.status === 'in_progress' ? (
+                              <CircleDot className="h-3 w-3 text-amber-500 flex-shrink-0" />
+                            ) : (
+                              <Circle className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                             )}
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground pl-5">
-                              {target.date_started && (
-                                <span>Started: {new Date(target.date_started).toLocaleDateString()}</span>
-                              )}
-                              {target.date_met && (
-                                <span>Met: {new Date(target.date_met).toLocaleDateString()}</span>
-                              )}
-                            </div>
+                            <span className="truncate">{target.target_name}</span>
                           </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                          <span className={`text-xs flex-shrink-0 ${target.status === 'met' ? 'text-emerald-600' : target.status === 'in_progress' ? 'text-amber-600' : 'text-muted-foreground'}`}>
+                            {target.status === 'met' ? 'Met' : target.status === 'in_progress' ? 'Active' : '—'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
 
-                {/* Swimmer Strategies */}
+                {/* Strategies */}
                 {swimmerStrategies.length > 0 && (
-                  <Card>
-                    <CardHeader className="py-2 px-3">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <Lightbulb className="h-4 w-4 text-purple-500" />
-                        Strategies
-                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-xs">
-                          {swimmerStrategies.length}
-                        </Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-3 pb-3 pt-0">
-                      <div className="space-y-2">
-                        {swimmerStrategies.map((strategy) => (
-                          <div key={strategy.id} className="flex items-center justify-between p-2 bg-purple-50 rounded">
-                            <div className="flex items-center gap-2">
-                              {strategy.is_used ? (
-                                <CheckCircle className="h-3 w-3 text-green-500" />
-                              ) : (
-                                <Circle className="h-3 w-3 text-gray-400" />
-                              )}
-                              <span className="text-sm">{strategy.strategy_name}</span>
-                            </div>
-                            <Badge
-                              variant="outline"
-                              className={`
-                                text-xs
-                                ${strategy.is_used ? 'bg-green-50 text-green-700 border-green-200' : 'bg-gray-50 text-gray-700 border-gray-200'}
-                              `}
-                            >
-                              {strategy.is_used ? 'Used' : 'Not Used'}
-                            </Badge>
+                  <div className="bg-purple-50/50 border border-purple-200/50 rounded-lg p-3">
+                    <h4 className="text-sm font-medium text-purple-800 mb-2 flex items-center gap-1.5">
+                      <Lightbulb className="h-3.5 w-3.5" />
+                      Strategies
+                      <span className="ml-auto text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
+                        {swimmerStrategies.length}
+                      </span>
+                    </h4>
+                    <div className="space-y-1.5 max-h-[150px] overflow-y-auto">
+                      {swimmerStrategies.map((strategy) => (
+                        <div key={strategy.id} className="flex items-center justify-between gap-2 p-1.5 bg-white/60 rounded text-sm">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            {strategy.is_used ? (
+                              <CheckCircle className="h-3 w-3 text-emerald-500 flex-shrink-0" />
+                            ) : (
+                              <Circle className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                            )}
+                            <span className="truncate">{strategy.strategy_name}</span>
                           </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                          <span className={`text-xs flex-shrink-0 ${strategy.is_used ? 'text-emerald-600' : 'text-muted-foreground'}`}>
+                            {strategy.is_used ? 'Used' : '—'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
+              </div>
+            )}
 
                 {/* Quick Actions */}
                 {(isAdmin || role === 'instructor') && swimmer.currentLevel && (
