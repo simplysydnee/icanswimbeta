@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { DEFAULT_FUNDING_SOURCE_CONFIG } from '@/lib/constants'
 import { emailService } from '@/lib/email-service'
+import { checkBookingConflict, isUniqueViolation } from '@/lib/booking/conflict'
+import { isSessionHeldByOther, clearSessionHold } from '@/lib/booking/hold'
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,6 +44,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Session is no longer available' },
         { status: 400 }
+      )
+    }
+
+    // Hold guard (BUG-00c): block if another user holds this session.
+    if (isSessionHeldByOther(session, user.id)) {
+      return NextResponse.json(
+        { error: 'This session is being held by another user. Please try again in a few minutes.' },
+        { status: 409 }
       )
     }
 
@@ -97,7 +107,8 @@ export async function POST(request: NextRequest) {
           .from('purchase_orders')
           .select('id, sessions_authorized, sessions_used')
           .eq('swimmer_id', swimmerId)
-          .eq('status', 'approved')
+          // Live DB uses status='active' (not 'approved') — see single/route.ts note.
+          .eq('status', 'active')
           .order('end_date', { ascending: true })
           .limit(1);
 
@@ -117,6 +128,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 6b. Conflict check (BUG-00a): prevent overlapping bookings + daily-cap breach.
+    const conflict = await checkBookingConflict(supabase, { swimmerId, sessionId })
+    if (conflict.hasConflict) {
+      return NextResponse.json(
+        { error: conflict.message, conflicts: conflict.conflicts },
+        { status: 409 }
+      )
+    }
+
     // 7. Create booking record
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
@@ -133,6 +153,12 @@ export async function POST(request: NextRequest) {
 
     if (bookingError) {
       console.error('Booking creation error:', bookingError)
+      if (isUniqueViolation(bookingError)) {
+        return NextResponse.json(
+          { error: 'This swimmer already has an active booking for this session.' },
+          { status: 409 }
+        )
+      }
       return NextResponse.json(
         { error: 'Failed to create booking' },
         { status: 500 }
@@ -179,6 +205,9 @@ export async function POST(request: NextRequest) {
       // Don't rollback - booking is valid, just log the error
     }
 
+    // Release this parent's own hold now that the booking is confirmed (BUG-00c).
+    await clearSessionHold(supabase, sessionId, user.id)
+
     // 10. Update swimmer assessment status
     await supabase
       .from('swimmers')
@@ -216,7 +245,8 @@ export async function POST(request: NextRequest) {
           .from('purchase_orders')
           .select('id')
           .eq('swimmer_id', swimmerId)
-          .eq('status', 'approved')
+          // Live DB uses status='active' (not 'approved') — see single/route.ts note.
+          .eq('status', 'active')
           .order('end_date', { ascending: true })
           .limit(1);
 

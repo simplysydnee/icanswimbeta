@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { emailService } from '@/lib/email-service';
 import { format } from 'date-fns';
+import { checkBookingConflict, isUniqueViolation } from '@/lib/booking/conflict';
+import { isSessionHeldByOther, clearSessionHold } from '@/lib/booking/hold';
 
 function getServiceSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -35,18 +37,17 @@ export async function POST(request: Request) {
       .single();
     if (!swimmer) return NextResponse.json({ error: 'Swimmer not authorized' }, { status: 403 });
 
-    // Check for booking conflicts
-    // const conflictResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/bookings/check-conflict`, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ swimmerId, sessionId }),
-    // });
+    // Conflict check (BUG-00a): prevent overlapping bookings and enforce daily cap.
+    // The wizard also calls this, but the previous server-side block was commented
+    // out, leaving the API bypassable by direct POSTs.
+    const conflict = await checkBookingConflict(serviceSupabase, { swimmerId, sessionId });
+    if (conflict.hasConflict) {
+      return NextResponse.json(
+        { error: conflict.message, conflicts: conflict.conflicts },
+        { status: 409 }
+      );
+    }
 
-    // const conflictData = await conflictResponse.json();
-    // if (conflictData.hasConflict) {
-    //   return NextResponse.json({ error: conflictData.message || 'Booking conflict detected' }, { status: 409 });
-    // }
-    console.log('Conflict check passed for swimmerId:', swimmerId, 'sessionId:', sessionId);
     const fundingSourceId = swimmer.funding_source_id;
 
     let fundingSourceRow: {
@@ -65,13 +66,21 @@ export async function POST(request: Request) {
     // Check session availability and validate session type rules
     const { data: session } = await serviceSupabase
       .from('sessions')
-      .select('id, start_time, end_time, status, is_full, max_capacity, booking_count, instructor_id, location, is_recurring, session_type, session_type_detail, is_semi_private_restricted')
+      .select('id, start_time, end_time, status, is_full, max_capacity, booking_count, instructor_id, location, is_recurring, session_type, session_type_detail, is_semi_private_restricted, held_by, held_until')
       .eq('id', sessionId)
       .in('status', ['available', 'open'])
       .eq('is_full', false)
       .single();
     if (!session) return NextResponse.json({ error: 'Session not available' }, { status: 400 });
-    console.log('Session availability check passed for sessionId:', sessionId);
+
+    // Hold guard (BUG-00c): if another parent is actively holding this session,
+    // do not let this request slip in and book it.
+    if (isSessionHeldByOther(session, parentId)) {
+      return NextResponse.json(
+        { error: 'This session is being held by another user. Please try again in a few minutes.' },
+        { status: 409 }
+      );
+    }
 
     // Semi-private sessions: only is_semi_private swimmers can book; flexible swimmers cannot
     const isSemiPrivate =
@@ -155,7 +164,10 @@ export async function POST(request: Request) {
           .from('purchase_orders')
           .select('id, sessions_authorized, sessions_booked, coordinator_id')
           .eq('swimmer_id', swimmerId)
-          .eq('status', 'approved')
+          // Live DB uses status='active' (not 'approved'). 567 active / 0 approved
+          // as of 2026-05-14 — filtering on 'approved' was silently rejecting every
+          // funded booking attempt.
+          .eq('status', 'active')
           .lte('start_date', session.start_time)
           .gte('end_date', session.start_time)
           .order('end_date', { ascending: true })
@@ -176,7 +188,10 @@ export async function POST(request: Request) {
       }
     }
 
-    // Create booking
+    // Create booking. The unique partial index added in migration
+    // 20260514000000_booking_atomic_safeguards.sql will raise a unique_violation
+    // (BUG-00b safety net) if two concurrent POSTs both passed the conflict check
+    // above. Map that to a 409 instead of a generic 500.
     const { data: booking, error: bookingError } = await serviceSupabase
       .from('bookings')
       .insert({
@@ -188,7 +203,15 @@ export async function POST(request: Request) {
       })
       .select()
       .single();
-    if (bookingError) return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 });
+    if (bookingError) {
+      if (isUniqueViolation(bookingError)) {
+        return NextResponse.json(
+          { error: 'This swimmer already has an active booking for this session.' },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 });
+    }
 
     // Update session
     const newBookingCount = (session.booking_count || 0) + 1;
@@ -206,6 +229,9 @@ export async function POST(request: Request) {
       await serviceSupabase.from('bookings').delete().eq('id', booking.id);
       return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
     }
+
+    // Release this parent's own hold now that the booking is confirmed (BUG-00c).
+    await clearSessionHold(serviceSupabase, sessionId, parentId);
 
     if (session.session_type === 'assessment') {
       const { error: swimmerAssessmentError } = await serviceSupabase

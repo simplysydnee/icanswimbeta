@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { emailService } from '@/lib/email-service';
 import { format, parseISO } from 'date-fns';
+import { checkBookingConflict, isUniqueViolation } from '@/lib/booking/conflict';
+import { isSessionHeldByOther, clearSessionHold } from '@/lib/booking/hold';
 
 function getServiceSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -149,13 +151,21 @@ export async function POST(request: Request) {
     const { data: session, error: sessErr } = await serviceSupabase
       .from('sessions')
       .select(
-        'id, start_time, end_time, status, is_full, max_capacity, booking_count, instructor_id, location, is_recurring'
+        'id, start_time, end_time, status, is_full, max_capacity, booking_count, instructor_id, location, is_recurring, held_by, held_until'
       )
       .eq('id', sessionId)
       .single();
 
     if (sessErr || !session) {
       return NextResponse.json({ error: 'Session not available' }, { status: 400 });
+    }
+
+    // Hold guard (BUG-00c).
+    if (isSessionHeldByOther(session as any, parentId)) {
+      return NextResponse.json(
+        { error: 'This session is being held by another user. Please try again in a few minutes.' },
+        { status: 409 }
+      );
     }
 
     const s0 = session as SessionRow;
@@ -210,7 +220,8 @@ export async function POST(request: Request) {
         .from('purchase_orders')
         .select('id, sessions_authorized, sessions_booked, coordinator_id, start_date, end_date')
         .eq('swimmer_id', swimmerId)
-        .eq('status', 'approved')
+        // Live DB uses status='active' (not 'approved') — see single/route.ts note.
+        .eq('status', 'active')
         .lte('start_date', anchorStart)
         .gte('end_date', anchorStart)
         .order('end_date', { ascending: true })
@@ -319,6 +330,24 @@ export async function POST(request: Request) {
       status: fr.status,
     });
 
+    // Per-occurrence conflict check (BUG-00a). The wizard pre-checks each date,
+    // but a direct POST or a stale tab could bypass that, so the server has to
+    // re-verify here. We use the occurrence time, not the template time.
+    for (const sessionDateYmd of sessionDatesToBook) {
+      const occStart = occurrenceDateTime(sessionDateYmd, fr.start_time);
+      const occEnd = fr.end_time ? occurrenceDateTime(sessionDateYmd, fr.end_time) : null;
+      const conflict = await checkBookingConflict(serviceSupabase, {
+        swimmerId,
+        startTime: occStart.toISOString(),
+        endTime: occEnd ? occEnd.toISOString() : undefined,
+      });
+      if (conflict.hasConflict) {
+        throw new Error(
+          `Booking conflict on ${sessionDateYmd}: ${conflict.message}`
+        );
+      }
+    }
+
     const bookings: { id: string; session_id: string }[] = [];
 
     for (const sessionDateYmd of sessionDatesToBook) {
@@ -336,6 +365,11 @@ export async function POST(request: Request) {
         .single();
 
       if (bookingError || !booking) {
+        if (isUniqueViolation(bookingError)) {
+          throw new Error(
+            `Booking conflict on ${sessionDateYmd}: this swimmer already has an active booking for this session.`
+          );
+        }
         throw new Error(`Failed to create booking for ${sessionDateYmd}`);
       }
 
@@ -379,6 +413,9 @@ export async function POST(request: Request) {
 
       console.log('Purchase order updated:', poUpdated);
     }
+
+    // Release this parent's own hold on the template session (BUG-00c).
+    await clearSessionHold(serviceSupabase, sessionId, parentId);
 
     try {
       const { data: parentProfile } = await serviceSupabase
@@ -488,7 +525,8 @@ export async function POST(request: Request) {
       message.includes('not found') ||
       message.includes('Failed to create booking') ||
       message.includes('Failed to update session') ||
-      message.includes('exceed max capacity')
+      message.includes('exceed max capacity') ||
+      message.includes('Booking conflict')
     ) {
       return NextResponse.json({ error: message }, { status: 409 });
     }
