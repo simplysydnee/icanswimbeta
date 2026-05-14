@@ -607,7 +607,7 @@ export function SwimmerDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="!max-w-[1400px] w-[95vw] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="!max-w-[1400px] w-[95vw] max-h-[92vh] overflow-y-auto p-3 sm:p-4">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -674,7 +674,7 @@ export function SwimmerDetailModal({
         </DialogHeader>
 
         {/* Tabbed Interface */}
-        <div className="mt-4">
+        <div className="mt-3">
           {/* Mobile Dropdown (visible on small and medium screens) */}
           <div className="block md:hidden mb-4">
             <Select value={activeTab} onValueChange={setActiveTab}>
@@ -695,7 +695,7 @@ export function SwimmerDetailModal({
 
           {/* Desktop Tabs (hidden on mobile, shown on medium and up) */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="hidden md:block">
-            <TabsList className="flex flex-wrap gap-1 mb-6">
+            <TabsList className="flex flex-wrap gap-1 mb-3">
               <TabsTrigger value="overview" className="px-2 py-1.5 text-[11px] sm:text-xs">Overview</TabsTrigger>
               <TabsTrigger value="medical" className="px-2 py-1.5 text-[11px] sm:text-xs">Medical & Safety</TabsTrigger>
               <TabsTrigger value="progress" className="px-2 py-1.5 text-[11px] sm:text-xs">Progress & Skills</TabsTrigger>
@@ -712,10 +712,10 @@ export function SwimmerDetailModal({
             </TabsList>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               {/* Main Content */}
-              <div className="md:col-span-3 space-y-6">
+              <div className="md:col-span-3 space-y-4">
                 {/* Status Row */}
                 <div className="flex flex-wrap gap-2">
                   <StatusBadge
@@ -749,9 +749,9 @@ export function SwimmerDetailModal({
 
                 {/* Status Management - Admin Only */}
                 {isAdmin && swimmer && (
-                  <div className="bg-white border rounded-lg p-4">
-                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Shield className="h-5 w-5" />
+                  <div className="bg-white border rounded-lg p-3">
+                    <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
                       Status Management
                     </h3>
                     <StatusSelector
@@ -776,12 +776,12 @@ export function SwimmerDetailModal({
                 />
 
                 {/* Key Info Section */}
-                <div className="bg-white border rounded-lg p-4">
-                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                    <Award className="h-5 w-5" />
+                <div className="bg-white border rounded-lg p-3">
+                  <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
+                    <Award className="h-4 w-4" />
                     Key Information
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {/* Diagnosis */}
                     {swimmer.diagnosis && swimmer.diagnosis.length > 0 && (
                       <div>
@@ -832,13 +832,13 @@ export function SwimmerDetailModal({
 
 
                 {/* Swimming Background */}
-                <div className="bg-white border rounded-lg p-4">
-                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                    <Award className="h-5 w-5" />
+                <div className="bg-white border rounded-lg p-3">
+                  <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
+                    <Award className="h-4 w-4" />
                     Swimming Background
                   </h3>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Previous Lessons</p>
                         <p className="font-medium">
@@ -887,13 +887,13 @@ export function SwimmerDetailModal({
 
                 {/* Care Needs Section */}
                 {(swimmer.toiletTrained || swimmer.nonAmbulatory || swimmer.communicationType || swimmer.otherTherapies) && (
-                  <div className="bg-white border rounded-lg p-4">
-                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Heart className="h-5 w-5" />
+                  <div className="bg-white border rounded-lg p-3">
+                    <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
+                      <Heart className="h-4 w-4" />
                       Care Needs
                     </h3>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {/* Toilet Trained */}
                         {swimmer.toiletTrained && (
                           <div>
@@ -952,13 +952,13 @@ export function SwimmerDetailModal({
               </div>
 
               {/* Right Column - Stats & Actions */}
-              <div className="space-y-4 sm:space-y-6">
+              <div className="space-y-3">
                 {/* Quick Stats */}
-                <div className="bg-white border rounded-lg p-4">
-                  <h3 className="text-xs font-medium text-muted-foreground mb-3 whitespace-nowrap">
+                <div className="bg-white border rounded-lg p-3">
+                  <h3 className="text-xs font-medium text-muted-foreground mb-2 whitespace-nowrap">
                     Quick Stats
                   </h3>
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div>
                       <p className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Assessment Status</p>
                       <div className="mt-1">
@@ -1024,8 +1024,8 @@ export function SwimmerDetailModal({
                 </div>
 
                 {/* Quick Actions */}
-                <div className="bg-white border rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                <div className="bg-white border rounded-lg p-3">
+                  <h3 className="text-xs font-medium text-muted-foreground mb-2">
                     Quick Actions
                   </h3>
                   <div className="space-y-2">
@@ -1155,11 +1155,11 @@ export function SwimmerDetailModal({
                 </div>
 
                 {/* System Info */}
-                <div className="bg-white border rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                <div className="bg-white border rounded-lg p-3">
+                  <h3 className="text-xs font-medium text-muted-foreground mb-2">
                     System Information
                   </h3>
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-1.5 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Created</span>
                       <span>{formatDate(swimmer.createdAt)}</span>
@@ -1180,21 +1180,21 @@ export function SwimmerDetailModal({
           </TabsContent>
 
           {/* Medical & Safety Tab - Compact Grid Design */}
-          <TabsContent value="medical" className="space-y-6">
+          <TabsContent value="medical" className="space-y-4">
             <section>
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Stethoscope className="h-5 w-5" />
+              <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
+                <Stethoscope className="h-4 w-4" />
                 Medical & Safety Information
               </h3>
 
               {/* Medical Information Grid */}
-              <div className="mb-8">
-                <div className="flex items-center gap-2 mb-3">
-                  <Heart className="h-5 w-5 text-red-600" />
-                  <h4 className="text-md font-semibold text-gray-800">Medical Information</h4>
+              <div className="mb-4">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Heart className="h-4 w-4 text-red-600" />
+                  <h4 className="text-sm font-semibold text-gray-800">Medical Information</h4>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {/* Allergies */}
                   {swimmer.hasAllergies !== undefined && (
                     <div className={`p-3 rounded-lg border ${swimmer.hasAllergies ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
@@ -1262,12 +1262,12 @@ export function SwimmerDetailModal({
 
               {/* Safety & Behavioral Grid */}
               <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Shield className="h-5 w-5 text-blue-600" />
-                  <h4 className="text-md font-semibold text-gray-800">Safety & Behavioral</h4>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Shield className="h-4 w-4 text-blue-600" />
+                  <h4 className="text-sm font-semibold text-gray-800">Safety & Behavioral</h4>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                   {/* Self Injurious Behavior */}
                   {swimmer.selfInjuriousBehavior !== undefined && (
                     <div className={`p-3 rounded-lg border ${swimmer.selfInjuriousBehavior ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
@@ -1370,8 +1370,8 @@ export function SwimmerDetailModal({
               </div>
 
               {/* Legend/Key */}
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600">
+              <div className="mt-4 pt-3 border-t border-gray-200">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
                   <div className="flex items-center gap-1.5">
                     <div className="h-3 w-3 rounded-full bg-red-100 border border-red-300"></div>
                     <span>Red = "Yes" (requires attention)</span>
@@ -1390,18 +1390,18 @@ export function SwimmerDetailModal({
           </TabsContent>
 
           {/* Progress Tab */}
-          <TabsContent value="progress" className="space-y-6">
+          <TabsContent value="progress" className="space-y-4">
             <section>
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <AwardIcon className="h-5 w-5" />
+              <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
+                <AwardIcon className="h-4 w-4" />
                 Progress & Skills
               </h3>
 
-              <div className="space-y-6">
+              <div className="space-y-3">
                 {/* Level Management - Admin Only */}
                 {isAdmin && swimmer && (
                   <Card>
-                    <CardHeader className="pb-2">
+                    <CardHeader className="py-2 px-3">
                       <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <Award className="h-4 w-4 text-muted-foreground" />
                         Current Level
@@ -1410,7 +1410,7 @@ export function SwimmerDetailModal({
                         Manually adjust swimmer's level (admin only)
                       </p>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="px-3 pb-3 pt-0">
                       <LevelSelector
                         swimmerId={swimmer.id}
                         currentLevelId={swimmer.currentLevelId || swimmer.currentLevel?.id || null}
@@ -1426,7 +1426,7 @@ export function SwimmerDetailModal({
                 {/* Level Progress Summary */}
                 {swimmer.currentLevel && (
                   <Card>
-                    <CardHeader className="pb-2">
+                    <CardHeader className="py-2 px-3">
                       <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <Award className="h-4 w-4 text-muted-foreground" />
                         Level Progress
@@ -1435,14 +1435,14 @@ export function SwimmerDetailModal({
                         {swimmer.currentLevel.displayName}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="px-3 pb-3 pt-0">
                       {loadingData ? (
                         <div className="space-y-2">
                           <Skeleton className="h-4 w-full" />
                           <Skeleton className="h-6 w-1/2" />
                         </div>
                       ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <div
@@ -1477,7 +1477,7 @@ export function SwimmerDetailModal({
                 {/* Focus Today - In Progress Skills */}
                 {swimmer.currentLevel && swimmerSkills.length > 0 && (
                   <Card>
-                    <CardHeader className="pb-2">
+                    <CardHeader className="py-2 px-3">
                       <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <Target className="h-4 w-4 text-amber-500" />
                         Focus Today
@@ -1489,7 +1489,7 @@ export function SwimmerDetailModal({
                         Skills currently in progress - focus on these during the lesson
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="px-3 pb-3 pt-0">
                       {loadingData ? (
                         <div className="space-y-3">
                           <Skeleton className="h-16 w-full" />
@@ -1551,7 +1551,7 @@ export function SwimmerDetailModal({
                 {/* Mastered Skills - Collapsible */}
                 {swimmer.currentLevel && swimmerSkills.filter(s => s.status === 'mastered').length > 0 && (
                   <Card>
-                    <CardHeader className="pb-2">
+                    <CardHeader className="py-2 px-3">
                       <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500" />
                         Mastered Skills
@@ -1560,7 +1560,7 @@ export function SwimmerDetailModal({
                         </Badge>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="px-3 pb-3 pt-0">
                       <div className="space-y-2">
                         {swimmerSkills
                           .filter(skill => skill.status === 'mastered')
@@ -1591,7 +1591,7 @@ export function SwimmerDetailModal({
                 {/* Not Started Skills - Collapsible */}
                 {swimmer.currentLevel && swimmerSkills.filter(s => s.status === 'not_started').length > 0 && (
                   <Card>
-                    <CardHeader className="pb-2">
+                    <CardHeader className="py-2 px-3">
                       <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <Circle className="h-4 w-4 text-gray-400" />
                         Not Started
@@ -1600,7 +1600,7 @@ export function SwimmerDetailModal({
                         </Badge>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="px-3 pb-3 pt-0">
                       <div className="space-y-2">
                         {swimmerSkills
                           .filter(skill => skill.status === 'not_started')
@@ -1638,7 +1638,7 @@ export function SwimmerDetailModal({
                 {/* Swimmer Targets */}
                 {swimmerTargets.length > 0 && (
                   <Card>
-                    <CardHeader className="pb-2">
+                    <CardHeader className="py-2 px-3">
                       <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <Target className="h-4 w-4 text-blue-500" />
                         Targets
@@ -1647,8 +1647,8 @@ export function SwimmerDetailModal({
                         </Badge>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
+                    <CardContent className="px-3 pb-3 pt-0">
+                      <div className="space-y-2">
                         {swimmerTargets.map((target) => (
                           <div key={target.id} className="space-y-1">
                             <div className="flex items-center justify-between">
@@ -1696,7 +1696,7 @@ export function SwimmerDetailModal({
                 {/* Swimmer Strategies */}
                 {swimmerStrategies.length > 0 && (
                   <Card>
-                    <CardHeader className="pb-2">
+                    <CardHeader className="py-2 px-3">
                       <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <Lightbulb className="h-4 w-4 text-purple-500" />
                         Strategies
@@ -1705,7 +1705,7 @@ export function SwimmerDetailModal({
                         </Badge>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="px-3 pb-3 pt-0">
                       <div className="space-y-2">
                         {swimmerStrategies.map((strategy) => (
                           <div key={strategy.id} className="flex items-center justify-between p-2 bg-purple-50 rounded">
@@ -1736,14 +1736,14 @@ export function SwimmerDetailModal({
                 {/* Quick Actions */}
                 {(isAdmin || role === 'instructor') && swimmer.currentLevel && (
                   <Card>
-                    <CardHeader className="pb-2">
+                    <CardHeader className="py-2 px-3">
                       <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <ClipboardList className="h-4 w-4 text-muted-foreground" />
                         Quick Actions
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 gap-2">
+                    <CardContent className="px-3 pb-3 pt-0">
+                      <div className="grid grid-cols-2 gap-1.5">
                         <Button
                           variant="outline"
                           size="sm"
@@ -1772,13 +1772,13 @@ export function SwimmerDetailModal({
 
                 {/* Recent Progress Notes */}
                 <Card>
-                  <CardHeader className="pb-2">
+                  <CardHeader className="py-2 px-3">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                       <FileText className="h-4 w-4 text-muted-foreground" />
                       Recent Progress Notes
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-3 pb-3 pt-0">
                     {loadingData ? (
                       <div className="space-y-2">
                         <Skeleton className="h-24 w-full" />
@@ -1805,16 +1805,16 @@ export function SwimmerDetailModal({
                 </Card>
 
                 {/* Progress Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="bg-blue-50 p-2.5 rounded-lg">
+                    <div className="text-xl font-bold text-blue-600">
                       {swimmer.lessonsCompleted || 0}
                     </div>
                     <div className="text-xs text-blue-800">Lessons Completed</div>
                   </div>
 
                   {/* Next Session */}
-                  <div className="bg-green-50 p-3 rounded-lg">
+                  <div className="bg-green-50 p-2.5 rounded-lg">
                     {formatNextSession(swimmer.nextSession) !== '—' ? (
                       <>
                         <div className="text-sm font-medium text-green-800">
@@ -1837,17 +1837,17 @@ export function SwimmerDetailModal({
           </TabsContent>
 
           {/* Sessions & Bookings Tab */}
-          <TabsContent value="sessions" className="space-y-6">
+          <TabsContent value="sessions" className="space-y-4">
             <section>
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
+              <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
                 Sessions & Bookings
               </h3>
 
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Upcoming Sessions */}
-                <div className="bg-white border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
+                <div className="bg-white border rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium">Upcoming Sessions</h4>
                     <Link href={`/booking?swimmer=${swimmer.id}`}>
                       <Button size="sm">
@@ -1885,31 +1885,31 @@ export function SwimmerDetailModal({
                 </div>
 
                 {/* Session Statistics */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                <div className="grid grid-cols-3 gap-2 p-3 bg-gray-50 rounded-lg">
                   <div className="text-center">
-                    <p className="text-2xl font-bold">{swimmer.fundedSessionsUsed || swimmer.lessonsCompleted || 0}</p>
+                    <p className="text-xl font-bold">{swimmer.fundedSessionsUsed || swimmer.lessonsCompleted || 0}</p>
                     <p className="text-xs text-muted-foreground">Completed</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold">{upcomingBookings.length}</p>
+                    <p className="text-xl font-bold">{upcomingBookings.length}</p>
                     <p className="text-xs text-muted-foreground">Upcoming</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold">{swimmer.fundedSessionsAuthorized || 0}</p>
+                    <p className="text-xl font-bold">{swimmer.fundedSessionsAuthorized || 0}</p>
                     <p className="text-xs text-muted-foreground">Authorized</p>
                   </div>
                 </div>
 
                 {/* Quick Progress Update Section - Admin only */}
                 {isAdmin && swimmer && (
-                  <Card className="mt-6">
-                    <CardHeader className="pb-2">
+                  <Card className="mt-3">
+                    <CardHeader className="py-2 px-3">
                       <CardTitle className="text-sm">Quick Progress Update</CardTitle>
                       <p className="text-xs text-muted-foreground">
                         Select a recent session to add progress notes
                       </p>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="px-3 pb-3 pt-0">
                       {loadingData ? (
                         <div className="space-y-2">
                           <Skeleton className="h-12 w-full" />
@@ -1955,15 +1955,15 @@ export function SwimmerDetailModal({
 
           {/* Billing & Funding Tab - Admin only */}
           {isAdmin && (
-            <TabsContent value="billing" className="space-y-6">
+            <TabsContent value="billing" className="space-y-4">
               <section>
-                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
+                <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
                   Billing & Funding
                 </h3>
 
               {/* Payment Type */}
-              <div className="mb-6">
+              <div className="mb-4">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Payment Type</h4>
                 <div className="flex items-center gap-2">
                   {paymentType === 'private_pay' && (
@@ -1984,10 +1984,10 @@ export function SwimmerDetailModal({
 
               {/* Funding Source Details */}
               {paymentType === 'funded' && (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {/* PO Details */}
                   {swimmer.currentPoNumber && (
-                    <div className="bg-violet-50 p-4 rounded-lg border border-violet-200">
+                    <div className="bg-violet-50 p-3 rounded-lg border border-violet-200">
                       <h4 className="text-sm font-medium text-violet-800 mb-2">Current Purchase Order</h4>
                       <div className="text-lg font-bold text-violet-900">{swimmer.currentPoNumber}</div>
                       {swimmer.poExpiresAt && (
@@ -1999,7 +1999,7 @@ export function SwimmerDetailModal({
                   )}
 
                   {/* Sessions Progress */}
-                  <div className="bg-violet-50 p-4 rounded-lg border border-violet-200">
+                  <div className="bg-violet-50 p-3 rounded-lg border border-violet-200">
                     <div className="flex justify-between items-center mb-2">
                       <h4 className="text-sm font-medium text-violet-800">Sessions Usage</h4>
                       <div className="text-sm font-bold text-violet-900">
@@ -2039,7 +2039,7 @@ export function SwimmerDetailModal({
 
                   {/* Coordinator Info */}
                   {(swimmer.coordinatorName || swimmer.coordinatorEmail || swimmer.coordinatorPhone) && (
-                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                       <h4 className="text-sm font-medium text-gray-800 mb-2">Funding Coordinator</h4>
                       <div className="space-y-2">
                         {swimmer.coordinatorName && (
@@ -2067,7 +2067,7 @@ export function SwimmerDetailModal({
 
               {/* Private Pay Details */}
               {paymentType === 'private_pay' && (
-                <div className="bg-sky-50 p-4 rounded-lg border border-sky-200">
+                <div className="bg-sky-50 p-3 rounded-lg border border-sky-200">
                   <div className="flex items-center gap-2 mb-2">
                     <DollarSign className="h-5 w-5 text-sky-600" />
                     <div className="text-sm font-medium text-sky-800">Private Pay Client</div>
@@ -2080,7 +2080,7 @@ export function SwimmerDetailModal({
 
               {/* Scholarship Details */}
               {paymentType === 'scholarship' && (
-                <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
+                <div className="bg-pink-50 p-3 rounded-lg border border-pink-200">
                   <div className="flex items-center gap-2 mb-2">
                     <AwardIcon className="h-5 w-5 text-pink-600" />
                     <div className="text-sm font-medium text-pink-800">Scholarship Client</div>
@@ -2093,7 +2093,7 @@ export function SwimmerDetailModal({
 
               {/* Other Funding */}
               {paymentType === 'other' && (
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                   <div className="flex items-center gap-2 mb-2">
                     <HelpCircle className="h-5 w-5 text-gray-600" />
                     <div className="text-sm font-medium text-gray-800">Other Funding</div>

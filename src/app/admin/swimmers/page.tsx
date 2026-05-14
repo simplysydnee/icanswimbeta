@@ -29,9 +29,9 @@ function AdminSwimmersPageContent() {
 
   return (
     <RoleGuard allowedRoles={['admin']}>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Swimmer Management</h1>
             <p className="text-muted-foreground">
@@ -51,16 +51,16 @@ function AdminSwimmersPageContent() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Users className="h-4 w-4" />
+            <CardHeader className="py-2 px-3">
+              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5" />
                 Total Swimmers
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="px-3 pb-3 pt-0">
+              <div className="text-xl font-bold">
                 {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.totalSwimmers.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
@@ -69,14 +69,14 @@ function AdminSwimmersPageContent() {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Clock className="h-4 w-4" />
+            <CardHeader className="py-2 px-3">
+              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" />
                 Waitlisted
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="px-3 pb-3 pt-0">
+              <div className="text-xl font-bold">
                 {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.waitlistedSwimmers.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
@@ -107,14 +107,14 @@ function AdminSwimmersPageContent() {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <UserCheck className="h-4 w-4" />
+            <CardHeader className="py-2 px-3">
+              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                <UserCheck className="h-3.5 w-3.5" />
                 Active Enrolled
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="px-3 pb-3 pt-0">
+              <div className="text-xl font-bold">
                 {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.activeEnrolledSwimmers.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
@@ -123,14 +123,14 @@ function AdminSwimmersPageContent() {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
+            <CardHeader className="py-2 px-3">
+              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                <TrendingUp className="h-3.5 w-3.5" />
                 Avg. Lessons
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="px-3 pb-3 pt-0">
+              <div className="text-xl font-bold">
                 {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.activeSwimmers.toLocaleString()}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
@@ -163,11 +163,11 @@ function AdminSwimmersPageContent() {
               router.push(`/admin/swimmers?${params.toString()}`);
             }}
           >
-            <CardContent className="p-4">
+            <CardContent className="p-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                    <AlertTriangle className="h-5 w-5 text-orange-600" />
+                <div className="flex items-center gap-2.5">
+                  <div className="h-9 w-9 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                    <AlertTriangle className="h-4 w-4 text-orange-600" />
                   </div>
                   <div>
                     <p className="font-semibold text-orange-900">
@@ -253,14 +253,14 @@ function AdminSwimmersPageContent() {
 
         {/* Quick Actions */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
+          <CardHeader className="py-2 px-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Filter className="h-4 w-4" />
               Quick Filters
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          <CardContent className="px-3 pb-3 pt-0">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               <Button variant="outline" className="justify-start text-left truncate">
                 <Users className="h-4 w-4 mr-2 shrink-0" />
                 <span className="truncate">Needs Assessment</span>

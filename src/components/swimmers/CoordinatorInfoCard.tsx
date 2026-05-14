@@ -28,14 +28,14 @@ export function CoordinatorInfoCard({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <Building2 className="h-5 w-5" />
+      <CardHeader className="py-2 px-3">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <Building2 className="h-4 w-4" />
           Coordinator Information
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+      <CardContent className="px-3 pb-3 pt-0">
+        <div className="space-y-2">
           {swimmer.coordinatorName && (
             <div>
               <p className="text-sm font-medium text-muted-foreground">Coordinator Name</p>

@@ -496,9 +496,9 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col md:flex-row gap-3">
           {/* Search */}
           <div className="flex-1">
             <div className="relative">
@@ -512,7 +512,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
             </div>
           </div>
           {/* Filter dropdowns */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             <Select value={status} onValueChange={(value) => updateFilter('status', value)}>
               <SelectTrigger className="w-[150px]">
                 <Filter className="h-4 w-4 mr-2" />
@@ -598,7 +598,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
         </div>
 
         {/* Mobile view - cards */}
-        <div className="md:hidden space-y-4 w-full overflow-x-hidden">
+        <div className="md:hidden space-y-2.5 w-full overflow-x-hidden">
           {loading ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, index) => (

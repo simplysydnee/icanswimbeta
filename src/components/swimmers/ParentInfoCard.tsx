@@ -41,14 +41,14 @@ export function ParentInfoCard({
   if (hasLinkedParent) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Users className="h-5 w-5" />
+        <CardHeader className="py-2 px-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Users className="h-4 w-4" />
             Parent/Guardian Information
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
+        <CardContent className="px-3 pb-3 pt-0">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-2">
@@ -87,28 +87,28 @@ export function ParentInfoCard({
   if (swimmer.parentEmail) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <Users className="h-5 w-5" />
+        <CardHeader className="py-2 px-3">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Users className="h-4 w-4" />
             Parent/Guardian Information
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
+        <CardContent className="px-3 pb-3 pt-0">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <p className="font-medium text-amber-600">Pending Parent Signup</p>
-                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-3 mt-1.5 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Mail className="h-4 w-4" />
                     <span>{swimmer.parentEmail}</span>
                   </div>
                 </div>
-                <p className="text-xs text-amber-600 mt-2">
+                <p className="text-xs text-amber-600 mt-1.5">
                   Parent has not created an account yet. They will be automatically linked when they sign up.
                 </p>
                 {swimmer.invitedAt && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 mt-0.5">
                     Invitation sent {formatInvitationTime(swimmer.invitedAt)}
                   </p>
                 )}
@@ -157,14 +157,14 @@ export function ParentInfoCard({
   // No parent email at all
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold flex items-center gap-2">
-          <Users className="h-5 w-5" />
+      <CardHeader className="py-2 px-3">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <Users className="h-4 w-4" />
           Parent/Guardian Information
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+      <CardContent className="px-3 pb-3 pt-0">
+        <div className="space-y-2">
           <p className="text-muted-foreground">No parent information available</p>
           {isAdmin && (
             <Button
