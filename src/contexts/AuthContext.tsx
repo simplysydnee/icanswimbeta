@@ -64,8 +64,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch user profile and role (only called when we have a user)
   const fetchUserProfile = async (userId: string, userEmail?: string, retryCount = 0) => {
-    console.log('=== AUTH DEBUG: fetchUserProfile called ===');
-    console.log('Parameters:', { userId, userEmail, retryCount });
 
     try {
       setIsLoadingProfile(true)
@@ -158,9 +156,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       let rolesError: { code?: string; message?: string; details?: string; hint?: string } | null = null;
 
       try {
-        console.log('=== AUTH DEBUG: Fetching roles for user ===');
-        console.log('User ID:', userId);
-
         const rolesPromise = supabase
           .from('user_roles')
           .select('*')
@@ -169,13 +164,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const rolesResult = await Promise.race([rolesPromise, queryTimeoutPromise, globalTimeoutPromise]) as any;
         rolesData = rolesResult.data;
         rolesError = rolesResult.error;
-
-        console.log('Roles query result:', {
-          data: rolesData,
-          error: rolesError,
-          hasData: !!rolesData,
-          dataLength: rolesData?.length || 0
-        });
       } catch (error) {
         console.error('=== AUTH DEBUG: Roles query catch error ===', error);
         rolesError = {
@@ -226,11 +214,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
       }
 
-      console.log('=== AUTH DEBUG: Setting role ===');
-      console.log('Primary role determined:', primaryRole);
-      console.log('Roles data:', rolesData);
-      console.log('Final profile data exists:', !!finalProfileData);
-
       const userWithRole: UserWithRole = {
         ...finalProfileData,
         role: primaryRole,
@@ -239,7 +222,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setProfile(userWithRole)
       setRole(primaryRole)
-      console.log('=== AUTH DEBUG: Role set to ===', primaryRole);
     } catch (error) {
       console.error('=== AUTH DEBUG: fetchUserProfile catch block error ===', error);
       console.error('Error details:', {
@@ -328,7 +310,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setError(getUserError.message)
           }
         } else if (user) {
-          console.log('Auth: User found during initialization:', user.id, user.email)
           const authUser = transformUser(user)
           setUser(authUser)
 
@@ -342,7 +323,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           // Set loading to false immediately since we have a user
           // Profile fetch will handle isLoadingProfile separately
-          console.log('Auth: Setting loading to false (user exists)')
           setLoading(false)
         } else {
           // No user found - set loading to false immediately
@@ -373,7 +353,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return null
           })
         } else if (session?.user) {
-          console.log('Auth: Auth state change - user signed in:', session.user.id, session.user.email)
           const authUser = transformUser(session.user)
           setUser(authUser)
 
@@ -385,7 +364,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           })
           // Set loading to false immediately since we have a user
           // Profile fetch will handle isLoadingProfile separately
-          console.log('Auth: Setting loading to false (auth state change)')
           setLoading(false)
         } else {
           // No session/user - this is a non-authenticated state
@@ -393,8 +371,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setProfile(null)
           setRole(null)
           setLoading(false) // Non-authenticated users shouldn't see loading
+          // Only refresh on sign-out so server components (e.g. login page guard)
+          // re-evaluate — do NOT refresh on sign-in or it creates a redirect loop.
+          router.refresh()
         }
-        router.refresh()
       }
     )
 
@@ -406,25 +386,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true)
       setError(null)
 
-      console.log('Attempting login for:', email)
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-
-      console.log('Login response:', { data, error })
 
       if (error) {
         console.error('Login error:', error)
         throw error
       }
 
-      console.log('Login successful, redirecting...')
       // Redirect to specified path or default to dashboard
       const redirectPath = redirectTo || '/dashboard'
       router.push(redirectPath)
     } catch (err) {
-      console.error('Login catch error:', err)
       setError(err instanceof Error ? err.message : 'Login failed')
       throw err
     } finally {
@@ -478,8 +453,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.error('Failed to assign default role:', roleError);
             // Don't fail signup if role assignment fails - user can still login
             // and will get default 'parent' role from fetchUserProfile fallback
-          } else {
-            console.log('Assigned default parent role to new user:', data.user.id);
           }
         } catch (roleError) {
           console.error('Error assigning default role:', roleError);
@@ -514,8 +487,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Wait a bit longer to ensure session is fully established
           await new Promise(resolve => setTimeout(resolve, 1500));
 
-          console.log('Attempting to auto-link swimmers for new user:', data.user.email);
-
           const response = await fetch('/api/auth/link-swimmers', {
             method: 'POST',
             headers: {
@@ -539,8 +510,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
             // Continue anyway - signup succeeded, just auto-link failed
           } else {
-            const result = await response.json();
-            console.log('Auto-link result:', result);
+            await response.json();
           }
         } catch (linkError) {
           console.error('Error auto-linking swimmers:', linkError);

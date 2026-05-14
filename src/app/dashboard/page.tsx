@@ -16,7 +16,6 @@ export default function DashboardRedirect() {
     const timer = setTimeout(() => {
       const isLoading = loading || isLoadingProfile;
       if (isLoading) {
-        console.error('Dashboard: Auth loading timed out after 8 seconds');
         setHasTimedOut(true);
       }
     }, 8000);
@@ -27,17 +26,8 @@ export default function DashboardRedirect() {
   useEffect(() => {
     const isLoading = loading || isLoadingProfile;
 
-    console.log('Dashboard redirect effect:', {
-      isLoading,
-      user: !!user,
-      role,
-      loading,
-      isLoadingProfile
-    });
-
     // Early redirect for non-authenticated users
     if (!isLoading && !user) {
-      console.log('Dashboard: No user, redirecting to login');
       router.replace('/login');
       return;
     }
@@ -46,27 +36,19 @@ export default function DashboardRedirect() {
       // Special redirect for staff@icanswim209.com
       const userEmail = user.email?.toLowerCase();
       if (userEmail === 'staff@icanswim209.com') {
-        console.log('Dashboard: Redirecting staff@icanswim209.com to /staff-mode');
         router.replace('/staff-mode');
         return;
       }
 
-      // Only redirect if we have a definite role
-      console.log('Dashboard: User exists, role:', role);
       if (role === 'admin') {
-        console.log('Dashboard: Redirecting admin to /admin');
         router.replace('/admin');
       } else if (role === 'instructor') {
-        console.log('Dashboard: Redirecting instructor to /instructor');
         router.replace('/instructor');
       } else if (role === 'coordinator') {
-        console.log('Dashboard: Redirecting coordinator to /coordinator/pos');
         router.replace('/coordinator/pos');
       } else if (role === 'parent') {
-        console.log('Dashboard: Redirecting parent to /parent');
         router.replace('/parent');
       } else if (role === null || role === undefined) {
-        console.log('Dashboard: Role is null/undefined, using default parent role');
         // Use parent as default role if role is not determined
         router.replace('/parent');
       }
