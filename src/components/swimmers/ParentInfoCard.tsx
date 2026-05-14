@@ -35,28 +35,28 @@ export function ParentInfoCard({
   if (hasLinkedParent) {
     return (
       <div className="chart-section">
-        <h3 className="chart-header flex items-center gap-1.5">
-          <Users className="h-3 w-3" />
+        <h3 className="chart-header flex items-center gap-2">
+          <Users className="h-4 w-4" />
           Parent/Guardian
         </h3>
         <div className="flex items-center justify-between">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium truncate">{swimmer.parent?.fullName || 'Not provided'}</span>
-              <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600">
-                <CheckCircle className="h-3 w-3" /> Linked
+              <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
+                <CheckCircle className="h-3.5 w-3.5" /> Linked
               </span>
             </div>
-            <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
+            <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
               {swimmer.parent?.email && (
-                <span className="flex items-center gap-1">
-                  <Mail className="h-3 w-3" />
+                <span className="flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5" />
                   {swimmer.parent.email}
                 </span>
               )}
               {swimmer.parent?.phone && (
-                <span className="flex items-center gap-1">
-                  <Phone className="h-3 w-3" />
+                <span className="flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5" />
                   {swimmer.parent.phone}
                 </span>
               )}
@@ -71,21 +71,21 @@ export function ParentInfoCard({
   if (swimmer.parentEmail) {
     return (
       <div className="chart-section">
-        <h3 className="chart-header flex items-center gap-1.5">
-          <Users className="h-3 w-3" />
+        <h3 className="chart-header flex items-center gap-2">
+          <Users className="h-4 w-4" />
           Parent/Guardian
         </h3>
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-amber-600 font-medium">Pending Signup</span>
+              <span className="text-sm text-amber-600 font-medium">Pending Signup</span>
             </div>
-            <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
-              <Mail className="h-3 w-3" />
+            <div className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
+              <Mail className="h-3.5 w-3.5" />
               {swimmer.parentEmail}
             </div>
             {swimmer.invitedAt && (
-              <p className="text-[10px] text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-1">
                 Invited {formatInvitationTime(swimmer.invitedAt)}
               </p>
             )}
@@ -94,20 +94,20 @@ export function ParentInfoCard({
             <Button
               variant="outline"
               size="sm"
-              className="h-6 text-[10px] px-2"
+              className="h-7 text-xs px-2"
               onClick={onInviteParent}
               disabled={invitingParent}
             >
               {invitingParent ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : swimmer.invitedAt ? (
                 <>
-                  <Mail className="h-3 w-3 mr-1" />
+                  <Mail className="h-3.5 w-3.5 mr-1" />
                   Resend
                 </>
               ) : (
                 <>
-                  <UserPlus className="h-3 w-3 mr-1" />
+                  <UserPlus className="h-3.5 w-3.5 mr-1" />
                   Invite
                 </>
               )}
@@ -121,11 +121,11 @@ export function ParentInfoCard({
   // No parent email
   return (
     <div className="chart-section">
-      <h3 className="chart-header flex items-center gap-1.5">
-        <Users className="h-3 w-3" />
+      <h3 className="chart-header flex items-center gap-2">
+        <Users className="h-4 w-4" />
         Parent/Guardian
       </h3>
-      <p className="text-xs text-muted-foreground">No parent information</p>
+      <p className="text-sm text-muted-foreground">No parent information</p>
     </div>
   );
 }

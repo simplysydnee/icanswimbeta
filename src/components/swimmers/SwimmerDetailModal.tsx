@@ -608,33 +608,31 @@ export function SwimmerDetailModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="!max-w-[1200px] w-[95vw] max-h-[94vh] overflow-y-auto p-0">
-        {/* Compact Header */}
-        <div className="sticky top-0 z-10 bg-background border-b px-4 py-2.5">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-background border-b px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Smaller Avatar */}
-              <Avatar className="h-10 w-10 border border-border">
+              <Avatar className="h-12 w-12 border border-border">
                 {swimmer.photoUrl && (
                   <AvatarImage src={swimmer.photoUrl} alt={swimmer.firstName} />
                 )}
-                <AvatarFallback className="bg-muted text-muted-foreground text-sm font-medium">
+                <AvatarFallback className="bg-muted text-muted-foreground text-base font-medium">
                   {getInitials(swimmer.firstName, swimmer.lastName)}
                 </AvatarFallback>
               </Avatar>
 
-              {/* Name + inline status dots */}
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <DialogHeader className="p-0 space-y-0">
-                    <DialogTitle className="text-base font-semibold">
+                    <DialogTitle className="text-lg font-semibold">
                       {swimmer.firstName} {swimmer.lastName}
                     </DialogTitle>
                   </DialogHeader>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleEdit}>
-                    <Edit className="h-3 w-3" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleEdit}>
+                    <Edit className="h-3.5 w-3.5" />
                   </Button>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
                   {calculateAge(swimmer.dateOfBirth) !== '—' && (
                     <span>{calculateAge(swimmer.dateOfBirth)}</span>
                   )}
@@ -645,31 +643,31 @@ export function SwimmerDetailModal({
                     </>
                   )}
                   <span className="stat-inline-divider" />
-                  <StatusDot type="enrollment" value={swimmer.enrollmentStatus} size="sm" />
+                  <StatusDot type="enrollment" value={swimmer.enrollmentStatus} size="md" />
                   {swimmer.approvalStatus && swimmer.approvalStatus !== 'approved' && (
                     <>
                       <span className="stat-inline-divider" />
-                      <StatusDot type="approval" value={swimmer.approvalStatus} size="sm" />
+                      <StatusDot type="approval" value={swimmer.approvalStatus} size="md" />
                     </>
                   )}
                   <span className="stat-inline-divider" />
-                  <StatusDot type="funding" value={paymentType} size="sm" />
+                  <StatusDot type="funding" value={paymentType} size="md" />
                 </div>
               </div>
             </div>
 
-            {/* Compact action buttons */}
-            <div className="flex items-center gap-1.5">
-              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleViewFullPage}>
+            {/* Action buttons */}
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" className="h-8 text-sm" onClick={handleViewFullPage}>
                 Full Page
               </Button>
               {isAdmin && swimmer.approvalStatus === 'pending' && onApprove && onDecline && (
                 <>
-                  <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700" onClick={() => onApprove(swimmer)}>
-                    <CheckCircle className="h-3 w-3 mr-1" /> Approve
+                  <Button size="sm" className="h-8 text-sm bg-emerald-600 hover:bg-emerald-700" onClick={() => onApprove(swimmer)}>
+                    <CheckCircle className="h-4 w-4 mr-1" /> Approve
                   </Button>
-                  <Button variant="destructive" size="sm" className="h-7 text-xs" onClick={() => onDecline(swimmer)}>
-                    <XCircle className="h-3 w-3 mr-1" /> Decline
+                  <Button variant="destructive" size="sm" className="h-8 text-sm" onClick={() => onDecline(swimmer)}>
+                    <XCircle className="h-4 w-4 mr-1" /> Decline
                   </Button>
                 </>
               )}
@@ -682,7 +680,7 @@ export function SwimmerDetailModal({
           {/* Mobile Dropdown */}
           <div className="block md:hidden mb-3">
             <Select value={activeTab} onValueChange={setActiveTab}>
-              <SelectTrigger id="mobile-tab-select" name="mobileTabSelect" className="w-full h-8 text-xs">
+              <SelectTrigger id="mobile-tab-select" name="mobileTabSelect" className="w-full h-9 text-sm">
                 <SelectValue placeholder="Select section" />
               </SelectTrigger>
               <SelectContent>
@@ -700,18 +698,18 @@ export function SwimmerDetailModal({
           {/* Desktop Tabs - Underline style */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="hidden md:block">
             <TabsList className="h-auto p-0 bg-transparent border-b border-border/50 rounded-none w-full justify-start gap-0">
-              <TabsTrigger value="overview" className="px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Overview</TabsTrigger>
-              <TabsTrigger value="medical" className="px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Medical</TabsTrigger>
-              <TabsTrigger value="progress" className="px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Progress</TabsTrigger>
-              <TabsTrigger value="sessions" className="px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Sessions</TabsTrigger>
+              <TabsTrigger value="overview" className="px-4 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Overview</TabsTrigger>
+              <TabsTrigger value="medical" className="px-4 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Medical</TabsTrigger>
+              <TabsTrigger value="progress" className="px-4 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Progress</TabsTrigger>
+              <TabsTrigger value="sessions" className="px-4 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Sessions</TabsTrigger>
               {assessmentReport && (
-                <TabsTrigger value="assessment" className="px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Assessment</TabsTrigger>
+                <TabsTrigger value="assessment" className="px-4 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Assessment</TabsTrigger>
               )}
               {isAdmin && (
-                <TabsTrigger value="billing" className="px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Billing</TabsTrigger>
+                <TabsTrigger value="billing" className="px-4 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Billing</TabsTrigger>
               )}
               {isAdmin && (
-                <TabsTrigger value="notes" className="px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Notes</TabsTrigger>
+                <TabsTrigger value="notes" className="px-4 py-2 text-sm rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Notes</TabsTrigger>
               )}
             </TabsList>
 
@@ -735,16 +733,16 @@ export function SwimmerDetailModal({
                   </div>
                 )}
 
-                {/* Key Info - Dense grid */}
+                {/* Key Info */}
                 <div className="chart-section">
                   <h3 className="chart-header">Key Information</h3>
                   <div className="chart-grid">
                     {swimmer.diagnosis && swimmer.diagnosis.length > 0 && (
-                      <div className="col-span-2 lg:col-span-3">
+                      <div className="col-span-2 lg:col-span-3 mb-2">
                         <span className="chart-label">Diagnosis</span>
-                        <div className="flex flex-wrap gap-1 mt-0.5">
+                        <div className="flex flex-wrap gap-1.5 mt-1">
                           {swimmer.diagnosis.map((d, i) => (
-                            <span key={i} className="inline-flex items-center px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 rounded">
+                            <span key={i} className="inline-flex items-center px-2 py-1 text-sm bg-purple-100 text-purple-700 rounded">
                               {d}
                             </span>
                           ))}
@@ -778,7 +776,7 @@ export function SwimmerDetailModal({
                   </div>
                 </div>
 
-                {/* Swimming Background - Compact */}
+                {/* Swimming Background */}
                 <div className="chart-section">
                   <h3 className="chart-header">Swimming Background</h3>
                   <div className="chart-grid-2">
@@ -793,28 +791,28 @@ export function SwimmerDetailModal({
                   </div>
                   {/* Swim Goals */}
                   {((swimmer.swimGoals || swimmer.swim_goals)?.length > 0 || assessmentReport) && (
-                    <div className="mt-2">
+                    <div className="mt-3">
                       <span className="chart-label">Goals</span>
                       {assessmentReport ? (
-                        <p className="text-xs mt-0.5 text-foreground">{assessmentReport.swim_skills_goals || assessmentReport.safety_goals || 'Set by instructor'}</p>
+                        <p className="text-sm mt-1 text-foreground">{assessmentReport.swim_skills_goals || assessmentReport.safety_goals || 'Set by instructor'}</p>
                       ) : (
-                        <div className="flex flex-wrap gap-1 mt-0.5">
+                        <div className="flex flex-wrap gap-1.5 mt-1">
                           {(swimmer.swimGoals || swimmer.swim_goals || []).map((goal: string, i: number) => (
-                            <span key={i} className="text-xs px-1.5 py-0.5 bg-muted rounded">{goal}</span>
+                            <span key={i} className="text-sm px-2 py-0.5 bg-muted rounded">{goal}</span>
                           ))}
                         </div>
                       )}
                     </div>
                   )}
                   {swimmer.strengthsInterests && (
-                    <div className="mt-2">
+                    <div className="mt-3">
                       <span className="chart-label">Strengths/Interests</span>
-                      <p className="text-xs mt-0.5">{swimmer.strengthsInterests}</p>
+                      <p className="text-sm mt-1">{swimmer.strengthsInterests}</p>
                     </div>
                   )}
                 </div>
 
-                {/* Care Needs - Compact */}
+                {/* Care Needs */}
                 {(swimmer.toiletTrained || swimmer.nonAmbulatory || swimmer.communicationType || swimmer.otherTherapies) && (
                   <div className="chart-section">
                     <h3 className="chart-header">Care Needs</h3>
@@ -833,19 +831,19 @@ export function SwimmerDetailModal({
                       )}
                     </div>
                     {swimmer.communicationType && swimmer.communicationType.length > 0 && (
-                      <div className="mt-2">
+                      <div className="mt-3">
                         <span className="chart-label">Communication</span>
-                        <div className="flex flex-wrap gap-1 mt-0.5">
+                        <div className="flex flex-wrap gap-1.5 mt-1">
                           {swimmer.communicationType.map((type, i) => (
-                            <span key={i} className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded">{type}</span>
+                            <span key={i} className="text-sm px-2 py-0.5 bg-blue-50 text-blue-700 rounded">{type}</span>
                           ))}
                         </div>
                       </div>
                     )}
                     {swimmer.otherTherapies && (
-                      <div className="mt-2">
+                      <div className="mt-3">
                         <span className="chart-label">Other Therapies</span>
-                        <p className="text-xs mt-0.5">{swimmer.therapiesDescription || 'Yes'}</p>
+                        <p className="text-sm mt-1">{swimmer.therapiesDescription || 'Yes'}</p>
                       </div>
                     )}
                   </div>
@@ -1019,38 +1017,38 @@ export function SwimmerDetailModal({
             </div>
           </TabsContent>
 
-          {/* Medical & Safety Tab - Compact */}
-          <TabsContent value="medical" className="mt-3 space-y-3">
+          {/* Medical & Safety Tab */}
+          <TabsContent value="medical" className="mt-4 space-y-4">
               {/* Medical Information */}
               <div className="chart-section">
-                <h3 className="chart-header flex items-center gap-1.5">
-                  <Heart className="h-3 w-3 text-red-500" />
+                <h3 className="chart-header flex items-center gap-2">
+                  <Heart className="h-4 w-4 text-red-500" />
                   Medical Information
                 </h3>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
                   {swimmer.hasAllergies !== undefined && (
-                    <div className={`p-2 rounded border text-center ${swimmer.hasAllergies ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
-                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.hasAllergies ? 'text-red-700' : 'text-muted-foreground'}`}>Allergies</div>
-                      <div className={`text-xs font-semibold ${swimmer.hasAllergies ? 'text-red-800' : ''}`}>{swimmer.hasAllergies ? 'Yes' : 'No'}</div>
+                    <div className={`p-3 rounded border text-center ${swimmer.hasAllergies ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-xs uppercase tracking-wide ${swimmer.hasAllergies ? 'text-red-700' : 'text-muted-foreground'}`}>Allergies</div>
+                      <div className={`text-sm font-semibold ${swimmer.hasAllergies ? 'text-red-800' : ''}`}>{swimmer.hasAllergies ? 'Yes' : 'No'}</div>
                     </div>
                   )}
                   {swimmer.hasMedicalConditions !== undefined && (
-                    <div className={`p-2 rounded border text-center ${swimmer.hasMedicalConditions ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
-                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.hasMedicalConditions ? 'text-red-700' : 'text-muted-foreground'}`}>Conditions</div>
-                      <div className={`text-xs font-semibold ${swimmer.hasMedicalConditions ? 'text-red-800' : ''}`}>{swimmer.hasMedicalConditions ? 'Yes' : 'No'}</div>
+                    <div className={`p-3 rounded border text-center ${swimmer.hasMedicalConditions ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-xs uppercase tracking-wide ${swimmer.hasMedicalConditions ? 'text-red-700' : 'text-muted-foreground'}`}>Conditions</div>
+                      <div className={`text-sm font-semibold ${swimmer.hasMedicalConditions ? 'text-red-800' : ''}`}>{swimmer.hasMedicalConditions ? 'Yes' : 'No'}</div>
                     </div>
                   )}
                   {swimmer.historyOfSeizures !== undefined && (
-                    <div className={`p-2 rounded border text-center ${swimmer.historyOfSeizures ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
-                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.historyOfSeizures ? 'text-red-700' : 'text-muted-foreground'}`}>Seizures</div>
-                      <div className={`text-xs font-semibold ${swimmer.historyOfSeizures ? 'text-red-800' : ''}`}>{swimmer.historyOfSeizures ? 'Yes' : 'No'}</div>
+                    <div className={`p-3 rounded border text-center ${swimmer.historyOfSeizures ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-xs uppercase tracking-wide ${swimmer.historyOfSeizures ? 'text-red-700' : 'text-muted-foreground'}`}>Seizures</div>
+                      <div className={`text-sm font-semibold ${swimmer.historyOfSeizures ? 'text-red-800' : ''}`}>{swimmer.historyOfSeizures ? 'Yes' : 'No'}</div>
                     </div>
                   )}
                 </div>
                 {/* Details for flagged items */}
                 {(swimmer.hasAllergies && swimmer.allergiesDescription) || (swimmer.hasMedicalConditions && swimmer.medicalConditionsDescription) || (swimmer.historyOfSeizures && swimmer.seizuresDescription) ? (
-                  <div className="mt-2 p-2 bg-red-50/50 border border-red-100 rounded text-xs space-y-1">
+                  <div className="mt-3 p-3 bg-red-50/50 border border-red-100 rounded text-sm space-y-1.5">
                     {swimmer.hasAllergies && swimmer.allergiesDescription && (
                       <p><span className="font-medium text-red-700">Allergies:</span> <span className="text-red-600">{swimmer.allergiesDescription}</span></p>
                     )}
@@ -1064,47 +1062,47 @@ export function SwimmerDetailModal({
                 ) : null}
               </div>
 
-              {/* Safety & Behavioral - Compact */}
+              {/* Safety & Behavioral */}
               <div className="chart-section">
-                <h3 className="chart-header flex items-center gap-1.5">
-                  <Shield className="h-3 w-3 text-blue-500" />
+                <h3 className="chart-header flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-blue-500" />
                   Safety & Behavioral
                 </h3>
-                <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 gap-1.5">
+                <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 gap-2">
                   {swimmer.selfInjuriousBehavior !== undefined && (
-                    <div className={`p-2 rounded border text-center ${swimmer.selfInjuriousBehavior ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
-                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.selfInjuriousBehavior ? 'text-red-700' : 'text-muted-foreground'}`}>Self-Inj</div>
-                      <div className={`text-xs font-semibold ${swimmer.selfInjuriousBehavior ? 'text-red-800' : ''}`}>{swimmer.selfInjuriousBehavior ? 'Yes' : 'No'}</div>
+                    <div className={`p-3 rounded border text-center ${swimmer.selfInjuriousBehavior ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-xs uppercase tracking-wide ${swimmer.selfInjuriousBehavior ? 'text-red-700' : 'text-muted-foreground'}`}>Self-Inj</div>
+                      <div className={`text-sm font-semibold ${swimmer.selfInjuriousBehavior ? 'text-red-800' : ''}`}>{swimmer.selfInjuriousBehavior ? 'Yes' : 'No'}</div>
                     </div>
                   )}
                   {swimmer.aggressiveBehavior !== undefined && (
-                    <div className={`p-2 rounded border text-center ${swimmer.aggressiveBehavior ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
-                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.aggressiveBehavior ? 'text-red-700' : 'text-muted-foreground'}`}>Aggressive</div>
-                      <div className={`text-xs font-semibold ${swimmer.aggressiveBehavior ? 'text-red-800' : ''}`}>{swimmer.aggressiveBehavior ? 'Yes' : 'No'}</div>
+                    <div className={`p-3 rounded border text-center ${swimmer.aggressiveBehavior ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-xs uppercase tracking-wide ${swimmer.aggressiveBehavior ? 'text-red-700' : 'text-muted-foreground'}`}>Aggressive</div>
+                      <div className={`text-sm font-semibold ${swimmer.aggressiveBehavior ? 'text-red-800' : ''}`}>{swimmer.aggressiveBehavior ? 'Yes' : 'No'}</div>
                     </div>
                   )}
                   {swimmer.elopementHistory !== undefined && (
-                    <div className={`p-2 rounded border text-center ${swimmer.elopementHistory ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
-                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.elopementHistory ? 'text-red-700' : 'text-muted-foreground'}`}>Elopement</div>
-                      <div className={`text-xs font-semibold ${swimmer.elopementHistory ? 'text-red-800' : ''}`}>{swimmer.elopementHistory ? 'Yes' : 'No'}</div>
+                    <div className={`p-3 rounded border text-center ${swimmer.elopementHistory ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-xs uppercase tracking-wide ${swimmer.elopementHistory ? 'text-red-700' : 'text-muted-foreground'}`}>Elopement</div>
+                      <div className={`text-sm font-semibold ${swimmer.elopementHistory ? 'text-red-800' : ''}`}>{swimmer.elopementHistory ? 'Yes' : 'No'}</div>
                     </div>
                   )}
                   {swimmer.hasBehaviorPlan !== undefined && (
-                    <div className={`p-2 rounded border text-center ${swimmer.hasBehaviorPlan ? 'bg-amber-50 border-amber-200' : 'bg-muted/30 border-border/30'}`}>
-                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.hasBehaviorPlan ? 'text-amber-700' : 'text-muted-foreground'}`}>Beh Plan</div>
-                      <div className={`text-xs font-semibold ${swimmer.hasBehaviorPlan ? 'text-amber-800' : ''}`}>{swimmer.hasBehaviorPlan ? 'Yes' : 'No'}</div>
+                    <div className={`p-3 rounded border text-center ${swimmer.hasBehaviorPlan ? 'bg-amber-50 border-amber-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-xs uppercase tracking-wide ${swimmer.hasBehaviorPlan ? 'text-amber-700' : 'text-muted-foreground'}`}>Beh Plan</div>
+                      <div className={`text-sm font-semibold ${swimmer.hasBehaviorPlan ? 'text-amber-800' : ''}`}>{swimmer.hasBehaviorPlan ? 'Yes' : 'No'}</div>
                     </div>
                   )}
                   {swimmer.restraintHistory !== undefined && (
-                    <div className={`p-2 rounded border text-center ${swimmer.restraintHistory ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
-                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.restraintHistory ? 'text-red-700' : 'text-muted-foreground'}`}>Restraint</div>
-                      <div className={`text-xs font-semibold ${swimmer.restraintHistory ? 'text-red-800' : ''}`}>{swimmer.restraintHistory ? 'Yes' : 'No'}</div>
+                    <div className={`p-3 rounded border text-center ${swimmer.restraintHistory ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-xs uppercase tracking-wide ${swimmer.restraintHistory ? 'text-red-700' : 'text-muted-foreground'}`}>Restraint</div>
+                      <div className={`text-sm font-semibold ${swimmer.restraintHistory ? 'text-red-800' : ''}`}>{swimmer.restraintHistory ? 'Yes' : 'No'}</div>
                     </div>
                   )}
                 </div>
                 {/* Details for flagged behavioral items */}
                 {(swimmer.selfInjuriousBehavior && swimmer.selfInjuriousBehaviorDescription) || (swimmer.aggressiveBehavior && swimmer.aggressiveBehaviorDescription) || (swimmer.elopementHistory && swimmer.elopementHistoryDescription) || (swimmer.restraintHistory && swimmer.restraintHistoryDescription) ? (
-                  <div className="mt-2 p-2 bg-red-50/50 border border-red-100 rounded text-xs space-y-1">
+                  <div className="mt-3 p-3 bg-red-50/50 border border-red-100 rounded text-sm space-y-1.5">
                     {swimmer.selfInjuriousBehavior && swimmer.selfInjuriousBehaviorDescription && (
                       <p><span className="font-medium text-red-700">Self-Injury:</span> <span className="text-red-600">{swimmer.selfInjuriousBehaviorDescription}</span></p>
                     )}
@@ -1121,11 +1119,11 @@ export function SwimmerDetailModal({
                 ) : null}
               </div>
 
-              {/* Legend - Minimal */}
-              <div className="flex items-center gap-4 text-[10px] text-muted-foreground pt-2 border-t border-border/30">
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-200" /> Flagged</span>
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-200" /> Has Plan</span>
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-muted" /> Clear</span>
+              {/* Legend */}
+              <div className="flex items-center gap-5 text-xs text-muted-foreground pt-3 border-t border-border/30">
+                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-red-300" /> Flagged</span>
+                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-300" /> Has Plan</span>
+                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-muted" /> Clear</span>
               </div>
           </TabsContent>
 

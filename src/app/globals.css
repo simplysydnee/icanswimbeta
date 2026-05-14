@@ -277,7 +277,7 @@ html, body {
   
   /* Client Chart / Case Management Utilities */
   .chart-section {
-    @apply border-b border-border/40 pb-3 mb-3;
+    @apply border-b border-border/40 pb-4 mb-4;
   }
   
   .chart-section:last-child {
@@ -285,19 +285,19 @@ html, body {
   }
   
   .chart-header {
-    @apply text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 pb-1 border-b border-border/30;
+    @apply text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2.5 pb-1.5 border-b border-border/30;
   }
   
   .chart-row {
-    @apply flex items-center justify-between py-1 text-sm;
+    @apply flex items-center justify-between py-1.5 text-sm;
   }
   
   .chart-row-bordered {
-    @apply flex items-center justify-between py-1.5 border-b border-border/20 text-sm last:border-b-0;
+    @apply flex items-center justify-between py-2 border-b border-border/20 text-sm last:border-b-0;
   }
   
   .chart-label {
-    @apply text-xs text-muted-foreground;
+    @apply text-sm text-muted-foreground;
   }
   
   .chart-value {
@@ -305,11 +305,11 @@ html, body {
   }
   
   .chart-grid {
-    @apply grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1;
+    @apply grid grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2;
   }
   
   .chart-grid-2 {
-    @apply grid grid-cols-2 gap-x-4 gap-y-1;
+    @apply grid grid-cols-2 gap-x-6 gap-y-2;
   }
   
   /* Status dot indicators */

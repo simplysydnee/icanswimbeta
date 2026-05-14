@@ -322,11 +322,12 @@ export function StatusDot({ type, value, showLabel = true, size = 'sm', classNam
   const statusConfig = config[value?.toLowerCase()] || config[value] || { label: value || '—' };
   const dotColor = statusDotColors[value?.toLowerCase() as keyof typeof statusDotColors] || 'bg-gray-400';
   const dotSize = size === 'sm' ? 'h-2 w-2' : 'h-2.5 w-2.5';
+  const labelSize = size === 'sm' ? 'text-xs' : 'text-sm';
   
   return (
     <span className={cn('inline-flex items-center gap-1.5', className)}>
       <span className={cn('rounded-full flex-shrink-0', dotSize, dotColor)} />
-      {showLabel && <span className="text-xs">{statusConfig.label}</span>}
+      {showLabel && <span className={labelSize}>{statusConfig.label}</span>}
     </span>
   );
 }

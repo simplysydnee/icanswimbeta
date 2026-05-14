@@ -25,8 +25,8 @@ export function CoordinatorInfoCard({
 
   return (
     <div className="chart-section">
-      <h3 className="chart-header flex items-center gap-1.5">
-        <Building2 className="h-3 w-3" />
+      <h3 className="chart-header flex items-center gap-2">
+        <Building2 className="h-4 w-4" />
         Coordinator
       </h3>
       <div className="space-y-1">
@@ -39,13 +39,13 @@ export function CoordinatorInfoCard({
         {swimmer.coordinatorEmail && (
           <div className="chart-row-bordered">
             <span className="chart-label">Email</span>
-            <div className="flex items-center gap-1.5">
-              <a href={`mailto:${swimmer.coordinatorEmail}`} className="text-xs text-blue-600 hover:underline truncate max-w-[150px]">
+            <div className="flex items-center gap-2">
+              <a href={`mailto:${swimmer.coordinatorEmail}`} className="text-sm text-blue-600 hover:underline truncate max-w-[200px]">
                 {swimmer.coordinatorEmail}
               </a>
               {onEmailCoordinator && (
-                <Button variant="ghost" size="sm" className="h-5 w-5 p-0" onClick={onEmailCoordinator}>
-                  <Mail className="h-3 w-3" />
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={onEmailCoordinator}>
+                  <Mail className="h-3.5 w-3.5" />
                 </Button>
               )}
             </div>
@@ -54,7 +54,7 @@ export function CoordinatorInfoCard({
         {swimmer.coordinatorPhone && (
           <div className="chart-row-bordered">
             <span className="chart-label">Phone</span>
-            <a href={`tel:${swimmer.coordinatorPhone}`} className="text-xs text-blue-600 hover:underline">
+            <a href={`tel:${swimmer.coordinatorPhone}`} className="text-sm text-blue-600 hover:underline">
               {swimmer.coordinatorPhone}
             </a>
           </div>
