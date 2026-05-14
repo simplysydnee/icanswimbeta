@@ -1,5 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { notifyParentLateCancelWarning, notifyAdminLateCancelWarning } from '@/lib/email/cancellation-notifications'
+
+function getServiceSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SECRET_KEY
+  if (!url || !key) throw new Error('Missing Supabase env (service role)')
+  return createServiceClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
 
 export async function POST(
   request: NextRequest,
@@ -107,6 +118,8 @@ export async function POST(
     if (markAsFlexibleSwimmer) {
       isLate = true
       lateType = 'admin_cancel'
+    } else if (wasLateCancel) {
+      lateType = 'unexcused'
     }
 
     const { data: cancelResult, error: cancelError } = await supabase.rpc('cancel_booking', {
@@ -144,6 +157,41 @@ export async function POST(
         .from('swimmers')
         .update({ assessment_status: 'not_scheduled' })
         .eq('id', booking.swimmer[0].id)
+    }
+
+    // Send late cancel warning emails if applicable
+    if (lateType === 'unexcused') {
+      try {
+        const serviceSupabase = getServiceSupabase()
+        const { data: updatedSwimmer } = await serviceSupabase
+          .from('swimmers')
+          .select('unexcused_late_cancel_count, first_name, last_name')
+          .eq('id', booking.swimmer[0].id)
+          .single()
+
+        if (updatedSwimmer) {
+          const count = updatedSwimmer.unexcused_late_cancel_count
+          if (count === 1) {
+            await notifyParentLateCancelWarning(bookingId, 1)
+          } else if (count === 2) {
+            await notifyParentLateCancelWarning(bookingId, 2)
+            const { data: parentProfile } = await serviceSupabase
+              .from('profiles')
+              .select('full_name, email')
+              .eq('id', booking.swimmer[0].parent_id)
+              .single()
+
+            await notifyAdminLateCancelWarning(
+              updatedSwimmer.id,
+              `${updatedSwimmer.first_name} ${updatedSwimmer.last_name}`,
+              parentProfile?.full_name || 'Parent',
+              parentProfile?.email || ''
+            )
+          }
+        }
+      } catch (notifError) {
+        console.error('Failed to send late cancel notification:', notifError)
+      }
     }
 
     return NextResponse.json({

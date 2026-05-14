@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { notifyParentLateCancelWarning, notifyAdminLateCancelWarning } from '@/lib/email/cancellation-notifications'
 
 function getServiceSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -115,7 +116,7 @@ export async function POST(
       p_cancel_reason: reason || null,
       p_cancel_source: 'parent',
       p_is_late_cancel: isLateCancellation,
-      p_late_cancel_type: null,
+      p_late_cancel_type: isLateCancellation ? 'unexcused' : null,
       p_late_cancel_note: isLateCancellation ? 'late_cancellation' : null,
     });
 
@@ -146,6 +147,40 @@ export async function POST(
         .from('swimmers')
         .update({ assessment_status: 'not_scheduled' })
         .eq('id', (booking.swimmer as any).id)
+    }
+
+    // Send late cancel warning emails if applicable
+    if (isLateCancellation) {
+      try {
+        const { data: updatedSwimmer } = await serviceSupabase
+          .from('swimmers')
+          .select('unexcused_late_cancel_count, first_name, last_name')
+          .eq('id', (booking.swimmer as any).id)
+          .single()
+
+        if (updatedSwimmer) {
+          const count = updatedSwimmer.unexcused_late_cancel_count
+          if (count === 1) {
+            await notifyParentLateCancelWarning(bookingId, 1)
+          } else if (count === 2) {
+            await notifyParentLateCancelWarning(bookingId, 2)
+            const { data: parentProfile } = await serviceSupabase
+              .from('profiles')
+              .select('full_name, email')
+              .eq('id', (booking.swimmer as any).parent_id)
+              .single()
+
+            await notifyAdminLateCancelWarning(
+              updatedSwimmer.id,
+              `${updatedSwimmer.first_name} ${updatedSwimmer.last_name}`,
+              parentProfile?.full_name || 'Parent',
+              parentProfile?.email || ''
+            )
+          }
+        }
+      } catch (notifError) {
+        console.error('Failed to send late cancel notification:', notifError)
+      }
     }
 
     return NextResponse.json({
