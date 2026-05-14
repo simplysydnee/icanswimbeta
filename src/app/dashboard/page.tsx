@@ -26,34 +26,36 @@ export default function DashboardRedirect() {
   useEffect(() => {
     const isLoading = loading || isLoadingProfile;
 
-    // Early redirect for non-authenticated users
-    if (!isLoading && !user) {
+    // Still loading — wait
+    if (isLoading) return;
+
+    // Not authenticated — send to login
+    if (!user) {
       router.replace('/login');
       return;
     }
 
-    if (!isLoading && user) {
-      // Special redirect for staff@icanswim209.com
-      const userEmail = user.email?.toLowerCase();
-      if (userEmail === 'staff@icanswim209.com') {
-        router.replace('/staff-mode');
-        return;
-      }
+    // Special redirect for staff email regardless of role
+    const userEmail = user.email?.toLowerCase();
+    if (userEmail === 'staff@icanswim209.com') {
+      router.replace('/staff-mode');
+      return;
+    }
 
-      if (role === 'admin') {
-        router.replace('/admin');
-      } else if (role === 'instructor') {
-        router.replace('/instructor');
-      } else if (role === 'coordinator') {
-        router.replace('/coordinator/pos');
-      } else if (role === 'parent') {
-        router.replace('/parent');
-      } else if (role === null || role === undefined) {
-        // Use parent as default role if role is not determined
-        router.replace('/parent');
-      }
-      // If role is null/undefined, don't redirect - wait for role to be determined
-      // or show appropriate UI
+    // Role is not yet resolved — do not redirect prematurely
+    if (role === null || role === undefined) return;
+
+    if (role === 'admin') {
+      router.replace('/admin');
+    } else if (role === 'instructor') {
+      router.replace('/instructor');
+    } else if (role === 'coordinator') {
+      router.replace('/coordinator/pos');
+    } else if (role === 'parent') {
+      router.replace('/parent');
+    } else {
+      // Unknown role — default to parent
+      router.replace('/parent');
     }
   }, [user, role, loading, isLoadingProfile, router]);
 

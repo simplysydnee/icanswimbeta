@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserWithRole | null>(null)
   const [role, setRole] = useState<UserRole | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
@@ -356,14 +356,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const authUser = transformUser(session.user)
           setUser(authUser)
 
-          // Start profile fetch but don't wait for it to complete
-          fetchUserProfile(session.user.id, session.user.email).catch((error) => {
-            console.error('Auth: Profile fetch failed during auth state change:', error)
-            // Set default role if profile fetch fails
-            setRole('parent')
-          })
-          // Set loading to false immediately since we have a user
-          // Profile fetch will handle isLoadingProfile separately
+          // On INITIAL_SESSION the profile is already being fetched by initializeAuth.
+          // Only fetch again for a genuine new SIGNED_IN event to avoid a double-fetch race.
+          if (event === 'SIGNED_IN') {
+            fetchUserProfile(session.user.id, session.user.email).catch((error) => {
+              console.error('Auth: Profile fetch failed during auth state change:', error)
+              setRole('parent')
+            })
+          }
           setLoading(false)
         } else {
           // No session/user - this is a non-authenticated state
