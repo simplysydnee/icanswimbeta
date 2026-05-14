@@ -289,15 +289,19 @@ html, body {
   }
   
   .chart-row {
-    @apply flex items-center justify-between py-1.5 text-sm;
+    @apply flex items-center gap-2 py-1 text-sm;
   }
   
   .chart-row-bordered {
-    @apply flex items-center justify-between py-2 border-b border-border/20 text-sm last:border-b-0;
+    @apply flex items-center gap-2 py-1.5 border-b border-border/20 text-sm last:border-b-0;
   }
   
   .chart-label {
-    @apply text-sm text-muted-foreground;
+    @apply text-sm text-muted-foreground whitespace-nowrap;
+  }
+  
+  .chart-label::after {
+    content: ':';
   }
   
   .chart-value {
@@ -305,11 +309,11 @@ html, body {
   }
   
   .chart-grid {
-    @apply grid grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2;
+    @apply grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-1;
   }
   
   .chart-grid-2 {
-    @apply grid grid-cols-2 gap-x-6 gap-y-2;
+    @apply grid grid-cols-2 gap-x-4 gap-y-1;
   }
   
   /* Status dot indicators */
