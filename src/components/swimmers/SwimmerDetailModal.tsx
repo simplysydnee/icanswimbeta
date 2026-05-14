@@ -1166,7 +1166,8 @@ export function SwimmerDetailModal({
             </div>
 
             {/* Skills Grid - 3 columns */}
-            {swimmer.currentLevel && swimmerSkills.length > 0 && (
+            {swimmer.currentLevel ? (
+              swimmerSkills.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* In Progress */}
                 <div className="bg-amber-50/50 border border-amber-200/50 rounded-lg p-3">
@@ -1252,6 +1253,19 @@ export function SwimmerDetailModal({
                     )}
                   </div>
                 </div>
+              </div>
+              ) : (
+                <div className="text-center py-6 bg-muted/20 rounded-lg border border-dashed">
+                  <Target className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                  <p className="text-sm text-muted-foreground">No skills tracked yet for {swimmer.currentLevel.displayName}</p>
+                  <p className="text-xs text-muted-foreground/70 mt-1">Skills will appear here once tracking begins</p>
+                </div>
+              )
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                <Circle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No level assigned yet</p>
+                <p className="text-xs mt-1">Assign a level to track skill progress</p>
               </div>
             )}
 
