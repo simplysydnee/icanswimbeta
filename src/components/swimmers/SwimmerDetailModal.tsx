@@ -176,6 +176,7 @@ export function SwimmerDetailModal({
   const [swimmerTargets, setSwimmerTargets] = useState<any[]>([]);
   const [swimmerStrategies, setSwimmerStrategies] = useState<any[]>([]);
   const [assessmentReport, setAssessmentReport] = useState<any>(null);
+  const [currentLevel, setCurrentLevel] = useState<{ id: string; displayName: string; color: string } | null>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [skillTrackerOpen, setSkillTrackerOpen] = useState(false);
@@ -268,6 +269,28 @@ export function SwimmerDetailModal({
 
     try {
       const supabase = createClient();
+
+      // Fetch current level if swimmer has one
+      if (swimmer.currentLevelId) {
+        const { data: levelData, error: levelError } = await supabase
+          .from('levels')
+          .select('id, name, display_name, color')
+          .eq('id', swimmer.currentLevelId)
+          .single();
+
+        if (levelError) {
+          console.error('Error fetching level:', levelError);
+          setCurrentLevel(null);
+        } else if (levelData) {
+          setCurrentLevel({
+            id: levelData.id,
+            displayName: levelData.display_name || levelData.name,
+            color: levelData.color || '#ccc'
+          });
+        }
+      } else {
+        setCurrentLevel(null);
+      }
 
       // Fetch progress notes
       const { data: notes, error: notesError } = await supabase
@@ -636,10 +659,10 @@ export function SwimmerDetailModal({
                   {calculateAge(swimmer.dateOfBirth) !== '—' && (
                     <span>{calculateAge(swimmer.dateOfBirth)}</span>
                   )}
-                  {swimmer.currentLevel && (
+                  {currentLevel && (
                     <>
                       <span className="stat-inline-divider" />
-                      <span className="font-medium text-foreground">{swimmer.currentLevel.displayName}</span>
+                      <span className="font-medium text-foreground">{currentLevel.displayName}</span>
                     </>
                   )}
                   <span className="stat-inline-divider" />
@@ -1133,10 +1156,10 @@ export function SwimmerDetailModal({
             <div className="chart-section">
               <div className="flex flex-wrap items-center gap-4 mb-3">
                 {/* Current Level Display */}
-                {swimmer.currentLevel && (
+                {currentLevel && (
                   <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: swimmer.currentLevel.color || '#ccc' }} />
-                    <span className="text-sm font-medium">{swimmer.currentLevel.displayName}</span>
+                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: currentLevel.color || '#ccc' }} />
+                    <span className="text-sm font-medium">{currentLevel.displayName}</span>
                     <span className="text-sm text-muted-foreground">
                       ({swimmerSkills.filter(s => s.status === 'mastered').length}/{swimmerSkills.length} mastered)
                     </span>
@@ -1148,14 +1171,14 @@ export function SwimmerDetailModal({
                     <span className="text-xs text-muted-foreground">Change:</span>
                     <LevelSelector
                       swimmerId={swimmer.id}
-                      currentLevelId={swimmer.currentLevelId || swimmer.currentLevel?.id || null}
+                      currentLevelId={swimmer.currentLevelId || currentLevel?.id || null}
                       onLevelChange={() => fetchAdditionalData()}
                     />
                   </div>
                 )}
               </div>
               {/* Progress Bar */}
-              {swimmer.currentLevel && (
+              {currentLevel && (
                 <div className="w-full bg-muted rounded-full h-2">
                   <div
                     className="bg-emerald-500 h-2 rounded-full transition-all"
@@ -1166,7 +1189,7 @@ export function SwimmerDetailModal({
             </div>
 
             {/* Skills Grid - 3 columns */}
-            {swimmer.currentLevel ? (
+            {currentLevel ? (
               swimmerSkills.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* In Progress */}
@@ -1257,7 +1280,7 @@ export function SwimmerDetailModal({
               ) : (
                 <div className="text-center py-6 bg-muted/20 rounded-lg border border-dashed">
                   <Target className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                  <p className="text-sm text-muted-foreground">No skills tracked yet for {swimmer.currentLevel.displayName}</p>
+                  <p className="text-sm text-muted-foreground">No skills tracked yet for {currentLevel.displayName}</p>
                   <p className="text-xs text-muted-foreground/70 mt-1">Skills will appear here once tracking begins</p>
                 </div>
               )
@@ -1337,7 +1360,7 @@ export function SwimmerDetailModal({
             )}
 
             {/* Quick Actions */}
-            {(isAdmin || role === 'instructor') && swimmer.currentLevel && (
+            {(isAdmin || role === 'instructor') && currentLevel && (
               <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
