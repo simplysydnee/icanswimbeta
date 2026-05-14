@@ -232,6 +232,14 @@ function POSPageContent() {
   const [showExhausted, setShowExhausted] = useState(false);
   const [showExpiring, setShowExpiring] = useState(false);
 
+  // Quick filter badge toggles
+  const [showApproachingLimit, setShowApproachingLimit] = useState(false);
+  const [showExpiringSoon, setShowExpiringSoon] = useState(false);
+
+  // Search debounce
+  const [committedSearch, setCommittedSearch] = useState('');
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Funding source detail modal state
   const [fundingSourceDetailOpen, setFundingSourceDetailOpen] = useState(false);
   const [selectedFundingSourceForDetail, setSelectedFundingSourceForDetail] = useState<string | null>(null);
@@ -279,6 +287,10 @@ function POSPageContent() {
   });
 
   const [fundingSourceStats, setFundingSourceStats] = useState<FundingSourceStats[]>([]);
+
+  // Quick filter badge counts from API
+  const [approachingLimitCount, setApproachingLimitCount] = useState(0);
+  const [expiringSoonCount, setExpiringSoonCount] = useState(0);
 
   // Tab state
   const [activeTab, setActiveTab] = useState<POSTab>('purchase-orders');
@@ -352,6 +364,24 @@ function POSPageContent() {
       if (attentionNeeds) {
         params.append('attention', 'needs');
       }
+      if (statusFilter && statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
+      if (poTypeFilter && poTypeFilter !== 'all') {
+        params.append('poType', poTypeFilter);
+      }
+      if (fundingSourceFilter && fundingSourceFilter !== 'all') {
+        params.append('fundingSource', fundingSourceFilter);
+      }
+      if (committedSearch) {
+        params.append('search', committedSearch);
+      }
+      if (showApproachingLimit) {
+        params.append('approachingLimit', 'true');
+      }
+      if (showExpiringSoon) {
+        params.append('expiringSoon', 'true');
+      }
 
       const response = await fetch(`/api/pos?${params.toString()}`);
       if (!response.ok) {
@@ -381,18 +411,27 @@ function POSPageContent() {
         outstandingClients: 0,
       });
       setFundingSourceStats(result.fundingSourceStats || []);
+      setApproachingLimitCount(result.approachingLimitCount ?? 0);
+      setExpiringSoonCount(result.expiringSoonCount ?? 0);
     } catch (error) {
       console.error('Error fetching POs:', error);
     } finally {
       setLoading(false);
     }
-  }, [selectedMonth, attentionNeeds]);
+  }, [selectedMonth, attentionNeeds, statusFilter, poTypeFilter, fundingSourceFilter, committedSearch, showApproachingLimit, showExpiringSoon]);
 
   useEffect(() => {
     fetchPurchaseOrders();
     fetchFundingSources();
     fetchMonthRange();
   }, [fetchPurchaseOrders, fetchFundingSources, fetchMonthRange]);
+
+  // Cleanup search debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
+  }, []);
 
   const handleApprove = async () => {
     if (!selectedPO) return;
@@ -749,7 +788,23 @@ function POSPageContent() {
       })()
     );
 
-    return matchesSearch && matchesStatus && matchesBillingStatus && matchesPoType && matchesFundingSource && matchesSelectedFundingSource && matchesExhaustedFilter && matchesExpiringFilter;
+    const matchesApproachingLimitFilter = !showApproachingLimit || (
+      po.sessions_used >= 10 &&
+      (po.status === 'active' || po.status === 'approved_pending_auth') &&
+      po.po_type === 'lessons'
+    );
+    const matchesExpiringSoonFilter = !showExpiringSoon || (
+      !!po.end_date &&
+      (po.status === 'active' || po.status === 'approved_pending_auth') &&
+      po.po_type === 'lessons' &&
+      (() => {
+        const end = parsePODate(po.end_date);
+        const d = Math.floor((end.getTime() - todayForFilter.getTime()) / 86400000);
+        return d >= 0 && d <= 7;
+      })()
+    );
+
+    return matchesSearch && matchesStatus && matchesBillingStatus && matchesPoType && matchesFundingSource && matchesSelectedFundingSource && matchesExhaustedFilter && matchesExpiringFilter && matchesApproachingLimitFilter && matchesExpiringSoonFilter;
   });
 
   const getFundingSources = () => {
@@ -872,6 +927,37 @@ function POSPageContent() {
         );
       })()}
 
+      {/* Quick Filter Badges */}
+      {(approachingLimitCount > 0 || expiringSoonCount > 0) && (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm mb-6">
+          {approachingLimitCount > 0 && (
+            <button
+              onClick={() => { setShowApproachingLimit(!showApproachingLimit); setShowExpiringSoon(false); }}
+              className={`font-medium underline-offset-2 hover:underline ${showApproachingLimit ? 'text-amber-700' : 'text-amber-600'}`}
+            >
+              ⚠️ {approachingLimitCount} Approaching Limit
+            </button>
+          )}
+          {approachingLimitCount > 0 && expiringSoonCount > 0 && <span className="text-gray-300">·</span>}
+          {expiringSoonCount > 0 && (
+            <button
+              onClick={() => { setShowExpiringSoon(!showExpiringSoon); setShowApproachingLimit(false); }}
+              className={`font-medium underline-offset-2 hover:underline ${showExpiringSoon ? 'text-red-700' : 'text-red-600'}`}
+            >
+              🔴 {expiringSoonCount} Expiring Soon
+            </button>
+          )}
+          {(showApproachingLimit || showExpiringSoon) && (
+            <button
+              className="ml-auto text-xs text-muted-foreground underline-offset-2 hover:underline"
+              onClick={() => { setShowApproachingLimit(false); setShowExpiringSoon(false); }}
+            >
+              Clear filter
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Conditional Content */}
       {activeTab === 'purchase-orders' ? (
         <>
@@ -930,7 +1016,13 @@ function POSPageContent() {
               <Input
                 placeholder="Search by swimmer, auth#, or coordinator..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+                  searchTimeoutRef.current = setTimeout(() => {
+                    setCommittedSearch(e.target.value);
+                  }, 300);
+                }}
                 className="pl-10 w-full"
               />
             </div>
@@ -1005,6 +1097,44 @@ function POSPageContent() {
                   </option>
                 ))}
               </select>
+
+              {(() => {
+                const hasActiveFilters = statusFilter !== 'all' ||
+                  poTypeFilter !== 'all' ||
+                  fundingSourceFilter !== 'all' ||
+                  billingStatusFilter !== 'all' ||
+                  committedSearch !== '' ||
+                  showExhausted ||
+                  showExpiring ||
+                  showApproachingLimit ||
+                  showExpiringSoon ||
+                  selectedFundingSource !== null;
+                if (!hasActiveFilters) return null;
+                return (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground shrink-0"
+                    onClick={() => {
+                      setStatusFilter('all');
+                      setPoTypeFilter('all');
+                      setFundingSourceFilter('all');
+                      setBillingStatusFilter('all');
+                      setSearchTerm('');
+                      setCommittedSearch('');
+                      setShowExhausted(false);
+                      setShowExpiring(false);
+                      setShowApproachingLimit(false);
+                      setShowExpiringSoon(false);
+                      setSelectedFundingSource(null);
+                      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+                    }}
+                  >
+                    <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                    Clear filters
+                  </Button>
+                );
+              })()}
             </div>
           </div>
         </CardContent>

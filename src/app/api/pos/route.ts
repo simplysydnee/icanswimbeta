@@ -37,6 +37,31 @@ export async function GET(request: NextRequest) {
     const limitRaw = parseInt(searchParams.get('limit') || '0', 10);
     const limit =
       Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 200) : 0;
+    const poType = searchParams.get('poType');
+    const fundingSource = searchParams.get('fundingSource');
+    const approachingLimit = searchParams.get('approachingLimit') === 'true';
+    const expiringSoon = searchParams.get('expiringSoon') === 'true';
+
+    // ── Quick filter badge counts (always from unfiltered data) ──
+    const todayStr = new Date().toISOString().split('T')[0];
+    const sevenDaysLater = new Date();
+    sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
+    const sevenDaysStr = sevenDaysLater.toISOString().split('T')[0];
+
+    const { count: approachingLimitCount } = await supabase
+      .from('purchase_orders')
+      .select('*', { count: 'exact', head: true })
+      .gte('sessions_used', 10)
+      .in('status', ['active', 'approved_pending_auth'])
+      .eq('po_type', 'lessons');
+
+    const { count: expiringSoonCount } = await supabase
+      .from('purchase_orders')
+      .select('*', { count: 'exact', head: true })
+      .gte('end_date', todayStr)
+      .lte('end_date', sevenDaysStr)
+      .in('status', ['active', 'approved_pending_auth'])
+      .eq('po_type', 'lessons');
 
     let query = supabase
       .from('purchase_orders')
@@ -63,6 +88,29 @@ export async function GET(request: NextRequest) {
 
     if (coordinatorId) {
       query = query.eq('coordinator_id', user.id);
+    }
+
+    if (poType && poType !== 'all') {
+      query = query.eq('po_type', poType);
+    }
+
+    if (fundingSource && fundingSource !== 'all') {
+      query = query.eq('funding_source_id', fundingSource);
+    }
+
+    if (approachingLimit) {
+      query = query
+        .gte('sessions_used', 10)
+        .in('status', ['active', 'approved_pending_auth'])
+        .eq('po_type', 'lessons');
+    }
+
+    if (expiringSoon) {
+      query = query
+        .gte('end_date', todayStr)
+        .lte('end_date', sevenDaysStr)
+        .in('status', ['active', 'approved_pending_auth'])
+        .eq('po_type', 'lessons');
     }
 
     // Remove default 1k row limit to get all POs
@@ -156,13 +204,15 @@ export async function GET(request: NextRequest) {
       // Continue with just PO data
     }
 
-    // Filter by search (swimmer name) if provided
+    // Filter by search (swimmer name, auth#, coordinator name) if provided
     let filteredData = enrichedPoData;
     if (search) {
       const searchLower = search.toLowerCase();
       filteredData = enrichedPoData?.filter(po =>
         po.swimmer?.first_name?.toLowerCase().includes(searchLower) ||
-        po.swimmer?.last_name?.toLowerCase().includes(searchLower)
+        po.swimmer?.last_name?.toLowerCase().includes(searchLower) ||
+        po.authorization_number?.toLowerCase().includes(searchLower) ||
+        po.coordinator?.full_name?.toLowerCase().includes(searchLower)
       );
     }
 
@@ -389,6 +439,8 @@ export async function GET(request: NextRequest) {
       data: outputData,
       stats: overallStats,
       fundingSourceStats: fundingSourceStatsArray,
+      approachingLimitCount: approachingLimitCount ?? 0,
+      expiringSoonCount: expiringSoonCount ?? 0,
       ...(attention === 'needs'
         ? { attentionCount: statsSource.length }
         : {}),
