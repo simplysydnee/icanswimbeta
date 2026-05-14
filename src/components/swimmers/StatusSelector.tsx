@@ -173,7 +173,7 @@ export function StatusSelector({
           }}
           disabled={isLoading}
         >
-          <SelectTrigger className="h-7 w-[100px] text-xs">
+          <SelectTrigger className="h-7 w-[110px] text-xs">
             <SelectValue placeholder="Select..." />
           </SelectTrigger>
           <SelectContent>
