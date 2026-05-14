@@ -106,91 +106,34 @@ export async function POST(
       instructorName = instructor?.full_name
     }
 
-    // Cancel the booking (service client to bypass RLS)
-    const { error: updateError } = await serviceSupabase
-      .from('bookings')
-      .update({
-        status: 'cancelled',
-        cancel_reason: reason,
-        canceled_at: now.toISOString(),
-        canceled_by: user.id,
-      })
-      .eq('id', bookingId)
+    // ═══════════════════════════════════════════════════════════════════
+    // Atomically cancel via cancel_booking RPC (row-level lock)
+    // ═══════════════════════════════════════════════════════════════════
+    const { data: cancelResult, error: cancelError } = await serviceSupabase.rpc('cancel_booking', {
+      p_booking_id: bookingId,
+      p_cancelled_by: user.id,
+      p_cancel_reason: reason || null,
+      p_cancel_source: 'parent',
+      p_is_late_cancel: isLateCancellation,
+      p_late_cancel_type: null,
+      p_late_cancel_note: isLateCancellation ? 'late_cancellation' : null,
+    });
 
-    if (updateError) {
-      throw new Error('Failed to cancel booking')
+    if (cancelError || cancelResult?.error) {
+      const errorCode = cancelResult?.error || 'internal_error';
+      const errorMap: Record<string, { status: number; message: string }> = {
+        booking_not_found: { status: 404, message: 'Booking not found' },
+        already_cancelled: { status: 400, message: 'Booking is already cancelled' },
+        cannot_cancel_completed: { status: 400, message: 'Cannot cancel a completed booking' },
+        pending_auth_admin_only: { status: 403, message: 'Only admins can cancel pending authorization bookings' },
+        internal_error: { status: 500, message: 'Failed to cancel booking' },
+      };
+      const err = errorMap[errorCode] ?? { status: 500, message: 'Failed to cancel booking' };
+      console.error('cancel_booking RPC failed:', errorCode, cancelError || cancelResult);
+      return NextResponse.json({ error: err.message }, { status: err.status });
     }
 
-    // Decrement session booking count
-    await serviceSupabase
-      .from('sessions')
-      .update({
-        booking_count: Math.max(0, ((booking.session as any).booking_count || 1) - 1),
-        is_full: false,
-      })
-      .eq('id', (booking.session as any).id)
-
-    // Late cancellation consequences:
-    // - mark swimmer as flexible_swimmer
-    // - create a floating session for the vacated slot
-    let createdFloatingSession = false
-    let floatingSessionId = null
-
-    if (isLateCancellation) {
-      await serviceSupabase
-        .from('swimmers')
-        .update({
-          flexible_swimmer: true,
-          flexible_swimmer_reason: 'late_cancellation',
-          flexible_swimmer_set_at: now.toISOString(),
-        })
-        .eq('id', (booking.swimmer as any).id)
-
-      if (sessionStart > now) {
-        const { data: floatingSession } = await serviceSupabase
-          .from('floating_sessions')
-          .insert({
-            original_session_id: (booking.session as any).id,
-            original_booking_id: bookingId,
-            available_until: (booking.session as any).start_time,
-            month_year: sessionStart.toISOString().slice(0, 7),
-            status: 'available',
-          })
-          .select('id')
-          .single()
-
-        if (floatingSession) {
-          createdFloatingSession = true
-          floatingSessionId = floatingSession.id
-        }
-      }
-    }
-
-    // Track cancellation for analytics
-    await serviceSupabase
-      .from('cancellations')
-      .insert({
-        booking_id: bookingId,
-        session_id: (booking.session as any).id,
-        swimmer_id: (booking.swimmer as any).id,
-        parent_id: (booking.swimmer as any).parent_id,
-        canceled_by: user.id,
-        cancellation_type: booking.booking_type === 'assessment' ? 'assessment' : 'single',
-        session_date: (booking.session as any).start_time,
-        session_start_time: (booking.session as any).start_time,
-        session_end_time: (booking.session as any).end_time,
-        session_location: (booking.session as any).location,
-        instructor_id: (booking.session as any).instructor_id,
-        instructor_name: instructorName,
-        swimmer_name: `${(booking.swimmer as any).first_name} ${(booking.swimmer as any).last_name}`,
-        swimmer_has_funding_source: !!(booking.swimmer as any).funding_source_id,
-        hours_before_session: Math.round(hoursBeforeSession * 100) / 100,
-        was_late_cancellation: isLateCancellation,
-        cancel_reason: reason,
-        cancel_source: 'parent',
-        created_floating_session: createdFloatingSession,
-        floating_session_id: floatingSessionId,
-      })
+    const createdFloatingSession = cancelResult.created_floating_session === true;
 
     // If assessment, update assessment record and swimmer status
     if (booking.booking_type === 'assessment') {

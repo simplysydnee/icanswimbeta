@@ -45,17 +45,7 @@ export async function POST(request: Request) {
       .single();
     if (!swimmer) return NextResponse.json({ error: 'Swimmer not authorized' }, { status: 403 });
 
-    // Check for booking conflicts
-    // const conflictResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/bookings/check-conflict`, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ swimmerId, sessionId }),
-    // });
-
-    // const conflictData = await conflictResponse.json();
-    // if (conflictData.hasConflict) {
-    //   return NextResponse.json({ error: conflictData.message || 'Booking conflict detected' }, { status: 409 });
-    // }
+    // Conflict check is handled atomically inside book_session RPC
     console.log('Conflict check passed for swimmerId:', swimmerId, 'sessionId:', sessionId);
     const fundingSourceId = swimmer.funding_source_id;
 
@@ -281,36 +271,46 @@ export async function POST(request: Request) {
       }
     }
 
-    // Create booking
-    const { data: booking, error: bookingError } = await serviceSupabase
+    // ═══════════════════════════════════════════════════════════════════
+    // Atomically create booking via book_session RPC (row-level lock)
+    // ═══════════════════════════════════════════════════════════════════
+    const { data: bookResult, error: rpcError } = await serviceSupabase.rpc('book_session', {
+      p_session_id: sessionId,
+      p_swimmer_id: swimmerId,
+      p_parent_id: parentId,
+      p_booking_type: 'lesson',
+      p_purchase_order_id: activePoId ?? null,
+      p_status: bookingStatus,
+    });
+
+    if (rpcError || bookResult?.error) {
+      const errorCode = bookResult?.error || 'internal_error';
+      const errorMap: Record<string, { status: number; message: string }> = {
+        session_full: { status: 409, message: 'Session is full' },
+        session_not_available: { status: 409, message: 'Session is not available' },
+        session_held: { status: 409, message: 'Session is temporarily held by another user' },
+        duplicate_booking: { status: 409, message: 'Already booked for this session' },
+        swimmer_conflict: { status: 409, message: 'Swimmer already has a booking at this time' },
+        session_not_found: { status: 404, message: 'Session not found' },
+        internal_error: { status: 500, message: 'Booking failed' },
+      };
+      const err = errorMap[errorCode] ?? { status: 500, message: 'Booking failed' };
+      console.error('book_session RPC failed:', errorCode, rpcError || bookResult);
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
+
+    const bookingId = bookResult.booking_id;
+
+    // Fetch the created booking for the response
+    const { data: booking, error: bookingFetchError } = await serviceSupabase
       .from('bookings')
-      .insert({
-        session_id: sessionId,
-        swimmer_id: swimmerId,
-        parent_id: parentId,
-        status: bookingStatus,
-        purchase_order_id: activePoId,
-        created_at: new Date().toISOString(),
-      })
       .select()
+      .eq('id', bookingId)
       .single();
-    if (bookingError) return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 });
 
-    // Update session
-    const newBookingCount = (session.booking_count || 0) + 1;
-    const isFull = newBookingCount >= session.max_capacity;
-    const { error: sessionUpdateError } = await serviceSupabase
-      .from('sessions')
-      .update({
-        booking_count: newBookingCount,
-        is_full: isFull,
-        status: isFull ? 'booked' : session.status,
-      })
-      .eq('id', sessionId);
-
-    if (sessionUpdateError) {
-      await serviceSupabase.from('bookings').delete().eq('id', booking.id);
-      return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
+    if (bookingFetchError || !booking) {
+      console.error('Failed to fetch created booking:', bookingFetchError);
+      // The booking was created — return what we can
     }
 
     if (session.session_type === 'assessment') {
@@ -324,15 +324,14 @@ export async function POST(request: Request) {
         .eq('assessment_status', 'not_scheduled');
 
       if (swimmerAssessmentError) {
-        await serviceSupabase.from('bookings').delete().eq('id', booking.id);
-        await serviceSupabase
-          .from('sessions')
-          .update({
-            booking_count: session.booking_count ?? 0,
-            is_full: session.is_full ?? false,
-            status: session.status,
-          })
-          .eq('id', sessionId);
+        // Rollback the booking atomically
+        await serviceSupabase.rpc('cancel_booking', {
+          p_booking_id: bookingId,
+          p_cancelled_by: parentId,
+          p_cancel_reason: 'Assessment status update failed — booking rolled back',
+          p_cancel_source: 'system',
+          p_is_late_cancel: false,
+        });
         return NextResponse.json(
           { error: 'Failed to update swimmer assessment status' },
           { status: 500 }
@@ -537,6 +536,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       confirmationNumber,
+      bookingId,
       booking,
       session: {
         id: session.id,
@@ -544,7 +544,6 @@ export async function POST(request: Request) {
         endTime: session.end_time,
         instructorId: session.instructor_id,
         location: session.location,
-        status: isFull ? 'booked' : session.status,
       },
       fundingSourceId,
     });

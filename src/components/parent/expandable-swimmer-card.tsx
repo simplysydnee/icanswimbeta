@@ -47,9 +47,16 @@ interface ExpandableSwimmerCardProps {
       color?: string
     }
     funding_source_id?: boolean
+    funding_source_requires_authorization?: boolean
     payment_type?: string
     funding_source_name?: string
     funding_coordinator_name?: string
+    active_purchase_order?: {
+      sessions_authorized: number
+      sessions_used: number
+      unexcused_late_cancel_count: number
+      sessions_remaining: number
+    } | null
     funding_coordinator_email?: string
     funding_coordinator_phone?: string
     authorized_sessions_used?: number
@@ -309,6 +316,37 @@ export function ExpandableSwimmerCard({
                 No upcoming sessions
               </div>
             )}
+
+            {/* Authorization Summary for VMRC/CVRC swimmers */}
+            {swimmer.funding_source_requires_authorization && swimmer.active_purchase_order && (
+              <div className="border border-purple-200 bg-purple-50/40 rounded-md p-2.5 space-y-1">
+                <p className="text-[11px] font-semibold text-purple-800 uppercase tracking-wide">
+                  Authorization Summary
+                </p>
+                <p className="text-sm text-purple-900">
+                  {swimmer.active_purchase_order.sessions_remaining} of {swimmer.active_purchase_order.sessions_authorized} lessons remaining
+                </p>
+                <div className="flex gap-3 text-xs text-purple-700">
+                  <span>0 cancelled</span>
+                  <span>
+                    {swimmer.active_purchase_order.unexcused_late_cancel_count} late cancels
+                    {swimmer.active_purchase_order.unexcused_late_cancel_count >= 1 && (
+                      <span className="text-amber-600 ml-1">⚠️</span>
+                    )}
+                  </span>
+                </div>
+                {swimmer.active_purchase_order.unexcused_late_cancel_count >= 1 && (
+                  <p className="text-[11px] text-amber-700 leading-tight">
+                    Late cancellations may result in removal from program
+                  </p>
+                )}
+                {swimmer.active_purchase_order.unexcused_late_cancel_count >= 2 && (
+                  <p className="text-[11px] text-red-700 leading-tight">
+                    At risk of being dropped from the program
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
         <div className="px-6 pb-4 pt-2 border-t">
@@ -548,6 +586,40 @@ export function ExpandableSwimmerCard({
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <span className="break-all">{swimmer.funding_coordinator_email}</span>
                     </div>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* Authorization Summary for VMRC/CVRC swimmers (expanded view) */}
+            {swimmer.funding_source_requires_authorization && swimmer.active_purchase_order && (
+              <section>
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Authorization Summary
+                </h3>
+                <div className="border border-purple-200 bg-purple-50/40 rounded-lg p-4 space-y-2">
+                  <div className="text-sm font-medium text-purple-900">
+                    {swimmer.active_purchase_order.sessions_remaining} of {swimmer.active_purchase_order.sessions_authorized} lessons remaining
+                  </div>
+                  <div className="flex gap-4 text-xs text-purple-700">
+                    <span>0 cancelled</span>
+                    <span>
+                      {swimmer.active_purchase_order.unexcused_late_cancel_count} late cancels
+                      {swimmer.active_purchase_order.unexcused_late_cancel_count >= 1 && (
+                        <span className="text-amber-600 ml-1">⚠️</span>
+                      )}
+                    </span>
+                  </div>
+                  {swimmer.active_purchase_order.unexcused_late_cancel_count >= 1 && (
+                    <p className="text-xs text-amber-700 leading-tight">
+                      Late cancellations may result in removal from program
+                    </p>
+                  )}
+                  {swimmer.active_purchase_order.unexcused_late_cancel_count >= 2 && (
+                    <p className="text-xs text-red-700 leading-tight font-medium">
+                      At risk of being dropped from the program
+                    </p>
                   )}
                 </div>
               </section>

@@ -28,27 +28,54 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // ── Cancel action: handled entirely via cancel_booking RPC ─────
+    if (action === 'cancel') {
+      if (!data?.reason) {
+        return NextResponse.json(
+          { error: 'Cancel reason is required' },
+          { status: 400 }
+        )
+      }
+
+      const cancelErrors: string[] = []
+      let cancelledCount = 0
+
+      for (const booking of bookings) {
+        if (booking.status === 'cancelled' || booking.status === 'completed') continue
+
+        const result = await supabase.rpc('cancel_booking', {
+          p_booking_id: booking.id,
+          p_cancelled_by: booking.id,            // Bulk ops use booking ID as system marker
+          p_cancel_reason: data.reason,
+          p_cancel_source: 'admin',
+          p_is_late_cancel: false,
+          p_late_cancel_type: null,
+          p_late_cancel_note: null,
+        })
+
+        if (result.error || result.data?.error) {
+          cancelErrors.push(`Booking ${booking.id}: ${result.data?.error || result.error?.message}`)
+        } else {
+          cancelledCount++
+        }
+      }
+
+      if (cancelErrors.length > 0) {
+        console.error('Bulk cancel errors:', cancelErrors)
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `${cancelledCount} bookings cancelled`,
+        count: cancelledCount,
+        errors: cancelErrors.length > 0 ? cancelErrors : undefined,
+      })
+    }
+
     let updateData: any = {}
     let message = ''
 
     switch (action) {
-      case 'cancel':
-        if (!data?.reason) {
-          return NextResponse.json(
-            { error: 'Cancel reason is required' },
-            { status: 400 }
-          )
-        }
-        updateData = {
-          status: 'cancelled',
-          cancel_reason: data.reason,
-          cancel_source: 'admin',
-          canceled_at: new Date().toISOString(),
-          notes: data.notes ? `${data.notes}\n\n[Bulk cancel: ${data.reason}]` : `[Bulk cancel: ${data.reason}]`
-        }
-        message = `${bookings.length} bookings cancelled`
-        break
-
       case 'change_instructor':
         if (!data?.instructorId) {
           return NextResponse.json(
@@ -115,41 +142,6 @@ export async function POST(request: NextRequest) {
           { error: 'Failed to update bookings' },
           { status: 500 }
         )
-      }
-    }
-
-    // Update session booking counts for cancellations
-    if (action === 'cancel') {
-      const confirmedBookings = bookings.filter(b => b.status === 'confirmed')
-      const sessionCounts: Record<string, number> = {}
-
-      // Count cancellations per session
-      confirmedBookings.forEach(booking => {
-        if (booking.session_id) {
-          sessionCounts[booking.session_id] = (sessionCounts[booking.session_id] || 0) + 1
-        }
-      })
-
-      // Update each session
-      for (const [sessionId, cancelCount] of Object.entries(sessionCounts)) {
-        const { data: session } = await supabase
-          .from('sessions')
-          .select('booking_count, max_capacity')
-          .eq('id', sessionId)
-          .single()
-
-        if (session) {
-          const newBookingCount = Math.max(0, (session.booking_count || 0) - cancelCount)
-          const isFull = newBookingCount >= session.max_capacity
-
-          await supabase
-            .from('sessions')
-            .update({
-              booking_count: newBookingCount,
-              is_full: isFull
-            })
-            .eq('id', sessionId)
-        }
       }
     }
 

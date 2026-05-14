@@ -101,15 +101,15 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Generate block cancellation ID for tracking
-    const blockCancelId = crypto.randomUUID()
     const results = {
       canceled: 0,
       skipped: 0,
       errors: [] as string[],
     }
 
-    // Cancel each booking
+    // Cancel each booking atomically via cancel_booking RPC
+    // Block cancellations always create floating sessions but don't mark
+    // swimmers as flexible (passing p_late_cancel_type='block_cancel')
     for (const booking of blockBookings) {
       const sessionStart = new Date(booking.session.start_time)
 
@@ -119,69 +119,22 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      const hoursBeforeSession = (sessionStart.getTime() - now.getTime()) / (1000 * 60 * 60)
-
       try {
-        // Update booking
-        await supabase
-          .from('bookings')
-          .update({
-            status: 'cancelled',
-            cancel_reason: reason || 'Block cancellation',
-            canceled_at: now.toISOString(),
-            canceled_by: user.id,
-          })
-          .eq('id', booking.id)
+        const { data: cancelResult, error: cancelError } = await supabase.rpc('cancel_booking', {
+          p_booking_id: booking.id,
+          p_cancelled_by: user.id,
+          p_cancel_reason: reason || 'Block cancellation',
+          p_cancel_source: isAdmin ? 'admin' : 'parent',
+          p_is_late_cancel: false,
+          p_late_cancel_type: 'block_cancel',
+          p_late_cancel_note: null,
+        });
 
-        // Update session
-        await supabase
-          .from('sessions')
-          .update({
-            booking_count: Math.max(0, (booking.session.booking_count || 1) - 1),
-            is_full: false,
-          })
-          .eq('id', booking.session.id)
-
-        // Create floating session
-        const { data: floatingSession } = await supabase
-          .from('floating_sessions')
-          .insert({
-            original_session_id: booking.session.id,
-            original_booking_id: booking.id,
-            available_until: booking.session.start_time,
-            month_year: sessionStart.toISOString().slice(0, 7),
-            status: 'available',
-          })
-          .select('id')
-          .single()
-
-        // Track cancellation
-        await supabase
-          .from('cancellations')
-          .insert({
-            booking_id: booking.id,
-            session_id: booking.session.id,
-            swimmer_id: swimmerId,
-            parent_id: swimmer.parent_id,
-            canceled_by: user.id,
-            cancellation_type: 'block',
-            block_id: blockCancelId,
-            session_date: booking.session.start_time,
-            session_start_time: booking.session.start_time,
-            session_end_time: booking.session.end_time,
-            session_location: booking.session.location,
-            instructor_id: booking.session.instructor_id,
-            swimmer_name: `${swimmer.first_name} ${swimmer.last_name}`,
-            swimmer_has_funding_source: !!swimmer.funding_source_id,
-            hours_before_session: Math.round(hoursBeforeSession * 100) / 100,
-            was_late_cancellation: false,
-            cancel_reason: reason || 'Block cancellation',
-            cancel_source: isAdmin ? 'admin' : 'parent',
-            created_floating_session: true,
-            floating_session_id: floatingSession?.id,
-          })
-
-        results.canceled++
+        if (cancelError || cancelResult?.error) {
+          results.errors.push(`Booking ${booking.id}: ${cancelResult?.error || cancelError?.message}`);
+        } else {
+          results.canceled++;
+        }
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error'
         results.errors.push(`Failed to cancel booking ${booking.id}: ${errorMessage}`)
@@ -191,7 +144,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `Cancelled ${results.canceled} sessions`,
-      blockId: blockCancelId,
       results,
     })
 

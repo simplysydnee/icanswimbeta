@@ -161,6 +161,30 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: `Failed to fetch swimmers: ${error.message || error.details || error.hint || 'Unknown error'}` }, { status: 500 });
     }
 
+    // Batch query active purchase orders for funded swimmers
+    let poMap: Record<string, any> = {};
+    const fundedSwimmers = (data || []).filter(
+      s => s.funding_source?.[0]?.requires_authorization === true
+    );
+    if (fundedSwimmers.length > 0) {
+      const swimmerIds = fundedSwimmers.map(s => s.id);
+      const { data: poRows } = await supabase
+        .from('purchase_orders')
+        .select('swimmer_id, sessions_authorized, sessions_used, unexcused_late_cancel_count')
+        .in('swimmer_id', swimmerIds)
+        .eq('po_type', 'lessons')
+        .in('status', ['active', 'approved_pending_auth'])
+        .order('start_date', { ascending: false });
+
+      if (poRows) {
+        for (const po of poRows) {
+          if (!poMap[po.swimmer_id]) {
+            poMap[po.swimmer_id] = po;
+          }
+        }
+      }
+    }
+
     // Transform snake_case → camelCase for frontend consistency
     function transformSwimmer(raw: any) {
       const completedBookings = raw.bookings?.filter((b: any) => b.status === 'completed') || [];
@@ -185,6 +209,13 @@ export async function GET(req: Request) {
       } : null;
 
       const funding = raw.funding_source?.[0] || null;
+
+      const rawPo = poMap[raw.id] || null;
+      const activePurchaseOrder = rawPo ? {
+        sessionsAuthorized: rawPo.sessions_authorized,
+        sessionsUsed: rawPo.sessions_used,
+        unexcusedLateCancelCount: rawPo.unexcused_late_cancel_count,
+      } : null;
 
       const nextSession = nextBooking?.session?.[0] ? {
         startTime: nextBooking.session[0].start_time,
@@ -247,7 +278,14 @@ export async function GET(req: Request) {
         liabilityWaiverSignature: raw.liability_waiver_signature,
         signedWaiver: raw.signed_waiver,
         currentLevel: level,
-        fundingSource: funding,
+        fundingSource: funding ? {
+          id: funding.id,
+          name: funding.name,
+          priceCents: funding.price_cents,
+          requiresAuthorization: funding.requires_authorization,
+          type: funding.type,
+        } : null,
+        activePurchaseOrder,
         nextSession,
         lessonsCompleted,
         bookings: raw.bookings,

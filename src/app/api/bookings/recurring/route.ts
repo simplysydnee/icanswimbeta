@@ -84,10 +84,7 @@ function occurrenceDateTime(ymd: string, templateStartIso: string): Date {
 }
 
 export async function POST(request: Request) {
-  const rollback: {
-    bookingIds: string[];
-    sessionSnapshots: { id: string; booking_count: number; is_full: boolean | null; status: string }[];
-  } = { bookingIds: [], sessionSnapshots: [] };
+  const bookingIds: string[] = [];
 
   try {
     const supabase = await createClient();
@@ -290,74 +287,42 @@ export async function POST(request: Request) {
 
     const sessionDatesToBook = datesInPo.slice(0, nBookings);
 
-    const { data: fresh, error: freshErr } = await serviceSupabase
-      .from('sessions')
-      .select(
-        'id, start_time, end_time, status, is_full, max_capacity, booking_count, instructor_id, location, is_recurring'
-      )
-      .eq('id', sessionId)
-      .single();
-
-    if (freshErr || !fresh) {
-      throw new Error(`Session ${sessionId} not found`);
-    }
-
-    const fr = fresh as SessionRow;
-    const fc = fr.booking_count ?? 0;
-    const fcap = fr.max_capacity ?? 1;
-    if (!['available', 'open'].includes(fr.status) || fr.is_full || fc >= fcap) {
-      throw new Error(`Session ${sessionId} is no longer available`);
-    }
-    if (fc + nBookings > fcap) {
-      throw new Error(`Session ${sessionId} would exceed max capacity`);
-    }
-
-    rollback.sessionSnapshots.push({
-      id: fr.id,
-      booking_count: fc,
-      is_full: fr.is_full,
-      status: fr.status,
-    });
-
+    // ═══════════════════════════════════════════════════════════════════
+    // Atomically create bookings via book_session RPC (row-level lock)
+    // Called once per date — each call increments booking_count by 1
+    // ═══════════════════════════════════════════════════════════════════
     const bookings: { id: string; session_id: string }[] = [];
 
     for (const sessionDateYmd of sessionDatesToBook) {
-      const { data: booking, error: bookingError } = await serviceSupabase
-        .from('bookings')
-        .insert({
-          session_id: sessionId,
-          swimmer_id: swimmerId,
-          parent_id: parentId,
-          status: 'confirmed',
-          session_date: sessionDateYmd,
-          created_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
+      const { data: result, error: rpcError } = await serviceSupabase.rpc('book_session', {
+        p_session_id: sessionId,
+        p_swimmer_id: swimmerId,
+        p_parent_id: parentId,
+        p_booking_type: 'lesson',
+        p_purchase_order_id: activePoId ?? null,
+        p_status: 'confirmed',
+      });
 
-      if (bookingError || !booking) {
-        throw new Error(`Failed to create booking for ${sessionDateYmd}`);
+      if (rpcError || result?.error) {
+        // Rollback already-created bookings via cancel_booking
+        for (const bid of bookingIds) {
+          await serviceSupabase.rpc('cancel_booking', {
+            p_booking_id: bid,
+            p_cancelled_by: parentId,
+            p_cancel_reason: 'Rollback from recurring booking failure',
+            p_cancel_source: 'system',
+            p_is_late_cancel: false,
+          });
+        }
+        const code = result?.error || 'rpc_error';
+        throw new Error(`book_session failed for ${sessionDateYmd}: ${code}${rpcError ? ' (' + rpcError.message + ')' : ''}`);
       }
 
-      rollback.bookingIds.push(booking.id);
-      bookings.push({ id: booking.id, session_id: sessionId });
+      bookingIds.push(result.booking_id);
+      bookings.push({ id: result.booking_id, session_id: sessionId });
     }
 
-    const newBookingCount = fc + nBookings;
-    const isFull = newBookingCount >= fcap;
-    const { error: sessionUpdateError } = await serviceSupabase
-      .from('sessions')
-      .update({
-        booking_count: newBookingCount,
-        is_full: isFull,
-        status: isFull ? 'booked' : fr.status,
-      })
-      .eq('id', sessionId);
-
-    if (sessionUpdateError) {
-      throw new Error(`Failed to update session ${sessionId}`);
-    }
-
+    // Update purchase order — same logic as before, now using nBookings
     if (fundingSourceId && activePoId) {
       const nextSessionsBooked = currentBookingCount + nBookings;
 
@@ -388,14 +353,14 @@ export async function POST(request: Request) {
         .single();
 
       const sessionsForEmail = sessionDatesToBook.map(ymd => {
-        const dt = occurrenceDateTime(ymd, fr.start_time);
+        const dt = occurrenceDateTime(ymd, s0.start_time);
         return {
           date: format(dt, 'EEEE, MMMM d, yyyy'),
           time: format(dt, 'h:mm a'),
         };
       });
 
-      const firstInstructorId = fr.instructor_id;
+      const firstInstructorId = s0.instructor_id;
       const { data: firstInstructorProfile } = firstInstructorId
         ? await serviceSupabase
             .from('profiles')
@@ -410,7 +375,7 @@ export async function POST(request: Request) {
           parentName: parentProfile.full_name || 'Parent',
           childName: `${swimmer.first_name} ${swimmer.last_name}`,
           instructor: firstInstructorProfile?.full_name || 'Instructor',
-          location: fr.location || 'TBD',
+          location: s0.location || 'TBD',
           sessions: sessionsForEmail,
         });
       }
@@ -423,16 +388,16 @@ export async function POST(request: Request) {
           .maybeSingle();
 
         if (coordinatorProfile?.email) {
-          const { data: instructorProfile } = fr.instructor_id
+          const { data: instructorProfile } = s0.instructor_id
             ? await serviceSupabase
                 .from('profiles')
                 .select('full_name')
-                .eq('id', fr.instructor_id)
+                .eq('id', s0.instructor_id)
                 .single()
             : { data: null };
 
           for (const ymd of sessionDatesToBook) {
-            const dt = occurrenceDateTime(ymd, fr.start_time);
+            const dt = occurrenceDateTime(ymd, s0.start_time);
             await emailService.sendFundedSingleLessonCoordinatorNotification({
               coordinatorEmail: coordinatorProfile.email,
               coordinatorName: coordinatorProfile.full_name || 'Coordinator',
@@ -440,7 +405,7 @@ export async function POST(request: Request) {
               childName: `${swimmer.first_name} ${swimmer.last_name}`,
               date: format(dt, 'EEEE, MMMM d, yyyy'),
               time: format(dt, 'h:mm a'),
-              location: fr.location || 'TBD',
+              location: s0.location || 'TBD',
               instructor: instructorProfile?.full_name || 'Instructor',
               fundingSourceName: fundingSourceRow?.name ?? undefined,
             });
@@ -475,29 +440,40 @@ export async function POST(request: Request) {
 
     const serviceSupabase = getServiceSupabase();
 
-    for (const bid of rollback.bookingIds) {
-      await serviceSupabase.from('bookings').delete().eq('id', bid);
-    }
-    for (const snap of rollback.sessionSnapshots) {
-      await serviceSupabase
-        .from('sessions')
-        .update({
-          booking_count: snap.booking_count,
-          is_full: snap.is_full,
-          status: snap.status,
-        })
-        .eq('id', snap.id);
+    // Rollback via cancel_booking (atomic, logs to cancellations table)
+    for (const bid of bookingIds) {
+      try {
+        await serviceSupabase.rpc('cancel_booking', {
+          p_booking_id: bid,
+          p_cancelled_by: parentId,
+          p_cancel_reason: 'Rollback on recurring booking error',
+          p_cancel_source: 'system',
+          p_is_late_cancel: false,
+        });
+      } catch (cancelErr) {
+        console.error(`Failed to rollback booking ${bid}:`, cancelErr);
+      }
     }
 
     const message = error instanceof Error ? error.message : 'Internal server error';
+
+    // Map book_session error codes to HTTP statuses
     if (
+      message.includes('session_full') ||
+      message.includes('session_not_available') ||
+      message.includes('session_held') ||
+      message.includes('duplicate_booking') ||
+      message.includes('swimmer_conflict') ||
       message.includes('no longer available') ||
-      message.includes('not found') ||
-      message.includes('Failed to create booking') ||
-      message.includes('Failed to update session') ||
       message.includes('exceed max capacity')
     ) {
       return NextResponse.json({ error: message }, { status: 409 });
+    }
+    if (message.includes('session_not_found')) {
+      return NextResponse.json({ error: message }, { status: 404 });
+    }
+    if (message.includes('not found')) {
+      return NextResponse.json({ error: message }, { status: 404 });
     }
     if (
       message.includes('Purchase order') ||

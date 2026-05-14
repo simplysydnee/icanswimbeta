@@ -95,6 +95,17 @@ interface ApiSwimmer {
   paymentType?: string
   fundingSourceId?: string
   fundingSourceName?: string
+  fundingSource?: {
+    id: string
+    name: string
+    requiresAuthorization: boolean
+    type: string
+  }
+  activePurchaseOrder?: {
+    sessionsAuthorized: number
+    sessionsUsed: number
+    unexcusedLateCancelCount: number
+  } | null
   coordinatorName?: string
   coordinatorEmail?: string
   coordinatorPhone?: string
@@ -194,6 +205,13 @@ export default function SwimmersPage() {
           payment_type: swimmer.paymentType,
           funding_source_id: !!swimmer.fundingSourceId, // Convert to boolean (existing badge logic depends on this)
           funding_source_name: swimmer.fundingSourceName,
+          funding_source_requires_authorization: swimmer.fundingSource?.requiresAuthorization === true,
+          active_purchase_order: swimmer.activePurchaseOrder ? {
+            sessions_authorized: swimmer.activePurchaseOrder.sessionsAuthorized,
+            sessions_used: swimmer.activePurchaseOrder.sessionsUsed,
+            unexcused_late_cancel_count: swimmer.activePurchaseOrder.unexcusedLateCancelCount,
+            sessions_remaining: swimmer.activePurchaseOrder.sessionsAuthorized - swimmer.activePurchaseOrder.sessionsUsed,
+          } : null,
           funding_coordinator_name: swimmer.coordinatorName,
           funding_coordinator_email: swimmer.coordinatorEmail,
           funding_coordinator_phone: swimmer.coordinatorPhone,

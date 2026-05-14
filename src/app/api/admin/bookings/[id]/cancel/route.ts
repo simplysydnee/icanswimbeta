@@ -99,88 +99,39 @@ export async function POST(
       isRegionalCenter = fundingSource?.type === 'regional_center'
     }
 
-    // Admin cancels the booking
-    await supabase
-      .from('bookings')
-      .update({
-        status: 'cancelled',
-        cancel_reason: reason,
-        canceled_at: now.toISOString(),
-        canceled_by: user.id,
-      })
-      .eq('id', bookingId)
+    // Admin cancels the booking — atomically via cancel_booking RPC
+    let isLate = wasLateCancel
+    let lateType: string | null = null
 
-    // Update session booking count
-    await supabase
-      .from('sessions')
-      .update({
-        booking_count: Math.max(0, (booking.session[0].booking_count || 1) - 1),
-        is_full: false,
-      })
-      .eq('id', booking.session[0].id)
-
-    // If admin chose to mark as flexible swimmer
+    // Admin chooses whether to treat this as a late cancellation
     if (markAsFlexibleSwimmer) {
-      await supabase
-        .from('swimmers')
-        .update({
-          flexible_swimmer: true,
-          flexible_swimmer_reason: reason || 'Late cancellation - admin marked',
-          flexible_swimmer_set_at: now.toISOString(),
-          flexible_swimmer_set_by: user.id,
-        })
-        .eq('id', booking.swimmer[0].id)
+      isLate = true
+      lateType = 'admin_cancel'
     }
 
-    // Create floating session if recurring and future
-    let createdFloatingSession = false
-    let floatingSessionId = null
-    if (booking.session[0].is_recurring && sessionStart > now) {
-      const { data: floatingSession } = await supabase
-        .from('floating_sessions')
-        .insert({
-          original_session_id: booking.session[0].id,
-          original_booking_id: bookingId,
-          available_until: booking.session[0].start_time,
-          month_year: sessionStart.toISOString().slice(0, 7),
-          status: 'available',
-        })
-        .select('id')
-        .single()
+    const { data: cancelResult, error: cancelError } = await supabase.rpc('cancel_booking', {
+      p_booking_id: bookingId,
+      p_cancelled_by: user.id,
+      p_cancel_reason: reason || null,
+      p_cancel_source: 'admin',
+      p_is_late_cancel: isLate,
+      p_late_cancel_type: lateType,
+      p_late_cancel_note: adminNotes || (markAsFlexibleSwimmer ? 'Late cancellation - admin marked' : null),
+    });
 
-      if (floatingSession) {
-        createdFloatingSession = true
-        floatingSessionId = floatingSession.id
-      }
+    if (cancelError || cancelResult?.error) {
+      const errorCode = cancelResult?.error || 'internal_error';
+      const errorMap: Record<string, { status: number; message: string }> = {
+        booking_not_found: { status: 404, message: 'Booking not found' },
+        already_cancelled: { status: 400, message: 'Booking is already cancelled' },
+        cannot_cancel_completed: { status: 400, message: 'Cannot cancel a completed booking' },
+        pending_auth_admin_only: { status: 403, message: 'Pending authorization bookings require admin cancel' },
+        internal_error: { status: 500, message: 'Failed to cancel booking' },
+      };
+      const err = errorMap[errorCode] ?? { status: 500, message: 'Failed to cancel booking' };
+      console.error('cancel_booking RPC failed:', errorCode, cancelError || cancelResult);
+      return NextResponse.json({ error: err.message }, { status: err.status });
     }
-
-    // Track cancellation with admin details
-    await supabase
-      .from('cancellations')
-      .insert({
-        booking_id: bookingId,
-        session_id: booking.session[0].id,
-        swimmer_id: booking.swimmer[0].id,
-        parent_id: booking.swimmer[0].parent_id,
-        canceled_by: user.id,
-        cancellation_type: booking.booking_type === 'assessment' ? 'assessment' : 'single',
-        session_date: booking.session[0].start_time,
-        session_start_time: booking.session[0].start_time,
-        session_end_time: booking.session[0].end_time,
-        session_location: booking.session[0].location,
-        instructor_id: booking.session[0].instructor_id,
-        instructor_name: instructorName,
-        swimmer_name: `${booking.swimmer[0].first_name} ${booking.swimmer[0].last_name}`,
-        swimmer_is_regional_center: isRegionalCenter,
-        hours_before_session: Math.round(hoursBeforeSession * 100) / 100,
-        was_late_cancellation: wasLateCancel,
-        cancel_reason: reason,
-        cancel_source: 'admin',
-        admin_notes: adminNotes,
-        marked_flexible_swimmer: markAsFlexibleSwimmer,
-        created_floating_session: createdFloatingSession,
-        floating_session_id: floatingSessionId,
-      })
 
     // If assessment, update records
     if (booking.booking_type === 'assessment') {
@@ -200,7 +151,7 @@ export async function POST(
       message: 'Booking cancelled by admin',
       wasLateCancel,
       markedFlexibleSwimmer: markAsFlexibleSwimmer,
-      createdFloatingSession,
+      createdFloatingSession: cancelResult?.created_floating_session === true,
     })
 
   } catch (error: unknown) {

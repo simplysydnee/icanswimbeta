@@ -140,7 +140,59 @@ export async function PATCH(
       )
     }
 
-    // Update booking
+    // ── Role check for sensitive status changes ────────────────────
+    const { data: userRoles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+
+    const userRole = userRoles?.[0]?.role ?? 'parent'
+    const isAdminOrInstructor = userRole === 'admin' || userRole === 'instructor'
+
+    if (
+      (body.status === 'completed' || body.status === 'no_show') &&
+      !isAdminOrInstructor
+    ) {
+      return NextResponse.json(
+        { error: 'Only admins or instructors can mark bookings as completed or no-show' },
+        { status: 403 }
+      )
+    }
+
+    // ── Cancellation via cancel_booking RPC ───────────────────────
+    if (body.status === 'cancelled' && currentBooking.status !== 'cancelled') {
+      const { data: cancelResult, error: cancelError } = await supabase.rpc('cancel_booking', {
+        p_booking_id: id,
+        p_cancelled_by: user.id,
+        p_cancel_reason: body.cancel_reason || 'Cancelled by admin/instructor',
+        p_cancel_source: 'admin',
+        p_is_late_cancel: false,
+        p_late_cancel_type: null,
+        p_late_cancel_note: null,
+      });
+
+      if (cancelError || cancelResult?.error) {
+        const errorCode = cancelResult?.error || 'internal_error';
+        const errorMap: Record<string, { status: number; message: string }> = {
+          booking_not_found: { status: 404, message: 'Booking not found' },
+          already_cancelled: { status: 400, message: 'Booking is already cancelled' },
+          cannot_cancel_completed: { status: 400, message: 'Cannot cancel a completed booking' },
+          pending_auth_admin_only: { status: 403, message: 'Only admins can cancel pending authorization bookings' },
+          internal_error: { status: 500, message: 'Failed to cancel booking' },
+        };
+        const err = errorMap[errorCode] ?? { status: 500, message: 'Failed to cancel booking' };
+        console.error('cancel_booking RPC failed:', errorCode, cancelError || cancelResult);
+        return NextResponse.json({ error: err.message }, { status: err.status });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Booking cancelled',
+        created_floating_session: cancelResult?.created_floating_session === true,
+      });
+    }
+
+    // ── For all other status changes, update the booking directly ──
     const { data: booking, error } = await supabase
       .from('bookings')
       .update({
@@ -157,28 +209,6 @@ export async function PATCH(
         { error: 'Failed to update booking' },
         { status: 500 }
       )
-    }
-
-    // If status changed to cancelled, update session booking count
-    if (body.status === 'cancelled' && currentBooking.status !== 'cancelled') {
-      const { data: session } = await supabase
-        .from('sessions')
-        .select('booking_count, max_capacity')
-        .eq('id', currentBooking.session_id)
-        .single()
-
-      if (session) {
-        const newBookingCount = Math.max(0, (session.booking_count || 0) - 1)
-        const isFull = newBookingCount >= session.max_capacity
-
-        await supabase
-          .from('sessions')
-          .update({
-            booking_count: newBookingCount,
-            is_full: isFull
-          })
-          .eq('id', currentBooking.session_id)
-      }
     }
 
     // If status changed to completed, check PO session exhaustion

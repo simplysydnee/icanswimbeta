@@ -35,6 +35,10 @@ interface Swimmer {
     requires_authorization: boolean
   }
   has_active_po?: boolean
+  po_sessions_authorized?: number
+  po_sessions_used?: number
+  po_sessions_remaining?: number
+  po_unexcused_late_cancel_count?: number
 }
 
 interface Booking {
@@ -100,22 +104,40 @@ export default function ParentDashboard() {
         // Continue with empty swimmers array
       } else {
         // Check for active purchase orders for each swimmer
-        const swimmersWithPO = await Promise.all(
-          (swimmersData || []).map(async (swimmer) => {
-            const { data: poData } = await supabase
-              .from('purchase_orders')
-              .select('id')
-              .eq('swimmer_id', swimmer.id)
-              .eq('status', 'active')
-              .eq('po_type', 'lessons')
-              .limit(1)
+        const fundedIds = (swimmersData || [])
+          .filter(s => s.funding_source?.requires_authorization === true)
+          .map(s => s.id)
 
-            return {
-              ...swimmer,
-              has_active_po: !!poData && poData.length > 0
+        let poMap: Record<string, { sessions_authorized: number; sessions_used: number; unexcused_late_cancel_count: number }> = {}
+        if (fundedIds.length > 0) {
+          const { data: poRows } = await supabase
+            .from('purchase_orders')
+            .select('swimmer_id, sessions_authorized, sessions_used, unexcused_late_cancel_count')
+            .in('swimmer_id', fundedIds)
+            .eq('po_type', 'lessons')
+            .in('status', ['active', 'approved_pending_auth'])
+            .order('start_date', { ascending: false })
+
+          if (poRows) {
+            for (const po of poRows) {
+              if (!poMap[po.swimmer_id]) {
+                poMap[po.swimmer_id] = po
+              }
             }
-          })
-        )
+          }
+        }
+
+        const swimmersWithPO = (swimmersData || []).map((swimmer) => {
+          const po = poMap[swimmer.id]
+          return {
+            ...swimmer,
+            has_active_po: !!po,
+            po_sessions_authorized: po?.sessions_authorized ?? 0,
+            po_sessions_used: po?.sessions_used ?? 0,
+            po_sessions_remaining: (po?.sessions_authorized ?? 0) - (po?.sessions_used ?? 0),
+            po_unexcused_late_cancel_count: po?.unexcused_late_cancel_count ?? 0,
+          }
+        })
 
         setSwimmers(swimmersWithPO || [])
       }
@@ -350,6 +372,20 @@ export default function ParentDashboard() {
     }
   }
 
+  // Helper to render PO sessions remaining for VMRC/CVRC swimmers
+  const renderPoSummary = (swimmer: Swimmer) => {
+    if (!swimmer.funding_source?.requires_authorization || !swimmer.has_active_po) return null
+    const remaining = swimmer.po_sessions_remaining ?? 0
+    const total = swimmer.po_sessions_authorized ?? 0
+    if (remaining > 3) {
+      return <p className="text-xs text-teal-600 mt-1">{remaining}/{total} lessons remaining</p>
+    }
+    if (remaining > 0) {
+      return <p className="text-xs text-amber-600 mt-1">⚠️ {remaining}/{total} lessons remaining</p>
+    }
+    return null
+  }
+
   // Group bookings by swimmer for empty states
   const bookingsBySwimmer = bookings.reduce((acc, booking) => {
     const swimmerId = booking.swimmer.id
@@ -501,6 +537,7 @@ export default function ParentDashboard() {
                             <h3 className="font-medium">
                               {swimmer.first_name} {swimmer.last_name}
                             </h3>
+                            {renderPoSummary(swimmer)}
                             <p className="text-sm text-gray-500 mt-0.5">{buttonConfig.title}</p>
                             {buttonConfig.description && (
                               <p className="text-sm text-gray-500 mt-0.5">{buttonConfig.description}</p>
@@ -822,6 +859,7 @@ export default function ParentDashboard() {
                             <div className="font-medium">
                               {swimmer.first_name} {swimmer.last_name}
                             </div>
+                            {renderPoSummary(swimmer)}
                             <div className="flex items-center gap-2 mt-1">
                               {swimmer.current_level && (
                                 <Badge

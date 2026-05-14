@@ -107,6 +107,7 @@ export async function GET(request: NextRequest) {
       .or('status.eq.available,status.eq.open')
       .neq('status', 'closed')
       .eq('is_full', false)
+      .gte('start_time', new Date().toISOString())
       .order('start_time', { ascending: true })
 
     // Apply filters

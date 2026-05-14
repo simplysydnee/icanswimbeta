@@ -1,11 +1,22 @@
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { DEFAULT_FUNDING_SOURCE_CONFIG } from '@/lib/constants'
 import { emailService } from '@/lib/email-service'
 
+function getServiceSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !key) throw new Error('Missing Supabase env (service role)');
+  return createServiceClient(url, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
+    const serviceSupabase = getServiceSupabase()
 
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -84,7 +95,6 @@ export async function POST(request: NextRequest) {
 
     // 6. Funding source authorization validation for assessment
     if (swimmer.funding_source_id) {
-      // First check if funding source requires authorization
       const { data: fundingSource } = await supabase
         .from('funding_sources')
         .select('requires_authorization')
@@ -92,7 +102,6 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (fundingSource?.requires_authorization) {
-        // Find active purchase order for this swimmer
         const { data: purchaseOrders } = await supabase
           .from('purchase_orders')
           .select('id, sessions_authorized, sessions_used')
@@ -101,12 +110,8 @@ export async function POST(request: NextRequest) {
           .order('end_date', { ascending: true })
           .limit(1);
 
-        if (!purchaseOrders || purchaseOrders.length === 0) {
-          // No active PO found - booking will proceed, notification will be created after booking
-          // Continue without active PO
-        } else {
+        if (purchaseOrders && purchaseOrders.length > 0) {
           const activePo = purchaseOrders[0];
-          // Check if swimmer has available sessions for assessment
           if (activePo.sessions_used >= activePo.sessions_authorized) {
             return NextResponse.json(
               { error: 'Funding source authorization exhausted - no sessions available for assessment' },
@@ -117,35 +122,40 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 7. Create booking record
-    const { data: booking, error: bookingError } = await supabase
-      .from('bookings')
-      .insert({
-        session_id: sessionId,
-        swimmer_id: swimmerId,
-        parent_id: user.id,
-        status: 'confirmed',
-        booking_type: 'assessment',
-        created_at: new Date().toISOString(),
-      })
-      .select()
-      .single()
+    // 7. Create booking atomically via book_session RPC
+    const { data: bookingResult, error: bookingRpcError } = await serviceSupabase.rpc('book_session', {
+      p_session_id: sessionId,
+      p_swimmer_id: swimmerId,
+      p_parent_id: user.id,
+      p_booking_type: 'assessment',
+      p_purchase_order_id: null,
+      p_status: 'confirmed',
+    })
 
-    if (bookingError) {
-      console.error('Booking creation error:', bookingError)
-      return NextResponse.json(
-        { error: 'Failed to create booking' },
-        { status: 500 }
-      )
+    if (bookingRpcError || bookingResult?.error) {
+      const errorCode = bookingResult?.error || bookingRpcError?.message || 'internal_error'
+      console.error('book_session RPC error:', errorCode)
+      const errorMap: Record<string, { status: number; message: string }> = {
+        session_full: { status: 409, message: 'Session is full' },
+        session_not_available: { status: 409, message: 'Session is not available' },
+        session_held: { status: 409, message: 'Session is currently held by another user' },
+        session_not_found: { status: 404, message: 'Session not found' },
+        duplicate_booking: { status: 409, message: 'Already booked for this session' },
+        swimmer_conflict: { status: 409, message: 'Swimmer has a conflicting booking' },
+      }
+      const err = errorMap[errorCode] ?? { status: 500, message: 'Failed to create booking' }
+      return NextResponse.json({ error: err.message }, { status: err.status })
     }
 
+    const bookingId = bookingResult.booking_id
+
     // 8. Create assessment record
-    const { data: assessment, error: assessmentError } = await supabase
+    const { data: assessment, error: assessmentError } = await serviceSupabase
       .from('assessments')
       .insert({
         swimmer_id: swimmerId,
         session_id: sessionId,
-        booking_id: booking.id,
+        booking_id: bookingId,
         scheduled_date: session.start_time,
         status: 'scheduled',
         approval_status: swimmer.funding_source_id ? 'pending' : 'approved',
@@ -156,31 +166,24 @@ export async function POST(request: NextRequest) {
 
     if (assessmentError) {
       console.error('Assessment creation error:', assessmentError)
-      // Rollback booking
-      await supabase.from('bookings').delete().eq('id', booking.id)
+      // Rollback booking atomically
+      await serviceSupabase.rpc('cancel_booking', {
+        p_booking_id: bookingId,
+        p_cancelled_by: user.id,
+        p_cancel_reason: 'Assessment creation failed - rollback',
+        p_cancel_source: 'admin',
+        p_is_late_cancel: false,
+        p_late_cancel_type: null,
+        p_late_cancel_note: null,
+      })
       return NextResponse.json(
         { error: 'Failed to create assessment' },
         { status: 500 }
       )
     }
 
-    // 9. Update session booking count
-    const { error: updateError } = await supabase
-      .from('sessions')
-      .update({
-        booking_count: (session.booking_count || 0) + 1,
-        is_full: (session.booking_count || 0) + 1 >= (session.max_capacity || 1),
-        status: (session.booking_count || 0) + 1 >= (session.max_capacity || 1) ? 'booked' : session.status,
-      })
-      .eq('id', sessionId)
-
-    if (updateError) {
-      console.error('Session update error:', updateError)
-      // Don't rollback - booking is valid, just log the error
-    }
-
-    // 10. Update swimmer assessment status
-    await supabase
+    // 9. Update swimmer assessment status
+    await serviceSupabase
       .from('swimmers')
       .update({
         assessment_status: 'scheduled',
@@ -188,11 +191,11 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', swimmerId)
 
-    // 11. Create Assessment Purchase Order for funded clients
+    // 10. Create Assessment Purchase Order for funded clients
     let assessmentPO = null
     if (swimmer.funding_source_id) {
       assessmentPO = await createAssessmentPO(
-        supabase,
+        serviceSupabase,
         swimmer.id,
         swimmer.funding_source_id,
         user.id,
@@ -202,51 +205,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 11a. Check if funding source requires authorization but no active PO was found
-    if (swimmer.funding_source_id) {
-      const { data: fundingSource } = await supabase
-        .from('funding_sources')
-        .select('requires_authorization')
-        .eq('id', swimmer.funding_source_id)
-        .single();
-
-      if (fundingSource?.requires_authorization) {
-        // Check if there's an active PO (we already checked earlier)
-        const { data: purchaseOrders } = await supabase
-          .from('purchase_orders')
-          .select('id')
-          .eq('swimmer_id', swimmerId)
-          .eq('status', 'approved')
-          .order('end_date', { ascending: true })
-          .limit(1);
-
-        if (!purchaseOrders || purchaseOrders.length === 0) {
-          // No active PO found - create pending notification
-          try {
-            await supabase
-              .from('pending_notifications')
-              .insert({
-                type: 'po_missing_at_booking',
-                status: 'pending',
-                payload: {
-                  swimmer_id: swimmerId,
-                  swimmer_name: `${swimmer.first_name} ${swimmer.last_name}`,
-                  booking_id: booking.id,
-                  lesson_date: session.start_time,
-                  booking_type: 'assessment'
-                }
-              });
-          } catch (notificationError) {
-            console.error('Failed to create pending notification:', notificationError);
-            // Don't fail the booking if notification fails
-          }
-        }
-      }
-    }
-
-    // 12. Send booking confirmation email via edge function for non-funded clients
+    // 11. Send booking confirmation email via edge function for non-funded clients
     try {
-      // Check if swimmer is funded (VMRC/CVRC) - only send for private pay and SD clients
       const { data: swimmerWithFunding } = await supabase
         .from('swimmers')
         .select(`
@@ -262,17 +222,15 @@ export async function POST(request: NextRequest) {
 
       const fundingSource = swimmerWithFunding?.funding_sources as any
 
-      // Only invoke edge function for non-funded clients (requires_authorization = false or null)
       if (!fundingSource?.requires_authorization) {
         await supabase.functions.invoke('send-booking-confirmation', {
-          body: { bookingId: booking.id }
+          body: { bookingId }
         })
       } else {
-        console.log(`Skipping booking confirmation email for funded client (assessment booking ${booking.id})`)
+        console.log(`Skipping booking confirmation email for funded client (assessment booking ${bookingId})`)
       }
     } catch (emailError) {
       console.error('Failed to send booking confirmation email:', emailError)
-      // Don't fail the booking if email fails
     }
 
     // Generate confirmation number for the response
@@ -281,11 +239,11 @@ export async function POST(request: NextRequest) {
     const randomNum = Math.floor(10000 + Math.random() * 90000);
     const confirmationNumber = `ICS-${dateStr}-${randomNum}`;
 
-    // 13. Return success
+    // 12. Return success
     return NextResponse.json({
       success: true,
       confirmationNumber,
-      booking: booking,
+      booking: { id: bookingId },
       assessment: assessment,
       assessmentPO: assessmentPO,
     })
@@ -309,15 +267,12 @@ async function createAssessmentPO(
   coordinatorEmail: string | null
 ) {
   try {
-    // Calculate PO dates - assessment PO is typically shorter duration
     const startDate = new Date()
     const endDate = new Date()
-    endDate.setMonth(endDate.getMonth() + 1) // Assessment PO valid for 1 month
+    endDate.setMonth(endDate.getMonth() + 1)
 
-    // Generate PO number
     const poNumber = `PO-ASSESS-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
 
-    // Create PO record
     const { data: po, error: poError } = await supabase
       .from('purchase_orders')
       .insert({
@@ -340,11 +295,9 @@ async function createAssessmentPO(
 
     if (poError) {
       console.error('Error creating assessment PO:', poError)
-      // Don't fail the whole request if PO creation fails
       return null
     }
 
-    // Update swimmer's PO info for assessment
     await supabase
       .from('swimmers')
       .update({
@@ -355,14 +308,9 @@ async function createAssessmentPO(
       })
       .eq('id', swimmerId)
 
-    // Coordinator notification removed per requirements
-    // Coordinators only receive emails for PO approvals, renewals, and referral requests
-    // NOT for individual lesson bookings (including assessments)
-
     return po
   } catch (error) {
     console.error('Error in createAssessmentPO:', error)
     return null
   }
 }
-
