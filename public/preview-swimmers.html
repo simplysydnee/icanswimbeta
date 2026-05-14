@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swimmers Admin - Density Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-50 p-4">
+  <div class="max-w-7xl mx-auto space-y-4">
+    <!-- Header -->
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-bold">Swimmers Management</h1>
+        <p class="text-sm text-gray-500">Density Preview - 4px Grid System</p>
+      </div>
+      <button class="bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm">Add Swimmer</button>
+    </div>
+
+    <!-- Stats Cards - gap-3 instead of gap-4, py-2 px-3 headers -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="bg-white border rounded-lg">
+        <div class="py-2 px-3">
+          <p class="text-xs font-medium text-gray-500 flex items-center gap-1.5">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path></svg>
+            Total Swimmers
+          </p>
+        </div>
+        <div class="px-3 pb-3">
+          <div class="text-xl font-bold">247</div>
+        </div>
+      </div>
+      <div class="bg-white border rounded-lg">
+        <div class="py-2 px-3">
+          <p class="text-xs font-medium text-gray-500 flex items-center gap-1.5">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Waitlisted
+          </p>
+        </div>
+        <div class="px-3 pb-3">
+          <div class="text-xl font-bold">23</div>
+        </div>
+      </div>
+      <div class="bg-white border rounded-lg">
+        <div class="py-2 px-3">
+          <p class="text-xs font-medium text-gray-500 flex items-center gap-1.5">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Active Enrolled
+          </p>
+        </div>
+        <div class="px-3 pb-3">
+          <div class="text-xl font-bold text-green-600">189</div>
+        </div>
+      </div>
+      <div class="bg-white border rounded-lg">
+        <div class="py-2 px-3">
+          <p class="text-xs font-medium text-gray-500 flex items-center gap-1.5">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+            Avg. Lessons
+          </p>
+        </div>
+        <div class="px-3 pb-3">
+          <div class="text-xl font-bold">12.4</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Filters - py-2 px-3 header, gap-2 -->
+    <div class="bg-white border rounded-lg">
+      <div class="py-2 px-3 border-b">
+        <p class="text-base font-semibold flex items-center gap-2">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+          Quick Filters
+        </p>
+      </div>
+      <div class="px-3 pb-3 pt-2">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <button class="border rounded px-2 py-1.5 text-sm hover:bg-gray-50">All Swimmers</button>
+          <button class="border rounded px-2 py-1.5 text-sm hover:bg-gray-50">Active Only</button>
+          <button class="border rounded px-2 py-1.5 text-sm hover:bg-gray-50">Needs Attention</button>
+          <button class="border rounded px-2 py-1.5 text-sm hover:bg-gray-50">Recent Signups</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Swimmers Table Preview -->
+    <div class="bg-white border rounded-lg">
+      <div class="py-2 px-3 border-b">
+        <p class="text-base font-semibold">Swimmers List</p>
+      </div>
+      <div class="divide-y">
+        <div class="px-3 py-2 flex items-center justify-between hover:bg-gray-50 cursor-pointer" onclick="openModal()">
+          <div class="flex items-center gap-2">
+            <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-medium text-blue-700">EJ</div>
+            <div>
+              <p class="font-medium text-sm">Emma Johnson</p>
+              <p class="text-xs text-gray-500">Level 3 - Active</p>
+            </div>
+          </div>
+          <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Active</span>
+        </div>
+        <div class="px-3 py-2 flex items-center justify-between hover:bg-gray-50 cursor-pointer" onclick="openModal()">
+          <div class="flex items-center gap-2">
+            <div class="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center text-sm font-medium text-purple-700">MS</div>
+            <div>
+              <p class="font-medium text-sm">Michael Smith</p>
+              <p class="text-xs text-gray-500">Level 2 - Active</p>
+            </div>
+          </div>
+          <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Active</span>
+        </div>
+        <div class="px-3 py-2 flex items-center justify-between hover:bg-gray-50 cursor-pointer" onclick="openModal()">
+          <div class="flex items-center gap-2">
+            <div class="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center text-sm font-medium text-amber-700">SW</div>
+            <div>
+              <p class="font-medium text-sm">Sarah Williams</p>
+              <p class="text-xs text-gray-500">Level 1 - Waitlisted</p>
+            </div>
+          </div>
+          <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">Waitlisted</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Click instruction -->
+    <p class="text-center text-sm text-gray-500">Click any swimmer row to open the detail modal</p>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4" onclick="closeModal(event)">
+    <div class="bg-white rounded-lg w-full max-w-[1400px] max-h-[92vh] overflow-y-auto p-3 sm:p-4" onclick="event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-lg font-bold text-blue-700">EJ</div>
+          <div>
+            <h2 class="text-xl font-bold">Emma Johnson</h2>
+            <p class="text-sm text-gray-500">Age 8 - Level 3</p>
+          </div>
+        </div>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <!-- Tabs - mb-3 instead of mb-6 -->
+      <div class="flex flex-wrap gap-1 mb-3 border-b pb-2">
+        <button class="px-3 py-1.5 text-sm font-medium bg-blue-100 text-blue-700 rounded" onclick="showTab('overview')">Overview</button>
+        <button class="px-3 py-1.5 text-sm font-medium hover:bg-gray-100 rounded" onclick="showTab('medical')">Medical</button>
+        <button class="px-3 py-1.5 text-sm font-medium hover:bg-gray-100 rounded" onclick="showTab('progress')">Progress</button>
+        <button class="px-3 py-1.5 text-sm font-medium hover:bg-gray-100 rounded" onclick="showTab('sessions')">Sessions</button>
+        <button class="px-3 py-1.5 text-sm font-medium hover:bg-gray-100 rounded" onclick="showTab('billing')">Billing</button>
+        <button class="px-3 py-1.5 text-sm font-medium hover:bg-gray-100 rounded" onclick="showTab('notes')">Notes</button>
+      </div>
+
+      <!-- Tab Content - space-y-4 instead of space-y-6 -->
+      <div id="tab-overview" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
+          <!-- Main Content - space-y-4 -->
+          <div class="md:col-span-3 space-y-4">
+            <!-- Status Management - p-3 instead of p-4 -->
+            <div class="bg-white border rounded-lg p-3">
+              <h3 class="text-base font-semibold mb-2 flex items-center gap-2">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                Status Management
+              </h3>
+              <div class="flex items-center gap-2">
+                <span class="text-sm">Current Status:</span>
+                <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-sm">Active</span>
+              </div>
+            </div>
+
+            <!-- Key Information - p-3, mb-2, gap-3 -->
+            <div class="bg-white border rounded-lg p-3">
+              <h3 class="text-base font-semibold mb-2 flex items-center gap-2">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                Key Information
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="bg-gray-50 p-2 rounded">
+                  <p class="text-xs text-gray-500">Date of Birth</p>
+                  <p class="text-sm font-medium">March 15, 2016</p>
+                </div>
+                <div class="bg-gray-50 p-2 rounded">
+                  <p class="text-xs text-gray-500">Age</p>
+                  <p class="text-sm font-medium">8 years old</p>
+                </div>
+                <div class="bg-gray-50 p-2 rounded">
+                  <p class="text-xs text-gray-500">Enrollment Date</p>
+                  <p class="text-sm font-medium">Jan 10, 2024</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Swimming Background - space-y-3, gap-3 -->
+            <div class="bg-white border rounded-lg p-3">
+              <h3 class="text-base font-semibold mb-2 flex items-center gap-2">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                Swimming Background
+              </h3>
+              <div class="space-y-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div class="bg-gray-50 p-2 rounded">
+                    <p class="text-xs text-gray-500">Current Level</p>
+                    <p class="text-sm font-medium">Level 3 - Intermediate</p>
+                  </div>
+                  <div class="bg-gray-50 p-2 rounded">
+                    <p class="text-xs text-gray-500">Lessons Completed</p>
+                    <p class="text-sm font-medium">24 lessons</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Care Needs - space-y-3, gap-3 -->
+            <div class="bg-white border rounded-lg p-3">
+              <h3 class="text-base font-semibold mb-2 flex items-center gap-2">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                Care Needs
+              </h3>
+              <div class="space-y-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div class="bg-gray-50 p-2 rounded">
+                    <p class="text-xs text-gray-500">Toilet Trained</p>
+                    <p class="text-sm font-medium">Yes</p>
+                  </div>
+                  <div class="bg-gray-50 p-2 rounded">
+                    <p class="text-xs text-gray-500">Communication</p>
+                    <p class="text-sm font-medium">Verbal</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column - space-y-3 -->
+          <div class="space-y-3">
+            <!-- Quick Stats - p-3, space-y-3, mb-2 -->
+            <div class="bg-white border rounded-lg p-3">
+              <h3 class="text-xs font-medium text-gray-500 mb-2">Quick Stats</h3>
+              <div class="space-y-3">
+                <div>
+                  <p class="text-xs text-gray-500">Total Lessons</p>
+                  <p class="text-lg font-bold">24</p>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500">This Month</p>
+                  <p class="text-lg font-bold">4</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Actions - p-3, mb-2 -->
+            <div class="bg-white border rounded-lg p-3">
+              <h3 class="text-xs font-medium text-gray-500 mb-2">Quick Actions</h3>
+              <div class="space-y-1.5">
+                <button class="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-gray-100">Book Session</button>
+                <button class="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-gray-100">Add Note</button>
+                <button class="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-gray-100">View History</button>
+              </div>
+            </div>
+
+            <!-- System Info - p-3, mb-2, space-y-1.5 -->
+            <div class="bg-white border rounded-lg p-3">
+              <h3 class="text-xs font-medium text-gray-500 mb-2">System Information</h3>
+              <div class="space-y-1.5 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-500">ID</span>
+                  <span class="font-mono text-xs">SW-00124</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">Created</span>
+                  <span>Jan 10, 2024</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medical Tab -->
+      <div id="tab-medical" class="space-y-4 hidden">
+        <section>
+          <h3 class="text-base font-semibold mb-3 flex items-center gap-2">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Medical & Safety Information
+          </h3>
+          <!-- Medical Information - mb-4, gap-1.5, gap-2 -->
+          <div class="mb-4">
+            <div class="flex items-center gap-1.5 mb-2">
+              <svg class="h-4 w-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+              <h4 class="text-sm font-semibold text-gray-800">Medical Information</h4>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              <div class="bg-gray-50 border rounded p-2">
+                <p class="text-xs text-gray-500">Diagnosis</p>
+                <p class="text-sm">Autism Spectrum Disorder</p>
+              </div>
+              <div class="bg-gray-50 border rounded p-2">
+                <p class="text-xs text-gray-500">Allergies</p>
+                <p class="text-sm">None known</p>
+              </div>
+              <div class="bg-gray-50 border rounded p-2">
+                <p class="text-xs text-gray-500">Medications</p>
+                <p class="text-sm">None</p>
+              </div>
+            </div>
+          </div>
+          <!-- Safety Grid - gap-1.5, gap-2 -->
+          <div>
+            <div class="flex items-center gap-1.5 mb-2">
+              <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+              <h4 class="text-sm font-semibold text-gray-800">Safety & Behavioral</h4>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+              <div class="bg-green-50 border border-green-200 rounded p-2">
+                <p class="text-xs text-gray-500">Water Comfort</p>
+                <p class="text-sm text-green-700">Comfortable</p>
+              </div>
+              <div class="bg-gray-50 border rounded p-2">
+                <p class="text-xs text-gray-500">Elopement Risk</p>
+                <p class="text-sm">Low</p>
+              </div>
+              <div class="bg-gray-50 border rounded p-2">
+                <p class="text-xs text-gray-500">Sensory Needs</p>
+                <p class="text-sm">Mild sensitivity</p>
+              </div>
+              <div class="bg-gray-50 border rounded p-2">
+                <p class="text-xs text-gray-500">Behavior Notes</p>
+                <p class="text-sm">Responds well to visual cues</p>
+              </div>
+            </div>
+          </div>
+          <!-- Legend - mt-4, pt-3, gap-3 -->
+          <div class="mt-4 pt-3 border-t border-gray-200">
+            <div class="flex flex-wrap items-center gap-3 text-xs text-gray-600">
+              <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-green-500"></span> No concerns</span>
+              <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Monitor</span>
+              <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-red-500"></span> Requires attention</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Progress Tab -->
+      <div id="tab-progress" class="space-y-4 hidden">
+        <section>
+          <h3 class="text-base font-semibold mb-2 flex items-center gap-2">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+            Progress & Skills
+          </h3>
+          <div class="space-y-3">
+            <!-- Level Progress Card - py-2 px-3 header -->
+            <div class="bg-white border rounded-lg">
+              <div class="py-2 px-3 border-b">
+                <p class="text-sm font-medium flex items-center gap-2">
+                  <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                  Level Progress
+                </p>
+                <p class="text-xs text-gray-500">Level 3 - Intermediate</p>
+              </div>
+              <div class="px-3 pb-3 pt-2">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div class="h-3 w-3 rounded-full bg-blue-500"></div>
+                      <span class="text-sm font-medium">Level 3 - Intermediate</span>
+                    </div>
+                    <div class="text-xs text-gray-500">7/10 skills</div>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-blue-500 h-2 rounded-full" style="width: 70%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Focus Today Card - py-2 px-3 -->
+            <div class="bg-white border rounded-lg">
+              <div class="py-2 px-3 border-b">
+                <p class="text-sm font-medium flex items-center gap-2">
+                  <svg class="h-4 w-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                  Focus Today
+                  <span class="bg-amber-50 text-amber-700 border border-amber-200 text-xs px-1.5 py-0.5 rounded">3 skills</span>
+                </p>
+                <p class="text-xs text-gray-500">Skills currently in progress</p>
+              </div>
+              <div class="px-3 pb-3 pt-2">
+                <div class="space-y-1.5">
+                  <div class="flex items-center gap-2 text-sm"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Treading water (30 sec)</div>
+                  <div class="flex items-center gap-2 text-sm"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Backstroke arms</div>
+                  <div class="flex items-center gap-2 text-sm"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Deep water comfort</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mastered Skills - py-2 px-3 -->
+            <div class="bg-white border rounded-lg">
+              <div class="py-2 px-3 border-b">
+                <p class="text-sm font-medium flex items-center gap-2">
+                  <svg class="h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  Mastered Skills
+                  <span class="bg-green-50 text-green-700 border border-green-200 text-xs px-1.5 py-0.5 rounded">7</span>
+                </p>
+              </div>
+              <div class="px-3 pb-3 pt-2">
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="bg-green-50 text-green-700 text-xs px-2 py-1 rounded">Float on back</span>
+                  <span class="bg-green-50 text-green-700 text-xs px-2 py-1 rounded">Freestyle kick</span>
+                  <span class="bg-green-50 text-green-700 text-xs px-2 py-1 rounded">Blow bubbles</span>
+                  <span class="bg-green-50 text-green-700 text-xs px-2 py-1 rounded">Jump in pool</span>
+                  <span class="bg-green-50 text-green-700 text-xs px-2 py-1 rounded">Submerge face</span>
+                  <span class="bg-green-50 text-green-700 text-xs px-2 py-1 rounded">Glide</span>
+                  <span class="bg-green-50 text-green-700 text-xs px-2 py-1 rounded">Roll over</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Sessions Tab -->
+      <div id="tab-sessions" class="space-y-4 hidden">
+        <section>
+          <h3 class="text-base font-semibold mb-2 flex items-center gap-2">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            Sessions & Bookings
+          </h3>
+          <div class="space-y-4">
+            <!-- Upcoming Sessions - p-3, mb-2 -->
+            <div class="bg-white border rounded-lg p-3">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-sm font-medium">Upcoming Sessions</h4>
+                <button class="text-xs text-blue-600">View All</button>
+              </div>
+              <div class="space-y-2">
+                <div class="flex items-center justify-between p-2 bg-blue-50 rounded">
+                  <div>
+                    <p class="text-sm font-medium">Saturday, Jan 20</p>
+                    <p class="text-xs text-gray-500">10:00 AM - Coach Sarah</p>
+                  </div>
+                  <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Confirmed</span>
+                </div>
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div>
+                    <p class="text-sm font-medium">Saturday, Jan 27</p>
+                    <p class="text-xs text-gray-500">10:00 AM - Coach Sarah</p>
+                  </div>
+                  <span class="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded">Scheduled</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Session Statistics - gap-2, p-3 -->
+            <div class="grid grid-cols-3 gap-2 p-3 bg-gray-50 rounded-lg">
+              <div class="text-center">
+                <p class="text-xl font-bold">24</p>
+                <p class="text-xs text-gray-500">Completed</p>
+              </div>
+              <div class="text-center">
+                <p class="text-xl font-bold">2</p>
+                <p class="text-xs text-gray-500">Upcoming</p>
+              </div>
+              <div class="text-center">
+                <p class="text-xl font-bold">40</p>
+                <p class="text-xs text-gray-500">Authorized</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Billing Tab -->
+      <div id="tab-billing" class="space-y-4 hidden">
+        <section>
+          <h3 class="text-base font-semibold mb-2 flex items-center gap-2">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Billing & Funding
+          </h3>
+          <!-- Payment Type - mb-4 -->
+          <div class="mb-4">
+            <span class="bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-sm font-medium">Funded</span>
+          </div>
+          <!-- Funding Source Details - space-y-3, p-3 -->
+          <div class="space-y-3">
+            <div class="bg-violet-50 p-3 rounded-lg border border-violet-200">
+              <h4 class="text-sm font-medium mb-2">PO Details</h4>
+              <div class="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <p class="text-xs text-gray-500">PO Number</p>
+                  <p class="font-medium">PO-2024-0124</p>
+                </div>
+                <div>
+                  <p class="text-xs text-gray-500">Funding Source</p>
+                  <p class="font-medium">Regional Center</p>
+                </div>
+              </div>
+            </div>
+            <div class="bg-violet-50 p-3 rounded-lg border border-violet-200">
+              <h4 class="text-sm font-medium mb-2">Sessions Progress</h4>
+              <div class="flex items-center gap-3">
+                <div class="flex-1">
+                  <div class="flex justify-between text-sm mb-1">
+                    <span>Used: 24</span>
+                    <span>Authorized: 40</span>
+                  </div>
+                  <div class="w-full bg-violet-200 rounded-full h-2">
+                    <div class="bg-violet-600 h-2 rounded-full" style="width: 60%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Notes Tab -->
+      <div id="tab-notes" class="space-y-4 hidden">
+        <div class="bg-white border rounded-lg">
+          <div class="py-2 px-3 border-b">
+            <p class="text-base font-semibold flex items-center gap-2">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+              Internal Notes
+            </p>
+          </div>
+          <div class="space-y-4 px-3 pb-3 pt-2">
+            <!-- Add Note Section - space-y-2 -->
+            <div class="space-y-2">
+              <textarea class="w-full border rounded p-2 text-sm" rows="2" placeholder="Add a note..."></textarea>
+              <button class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm">Add Note</button>
+            </div>
+            <!-- Notes List - space-y-2, p-3 -->
+            <div class="space-y-2">
+              <div class="border rounded-lg p-3">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <p class="text-sm font-medium">Coach Sarah</p>
+                    <p class="text-xs text-gray-500">Jan 15, 2024</p>
+                  </div>
+                </div>
+                <p class="text-sm mt-1.5">Great progress on backstroke today. Emma is really getting comfortable in deeper water.</p>
+              </div>
+              <div class="border rounded-lg p-3">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <p class="text-sm font-medium">Admin</p>
+                    <p class="text-xs text-gray-500">Jan 10, 2024</p>
+                  </div>
+                </div>
+                <p class="text-sm mt-1.5">Parent requested Saturday morning sessions only due to school schedule.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal() {
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('modal').classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(event) {
+      if (!event || event.target === document.getElementById('modal')) {
+        document.getElementById('modal').classList.add('hidden');
+        document.getElementById('modal').classList.remove('flex');
+        document.body.style.overflow = 'auto';
+      }
+    }
+
+    function showTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('[id^="tab-"]').forEach(tab => tab.classList.add('hidden'));
+      // Show selected tab
+      document.getElementById('tab-' + tabName).classList.remove('hidden');
+      // Update tab buttons
+      document.querySelectorAll('.mb-3.border-b button').forEach(btn => {
+        btn.classList.remove('bg-blue-100', 'text-blue-700');
+        btn.classList.add('hover:bg-gray-100');
+      });
+      event.target.classList.add('bg-blue-100', 'text-blue-700');
+      event.target.classList.remove('hover:bg-gray-100');
+    }
+  </script>
+</body>
+</html>
