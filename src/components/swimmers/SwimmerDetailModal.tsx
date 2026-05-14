@@ -55,6 +55,7 @@ import {
   CircleDot,
   Circle,
   Lightbulb,
+  X,
 } from 'lucide-react';
 
 import { useParentInvitation } from '@/hooks/useParentInvitation';
@@ -694,6 +695,9 @@ export function SwimmerDetailModal({
                   </Button>
                 </>
               )}
+              <Button variant="ghost" size="icon" className="h-8 w-8 ml-2" onClick={onClose}>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>

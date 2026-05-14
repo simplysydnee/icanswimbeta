@@ -50,94 +50,42 @@ function AdminSwimmersPageContent() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card>
-            <CardHeader className="py-2 px-3">
-              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" />
-                Total Swimmers
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-3 pt-0">
-              <div className="text-xl font-bold">
-                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.totalSwimmers.toLocaleString()}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {metrics && !metricsLoading && !metricsError ? `${metrics.vmrcClients} Funded, ${metrics.privatePayClients} Private` : 'All clients'}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="py-2 px-3">
-              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" />
-                Waitlisted
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-3 pt-0">
-              <div className="text-xl font-bold">
-                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.waitlistedSwimmers.toLocaleString()}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {metricsLoading || metricsError ? <Skeleton className="h-4 w-20" /> : `${Math.round((metrics!.waitlistedSwimmers / metrics!.totalSwimmers) * 100)}% of total`}
-              </div>
-              {!metricsLoading && !metricsError && metrics && (
-                <div className="mt-2 pt-2 border-t border-gray-100">
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <div className="flex justify-between">
-                      <span>Waitlist:</span>
-                      <span className="font-medium">{metrics.waitlistBreakdown.waitlist}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Pending Enrollment:</span>
-                      <span className="font-medium">{metrics.waitlistBreakdown.pending_enrollment}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Pending Approval:</span>
-                      <span className="font-medium">{metrics.waitlistBreakdown.pending_approval}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Enrollment Expired:</span>
-                      <span className="font-medium">{metrics.enrollmentExpired}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="py-2 px-3">
-              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <UserCheck className="h-3.5 w-3.5" />
-                Active Enrolled
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-3 pt-0">
-              <div className="text-xl font-bold">
-                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.activeEnrolledSwimmers.toLocaleString()}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {metricsLoading || metricsError ? <Skeleton className="h-4 w-20" /> : `${Math.round((metrics!.activeEnrolledSwimmers / metrics!.totalSwimmers) * 100)}% of total`}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="py-2 px-3">
-              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <TrendingUp className="h-3.5 w-3.5" />
-                Avg. Lessons
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-3 pt-0">
-              <div className="text-xl font-bold">
-                {metricsLoading ? <Skeleton className="h-8 w-16" /> : metricsError ? 'Error' : metrics?.activeSwimmers.toLocaleString()}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {metrics && !metricsLoading && !metricsError ? `active in last 30 days` : 'Active swimmers'}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Stats Cards - Compact horizontal row */}
+        <div className="flex flex-wrap gap-3">
+          <div className="flex items-center gap-2 px-3 py-2 bg-muted/40 rounded-lg border">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Total</span>
+            <span className="text-lg font-bold">
+              {metricsLoading ? <Skeleton className="h-5 w-8 inline-block" /> : metricsError ? '—' : metrics?.totalSwimmers.toLocaleString()}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-lg border border-amber-200/50">
+            <Clock className="h-4 w-4 text-amber-600" />
+            <span className="text-sm text-amber-700">Waitlisted</span>
+            <span className="text-lg font-bold text-amber-800">
+              {metricsLoading ? <Skeleton className="h-5 w-8 inline-block" /> : metricsError ? '—' : metrics?.waitlistedSwimmers.toLocaleString()}
+            </span>
+            {!metricsLoading && !metricsError && metrics && metrics.totalSwimmers > 0 && (
+              <span className="text-xs text-amber-600">({Math.round((metrics.waitlistedSwimmers / metrics.totalSwimmers) * 100)}%)</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-200/50">
+            <UserCheck className="h-4 w-4 text-emerald-600" />
+            <span className="text-sm text-emerald-700">Active</span>
+            <span className="text-lg font-bold text-emerald-800">
+              {metricsLoading ? <Skeleton className="h-5 w-8 inline-block" /> : metricsError ? '—' : metrics?.activeEnrolledSwimmers.toLocaleString()}
+            </span>
+            {!metricsLoading && !metricsError && metrics && metrics.totalSwimmers > 0 && (
+              <span className="text-xs text-emerald-600">({Math.round((metrics.activeEnrolledSwimmers / metrics.totalSwimmers) * 100)}%)</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200/50">
+            <TrendingUp className="h-4 w-4 text-blue-600" />
+            <span className="text-sm text-blue-700">Active (30d)</span>
+            <span className="text-lg font-bold text-blue-800">
+              {metricsLoading ? <Skeleton className="h-5 w-8 inline-block" /> : metricsError ? '—' : metrics?.activeSwimmers.toLocaleString()}
+            </span>
+          </div>
         </div>
 
         {/* Mobile Notice - Removed to prevent horizontal scroll */}
