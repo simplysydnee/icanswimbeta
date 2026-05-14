@@ -1322,107 +1322,27 @@ export function SwimmerDetailModal({
               </div>
             )}
 
-                {/* Quick Actions */}
-                {(isAdmin || role === 'instructor') && swimmer.currentLevel && (
-                  <Card>
-                    <CardHeader className="py-2 px-3">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                        Quick Actions
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-3 pb-3 pt-0">
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => setSkillTrackerOpen(true)}
-                        >
-                          <ClipboardList className="h-3 w-3 mr-1" />
-                          Full Skill Tracker
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => {
-                            // Open progress note modal
-                            setProgressModalOpen(true);
-                          }}
-                        >
-                          <FileText className="h-3 w-3 mr-1" />
-                          Add Note
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Recent Progress Notes */}
-                <Card>
-                  <CardHeader className="py-2 px-3">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                      Recent Progress Notes
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="px-3 pb-3 pt-0">
-                    {loadingData ? (
-                      <div className="space-y-2">
-                        <Skeleton className="h-24 w-full" />
-                        <Skeleton className="h-24 w-full" />
-                      </div>
-                    ) : progressNotes.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-4">No progress notes yet</p>
-                    ) : (
-                      <div className="space-y-2 max-h-48 overflow-y-auto">
-                        {progressNotes.map((note) => (
-                          <div key={note.id} className="p-3 bg-gray-50 rounded-lg">
-                            <div className="flex justify-between text-sm">
-                              <span className="font-medium">{note.instructor?.full_name || 'Unknown Instructor'}</span>
-                              <span className="text-muted-foreground">
-                                {note.created_at ? format(new Date(note.created_at), 'MMM d, yyyy') : 'N/A'}
-                              </span>
-                            </div>
-                            <p className="text-sm mt-1 line-clamp-2">{note.lesson_summary || note.instructor_notes || 'No summary provided'}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Progress Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <div className="bg-blue-50 p-2.5 rounded-lg">
-                    <div className="text-xl font-bold text-blue-600">
-                      {swimmer.lessonsCompleted || 0}
-                    </div>
-                    <div className="text-xs text-blue-800">Lessons Completed</div>
-                  </div>
-
-                  {/* Next Session */}
-                  <div className="bg-green-50 p-2.5 rounded-lg">
-                    {formatNextSession(swimmer.nextSession) !== '—' ? (
-                      <>
-                        <div className="text-sm font-medium text-green-800">
-                          {formatNextSession(swimmer.nextSession)}
-                        </div>
-                        <div className="text-xs text-green-600">Next Session</div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-sm font-medium text-green-800">
-                          No upcoming sessions
-                        </div>
-                        <div className="text-xs text-green-600">Schedule a session</div>
-                      </>
-                    )}
-                  </div>
-                </div>
+            {/* Quick Actions */}
+            {(isAdmin || role === 'instructor') && swimmer.currentLevel && (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSkillTrackerOpen(true)}
+                >
+                  <ClipboardList className="h-3.5 w-3.5 mr-1.5" />
+                  Full Skill Tracker
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setProgressModalOpen(true)}
+                >
+                  <FileText className="h-3.5 w-3.5 mr-1.5" />
+                  Add Note
+                </Button>
               </div>
-            </section>
+            )}
           </TabsContent>
 
           {/* Sessions & Bookings Tab */}
