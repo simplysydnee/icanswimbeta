@@ -266,6 +266,71 @@ export function StatusBadge({ type, value, className, showIcon = true, size }: S
   );
 }
 
+// Status dot colors for compact inline display
+const statusDotColors = {
+  // Enrollment
+  waitlist: 'bg-amber-500',
+  pending: 'bg-orange-500',
+  pending_approval: 'bg-blue-500',
+  enrolled: 'bg-emerald-500',
+  expired: 'bg-red-500',
+  declined: 'bg-gray-400',
+  dropped: 'bg-gray-600',
+  // Approval
+  approved: 'bg-emerald-500',
+  // Assessment
+  not_scheduled: 'bg-orange-500',
+  not_started: 'bg-amber-500',
+  scheduled: 'bg-cyan-500',
+  completed: 'bg-teal-500',
+  // Funding
+  private_pay: 'bg-sky-500',
+  funding_source: 'bg-violet-500',
+  funded: 'bg-violet-500',
+  scholarship: 'bg-pink-500',
+  other: 'bg-gray-500',
+} as const;
+
+interface StatusDotProps {
+  type: StatusType;
+  value: string;
+  showLabel?: boolean;
+  size?: 'sm' | 'md';
+  className?: string;
+}
+
+export function StatusDot({ type, value, showLabel = true, size = 'sm', className }: StatusDotProps) {
+  // Get config to get label
+  let config: Record<string, { label: string }>;
+  switch (type) {
+    case 'enrollment':
+      config = enrollmentStatusConfig;
+      break;
+    case 'approval':
+      config = approvalStatusConfig;
+      break;
+    case 'assessment':
+      config = assessmentStatusConfig;
+      break;
+    case 'funding':
+      config = fundingTypeConfig;
+      break;
+    default:
+      config = {};
+  }
+  
+  const statusConfig = config[value?.toLowerCase()] || config[value] || { label: value || '—' };
+  const dotColor = statusDotColors[value?.toLowerCase() as keyof typeof statusDotColors] || 'bg-gray-400';
+  const dotSize = size === 'sm' ? 'h-2 w-2' : 'h-2.5 w-2.5';
+  
+  return (
+    <span className={cn('inline-flex items-center gap-1.5', className)}>
+      <span className={cn('rounded-full flex-shrink-0', dotSize, dotColor)} />
+      {showLabel && <span className="text-xs">{statusConfig.label}</span>}
+    </span>
+  );
+}
+
 // Helper function to get all status options for dropdowns
 export function getStatusOptions(type: StatusType) {
   let config: Record<string, { label: string }>;

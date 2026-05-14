@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { StatusBadge } from './StatusBadge';
+import { StatusBadge, StatusDot } from './StatusBadge';
 import { EmailComposerModal } from '@/components/email/EmailComposerModal';
 import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
 import EditImportantNotesModal from '@/components/staff-mode/modals/EditImportantNotesModal';
@@ -607,167 +607,251 @@ export function SwimmerDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="!max-w-[1400px] w-[95vw] max-h-[92vh] overflow-y-auto p-3 sm:p-4">
-        <DialogHeader>
+      <DialogContent className="!max-w-[1200px] w-[95vw] max-h-[94vh] overflow-y-auto p-0">
+        {/* Compact Header */}
+        <div className="sticky top-0 z-10 bg-background border-b px-4 py-2.5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {/* Avatar - photo or initials */}
-              <Avatar className="h-16 w-16 border-2 border-cyan-200">
+            <div className="flex items-center gap-3">
+              {/* Smaller Avatar */}
+              <Avatar className="h-10 w-10 border border-border">
                 {swimmer.photoUrl && (
                   <AvatarImage src={swimmer.photoUrl} alt={swimmer.firstName} />
                 )}
-                <AvatarFallback className="bg-cyan-100 text-cyan-700 text-xl font-semibold">
+                <AvatarFallback className="bg-muted text-muted-foreground text-sm font-medium">
                   {getInitials(swimmer.firstName, swimmer.lastName)}
                 </AvatarFallback>
               </Avatar>
 
-              {/* Name, age, and edit icon */}
-              <div>
+              {/* Name + inline status dots */}
+              <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <DialogTitle className="text-2xl font-bold">
-                    {swimmer.firstName} {swimmer.lastName}
-                  </DialogTitle>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleEdit}>
-                    <Edit className="h-4 w-4" />
-                    <span className="sr-only">Edit swimmer</span>
+                  <DialogHeader className="p-0 space-y-0">
+                    <DialogTitle className="text-base font-semibold">
+                      {swimmer.firstName} {swimmer.lastName}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleEdit}>
+                    <Edit className="h-3 w-3" />
                   </Button>
                 </div>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                   {calculateAge(swimmer.dateOfBirth) !== '—' && (
-                    <span className="text-muted-foreground">
-                      {calculateAge(swimmer.dateOfBirth)}
-                    </span>
+                    <span>{calculateAge(swimmer.dateOfBirth)}</span>
                   )}
                   {swimmer.currentLevel && (
                     <>
-                      <span className="text-muted-foreground">•</span>
-                      <Badge
-                        variant="outline"
-                        className="text-sm font-medium"
-                      >
-                        {swimmer.currentLevel.displayName}
-                      </Badge>
+                      <span className="stat-inline-divider" />
+                      <span className="font-medium text-foreground">{swimmer.currentLevel.displayName}</span>
                     </>
                   )}
+                  <span className="stat-inline-divider" />
+                  <StatusDot type="enrollment" value={swimmer.enrollmentStatus} size="sm" />
+                  {swimmer.approvalStatus && swimmer.approvalStatus !== 'approved' && (
+                    <>
+                      <span className="stat-inline-divider" />
+                      <StatusDot type="approval" value={swimmer.approvalStatus} size="sm" />
+                    </>
+                  )}
+                  <span className="stat-inline-divider" />
+                  <StatusDot type="funding" value={paymentType} size="sm" />
                 </div>
               </div>
             </div>
 
-            {/* Action buttons - ROLE AWARE */}
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleViewFullPage}>View Full Page</Button>
-
-              {/* Only admins see Approve/Decline */}
+            {/* Compact action buttons */}
+            <div className="flex items-center gap-1.5">
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleViewFullPage}>
+                Full Page
+              </Button>
               {isAdmin && swimmer.approvalStatus === 'pending' && onApprove && onDecline && (
                 <>
-                  <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => onApprove(swimmer)}>
-                    <CheckCircle className="h-4 w-4 mr-1" /> Approve
+                  <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700" onClick={() => onApprove(swimmer)}>
+                    <CheckCircle className="h-3 w-3 mr-1" /> Approve
                   </Button>
-                  <Button variant="destructive" onClick={() => onDecline(swimmer)}>
-                    <XCircle className="h-4 w-4 mr-1" /> Decline
+                  <Button variant="destructive" size="sm" className="h-7 text-xs" onClick={() => onDecline(swimmer)}>
+                    <XCircle className="h-3 w-3 mr-1" /> Decline
                   </Button>
                 </>
               )}
             </div>
           </div>
-
-        </DialogHeader>
+        </div>
 
         {/* Tabbed Interface */}
-        <div className="mt-3">
-          {/* Mobile Dropdown (visible on small and medium screens) */}
-          <div className="block md:hidden mb-4">
+        <div className="px-4 py-3">
+          {/* Mobile Dropdown */}
+          <div className="block md:hidden mb-3">
             <Select value={activeTab} onValueChange={setActiveTab}>
-              <SelectTrigger id="mobile-tab-select" name="mobileTabSelect" className="w-full">
+              <SelectTrigger id="mobile-tab-select" name="mobileTabSelect" className="w-full h-8 text-xs">
                 <SelectValue placeholder="Select section" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="overview">Overview</SelectItem>
-                <SelectItem value="medical">Medical & Safety</SelectItem>
-                <SelectItem value="progress">Progress & Skills</SelectItem>
-                <SelectItem value="sessions">Sessions & Bookings</SelectItem>
+                <SelectItem value="medical">Medical</SelectItem>
+                <SelectItem value="progress">Progress</SelectItem>
+                <SelectItem value="sessions">Sessions</SelectItem>
                 {assessmentReport && <SelectItem value="assessment">Assessment</SelectItem>}
-                {isAdmin && <SelectItem value="billing">Billing & Funding</SelectItem>}
-                {isAdmin && <SelectItem value="notes">Internal Notes</SelectItem>}
+                {isAdmin && <SelectItem value="billing">Billing</SelectItem>}
+                {isAdmin && <SelectItem value="notes">Notes</SelectItem>}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Desktop Tabs (hidden on mobile, shown on medium and up) */}
+          {/* Desktop Tabs - Underline style */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="hidden md:block">
-            <TabsList className="flex flex-wrap gap-1 mb-3">
-              <TabsTrigger value="overview" className="px-2 py-1.5 text-[11px] sm:text-xs">Overview</TabsTrigger>
-              <TabsTrigger value="medical" className="px-2 py-1.5 text-[11px] sm:text-xs">Medical & Safety</TabsTrigger>
-              <TabsTrigger value="progress" className="px-2 py-1.5 text-[11px] sm:text-xs">Progress & Skills</TabsTrigger>
-              <TabsTrigger value="sessions" className="px-2 py-1.5 text-[11px] sm:text-xs">Sessions & Bookings</TabsTrigger>
+            <TabsList className="h-auto p-0 bg-transparent border-b border-border/50 rounded-none w-full justify-start gap-0">
+              <TabsTrigger value="overview" className="px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Overview</TabsTrigger>
+              <TabsTrigger value="medical" className="px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Medical</TabsTrigger>
+              <TabsTrigger value="progress" className="px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Progress</TabsTrigger>
+              <TabsTrigger value="sessions" className="px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Sessions</TabsTrigger>
               {assessmentReport && (
-                <TabsTrigger value="assessment" className="px-2 py-1.5 text-[11px] sm:text-xs">Assessment</TabsTrigger>
+                <TabsTrigger value="assessment" className="px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Assessment</TabsTrigger>
               )}
               {isAdmin && (
-                <TabsTrigger value="billing" className="px-2 py-1.5 text-[11px] sm:text-xs">Billing & Funding</TabsTrigger>
+                <TabsTrigger value="billing" className="px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Billing</TabsTrigger>
               )}
               {isAdmin && (
-                <TabsTrigger value="notes" className="px-2 py-1.5 text-[11px] sm:text-xs">Internal Notes</TabsTrigger>
+                <TabsTrigger value="notes" className="px-3 py-1.5 text-xs rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">Notes</TabsTrigger>
               )}
             </TabsList>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-              {/* Main Content */}
-              <div className="md:col-span-3 space-y-4">
-                {/* Status Row */}
-                <div className="flex flex-wrap gap-2">
-                  <StatusBadge
-                    type="enrollment"
-                    value={swimmer.enrollmentStatus}
-                  />
-                  {swimmer.approvalStatus && (
-                    <StatusBadge
-                      type="approval"
-                      value={swimmer.approvalStatus}
-                    />
-                  )}
-                  {swimmer.assessmentStatus && swimmer.assessmentStatus !== 'completed' && (
-                    <StatusBadge
-                      type="assessment"
-                      value={swimmer.assessmentStatus}
-                    />
-                  )}
-                  <StatusBadge
-                    type="funding"
-                    value={paymentType}
-                    showIcon={true}
-                    size="large"
-                  />
-                  {swimmer.lessonsCompleted > 0 && (
-                    <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
-                      {swimmer.lessonsCompleted} lessons
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Status Management - Admin Only */}
+          <TabsContent value="overview" className="mt-3">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Main Content - Left 2 columns */}
+              <div className="lg:col-span-2 space-y-3">
+                
+                {/* Status Management - Admin Only (compact) */}
                 {isAdmin && swimmer && (
-                  <div className="bg-white border rounded-lg p-3">
-                    <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      Status Management
-                    </h3>
+                  <div className="chart-section">
+                    <h3 className="chart-header">Status Management</h3>
                     <StatusSelector
                       swimmerId={swimmer.id}
                       currentEnrollmentStatus={swimmer.enrollmentStatus || swimmer.enrollment_status || ''}
                       currentAssessmentStatus={swimmer.assessmentStatus || swimmer.assessment_status || ''}
                       currentApprovalStatus={swimmer.approvalStatus || swimmer.approval_status || null}
-                      onStatusChange={() => {
-                        // Refresh swimmer data
-                        fetchAdditionalData();
-                      }}
+                      onStatusChange={() => fetchAdditionalData()}
                     />
                   </div>
                 )}
 
-                {/* Parent Info */}
+                {/* Key Info - Dense grid */}
+                <div className="chart-section">
+                  <h3 className="chart-header">Key Information</h3>
+                  <div className="chart-grid">
+                    {swimmer.diagnosis && swimmer.diagnosis.length > 0 && (
+                      <div className="col-span-2 lg:col-span-3">
+                        <span className="chart-label">Diagnosis</span>
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {swimmer.diagnosis.map((d, i) => (
+                            <span key={i} className="inline-flex items-center px-1.5 py-0.5 text-xs bg-purple-100 text-purple-700 rounded">
+                              {d}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {swimmer.height && (
+                      <div className="chart-row-bordered">
+                        <span className="chart-label">Height</span>
+                        <span className="chart-value">{swimmer.height}</span>
+                      </div>
+                    )}
+                    {swimmer.weight && (
+                      <div className="chart-row-bordered">
+                        <span className="chart-label">Weight</span>
+                        <span className="chart-value">{swimmer.weight}</span>
+                      </div>
+                    )}
+                    {swimmer.gender && (
+                      <div className="chart-row-bordered">
+                        <span className="chart-label">Gender</span>
+                        <span className="chart-value capitalize">{swimmer.gender}</span>
+                      </div>
+                    )}
+                    {calculateAge(swimmer.dateOfBirth) !== '—' && (
+                      <div className="chart-row-bordered">
+                        <span className="chart-label">Age</span>
+                        <span className="chart-value">{calculateAge(swimmer.dateOfBirth)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Swimming Background - Compact */}
+                <div className="chart-section">
+                  <h3 className="chart-header">Swimming Background</h3>
+                  <div className="chart-grid-2">
+                    <div className="chart-row-bordered">
+                      <span className="chart-label">Previous Lessons</span>
+                      <span className="chart-value">{swimmer.previousSwimLessons ? 'Yes' : 'No'}</span>
+                    </div>
+                    <div className="chart-row-bordered">
+                      <span className="chart-label">Water Comfort</span>
+                      <span className="chart-value capitalize">{swimmer.comfortableInWater || '—'}</span>
+                    </div>
+                  </div>
+                  {/* Swim Goals */}
+                  {((swimmer.swimGoals || swimmer.swim_goals)?.length > 0 || assessmentReport) && (
+                    <div className="mt-2">
+                      <span className="chart-label">Goals</span>
+                      {assessmentReport ? (
+                        <p className="text-xs mt-0.5 text-foreground">{assessmentReport.swim_skills_goals || assessmentReport.safety_goals || 'Set by instructor'}</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {(swimmer.swimGoals || swimmer.swim_goals || []).map((goal: string, i: number) => (
+                            <span key={i} className="text-xs px-1.5 py-0.5 bg-muted rounded">{goal}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {swimmer.strengthsInterests && (
+                    <div className="mt-2">
+                      <span className="chart-label">Strengths/Interests</span>
+                      <p className="text-xs mt-0.5">{swimmer.strengthsInterests}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Care Needs - Compact */}
+                {(swimmer.toiletTrained || swimmer.nonAmbulatory || swimmer.communicationType || swimmer.otherTherapies) && (
+                  <div className="chart-section">
+                    <h3 className="chart-header">Care Needs</h3>
+                    <div className="chart-grid-2">
+                      {swimmer.toiletTrained && (
+                        <div className="chart-row-bordered">
+                          <span className="chart-label">Toilet Trained</span>
+                          <span className="chart-value capitalize">{swimmer.toiletTrained}</span>
+                        </div>
+                      )}
+                      {swimmer.nonAmbulatory !== undefined && (
+                        <div className="chart-row-bordered">
+                          <span className="chart-label">Non-ambulatory</span>
+                          <span className="chart-value">{swimmer.nonAmbulatory ? 'Yes' : 'No'}</span>
+                        </div>
+                      )}
+                    </div>
+                    {swimmer.communicationType && swimmer.communicationType.length > 0 && (
+                      <div className="mt-2">
+                        <span className="chart-label">Communication</span>
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          {swimmer.communicationType.map((type, i) => (
+                            <span key={i} className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded">{type}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {swimmer.otherTherapies && (
+                      <div className="mt-2">
+                        <span className="chart-label">Other Therapies</span>
+                        <p className="text-xs mt-0.5">{swimmer.therapiesDescription || 'Yes'}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Parent Info - Compact Card */}
                 <ParentInfoCard
                   swimmer={displaySwimmer}
                   isAdmin={isAdmin}
@@ -775,167 +859,7 @@ export function SwimmerDetailModal({
                   invitingParent={isInviting}
                 />
 
-                {/* Key Info Section */}
-                <div className="bg-white border rounded-lg p-3">
-                  <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
-                    <Award className="h-4 w-4" />
-                    Key Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {/* Diagnosis */}
-                    {swimmer.diagnosis && swimmer.diagnosis.length > 0 && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground mb-2">Diagnosis</p>
-                        <div className="flex flex-wrap gap-2">
-                          {swimmer.diagnosis.map((d, i) => (
-                            <Badge key={i} variant="secondary" className="bg-purple-100 text-purple-800">
-                              {d}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Height */}
-                    {swimmer.height && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Height</p>
-                        <p className="font-medium">{swimmer.height}</p>
-                      </div>
-                    )}
-
-                    {/* Weight */}
-                    {swimmer.weight && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Weight</p>
-                        <p className="font-medium">{swimmer.weight}</p>
-                      </div>
-                    )}
-
-                    {/* Age */}
-                    {calculateAge(swimmer.dateOfBirth) !== '—' && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Age</p>
-                        <p className="font-medium">{calculateAge(swimmer.dateOfBirth)}</p>
-                      </div>
-                    )}
-
-                    {/* Gender */}
-                    {swimmer.gender && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Gender</p>
-                        <p className="font-medium capitalize">{swimmer.gender}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-
-                {/* Swimming Background */}
-                <div className="bg-white border rounded-lg p-3">
-                  <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
-                    <Award className="h-4 w-4" />
-                    Swimming Background
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Previous Lessons</p>
-                        <p className="font-medium">
-                          {swimmer.previousSwimLessons ? 'Yes' : 'No'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Comfort in Water</p>
-                        <p className="font-medium capitalize">{swimmer.comfortableInWater || 'Not specified'}</p>
-                      </div>
-                    </div>
-
-                    {/* Swim Goals - Show instructor goals from assessment if available */}
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-2">Swim Goals</p>
-                      {assessmentReport ? (
-                        <div className="space-y-2">
-                          {assessmentReport.swim_skills_goals && (
-                            <p className="text-sm"><span className="font-medium">Skills:</span> {assessmentReport.swim_skills_goals}</p>
-                          )}
-                          {assessmentReport.safety_goals && (
-                            <p className="text-sm"><span className="font-medium">Safety:</span> {assessmentReport.safety_goals}</p>
-                          )}
-                        </div>
-                      ) : (
-                        ((swimmer.swimGoals || swimmer.swim_goals)?.length || 0) > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {(swimmer.swimGoals || swimmer.swim_goals || []).map((goal: string, i: number) => (
-                              <Badge key={i} variant="secondary">{goal}</Badge>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">No goals set</p>
-                        )
-                      )}
-                    </div>
-
-                    {swimmer.strengthsInterests && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground mb-2">Strengths & Interests</p>
-                        <p className="font-medium">{swimmer.strengthsInterests}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Care Needs Section */}
-                {(swimmer.toiletTrained || swimmer.nonAmbulatory || swimmer.communicationType || swimmer.otherTherapies) && (
-                  <div className="bg-white border rounded-lg p-3">
-                    <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
-                      <Heart className="h-4 w-4" />
-                      Care Needs
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {/* Toilet Trained */}
-                        {swimmer.toiletTrained && (
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground">Toilet Trained</p>
-                            <p className="font-medium capitalize">{swimmer.toiletTrained}</p>
-                          </div>
-                        )}
-
-                        {/* Non-ambulatory */}
-                        {swimmer.nonAmbulatory !== undefined && (
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground">Non-ambulatory</p>
-                            <p className="font-medium">{swimmer.nonAmbulatory ? 'Yes' : 'No'}</p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Communication Type */}
-                      {swimmer.communicationType && swimmer.communicationType.length > 0 && (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground mb-2">Communication Type</p>
-                          <div className="flex flex-wrap gap-2">
-                            {swimmer.communicationType.map((type, index) => (
-                              <Badge key={index} variant="outline" className="bg-blue-50 text-blue-800">
-                                {type}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Other Therapies */}
-                      {swimmer.otherTherapies && (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground mb-2">Other Therapies</p>
-                          <p className="font-medium">{swimmer.therapiesDescription || 'Receives other therapies'}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
+                {/* Coordinator Info */}
                 <CoordinatorInfoCard
                   swimmer={displaySwimmer}
                   onEmailCoordinator={() => {
@@ -951,442 +875,258 @@ export function SwimmerDetailModal({
                 />
               </div>
 
-              {/* Right Column - Stats & Actions */}
+              {/* Right Column - Compact Stats & Actions */}
               <div className="space-y-3">
-                {/* Quick Stats */}
-                <div className="bg-white border rounded-lg p-3">
-                  <h3 className="text-xs font-medium text-muted-foreground mb-2 whitespace-nowrap">
-                    Quick Stats
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Assessment Status</p>
-                      <div className="mt-1">
-                        <StatusBadge
-                          type="assessment"
-                          value={swimmer.assessmentStatus}
-                          size="small"
-                        />
-                      </div>
+                {/* Quick Stats - Dense */}
+                <div className="bg-muted/30 rounded-lg p-2.5">
+                  <h3 className="chart-header">Quick Stats</h3>
+                  <div className="space-y-1">
+                    <div className="chart-row-bordered">
+                      <span className="chart-label">Assessment</span>
+                      <StatusDot type="assessment" value={swimmer.assessmentStatus} size="sm" />
                     </div>
-                    <div>
-                      <p className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Approval Status</p>
-                      <div className="mt-1">
-                        {swimmer.approvalStatus ? (
-                          <StatusBadge
-                            type="approval"
-                            value={swimmer.approvalStatus}
-                            size="small"
-                          />
-                        ) : (
-                          <Badge variant="outline" className="bg-gray-100 text-gray-800 mt-1">
-                            Not Set
-                          </Badge>
-                        )}
-                      </div>
+                    <div className="chart-row-bordered">
+                      <span className="chart-label">Approval</span>
+                      {swimmer.approvalStatus ? (
+                        <StatusDot type="approval" value={swimmer.approvalStatus} size="sm" />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </div>
-                    <div>
-                      <p className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Flexible Swimmer</p>
-                      <Badge variant="outline" className="whitespace-normal text-left mt-1">
-                        {swimmer.flexibleSwimmer ? 'Yes - Can fill last-minute spots' : 'No - Regular schedule only'}
-                      </Badge>
+                    <div className="chart-row-bordered">
+                      <span className="chart-label">Flexible</span>
+                      <span className="text-xs">{swimmer.flexibleSwimmer ? 'Yes' : 'No'}</span>
                     </div>
-                    <div>
-                      <p className="text-xs sm:text-sm font-medium text-muted-foreground whitespace-nowrap">Legal Documents</p>
-                      <div className="space-y-2 mt-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Cancellation Signed</span>
-                          {swimmer.cancellation_policy_signature ? (
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <XCircle className="h-4 w-4 text-red-600" />
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Liability Signed</span>
-                          {swimmer.liability_waiver_signature ? (
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <XCircle className="h-4 w-4 text-red-600" />
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm">Photo Release</span>
-                          {swimmer.photo_video_signature ? (
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <XCircle className="h-4 w-4 text-red-600" />
-                          )}
-                        </div>
-                      </div>
+                    <div className="chart-row-bordered">
+                      <span className="chart-label">Lessons</span>
+                      <span className="text-xs font-medium">{swimmer.lessonsCompleted || 0}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Quick Actions */}
-                <div className="bg-white border rounded-lg p-3">
-                  <h3 className="text-xs font-medium text-muted-foreground mb-2">
-                    Quick Actions
-                  </h3>
-                  <div className="space-y-2">
-                    {/* Book Session */}
+                {/* Legal Documents - Compact */}
+                <div className="bg-muted/30 rounded-lg p-2.5">
+                  <h3 className="chart-header">Legal Documents</h3>
+                  <div className="space-y-1">
+                    <div className="chart-row-bordered">
+                      <span className="chart-label">Cancellation</span>
+                      {swimmer.cancellation_policy_signature ? (
+                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                      ) : (
+                        <XCircle className="h-3.5 w-3.5 text-red-400" />
+                      )}
+                    </div>
+                    <div className="chart-row-bordered">
+                      <span className="chart-label">Liability</span>
+                      {swimmer.liability_waiver_signature ? (
+                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                      ) : (
+                        <XCircle className="h-3.5 w-3.5 text-red-400" />
+                      )}
+                    </div>
+                    <div className="chart-row-bordered">
+                      <span className="chart-label">Photo Release</span>
+                      {swimmer.photo_video_signature ? (
+                        <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+                      ) : (
+                        <XCircle className="h-3.5 w-3.5 text-red-400" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Actions - Compact buttons */}
+                <div className="bg-muted/30 rounded-lg p-2.5">
+                  <h3 className="chart-header">Quick Actions</h3>
+                  <div className="grid grid-cols-2 gap-1">
                     <Button
                       variant="outline"
-                      className="w-full justify-start"
-                      onClick={() => {
-                        console.log('Book Session clicked', { swimmerId: swimmer.id, isAdmin });
-                        router.push(
-                          isAdmin
-                            ? `/admin/bookings?swimmer=${swimmer.id}`
-                            : `/booking?swimmer=${swimmer.id}`
-                        );
-                      }}
+                      size="sm"
+                      className="h-7 text-xs justify-start"
+                      onClick={() => router.push(isAdmin ? `/admin/bookings?swimmer=${swimmer.id}` : `/booking?swimmer=${swimmer.id}`)}
                     >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Book Session
+                      <Calendar className="h-3 w-3 mr-1" />
+                      Book
                     </Button>
-
-                    {/* Edit Information */}
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start"
-                      onClick={handleEdit}
-                    >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Information
+                    <Button variant="outline" size="sm" className="h-7 text-xs justify-start" onClick={handleEdit}>
+                      <Edit className="h-3 w-3 mr-1" />
+                      Edit
                     </Button>
-
-                    {/* Add Progress Note - Admin/Instructor only */}
                     {(role === 'admin' || role === 'instructor') && (
                       <Button
                         variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => {
-                          console.log('Add Progress Note clicked', { swimmerId: swimmer.id, role });
-                          router.push(`/instructor/progress?swimmer=${swimmer.id}`);
-                        }}
+                        size="sm"
+                        className="h-7 text-xs justify-start"
+                        onClick={() => router.push(`/instructor/progress?swimmer=${swimmer.id}`)}
                       >
-                        <FileText className="h-4 w-4 mr-2" />
-                        Add Progress Note
+                        <FileText className="h-3 w-3 mr-1" />
+                        Notes
                       </Button>
                     )}
-
-                    {/* Email Parent */}
                     <Button
                       variant="outline"
-                      className="w-full justify-start"
+                      size="sm"
+                      className="h-7 text-xs justify-start"
                       onClick={() => {
-                        console.log('Email Parent clicked', { swimmerId: swimmer.id });
                         const parentEmail = swimmer.parent?.email;
-                        const parentName = swimmer.parent?.fullName || 'Parent';
-
                         if (parentEmail) {
-                          setEmailRecipient({
-                            email: parentEmail,
-                            name: parentName,
-                            type: 'parent'
-                          });
+                          setEmailRecipient({ email: parentEmail, name: swimmer.parent?.fullName || 'Parent', type: 'parent' });
                           setEmailModalOpen(true);
                         } else {
-                          toast({
-                            title: 'No parent email',
-                            description: 'This swimmer does not have a parent email on file.',
-                            variant: 'destructive'
-                          });
+                          toast({ title: 'No parent email', description: 'No parent email on file.', variant: 'destructive' });
                         }
                       }}
                     >
-                      <Mail className="h-4 w-4 mr-2" />
-                      Email Parent
+                      <Mail className="h-3 w-3 mr-1" />
+                      Email
                     </Button>
-
-                    {/* Email Coordinator - Only VMRC/CVRC (have coordinators) */}
-                    {swimmer.coordinatorEmail && (
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={() => {
-                          setEmailRecipient({
-                            email: swimmer.coordinatorEmail!,
-                            name: swimmer.coordinatorName || 'Coordinator',
-                            type: 'coordinator'
-                          });
-                          setEmailModalOpen(true);
-                        }}
-                      >
-                        <Users className="h-4 w-4 mr-2" />
-                        Email Coordinator
-                      </Button>
-                    )}
-
-                    {/* Add/Edit Important Notes - Admin only */}
                     {isAdmin && (
                       <Button
                         onClick={() => setShowImportantNotesModal(true)}
                         variant="outline"
-                        className="w-full justify-start text-amber-700 hover:text-amber-900 hover:bg-amber-50"
+                        size="sm"
+                        className="h-7 text-xs justify-start col-span-2 text-amber-700"
                       >
-                        <AlertTriangle className="h-4 w-4 mr-2 text-amber-500" />
-                        {displaySwimmer.important_notes && displaySwimmer.important_notes.length > 0
-                          ? `Edit Important Notes (${displaySwimmer.important_notes.length})`
-                          : 'Add Important Notes'}
+                        <AlertTriangle className="h-3 w-3 mr-1 text-amber-500" />
+                        {displaySwimmer.important_notes?.length ? `Important (${displaySwimmer.important_notes.length})` : 'Add Important'}
                       </Button>
                     )}
-
-                    {/* Invite Parent - Admin only, when no parent linked */}
                     {canInviteParent(isAdmin, displaySwimmer) && (
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start"
-                        onClick={handleInviteParent}
-                        disabled={isInviting}
-                      >
-                        {isInviting ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        ) : displaySwimmer.invitedAt ? (
-                          <Mail className="h-4 w-4 mr-2" />
-                        ) : (
-                          <UserPlus className="h-4 w-4 mr-2" />
-                        )}
+                      <Button variant="outline" size="sm" className="h-7 text-xs justify-start col-span-2" onClick={handleInviteParent} disabled={isInviting}>
+                        {isInviting ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <UserPlus className="h-3 w-3 mr-1" />}
                         {getInviteButtonText(isInviting, !!displaySwimmer.invitedAt)}
                       </Button>
                     )}
                   </div>
                 </div>
 
-                {/* System Info */}
-                <div className="bg-white border rounded-lg p-3">
-                  <h3 className="text-xs font-medium text-muted-foreground mb-2">
-                    System Information
-                  </h3>
-                  <div className="space-y-1.5 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Created</span>
-                      <span>{formatDate(swimmer.createdAt)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Last Updated</span>
-                      <span>{formatDate(swimmer.updatedAt)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Swimmer ID</span>
-                      <span className="font-mono text-xs">{swimmer.id.substring(0, 8)}...</span>
-                    </div>
+                {/* System Info - Minimal */}
+                <div className="text-[10px] text-muted-foreground px-1">
+                  <div className="flex justify-between">
+                    <span>Created</span>
+                    <span>{formatDate(swimmer.createdAt)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Updated</span>
+                    <span>{formatDate(swimmer.updatedAt)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>ID</span>
+                    <span className="font-mono">{swimmer.id.substring(0, 8)}</span>
                   </div>
                 </div>
               </div>
             </div>
-
           </TabsContent>
 
-          {/* Medical & Safety Tab - Compact Grid Design */}
-          <TabsContent value="medical" className="space-y-4">
-            <section>
-              <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
-                <Stethoscope className="h-4 w-4" />
-                Medical & Safety Information
-              </h3>
+          {/* Medical & Safety Tab - Compact */}
+          <TabsContent value="medical" className="mt-3 space-y-3">
+              {/* Medical Information */}
+              <div className="chart-section">
+                <h3 className="chart-header flex items-center gap-1.5">
+                  <Heart className="h-3 w-3 text-red-500" />
+                  Medical Information
+                </h3>
 
-              {/* Medical Information Grid */}
-              <div className="mb-4">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Heart className="h-4 w-4 text-red-600" />
-                  <h4 className="text-sm font-semibold text-gray-800">Medical Information</h4>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {/* Allergies */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5">
                   {swimmer.hasAllergies !== undefined && (
-                    <div className={`p-3 rounded-lg border ${swimmer.hasAllergies ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className={`text-xs font-medium ${swimmer.hasAllergies ? 'text-red-800' : 'text-gray-700'}`}>Allergies</div>
-                        <Badge
-                          variant={swimmer.hasAllergies ? "destructive" : "outline"}
-                          className={`text-xs h-5 px-1.5 ${swimmer.hasAllergies ? '' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
-                        >
-                          {swimmer.hasAllergies ? "Yes" : "No"}
-                        </Badge>
-                      </div>
-                      {swimmer.hasAllergies && swimmer.allergiesDescription && (
-                        <div className="mt-2 bg-red-50 border border-red-200 rounded p-2">
-                          <p className="text-xs font-medium text-red-800 mb-0.5">Details</p>
-                          <p className="text-xs text-red-700 line-clamp-2">{swimmer.allergiesDescription}</p>
-                        </div>
-                      )}
+                    <div className={`p-2 rounded border text-center ${swimmer.hasAllergies ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.hasAllergies ? 'text-red-700' : 'text-muted-foreground'}`}>Allergies</div>
+                      <div className={`text-xs font-semibold ${swimmer.hasAllergies ? 'text-red-800' : ''}`}>{swimmer.hasAllergies ? 'Yes' : 'No'}</div>
                     </div>
                   )}
-
-                  {/* Medical Conditions */}
                   {swimmer.hasMedicalConditions !== undefined && (
-                    <div className={`p-3 rounded-lg border ${swimmer.hasMedicalConditions ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className={`text-xs font-medium ${swimmer.hasMedicalConditions ? 'text-red-800' : 'text-gray-700'}`}>Conditions</div>
-                        <Badge
-                          variant={swimmer.hasMedicalConditions ? "destructive" : "outline"}
-                          className={`text-xs h-5 px-1.5 ${swimmer.hasMedicalConditions ? '' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
-                        >
-                          {swimmer.hasMedicalConditions ? "Yes" : "No"}
-                        </Badge>
-                      </div>
-                      {swimmer.hasMedicalConditions && swimmer.medicalConditionsDescription && (
-                        <div className="mt-2 bg-red-50 border border-red-200 rounded p-2">
-                          <p className="text-xs font-medium text-red-800 mb-0.5">Details</p>
-                          <p className="text-xs text-red-700 line-clamp-2">{swimmer.medicalConditionsDescription}</p>
-                        </div>
-                      )}
+                    <div className={`p-2 rounded border text-center ${swimmer.hasMedicalConditions ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.hasMedicalConditions ? 'text-red-700' : 'text-muted-foreground'}`}>Conditions</div>
+                      <div className={`text-xs font-semibold ${swimmer.hasMedicalConditions ? 'text-red-800' : ''}`}>{swimmer.hasMedicalConditions ? 'Yes' : 'No'}</div>
                     </div>
                   )}
-
-                  {/* History of Seizures */}
                   {swimmer.historyOfSeizures !== undefined && (
-                    <div className={`p-3 rounded-lg border ${swimmer.historyOfSeizures ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className={`text-xs font-medium ${swimmer.historyOfSeizures ? 'text-red-800' : 'text-gray-700'}`}>Seizures</div>
-                        <Badge
-                          variant={swimmer.historyOfSeizures ? "destructive" : "outline"}
-                          className={`text-xs h-5 px-1.5 ${swimmer.historyOfSeizures ? '' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
-                        >
-                          {swimmer.historyOfSeizures ? "Yes" : "No"}
-                        </Badge>
-                      </div>
-                      {swimmer.historyOfSeizures && swimmer.seizuresDescription && (
-                        <div className="mt-2 bg-red-50 border border-red-200 rounded p-2">
-                          <p className="text-xs font-medium text-red-800 mb-0.5">Details</p>
-                          <p className="text-xs text-red-700 line-clamp-2">{swimmer.seizuresDescription}</p>
-                        </div>
-                      )}
+                    <div className={`p-2 rounded border text-center ${swimmer.historyOfSeizures ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.historyOfSeizures ? 'text-red-700' : 'text-muted-foreground'}`}>Seizures</div>
+                      <div className={`text-xs font-semibold ${swimmer.historyOfSeizures ? 'text-red-800' : ''}`}>{swimmer.historyOfSeizures ? 'Yes' : 'No'}</div>
                     </div>
                   )}
                 </div>
+                {/* Details for flagged items */}
+                {(swimmer.hasAllergies && swimmer.allergiesDescription) || (swimmer.hasMedicalConditions && swimmer.medicalConditionsDescription) || (swimmer.historyOfSeizures && swimmer.seizuresDescription) ? (
+                  <div className="mt-2 p-2 bg-red-50/50 border border-red-100 rounded text-xs space-y-1">
+                    {swimmer.hasAllergies && swimmer.allergiesDescription && (
+                      <p><span className="font-medium text-red-700">Allergies:</span> <span className="text-red-600">{swimmer.allergiesDescription}</span></p>
+                    )}
+                    {swimmer.hasMedicalConditions && swimmer.medicalConditionsDescription && (
+                      <p><span className="font-medium text-red-700">Conditions:</span> <span className="text-red-600">{swimmer.medicalConditionsDescription}</span></p>
+                    )}
+                    {swimmer.historyOfSeizures && swimmer.seizuresDescription && (
+                      <p><span className="font-medium text-red-700">Seizures:</span> <span className="text-red-600">{swimmer.seizuresDescription}</span></p>
+                    )}
+                  </div>
+                ) : null}
               </div>
 
-              {/* Safety & Behavioral Grid */}
-              <div>
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Shield className="h-4 w-4 text-blue-600" />
-                  <h4 className="text-sm font-semibold text-gray-800">Safety & Behavioral</h4>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                  {/* Self Injurious Behavior */}
+              {/* Safety & Behavioral - Compact */}
+              <div className="chart-section">
+                <h3 className="chart-header flex items-center gap-1.5">
+                  <Shield className="h-3 w-3 text-blue-500" />
+                  Safety & Behavioral
+                </h3>
+                <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-6 gap-1.5">
                   {swimmer.selfInjuriousBehavior !== undefined && (
-                    <div className={`p-3 rounded-lg border ${swimmer.selfInjuriousBehavior ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className={`text-xs font-medium ${swimmer.selfInjuriousBehavior ? 'text-red-800' : 'text-gray-700'}`}>Self-Inj.</div>
-                        <Badge
-                          variant={swimmer.selfInjuriousBehavior ? "destructive" : "outline"}
-                          className={`text-xs h-5 px-1.5 ${swimmer.selfInjuriousBehavior ? '' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
-                        >
-                          {swimmer.selfInjuriousBehavior ? "Yes" : "No"}
-                        </Badge>
-                      </div>
-                      {swimmer.selfInjuriousBehavior && swimmer.selfInjuriousBehaviorDescription && (
-                        <div className="mt-2 bg-red-50 border border-red-200 rounded p-2">
-                          <p className="text-xs font-medium text-red-800 mb-0.5">Details</p>
-                          <p className="text-xs text-red-700 line-clamp-2">{swimmer.selfInjuriousBehaviorDescription}</p>
-                        </div>
-                      )}
+                    <div className={`p-2 rounded border text-center ${swimmer.selfInjuriousBehavior ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.selfInjuriousBehavior ? 'text-red-700' : 'text-muted-foreground'}`}>Self-Inj</div>
+                      <div className={`text-xs font-semibold ${swimmer.selfInjuriousBehavior ? 'text-red-800' : ''}`}>{swimmer.selfInjuriousBehavior ? 'Yes' : 'No'}</div>
                     </div>
                   )}
-
-                  {/* Aggressive Behavior */}
                   {swimmer.aggressiveBehavior !== undefined && (
-                    <div className={`p-3 rounded-lg border ${swimmer.aggressiveBehavior ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className={`text-xs font-medium ${swimmer.aggressiveBehavior ? 'text-red-800' : 'text-gray-700'}`}>Aggressive</div>
-                        <Badge
-                          variant={swimmer.aggressiveBehavior ? "destructive" : "outline"}
-                          className={`text-xs h-5 px-1.5 ${swimmer.aggressiveBehavior ? '' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
-                        >
-                          {swimmer.aggressiveBehavior ? "Yes" : "No"}
-                        </Badge>
-                      </div>
-                      {swimmer.aggressiveBehavior && swimmer.aggressiveBehaviorDescription && (
-                        <div className="mt-2 bg-red-50 border border-red-200 rounded p-2">
-                          <p className="text-xs font-medium text-red-800 mb-0.5">Details</p>
-                          <p className="text-xs text-red-700 line-clamp-2">{swimmer.aggressiveBehaviorDescription}</p>
-                        </div>
-                      )}
+                    <div className={`p-2 rounded border text-center ${swimmer.aggressiveBehavior ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.aggressiveBehavior ? 'text-red-700' : 'text-muted-foreground'}`}>Aggressive</div>
+                      <div className={`text-xs font-semibold ${swimmer.aggressiveBehavior ? 'text-red-800' : ''}`}>{swimmer.aggressiveBehavior ? 'Yes' : 'No'}</div>
                     </div>
                   )}
-
-                  {/* Elopement History */}
                   {swimmer.elopementHistory !== undefined && (
-                    <div className={`p-3 rounded-lg border ${swimmer.elopementHistory ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className={`text-xs font-medium ${swimmer.elopementHistory ? 'text-red-800' : 'text-gray-700'}`}>Elopement</div>
-                        <Badge
-                          variant={swimmer.elopementHistory ? "destructive" : "outline"}
-                          className={`text-xs h-5 px-1.5 ${swimmer.elopementHistory ? '' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
-                        >
-                          {swimmer.elopementHistory ? "Yes" : "No"}
-                        </Badge>
-                      </div>
-                      {swimmer.elopementHistory && swimmer.elopementHistoryDescription && (
-                        <div className="mt-2 bg-red-50 border border-red-200 rounded p-2">
-                          <p className="text-xs font-medium text-red-800 mb-0.5">Details</p>
-                          <p className="text-xs text-red-700 line-clamp-2">{swimmer.elopementHistoryDescription}</p>
-                        </div>
-                      )}
+                    <div className={`p-2 rounded border text-center ${swimmer.elopementHistory ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.elopementHistory ? 'text-red-700' : 'text-muted-foreground'}`}>Elopement</div>
+                      <div className={`text-xs font-semibold ${swimmer.elopementHistory ? 'text-red-800' : ''}`}>{swimmer.elopementHistory ? 'Yes' : 'No'}</div>
                     </div>
                   )}
-
-                  {/* Has Behavior Plan */}
                   {swimmer.hasBehaviorPlan !== undefined && (
-                    <div className={`p-3 rounded-lg border ${swimmer.hasBehaviorPlan ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className={`text-xs font-medium ${swimmer.hasBehaviorPlan ? 'text-amber-800' : 'text-gray-700'}`}>Beh. Plan</div>
-                        <Badge
-                          variant="outline"
-                          className={`text-xs h-5 px-1.5 ${swimmer.hasBehaviorPlan ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
-                        >
-                          {swimmer.hasBehaviorPlan ? "Yes" : "No"}
-                        </Badge>
-                      </div>
+                    <div className={`p-2 rounded border text-center ${swimmer.hasBehaviorPlan ? 'bg-amber-50 border-amber-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.hasBehaviorPlan ? 'text-amber-700' : 'text-muted-foreground'}`}>Beh Plan</div>
+                      <div className={`text-xs font-semibold ${swimmer.hasBehaviorPlan ? 'text-amber-800' : ''}`}>{swimmer.hasBehaviorPlan ? 'Yes' : 'No'}</div>
                     </div>
                   )}
-
-                  {/* Restraint History */}
                   {swimmer.restraintHistory !== undefined && (
-                    <div className={`p-3 rounded-lg border ${swimmer.restraintHistory ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className={`text-xs font-medium ${swimmer.restraintHistory ? 'text-red-800' : 'text-gray-700'}`}>Restraint</div>
-                        <Badge
-                          variant={swimmer.restraintHistory ? "destructive" : "outline"}
-                          className={`text-xs h-5 px-1.5 ${swimmer.restraintHistory ? '' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
-                        >
-                          {swimmer.restraintHistory ? "Yes" : "No"}
-                        </Badge>
-                      </div>
-                      {swimmer.restraintHistory && swimmer.restraintHistoryDescription && (
-                        <div className="mt-2 bg-red-50 border border-red-200 rounded p-2">
-                          <p className="text-xs font-medium text-red-800 mb-0.5">Details</p>
-                          <p className="text-xs text-red-700 line-clamp-2">{swimmer.restraintHistoryDescription}</p>
-                        </div>
-                      )}
+                    <div className={`p-2 rounded border text-center ${swimmer.restraintHistory ? 'bg-red-50 border-red-200' : 'bg-muted/30 border-border/30'}`}>
+                      <div className={`text-[10px] uppercase tracking-wide ${swimmer.restraintHistory ? 'text-red-700' : 'text-muted-foreground'}`}>Restraint</div>
+                      <div className={`text-xs font-semibold ${swimmer.restraintHistory ? 'text-red-800' : ''}`}>{swimmer.restraintHistory ? 'Yes' : 'No'}</div>
                     </div>
                   )}
                 </div>
+                {/* Details for flagged behavioral items */}
+                {(swimmer.selfInjuriousBehavior && swimmer.selfInjuriousBehaviorDescription) || (swimmer.aggressiveBehavior && swimmer.aggressiveBehaviorDescription) || (swimmer.elopementHistory && swimmer.elopementHistoryDescription) || (swimmer.restraintHistory && swimmer.restraintHistoryDescription) ? (
+                  <div className="mt-2 p-2 bg-red-50/50 border border-red-100 rounded text-xs space-y-1">
+                    {swimmer.selfInjuriousBehavior && swimmer.selfInjuriousBehaviorDescription && (
+                      <p><span className="font-medium text-red-700">Self-Injury:</span> <span className="text-red-600">{swimmer.selfInjuriousBehaviorDescription}</span></p>
+                    )}
+                    {swimmer.aggressiveBehavior && swimmer.aggressiveBehaviorDescription && (
+                      <p><span className="font-medium text-red-700">Aggressive:</span> <span className="text-red-600">{swimmer.aggressiveBehaviorDescription}</span></p>
+                    )}
+                    {swimmer.elopementHistory && swimmer.elopementHistoryDescription && (
+                      <p><span className="font-medium text-red-700">Elopement:</span> <span className="text-red-600">{swimmer.elopementHistoryDescription}</span></p>
+                    )}
+                    {swimmer.restraintHistory && swimmer.restraintHistoryDescription && (
+                      <p><span className="font-medium text-red-700">Restraint:</span> <span className="text-red-600">{swimmer.restraintHistoryDescription}</span></p>
+                    )}
+                  </div>
+                ) : null}
               </div>
 
-              {/* Legend/Key */}
-              <div className="mt-4 pt-3 border-t border-gray-200">
-                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-3 w-3 rounded-full bg-red-100 border border-red-300"></div>
-                    <span>Red = "Yes" (requires attention)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-3 w-3 rounded-full bg-gray-100 border border-gray-300"></div>
-                    <span>Gray = "No" (no issues)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-3 w-3 rounded-full bg-amber-100 border border-amber-300"></div>
-                    <span>Amber = Behavior Plan exists</span>
-                  </div>
-                </div>
+              {/* Legend - Minimal */}
+              <div className="flex items-center gap-4 text-[10px] text-muted-foreground pt-2 border-t border-border/30">
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-200" /> Flagged</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-200" /> Has Plan</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-muted" /> Clear</span>
               </div>
-            </section>
           </TabsContent>
 
           {/* Progress Tab */}

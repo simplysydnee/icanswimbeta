@@ -274,6 +274,65 @@ html, body {
   .container {
     @apply w-full max-w-full md:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8;
   }
+  
+  /* Client Chart / Case Management Utilities */
+  .chart-section {
+    @apply border-b border-border/40 pb-3 mb-3;
+  }
+  
+  .chart-section:last-child {
+    @apply border-b-0 pb-0 mb-0;
+  }
+  
+  .chart-header {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 pb-1 border-b border-border/30;
+  }
+  
+  .chart-row {
+    @apply flex items-center justify-between py-1 text-sm;
+  }
+  
+  .chart-row-bordered {
+    @apply flex items-center justify-between py-1.5 border-b border-border/20 text-sm last:border-b-0;
+  }
+  
+  .chart-label {
+    @apply text-xs text-muted-foreground;
+  }
+  
+  .chart-value {
+    @apply text-sm font-medium;
+  }
+  
+  .chart-grid {
+    @apply grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-1;
+  }
+  
+  .chart-grid-2 {
+    @apply grid grid-cols-2 gap-x-4 gap-y-1;
+  }
+  
+  /* Status dot indicators */
+  .status-dot {
+    @apply h-2 w-2 rounded-full flex-shrink-0;
+  }
+  
+  .status-dot-lg {
+    @apply h-2.5 w-2.5 rounded-full flex-shrink-0;
+  }
+  
+  /* Inline stat display */
+  .stat-inline {
+    @apply flex items-center gap-4 text-sm;
+  }
+  
+  .stat-inline-item {
+    @apply flex items-center gap-1.5;
+  }
+  
+  .stat-inline-divider {
+    @apply w-px h-4 bg-border/50;
+  }
 }
 
 /* Global link styling */
