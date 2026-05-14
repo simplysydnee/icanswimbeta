@@ -6,7 +6,7 @@ import { SwimmerManagementTable } from '@/components/swimmers/SwimmerManagementT
 import { SwimmerCard } from '@/components/swimmers/SwimmerCard';
 import { SwimmerAnalyticsModal } from '@/components/admin/SwimmerAnalyticsModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Download, Filter, BarChart3, Clock, UserCheck, UserX, TrendingUp, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Users, Download, BarChart3, Clock, UserCheck, UserX, TrendingUp, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -198,36 +198,6 @@ function AdminSwimmersPageContent() {
         ) : (
           <SwimmerManagementTable role="admin" swimmers={swimmers} isLoading={swimmersLoading} error={swimmersError} />
         )}
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader className="py-2 px-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Quick Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-3 pb-3 pt-0">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <Button variant="outline" className="justify-start text-left truncate">
-                <Users className="h-4 w-4 mr-2 shrink-0" />
-                <span className="truncate">Needs Assessment</span>
-              </Button>
-              <Button variant="outline" className="justify-start text-left truncate">
-                <Users className="h-4 w-4 mr-2 shrink-0" />
-                <span className="truncate">Regional Center Renewals Due</span>
-              </Button>
-              <Button variant="outline" className="justify-start text-left truncate">
-                <Users className="h-4 w-4 mr-2 shrink-0" />
-                <span className="truncate">No Upcoming Sessions</span>
-              </Button>
-              <Button variant="outline" className="justify-start text-left truncate">
-                <Users className="h-4 w-4 mr-2 shrink-0" />
-                <span className="truncate">Waitlist Priority</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Analytics Modal */}
         <SwimmerAnalyticsModal
