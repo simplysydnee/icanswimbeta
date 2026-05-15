@@ -97,6 +97,9 @@ export async function middleware(request: NextRequest) {
 
   // Redirect authenticated users from auth routes
   if (isAuthRoute && user) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[v0] Middleware: authenticated user on auth route, redirecting /login -> /dashboard')
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 

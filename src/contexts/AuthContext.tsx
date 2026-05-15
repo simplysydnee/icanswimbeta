@@ -64,9 +64,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch user profile and role (only called when we have a user)
   const fetchUserProfile = async (userId: string, userEmail?: string, retryCount = 0) => {
+    console.log('[v0] fetchUserProfile START:', { userId, userEmail, retryCount, timestamp: new Date().toISOString() })
 
     try {
       setIsLoadingProfile(true)
+      console.log('[v0] setIsLoadingProfile(true)');
 
       // Set a global timeout for the entire fetchUserProfile operation (reduced from 30s)
       const globalTimeoutPromise = new Promise((_, reject) =>
@@ -222,6 +224,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setProfile(userWithRole)
       setRole(primaryRole)
+      console.log('[v0] fetchUserProfile SUCCESS - set role:', primaryRole, 'timestamp:', new Date().toISOString())
     } catch (error) {
       console.error('=== AUTH DEBUG: fetchUserProfile catch block error ===', error);
       console.error('Error details:', {
@@ -275,11 +278,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setProfile(minimalProfile);
         setRole('parent');
-      } else {
-        // Set default values instead of null to prevent UI issues
-        setProfile(null);
-        setRole('parent'); // Default role
       }
+    } finally {
+      setIsLoadingProfile(false)
+      console.log('[v0] setIsLoadingProfile(false) - timestamp:', new Date().toISOString())
+    }
+  }
     } finally {
       setIsLoadingProfile(false)
     }
@@ -287,7 +291,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize auth state
   useEffect(() => {
+    console.log('[v0] AuthContext: initializeAuth useEffect running')
     const initializeAuth = async () => {
+      console.log('[v0] initializeAuth START')
       try {
         // Use getUser() instead of getSession() to check for stale tokens
         const { data: { user }, error: getUserError } = await supabase.auth.getUser()
@@ -310,11 +316,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setError(getUserError.message)
           }
         } else if (user) {
+          console.log('[v0] initializeAuth: user found:', user.id, user.email)
           const authUser = transformUser(user)
           setUser(authUser)
 
           // Start profile fetch but don't wait for it to complete
           // This prevents the page from hanging if profile fetch is slow
+          console.log('[v0] initializeAuth: calling fetchUserProfile')
           fetchUserProfile(user.id, user.email).catch((error) => {
             console.error('Auth: Profile fetch failed during initialization:', error)
             // Set default role if profile fetch fails
@@ -323,9 +331,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           // Set loading to false immediately since we have a user
           // Profile fetch will handle isLoadingProfile separately
+          console.log('[v0] initializeAuth: setLoading(false) - user exists')
           setLoading(false)
         } else {
           // No user found - set loading to false immediately
+          console.log('[v0] initializeAuth: no user found, setLoading(false)')
           setLoading(false)
         }
       } catch {
@@ -340,6 +350,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('[v0] onAuthStateChange event:', event, 'has session:', !!session, 'timestamp:', new Date().toISOString())
         // Handle specific auth events
         if (event === 'SIGNED_OUT') {
           // Only update state if not already cleared by manual signOut
@@ -353,19 +364,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return null
           })
         } else if (session?.user) {
+          console.log('[v0] onAuthStateChange: user session found, event:', event)
           const authUser = transformUser(session.user)
           setUser(authUser)
 
           // On INITIAL_SESSION the profile is already being fetched by initializeAuth.
           // Only fetch again for a genuine new SIGNED_IN event to avoid a double-fetch race.
           if (event === 'SIGNED_IN') {
+            console.log('[v0] onAuthStateChange: SIGNED_IN event, calling fetchUserProfile')
             fetchUserProfile(session.user.id, session.user.email).catch((error) => {
               console.error('Auth: Profile fetch failed during auth state change:', error)
               setRole('parent')
             })
+          } else {
+            console.log('[v0] onAuthStateChange: event is', event, '- NOT calling fetchUserProfile (already fetched by initializeAuth)')
           }
+          console.log('[v0] onAuthStateChange: setLoading(false)')
           setLoading(false)
         } else {
+          console.log('[v0] onAuthStateChange: no session - signed out state')
           // No session/user - this is a non-authenticated state
           setUser(null)
           setProfile(null)
@@ -382,6 +399,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase, router])
 
   const signIn = async ({ email, password, redirectTo }: LoginCredentials) => {
+    console.log('[v0] signIn START:', { email, redirectTo })
     try {
       setLoading(true)
       setError(null)
@@ -398,6 +416,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Redirect to specified path or default to dashboard
       const redirectPath = redirectTo || '/dashboard'
+      console.log('[v0] signIn: redirecting to', redirectPath)
       router.push(redirectPath)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
