@@ -929,10 +929,6 @@ export function SwimmerDetailModal({
                       )}
                     </div>
                     <div className="chart-row-bordered">
-                      <span className="chart-label">Flexible</span>
-                      <span className="text-xs">{swimmer.flexibleSwimmer ? 'Yes' : 'No'}</span>
-                    </div>
-                    <div className="chart-row-bordered">
                       <span className="chart-label">Lessons</span>
                       <span className="text-xs font-medium">{swimmer.lessonsCompleted || 0}</span>
                     </div>
