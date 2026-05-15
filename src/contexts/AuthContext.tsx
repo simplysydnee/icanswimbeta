@@ -332,39 +332,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_OUT') {
-          // Only update state if not already cleared by manual signOut
-          // This prevents race conditions with the signOut function
-          setUser((currentUser) => {
-            if (currentUser !== null) {
-              setProfile(null)
-              setRole(null)
-              setLoading(false)
-            }
-            return null
-          })
-        } else if (session?.user) {
-          const authUser = transformUser(session.user)
-          setUser(authUser)
-
-          // On INITIAL_SESSION the profile is already being fetched by initializeAuth.
-          // Only fetch again for a genuine new SIGNED_IN event to avoid a double-fetch race.
-          if (event === 'SIGNED_IN') {
-            fetchUserProfile(session.user.id, session.user.email).catch((error) => {
-              console.error('Auth: Profile fetch failed during auth state change:', error)
-              setRole('parent')
-            })
-          }
-          setLoading(false)
-        } else {
-          // No session/user - this is a non-authenticated state
           setUser(null)
           setProfile(null)
           setRole(null)
-          setLoading(false) // Non-authenticated users shouldn't see loading
-          // Only refresh on sign-out so server components (e.g. login page guard)
-          // re-evaluate — do NOT refresh on sign-in or it creates a redirect loop.
+          setLoading(false)
+          // Refresh server components so the login page guard re-evaluates
           router.refresh()
+        } else if (event === 'SIGNED_IN' && session?.user) {
+          const authUser = transformUser(session.user)
+          setUser(authUser)
+          fetchUserProfile(session.user.id, session.user.email).catch((error) => {
+            console.error('Auth: Profile fetch failed during auth state change:', error)
+            setRole('parent')
+          })
+          setLoading(false)
         }
+        // INITIAL_SESSION and TOKEN_REFRESHED are handled by initializeAuth —
+        // do not call router.refresh() for these events or it creates a reload loop.
       }
     )
 
