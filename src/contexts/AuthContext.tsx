@@ -360,9 +360,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        // Only refresh on actual auth state changes (sign in/out), not initial/token refresh
-        const shouldRefresh = event === 'SIGNED_IN' || event === 'SIGNED_OUT'
-        
         // Handle specific auth events
         if (event === 'SIGNED_OUT') {
           // Only update state if not already cleared by manual signOut
@@ -397,11 +394,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setRole(null)
           setLoading(false) // Non-authenticated users shouldn't see loading
         }
-        
-        // Only refresh router for actual sign in/out events to avoid infinite loops
-        if (shouldRefresh) {
-          router.refresh()
-        }
+        router.refresh()
       }
     )
 
