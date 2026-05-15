@@ -35,6 +35,10 @@ export const useAuth = () => {
   return context
 }
 
+// Create a single stable Supabase client instance outside the component
+// so it never changes reference between renders
+const supabase = createClient()
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [profile, setProfile] = useState<UserWithRole | null>(null)
@@ -43,7 +47,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoadingProfile, setIsLoadingProfile] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const supabase = createClient()
 
   // Transform Supabase user to AuthUser
   const transformUser = (supabaseUser: {
@@ -392,7 +395,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
 
     return () => subscription.unsubscribe()
-  }, [supabase, router])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const signIn = async ({ email, password, redirectTo }: LoginCredentials) => {
     console.log('[v0] signIn START:', { email, redirectTo })
