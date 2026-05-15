@@ -284,10 +284,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('[v0] setIsLoadingProfile(false) - timestamp:', new Date().toISOString())
     }
   }
-    } finally {
-      setIsLoadingProfile(false)
-    }
-  }
 
   // Initialize auth state
   useEffect(() => {
