@@ -16,15 +16,15 @@ export async function GET(
     }
 
     // Get user role
-    const { data: profile } = await supabase
-      .from('profiles')
+    const { data: userRole } = await supabase
+      .from('user_roles')
       .select('role')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
       .single();
 
-    if (!profile) {
+    if (!userRole) {
       return NextResponse.json(
-        { error: 'User profile not found' },
+        { error: 'User role not found' },
         { status: 404 }
       );
     }
@@ -99,7 +99,7 @@ export async function GET(
 
     // Check if user has permission
     // Admin can see all, instructor can only see their own assessments
-    if (profile.role === 'instructor' && booking.sessions.instructor_id !== user.id) {
+    if (userRole.role === 'instructor' && booking.sessions.instructor_id !== user.id) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }

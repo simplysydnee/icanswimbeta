@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { generateReferralRequestEmail, generateReferralConfirmationEmail, generateAssessmentBookingEmail, generateLessonBookingEmail, generateRecurringBookingEmail, generateCancellationEmail, generateParentInvitationEmail, generateWelcomeEmail, generateAccountCreatedEmail, generateEnrollmentRejectionEmail, generateCoordinatorReferralNewParentEmail, generateCoordinatorReferralExistingParentEmail, wrapEmailWithHeader } from '@/lib/emails'
+import { generateReferralRequestEmail, generateReferralConfirmationEmail, generateAssessmentBookingEmail, generateLessonBookingEmail, generateRecurringBookingEmail, generateCancellationEmail, generateParentInvitationEmail, generateWelcomeEmail, generateAccountCreatedEmail, generateEnrollmentRejectionEmail, generateDeclineEmail, generateCoordinatorDeclineNotification, generateCoordinatorReferralNewParentEmail, generateCoordinatorReferralExistingParentEmail, wrapEmailWithHeader } from '@/lib/emails'
 
 type EmailTemplate =
   | 'enrollment_invite'
@@ -553,6 +553,43 @@ export const emailService = {
         html,
       },
     })
+  },
+
+  async sendDeclineNotification(params: {
+    parentEmail: string
+    parentName: string
+    childName: string
+    coordinatorEmail?: string
+    coordinatorName?: string
+  }) {
+    const { subject, html } = generateDeclineEmail({
+      parentName: params.parentName,
+      childName: params.childName,
+    })
+
+    await sendEmail({
+      to: params.parentEmail,
+      templateType: 'custom',
+      toName: params.parentName,
+      customData: { subject, html },
+    })
+
+    if (params.coordinatorEmail) {
+      const { subject: coordSubject, html: coordHtml } = generateCoordinatorDeclineNotification({
+        coordinatorName: params.coordinatorName || 'Coordinator',
+        parentName: params.parentName,
+        childName: params.childName,
+      })
+
+      await sendEmail({
+        to: params.coordinatorEmail,
+        templateType: 'custom',
+        toName: params.coordinatorName,
+        customData: { subject: coordSubject, html: coordHtml },
+      })
+    }
+
+    return { success: true }
   },
 
   async sendEnrollmentRejectionNotice(params: {

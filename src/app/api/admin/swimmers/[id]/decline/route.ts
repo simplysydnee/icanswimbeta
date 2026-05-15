@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { emailService } from '@/lib/email-service';
 
 export async function POST(
   request: Request,
@@ -53,7 +54,36 @@ export async function POST(
       // No body provided — that's fine
     }
 
-    // ========== STEP 4: Update Swimmer ==========
+    // ========== STEP 4: Get Swimmer Details (for email) ==========
+    const { data: swimmer, error: swimmerError } = await serviceClient
+      .from('swimmers')
+      .select(`
+        id,
+        first_name,
+        last_name,
+        parent_id,
+        parent:profiles!swimmers_parent_id_fkey(
+          id,
+          full_name,
+          email
+        ),
+        funding_sources(
+          coordinator_name,
+          coordinator_email
+        )
+      `)
+      .eq('id', swimmerId)
+      .single();
+
+    if (swimmerError || !swimmer) {
+      console.error('Error fetching swimmer:', swimmerError);
+      return NextResponse.json(
+        { error: `Swimmer not found: ${swimmerError?.message || 'No data returned'}` },
+        { status: 404 }
+      );
+    }
+
+    // ========== STEP 5: Update Swimmer ==========
     const updateData: Record<string, any> = {
       approval_status: 'declined',
       declined_at: new Date().toISOString(),
@@ -77,7 +107,30 @@ export async function POST(
       );
     }
 
-    // ========== STEP 5: Return Success ==========
+    // ========== STEP 6: Send Decline Notifications ==========
+    if (swimmer.parent && Array.isArray(swimmer.parent) && swimmer.parent[0]?.email) {
+      const parent = swimmer.parent[0];
+      const coordinatorInfo = swimmer.funding_sources && Array.isArray(swimmer.funding_sources)
+        ? swimmer.funding_sources[0]
+        : undefined;
+
+      try {
+        await emailService.sendDeclineNotification({
+          parentEmail: parent.email,
+          parentName: parent.full_name || 'Parent',
+          childName: `${swimmer.first_name} ${swimmer.last_name}`,
+          coordinatorEmail: coordinatorInfo?.coordinator_email,
+          coordinatorName: coordinatorInfo?.coordinator_name,
+        });
+
+        console.log(`✅ Decline emails sent to parent and coordinator for swimmer ${swimmer.first_name} ${swimmer.last_name}`);
+      } catch (emailError) {
+        console.error('Error sending decline emails:', emailError);
+        // Don't fail the decline if email fails
+      }
+    }
+
+    // ========== STEP 7: Return Success ==========
     return NextResponse.json({
       success: true,
       message: 'Swimmer declined successfully',

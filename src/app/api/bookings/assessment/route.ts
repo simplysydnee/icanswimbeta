@@ -14,15 +14,19 @@ function getServiceSupabase() {
 }
 
 export async function POST(request: NextRequest) {
+  let bookingId: string | undefined
+  let serviceSupabase: ReturnType<typeof getServiceSupabase>
+  let currentUserId: string | undefined
   try {
     const supabase = await createClient()
-    const serviceSupabase = getServiceSupabase()
+    serviceSupabase = getServiceSupabase()
 
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    currentUserId = user.id
 
     const body = await request.json()
     const { sessionId, swimmerId } = body
@@ -147,7 +151,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: err.message }, { status: err.status })
     }
 
-    const bookingId = bookingResult.booking_id
+    bookingId = bookingResult.booking_id
 
     // 8. Create assessment record
     const { data: assessment, error: assessmentError } = await serviceSupabase
@@ -250,8 +254,20 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Assessment booking error:', error)
+    // Rollback booking if one was created — NEVER delete the swimmer
+    if (bookingId && currentUserId) {
+      await serviceSupabase.rpc('cancel_booking', {
+        p_booking_id: bookingId,
+        p_cancelled_by: currentUserId,
+        p_cancel_reason: 'Unexpected error - rollback',
+        p_cancel_source: 'admin',
+        p_is_late_cancel: false,
+        p_late_cancel_type: null,
+        p_late_cancel_note: null,
+      }).catch(e => console.error('Rollback failed:', e))
+    }
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Assessment booking failed due to an unexpected error' },
       { status: 500 }
     )
   }

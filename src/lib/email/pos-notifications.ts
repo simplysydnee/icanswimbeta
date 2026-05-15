@@ -734,6 +734,107 @@ export async function notifyCoordinatorNewFiscalYearPO(poId: string, sessionsRem
   }
 }
 
+export interface RolloverClient {
+  poId: string;
+  swimmerName: string;
+  uciNumber: string | null;
+  sessionsRemaining: number;
+  approveToken: string;
+  approveUrl: string;
+}
+
+function buildRolloverClientRow(client: RolloverClient, isAlt: boolean): string {
+  return `<tr style="${isAlt ? 'background:#fafcfd;' : ''}">
+    <td style="padding:7px 8px;border-bottom:1px solid #f0f5f8;color:#1a3347;font-weight:500">${client.swimmerName}</td>
+    <td style="padding:7px 8px;border-bottom:1px solid #f0f5f8;color:#5a7a8e">${client.uciNumber || 'Pending'}</td>
+    <td style="padding:7px 8px;border-bottom:1px solid #f0f5f8;text-align:center">
+      <span style="background:#e8f4fb;color:#0c447c;padding:2px 6px;border-radius:4px;font-weight:600">${client.sessionsRemaining}</span>
+    </td>
+    <td style="padding:7px 8px;border-bottom:1px solid #f0f5f8;color:#1a3347">Jul 1 – Oct 1, ${new Date().getFullYear()}</td>
+    <td style="padding:7px 8px;border-bottom:1px solid #f0f5f8;text-align:center">
+      <span style="background:#fff3cd;color:#7a5000;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">Pending Auth</span>
+    </td>
+    <td style="padding:7px 8px;border-bottom:1px solid #f0f5f8;text-align:center">
+      <a href="${client.approveUrl}" style="display:inline-block;background:#1D9E75;color:#fff;text-decoration:none;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700">✓ Approve</a>
+    </td>
+  </tr>`;
+}
+
+/**
+ * notifyCoordinatorFiscalYearRollover — sends a batch rollover email to a coordinator
+ * covering ALL their clients who need new fiscal year POs. One email per coordinator
+ * with per-row Approve buttons.
+ */
+export async function notifyCoordinatorFiscalYearRollover(
+  coordinatorEmail: string,
+  coordinatorName: string,
+  clients: RolloverClient[]
+) {
+  if (clients.length === 0) return;
+
+  const currentYear = new Date().getFullYear();
+  const clientRows = clients.map((c, i) => buildRolloverClientRow(c, i % 2 === 1)).join('\n');
+
+  const subject = `New Fiscal Year POS Required — ${clients.length} clients (July 1, ${currentYear})`;
+
+  const content = `
+    <div style="background:linear-gradient(135deg,#2A5E84 0%,#23A1C0 100%);padding:28px 36px;border-radius:8px 8px 0 0;">
+      <div style="font-family:'DM Serif Display',Georgia,serif;color:#fff;font-size:20px;line-height:1.3;">
+        <span style="display:block;font-family:Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;opacity:.7;margin-bottom:4px;">I Can Swim Adaptive Aquatics</span>
+        New Fiscal Year POS Required
+      </div>
+    </div>
+    <div style="background:#fff8e1;padding:12px 24px;border-bottom:1px solid #ffe082;text-align:center;">
+      <span style="font-size:12px;font-weight:700;color:#bf360c;letter-spacing:.04em;text-transform:uppercase;">⚠️ New Fiscal Year — New Authorization Required</span>
+    </div>
+    <div style="padding:24px 28px;">
+      <p style="margin:0 0 14px;font-size:15px;font-weight:600;color:#1a3347;">Hi ${coordinatorName || 'Coordinator'},</p>
+      <p style="margin:0 0 18px;font-size:14px;line-height:1.7;color:#3d5a6e;">
+        The new fiscal year (July 1 – June 30) has begun. The following <strong>${clients.length} client${clients.length === 1 ? '' : 's'}</strong> require new Purchase of Service authorizations to continue their swim lessons. Each client has sessions remaining from their previous authorization.
+      </p>
+
+      <div style="background:#e8f4fd;border:1px solid #c5dff0;border-radius:8px;padding:12px 18px;margin:0 0 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#3a718e;padding:7px 8px;border-bottom:2px solid #c5dff0;">Client</td>
+            <td style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#3a718e;padding:7px 8px;border-bottom:2px solid #c5dff0;">UCI</td>
+            <td style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#3a718e;padding:7px 8px;border-bottom:2px solid #c5dff0;text-align:center;">Sessions</td>
+            <td style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#3a718e;padding:7px 8px;border-bottom:2px solid #c5dff0;">New Period</td>
+            <td style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#3a718e;padding:7px 8px;border-bottom:2px solid #c5dff0;text-align:center;">Status</td>
+            <td style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#3a718e;padding:7px 8px;border-bottom:2px solid #c5dff0;text-align:center;">Approve</td>
+          </tr>
+          ${clientRows}
+        </table>
+      </div>
+
+      <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:16px 20px;margin:0 0 20px;">
+        <div style="font-size:13px;font-weight:600;color:#7a5000;margin-bottom:6px;">⚠️ New Authorization Number Required</div>
+        <p style="font-size:13px;color:#5a4a00;line-height:1.6;margin:0;">
+          These are new fiscal year POs and require <strong>new authorization numbers</strong> from VMRC/CVRC. Please submit a new POS request to your billing department for each client and click Approve once submitted.
+        </p>
+      </div>
+
+      <p style="margin:16px 0 0;font-size:13px;color:#8a9eb0;line-height:1.6;">
+        This is an automated notification. If you have questions, please contact I Can Swim at (209) 778-7877 or info@icanswim209.com.
+      </p>
+    </div>
+  `;
+
+  const html = wrapEmailWithHeader(content);
+
+  try {
+    await emailService.sendPOSNotification({
+      to: coordinatorEmail,
+      toName: coordinatorName || undefined,
+      subject,
+      html,
+    });
+    console.log(`Fiscal year rollover email sent to ${coordinatorEmail} (${clients.length} clients)`);
+  } catch (error) {
+    console.error('Failed to send fiscal year rollover email:', error);
+  }
+}
+
 /**
  * notifyParentPendingAuth — sends a pending auth summary email to the parent.
  * Used when a reminder is sent at day 7 to inform the parent about pending lessons.

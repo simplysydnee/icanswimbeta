@@ -20,11 +20,17 @@ export async function POST(request: NextRequest) {
     // Check if user has permission (admin or instructor)
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role, full_name')
+      .select('full_name')
       .eq('id', user.id)
       .single();
 
-    if (!profile || !['admin', 'instructor'].includes(profile.role)) {
+    const { data: userRole } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!profile || !userRole || !['admin', 'instructor'].includes(userRole.role)) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
