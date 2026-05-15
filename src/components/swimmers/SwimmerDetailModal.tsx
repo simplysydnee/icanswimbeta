@@ -752,9 +752,9 @@ export function SwimmerDetailModal({
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="mt-3">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Main Content - Left 2 columns */}
-              <div className="lg:col-span-2 space-y-3">
+              <div className="md:col-span-2 space-y-3">
                 
                 {/* Status Management - Admin Only (compact) */}
                 {isAdmin && swimmer && (
@@ -775,7 +775,7 @@ export function SwimmerDetailModal({
                   <h3 className="chart-header">Key Information</h3>
                   <div className="chart-grid">
                     {swimmer.diagnosis && swimmer.diagnosis.length > 0 && (
-                      <div className="col-span-2 lg:col-span-3 mb-2">
+                      <div className="col-span-2 mb-2">
                         <span className="chart-label">Diagnosis</span>
                         <div className="flex flex-wrap gap-1.5 mt-1">
                           {swimmer.diagnosis.map((d, i) => (
@@ -911,7 +911,7 @@ export function SwimmerDetailModal({
               </div>
 
               {/* Right Column - Compact Stats & Actions */}
-              <div className="space-y-3">
+              <div className="space-y-3 md:sticky md:top-0 md:self-start">
                 {/* Quick Stats - Dense */}
                 <div className="bg-muted/30 rounded-lg p-2.5">
                   <h3 className="chart-header">Quick Stats</h3>
@@ -934,6 +934,40 @@ export function SwimmerDetailModal({
                     </div>
                   </div>
                 </div>
+
+                {/* Coordinator Info - Compact sidebar version */}
+                {(displaySwimmer.coordinatorName || displaySwimmer.coordinatorEmail || displaySwimmer.coordinatorPhone) && (
+                  <div className="bg-muted/30 rounded-lg p-2.5">
+                    <h3 className="chart-header flex items-center gap-1.5">
+                      <Building2 className="h-3.5 w-3.5" />
+                      Coordinator
+                    </h3>
+                    <div className="space-y-1">
+                      {displaySwimmer.coordinatorName && (
+                        <div className="chart-row-bordered">
+                          <span className="chart-label">Name</span>
+                          <span className="text-xs font-medium truncate max-w-[120px]">{displaySwimmer.coordinatorName}</span>
+                        </div>
+                      )}
+                      {displaySwimmer.coordinatorEmail && (
+                        <div className="chart-row-bordered">
+                          <span className="chart-label">Email</span>
+                          <a href={`mailto:${displaySwimmer.coordinatorEmail}`} className="text-xs text-blue-600 hover:underline truncate max-w-[120px]">
+                            {displaySwimmer.coordinatorEmail}
+                          </a>
+                        </div>
+                      )}
+                      {displaySwimmer.coordinatorPhone && (
+                        <div className="chart-row-bordered">
+                          <span className="chart-label">Phone</span>
+                          <a href={`tel:${displaySwimmer.coordinatorPhone}`} className="text-xs text-blue-600 hover:underline">
+                            {displaySwimmer.coordinatorPhone}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Legal Documents - Compact */}
                 <div className="bg-muted/30 rounded-lg p-2.5">
