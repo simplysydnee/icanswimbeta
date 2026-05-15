@@ -143,6 +143,12 @@ export interface Swimmer {
   coordinatorName?: string;
   coordinatorEmail?: string;
   coordinatorPhone?: string;
+  // Funding authorization fields
+  fundingSourceName?: string;
+  authorizedSessionsTotal?: number;
+  authorizedSessionsUsed?: number;
+  currentAuthorizationNumber?: string;
+  authorizationExpiresAt?: string;
   admin_notes?: string;
   important_notes?: string[];
   invitedAt?: string;
@@ -252,9 +258,13 @@ export function SwimmerDetailModal({
       createdAt: raw.created_at,
       updatedAt: raw.updated_at,
       lessonsCompleted: raw.lessons_completed,
-      coordinatorName: raw.coordinator_name,
-      coordinatorEmail: raw.coordinator_email,
-      coordinatorPhone: raw.coordinator_phone,
+      coordinatorName: raw.funding_coordinator_name || raw.coordinator_name,
+      coordinatorEmail: raw.funding_coordinator_email || raw.coordinator_email,
+      coordinatorPhone: raw.funding_coordinator_phone || raw.coordinator_phone,
+      authorizedSessionsTotal: raw.authorized_sessions_total,
+      authorizedSessionsUsed: raw.authorized_sessions_used,
+      currentAuthorizationNumber: raw.current_authorization_number,
+      authorizationExpiresAt: raw.authorization_expires_at,
       parent: raw.parent ? {
         id: raw.parent.id,
         fullName: raw.parent.full_name,
@@ -1513,13 +1523,13 @@ export function SwimmerDetailModal({
                 </h3>
 
               {/* Payment Type */}
-              <div className="mb-4">
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Payment Type</h4>
+              <div className="chart-section">
+                <h3 className="chart-header">Payment Type</h3>
                 <div className="flex items-center gap-2">
                   {paymentType === 'private_pay' && (
                     <DollarSign className="h-5 w-5 text-sky-600" />
                   )}
-                  {paymentType === 'funded' && (
+                  {(paymentType === 'funded' || paymentType === 'funding_source') && (
                     <Building2 className="h-5 w-5 text-violet-600" />
                   )}
                   {paymentType === 'scholarship' && (
@@ -1528,21 +1538,26 @@ export function SwimmerDetailModal({
                   {paymentType === 'other' && (
                     <HelpCircle className="h-5 w-5 text-gray-600" />
                   )}
-                  <span className="font-medium capitalize">{paymentType.replace('_', ' ')}</span>
+                  <span className="font-medium capitalize">{paymentType.replace(/_/g, ' ')}</span>
+                  {displaySwimmer.fundingSourceName && paymentType !== 'private_pay' && (
+                    <span className="text-sm text-muted-foreground">— {displaySwimmer.fundingSourceName}</span>
+                  )}
                 </div>
               </div>
 
-              {/* Funding Source Details */}
-              {paymentType === 'funded' && (
+              {/* Funding Source Details — shown for funded/scholarship/other */}
+              {(paymentType === 'funded' || paymentType === 'funding_source' || paymentType === 'scholarship') && (
                 <div className="space-y-3">
-                  {/* PO Details */}
-                  {swimmer.currentPoNumber && (
+                  {/* Authorization / PO Details */}
+                  {(displaySwimmer.currentAuthorizationNumber || displaySwimmer.currentPoNumber) && (
                     <div className="bg-violet-50 p-3 rounded-lg border border-violet-200">
-                      <h4 className="text-sm font-medium text-violet-800 mb-2">Current Purchase Order</h4>
-                      <div className="text-lg font-bold text-violet-900">{swimmer.currentPoNumber}</div>
-                      {swimmer.poExpiresAt && (
+                      <h4 className="text-sm font-medium text-violet-800 mb-2">Current Authorization / PO</h4>
+                      <div className="text-lg font-bold text-violet-900">
+                        {displaySwimmer.currentAuthorizationNumber || displaySwimmer.currentPoNumber}
+                      </div>
+                      {(displaySwimmer.authorizationExpiresAt || displaySwimmer.poExpiresAt) && (
                         <div className="text-sm text-violet-600 mt-1">
-                          Expires: {formatDate(swimmer.poExpiresAt)}
+                          Expires: {formatDate(displaySwimmer.authorizationExpiresAt || displaySwimmer.poExpiresAt)}
                         </div>
                       )}
                     </div>
@@ -1553,40 +1568,93 @@ export function SwimmerDetailModal({
                     <div className="flex justify-between items-center mb-2">
                       <h4 className="text-sm font-medium text-violet-800">Sessions Usage</h4>
                       <div className="text-sm font-bold text-violet-900">
-                        {swimmer.fundedSessionsUsed || 0} / {swimmer.fundedSessionsAuthorized || 0}
+                        {displaySwimmer.authorizedSessionsUsed ?? displaySwimmer.fundedSessionsUsed ?? 0}
+                        {' / '}
+                        {displaySwimmer.authorizedSessionsTotal ?? displaySwimmer.fundedSessionsAuthorized ?? 0}
                       </div>
                     </div>
-                    {swimmer.fundedSessionsAuthorized && swimmer.fundedSessionsUsed && (
+                    {((displaySwimmer.authorizedSessionsTotal ?? displaySwimmer.fundedSessionsAuthorized) ?? 0) > 0 && (
                       <>
                         <div className="w-full bg-violet-200 rounded-full h-2 mb-2">
                           <div
                             className="bg-violet-600 h-2 rounded-full transition-all duration-300"
                             style={{
-                              width: `${Math.min(100, ((swimmer.fundedSessionsUsed / swimmer.fundedSessionsAuthorized) * 100))}%`
+                              width: `${Math.min(100, (((displaySwimmer.authorizedSessionsUsed ?? displaySwimmer.fundedSessionsUsed ?? 0) / (displaySwimmer.authorizedSessionsTotal ?? displaySwimmer.fundedSessionsAuthorized ?? 1)) * 100))}%`
                             }}
-                          ></div>
+                          />
                         </div>
                         <div className="text-xs text-violet-600">
-                          {swimmer.fundedSessionsAuthorized - swimmer.fundedSessionsUsed} sessions remaining
+                          {(displaySwimmer.authorizedSessionsTotal ?? displaySwimmer.fundedSessionsAuthorized ?? 0) - (displaySwimmer.authorizedSessionsUsed ?? displaySwimmer.fundedSessionsUsed ?? 0)} sessions remaining
                         </div>
                       </>
                     )}
                   </div>
 
                   {/* Renewal Alert */}
-                  {swimmer.fundedSessionsAuthorized &&
-                   swimmer.fundedSessionsUsed &&
-                   swimmer.fundedSessionsUsed >= swimmer.fundedSessionsAuthorized - 1 && (
+                  {((displaySwimmer.authorizedSessionsTotal ?? displaySwimmer.fundedSessionsAuthorized) ?? 0) > 0 &&
+                   (displaySwimmer.authorizedSessionsUsed ?? displaySwimmer.fundedSessionsUsed ?? 0) >= ((displaySwimmer.authorizedSessionsTotal ?? displaySwimmer.fundedSessionsAuthorized ?? 0) - 1) && (
                     <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                       <div className="flex items-center gap-2">
                         <AlertCircle className="h-4 w-4 text-amber-600" />
                         <span className="text-sm font-medium text-amber-800">
-                          PO renewal needed soon
+                          Authorization renewal needed soon
                         </span>
                       </div>
                     </div>
                   )}
+                </div>
+              )}
 
+              {/* Coordinator Info — shown whenever coordinator data exists */}
+              {(displaySwimmer.coordinatorName || displaySwimmer.coordinatorEmail || displaySwimmer.coordinatorPhone) && (
+                <div className="chart-section mt-4">
+                  <h3 className="chart-header flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    Funding Coordinator
+                  </h3>
+                  <div className="space-y-2">
+                    {displaySwimmer.coordinatorName && (
+                      <div className="chart-row-bordered">
+                        <span className="chart-label">Name</span>
+                        <span className="chart-value">{displaySwimmer.coordinatorName}</span>
+                      </div>
+                    )}
+                    {displaySwimmer.coordinatorEmail && (
+                      <div className="chart-row-bordered">
+                        <span className="chart-label">Email</span>
+                        <div className="flex items-center gap-2">
+                          <a href={`mailto:${displaySwimmer.coordinatorEmail}`} className="text-sm text-blue-600 hover:underline truncate max-w-[200px]">
+                            {displaySwimmer.coordinatorEmail}
+                          </a>
+                          <Button
+                            variant="ghost" size="sm" className="h-6 w-6 p-0"
+                            onClick={() => {
+                              if (displaySwimmer.coordinatorEmail) {
+                                setEmailRecipient({ email: displaySwimmer.coordinatorEmail, name: displaySwimmer.coordinatorName || 'Coordinator', type: 'coordinator' });
+                                setEmailModalOpen(true);
+                              }
+                            }}
+                          >
+                            <Mail className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    {displaySwimmer.coordinatorPhone && (
+                      <div className="chart-row-bordered">
+                        <span className="chart-label">Phone</span>
+                        <a href={`tel:${displaySwimmer.coordinatorPhone}`} className="text-sm text-blue-600 hover:underline">
+                          {displaySwimmer.coordinatorPhone}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Legacy funded details section (kept for backward compat with old field names) */}
+              {false && (paymentType === 'funded' || paymentType === 'funding_source') && (
+                <div className="space-y-3">
                   {/* Coordinator Info */}
                   {(swimmer.coordinatorName || swimmer.coordinatorEmail || swimmer.coordinatorPhone) && (
                     <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">

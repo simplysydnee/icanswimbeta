@@ -108,6 +108,7 @@ export const assessmentStatusConfig = {
 } as const;
 
 // Funding Type Configuration
+// Values must match what is stored in the `payment_type` column of the swimmers table
 export const fundingTypeConfig = {
   private_pay: {
     label: 'Private Pay',
@@ -117,16 +118,8 @@ export const fundingTypeConfig = {
     border: 'border-sky-200',
     size: 'default'
   },
-  funding_source: {
-    label: 'Funded',
-    icon: Building2,
-    bg: 'bg-violet-100',
-    text: 'text-violet-800',
-    border: 'border-violet-200',
-    size: 'large'
-  },
-/*
-  vmrc: {
+  // DB value: 'funded'
+  funded: {
     label: 'Funded',
     icon: Building2,
     bg: 'bg-violet-100',
@@ -134,8 +127,9 @@ export const fundingTypeConfig = {
     border: 'border-violet-200',
     size: 'default'
   },
-  cvrc: {
-    label: 'CVRC',
+  // Legacy alias used in some places
+  funding_source: {
+    label: 'Funded',
     icon: Building2,
     bg: 'bg-violet-100',
     text: 'text-violet-800',
@@ -158,7 +152,6 @@ export const fundingTypeConfig = {
     border: 'border-gray-200',
     size: 'default'
   },
-  */
 } as const;
 
 // Type definitions

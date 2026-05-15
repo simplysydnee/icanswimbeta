@@ -211,7 +211,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
   const [localSearch, setLocalSearch] = useState(search);
   const status = searchParams.get('status') || 'all';
   const priority = searchParams.get('priority') || 'all';
-  const funding = searchParams.get('payment_type') || 'all';
+  const funding = searchParams.get('funding') || 'all';
   const approval = searchParams.get('approval_status') || 'all';
   const level = searchParams.get('level') || 'all';
   const sortBy = searchParams.get('sortBy') || 'first_name';
@@ -286,7 +286,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
       if (search) params.set('search', search);
       if (status !== 'all') params.set('status', status);
       if (priority !== 'all') params.set('priority', priority);
-      if (funding !== 'all') params.set('payment_type', funding);
+      if (funding !== 'all') params.set('funding', funding);
       if (approval !== 'all') params.set('approval_status', approval);
       if (level !== 'all') params.set('level', level);
 
@@ -540,7 +540,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={funding} onValueChange={(value) => updateFilter('payment_type', value)}>
+            <Select value={funding} onValueChange={(value) => updateFilter('funding', value)}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Funding" />
               </SelectTrigger>
