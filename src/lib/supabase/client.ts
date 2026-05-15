@@ -10,16 +10,10 @@ export const createClient = () => {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseKey) {
-    // Log for debugging but DON'T return a mock
-    // NEXT_PUBLIC vars should always be available in browser
-    console.error('Supabase env vars missing:', {
-      url: !!supabaseUrl,
-      key: !!supabaseKey,
-      isServer: typeof window === 'undefined'
-    })
-
-    // Throw error so we know something is wrong
-    throw new Error('Supabase environment variables are not configured. Please check your .env.local file.')
+    // This should never happen in the browser — NEXT_PUBLIC_ vars are inlined at build time.
+    // If this fires it means the env vars were not set at build/dev startup.
+    console.error('[v0] Supabase env vars missing — check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY')
+    throw new Error('Supabase environment variables are not configured. Please check your environment settings.')
   }
 
   client = createBrowserClient(supabaseUrl, supabaseKey)

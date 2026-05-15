@@ -9,16 +9,7 @@ type Cookie = {
 }
 
 export async function middleware(request: NextRequest) {
-  // Only log in development
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Middleware: running for path:', request.nextUrl.pathname)
-  }
-
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+  let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,47 +20,13 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet: Cookie[]) {
-          // First set on request cookies for subsequent middleware/route reads
-          cookiesToSet.forEach(({ name, value, options }) => {
-            const isProduction = process.env.NODE_ENV === 'production'
-            const cookieOptions: CookieOptions = {
-              ...options,
-              sameSite: 'lax',
-              secure: isProduction,
-              httpOnly: true,
-              path: '/',
-            }
-            if (isProduction) {
-              const hostname = request.nextUrl.hostname
-              if (!hostname.includes('localhost') && !hostname.includes('127.0.0.1')) {
-                cookieOptions.domain = hostname
-              }
-            }
-            request.cookies.set({ name, value, ...cookieOptions })
-          })
-
-          // Create ONE response from the updated request, then set all cookies on it
-          // Do NOT create a new response per cookie — that drops all but the last one.
-          response = NextResponse.next({
-            request: { headers: request.headers },
-          })
-          cookiesToSet.forEach(({ name, value, options }) => {
-            const isProduction = process.env.NODE_ENV === 'production'
-            const cookieOptions: CookieOptions = {
-              ...options,
-              sameSite: 'lax',
-              secure: isProduction,
-              httpOnly: true,
-              path: '/',
-            }
-            if (isProduction) {
-              const hostname = request.nextUrl.hostname
-              if (!hostname.includes('localhost') && !hostname.includes('127.0.0.1')) {
-                cookieOptions.domain = hostname
-              }
-            }
-            response.cookies.set({ name, value, ...cookieOptions })
-          })
+          // Write updated cookies back onto the request so downstream reads see them
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          // Re-create the response with the updated request and set cookies on it
+          supabaseResponse = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
         },
       },
     }
@@ -97,16 +54,13 @@ export async function middleware(request: NextRequest) {
 
   // Redirect authenticated users from auth routes
   if (isAuthRoute && user) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[v0] Middleware: authenticated user on auth route, redirecting /login -> /dashboard')
-    }
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   // Allow /claim routes for all users (authenticated or not)
   // These routes handle their own authentication logic
   if (pathname.startsWith('/claim')) {
-    return response
+    return supabaseResponse
   }
 
   // If no user or not a protected route that needs role checking, return early
@@ -116,7 +70,7 @@ export async function middleware(request: NextRequest) {
                 !pathname.startsWith('/coordinator') &&
                 !pathname.startsWith('/staff-mode') &&
                 pathname !== '/dashboard')) {
-    return response
+    return supabaseResponse
   }
 
   // Fetch user roles once and cache for this request
@@ -130,94 +84,48 @@ export async function middleware(request: NextRequest) {
                pathname.startsWith('/staff-mode') ||
                pathname === '/dashboard')) {
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Middleware: fetching roles for user:', user.id)
-    }
-
     const { data: roles } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
 
     userRoles = roles?.map(r => r.role) || []
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Middleware: user roles:', userRoles)
-    }
   }
 
   // Check role-based access for parent routes
-  if (pathname.startsWith('/parent')) {
-    const hasParentRole = userRoles.includes('parent')
-    if (!hasParentRole) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Middleware: user does not have parent role, redirecting to unauthorized')
-      }
-      return NextResponse.redirect(new URL('/unauthorized', request.url))
-    }
+  if (pathname.startsWith('/parent') && !userRoles.includes('parent')) {
+    return NextResponse.redirect(new URL('/unauthorized', request.url))
   }
 
   // Check role-based access for admin routes
-  if (pathname.startsWith('/admin')) {
-    const hasAdminRole = userRoles.includes('admin')
-    if (!hasAdminRole) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Middleware: user does not have admin role, redirecting to unauthorized')
-      }
-      return NextResponse.redirect(new URL('/unauthorized', request.url))
-    }
+  if (pathname.startsWith('/admin') && !userRoles.includes('admin')) {
+    return NextResponse.redirect(new URL('/unauthorized', request.url))
   }
 
   // Check role-based access for instructor routes
-  if (pathname.startsWith('/instructor')) {
-    const hasInstructorRole = userRoles.includes('instructor') || userRoles.includes('admin')
-    if (!hasInstructorRole) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Middleware: user does not have instructor or admin role, redirecting to unauthorized')
-      }
-      return NextResponse.redirect(new URL('/unauthorized', request.url))
-    }
+  if (pathname.startsWith('/instructor') && !userRoles.includes('instructor') && !userRoles.includes('admin')) {
+    return NextResponse.redirect(new URL('/unauthorized', request.url))
   }
 
   // Check role-based access for coordinator routes
-  if (pathname.startsWith('/coordinator')) {
-    const hasCoordinatorRole = userRoles.includes('coordinator') || userRoles.includes('admin')
-    if (!hasCoordinatorRole) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Middleware: user does not have coordinator or admin role, redirecting to unauthorized')
-      }
-      return NextResponse.redirect(new URL('/unauthorized', request.url))
-    }
+  if (pathname.startsWith('/coordinator') && !userRoles.includes('coordinator') && !userRoles.includes('admin')) {
+    return NextResponse.redirect(new URL('/unauthorized', request.url))
   }
 
   // Check role-based access for staff mode routes
-  if (pathname.startsWith('/staff-mode')) {
-    const hasStaffModeRole = userRoles.includes('instructor') || userRoles.includes('admin')
-    if (!hasStaffModeRole) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Middleware: user does not have instructor or admin role, redirecting to unauthorized')
-      }
-      return NextResponse.redirect(new URL('/unauthorized', request.url))
-    }
+  if (pathname.startsWith('/staff-mode') && !userRoles.includes('instructor') && !userRoles.includes('admin')) {
+    return NextResponse.redirect(new URL('/unauthorized', request.url))
   }
 
   // Check role-based access for dashboard route
   if (pathname === '/dashboard') {
-    const hasValidRole = userRoles.some(role =>
-      role === 'parent' ||
-      role === 'instructor' ||
-      role === 'admin' ||
-      role === 'coordinator'
-    )
+    const hasValidRole = userRoles.some(r => ['parent', 'instructor', 'admin', 'coordinator'].includes(r))
     if (!hasValidRole) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Middleware: user does not have any valid role, redirecting to unauthorized')
-      }
       return NextResponse.redirect(new URL('/unauthorized', request.url))
     }
   }
 
-  return response
+  return supabaseResponse
 }
 
 export const config = {

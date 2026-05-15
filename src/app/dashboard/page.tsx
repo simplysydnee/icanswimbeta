@@ -25,59 +25,31 @@ export default function DashboardRedirect() {
 
   useEffect(() => {
     const isLoading = loading || isLoadingProfile;
-    console.log('[v0] DashboardRedirect useEffect:', { 
-      user: !!user, 
-      userId: user?.id,
-      role, 
-      loading, 
-      isLoadingProfile, 
-      isLoading,
-      timestamp: new Date().toISOString()
-    });
 
-    // Still loading — wait
-    if (isLoading) {
-      console.log('[v0] DashboardRedirect: still loading, waiting...')
-      return;
-    }
+    if (isLoading) return;
 
-    // Not authenticated — send to login
     if (!user) {
-      console.log('[v0] DashboardRedirect: no user, redirecting to /login')
       router.replace('/login');
       return;
     }
 
-    // Special redirect for staff email regardless of role
     const userEmail = user.email?.toLowerCase();
     if (userEmail === 'staff@icanswim209.com') {
-      console.log('[v0] DashboardRedirect: staff email detected, redirecting to /staff-mode')
       router.replace('/staff-mode');
       return;
     }
 
-    // Role is not yet resolved — do not redirect prematurely
-    if (role === null || role === undefined) {
-      console.log('[v0] DashboardRedirect: role is null/undefined, waiting for role to resolve...')
-      return;
-    }
+    if (role === null || role === undefined) return;
 
-    console.log('[v0] DashboardRedirect: redirecting based on role:', role)
     if (role === 'admin') {
-      console.log('[v0] DashboardRedirect: -> /admin')
       router.replace('/admin');
     } else if (role === 'instructor') {
-      console.log('[v0] DashboardRedirect: -> /instructor')
       router.replace('/instructor');
     } else if (role === 'coordinator') {
-      console.log('[v0] DashboardRedirect: -> /coordinator/pos')
       router.replace('/coordinator/pos');
     } else if (role === 'parent') {
-      console.log('[v0] DashboardRedirect: -> /parent')
       router.replace('/parent');
     } else {
-      // Unknown role — default to parent
-      console.log('[v0] DashboardRedirect: unknown role, defaulting to /parent')
       router.replace('/parent');
     }
   }, [user, role, loading, isLoadingProfile, router]);
