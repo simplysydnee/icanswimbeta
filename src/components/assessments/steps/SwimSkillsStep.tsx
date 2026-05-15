@@ -95,7 +95,7 @@ export function SwimSkillsStep({ data, onChange }: SwimSkillsStepProps) {
               </div>
               <div className="md:w-2/3">
                 <RadioGroup
-                  value={data[skill.id] || 'na'}
+                  value={data[skill.id] || ''}
                   onValueChange={(value: 'emerging' | 'na' | 'no' | 'yes') =>
                     handleSkillChange(skill.id, value)
                   }
