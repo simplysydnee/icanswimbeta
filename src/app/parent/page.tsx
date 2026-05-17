@@ -465,8 +465,8 @@ export default function ParentDashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* STEP 1: Header - Dark navy background */}
       <div className="bg-[#1a3a4f] text-white px-4 py-6 md:p-6">
-        <div className="w-full max-w-2xl">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="w-full max-w-5xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-0">
             <div>
               <p className="text-sm text-gray-300">{today}</p>
               <h1 className="text-2xl font-bold mt-1">Welcome back{firstName ? `, ${firstName}` : ''}!</h1>
@@ -490,7 +490,7 @@ export default function ParentDashboard() {
       </div>
 
       {/* Main content */}
-      <div className="w-full max-w-4xl mx-auto px-4 py-6 md:px-6 space-y-6">
+      <div className="w-full max-w-5xl mx-auto px-4 py-6 space-y-6 overflow-x-hidden">
         {/* Pending alerts */}
         <PendingEnrollmentAlert />
         <PendingParentReferrals />
@@ -851,69 +851,78 @@ export default function ParentDashboard() {
               </Button>
             </div>
           ) : (
-            <div className="divide-y divide-gray-50">
+            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               {swimmers.map((swimmer) => {
                 const remaining = swimmer.po_sessions_remaining ?? 0
                 const total = swimmer.po_sessions_authorized ?? 0
                 const pct = total > 0 ? Math.min(100, Math.round((swimmer.po_sessions_used ?? 0) / total * 100)) : 0
                 const poLow = swimmer.funding_source?.requires_authorization && swimmer.has_active_po && remaining <= 3 && remaining > 0
                 const poEmpty = swimmer.funding_source?.requires_authorization && swimmer.has_active_po && remaining === 0
+                const showPoBar = swimmer.funding_source?.requires_authorization && swimmer.has_active_po && total > 0
 
                 return (
-                  <Link
-                    key={swimmer.id}
-                    href={`/parent/swimmers/${swimmer.id}`}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
-                  >
-                    {/* Avatar */}
-                    <Avatar className="h-9 w-9 shrink-0 bg-[#2a5e84]">
-                      {swimmer.photo_url && <AvatarImage src={swimmer.photo_url} />}
-                      <AvatarFallback className="bg-[#2a5e84] text-white text-xs font-semibold">
-                        {getSwimmerInitials(swimmer.first_name, swimmer.last_name)}
-                      </AvatarFallback>
-                    </Avatar>
-
-                    {/* Name + badges + PO bar */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium text-gray-900 truncate">
+                  <div key={swimmer.id} className="bg-gray-50 rounded-lg border border-gray-200 p-4 flex flex-col gap-3 hover:border-[#23a1c0] transition-colors">
+                    {/* Card header: avatar + name stack */}
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-10 w-10 shrink-0 bg-[#2a5e84]">
+                        {swimmer.photo_url && <AvatarImage src={swimmer.photo_url} />}
+                        <AvatarFallback className="bg-[#2a5e84] text-white text-sm font-semibold">
+                          {getSwimmerInitials(swimmer.first_name, swimmer.last_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate leading-tight">
                           {swimmer.first_name} {swimmer.last_name}
-                        </span>
-                        {swimmer.current_level && (
-                          <Badge
-                            variant="outline"
-                            className={`${getLevelColor(swimmer.current_level.name)} text-xs py-0 px-1.5 h-5`}
-                          >
-                            {swimmer.current_level.display_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {swimmer.current_level?.display_name ?? 'No level assigned'}
+                        </p>
+                        <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                          {swimmer.current_level && (
+                            <Badge variant="outline" className={`${getLevelColor(swimmer.current_level.name)} text-xs py-0 px-1.5 h-4.5`}>
+                              {swimmer.current_level.display_name}
+                            </Badge>
+                          )}
+                          <Badge variant="outline" className={`${getEnrollmentStatusBadge(swimmer.enrollment_status)} text-xs py-0 px-1.5 h-4.5`}>
+                            {getEnrollmentStatusDisplay(swimmer.enrollment_status)}
                           </Badge>
-                        )}
-                        <Badge
-                          variant="outline"
-                          className={`${getEnrollmentStatusBadge(swimmer.enrollment_status)} text-xs py-0 px-1.5 h-5`}
-                        >
-                          {getEnrollmentStatusDisplay(swimmer.enrollment_status)}
-                        </Badge>
-                      </div>
-
-                      {/* PO sessions bar — only for authorized swimmers */}
-                      {swimmer.funding_source?.requires_authorization && swimmer.has_active_po && total > 0 && (
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <div className="w-28 bg-gray-200 rounded-full h-1.5 shrink-0">
-                            <div
-                              className={`h-1.5 rounded-full transition-all ${poEmpty ? 'bg-red-500' : poLow ? 'bg-amber-500' : 'bg-teal-500'}`}
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                          <span className={`text-xs font-medium ${poEmpty ? 'text-red-600' : poLow ? 'text-amber-600' : 'text-teal-600'}`}>
-                            {remaining}/{total} remaining
-                          </span>
                         </div>
-                      )}
+                      </div>
                     </div>
 
-                    {/* Chevron */}
-                    <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-[#23a1c0] shrink-0 transition-colors" />
-                  </Link>
+                    {/* Sessions progress — only for authorized swimmers */}
+                    {showPoBar && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Sessions remaining</span>
+                          <span className={`text-xs font-semibold ${poEmpty ? 'text-red-600' : poLow ? 'text-amber-600' : 'text-teal-600'}`}>
+                            {remaining}/{total}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                          <div
+                            className={`h-1.5 rounded-full transition-all ${poEmpty ? 'bg-red-500' : poLow ? 'bg-amber-500' : 'bg-teal-500'}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* View Profile button — compact, right-aligned on desktop */}
+                    <div className="flex sm:justify-end mt-auto pt-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs w-full sm:w-auto border-[#23a1c0] text-[#23a1c0] hover:bg-[#23a1c0] hover:text-white transition-colors"
+                        asChild
+                      >
+                        <Link href={`/parent/swimmers/${swimmer.id}`}>
+                          View Profile
+                          <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
                 )
               })}
             </div>
