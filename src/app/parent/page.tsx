@@ -1,5 +1,5 @@
 'use client'
-
+// v2
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
@@ -812,7 +812,7 @@ export default function ParentDashboard() {
           </div>{/* end p-4 */}
         </div>
 
-        {/* My Swimmers — compact rows */}
+        {/* My Swimmers — 2-column card grid */}
         <div className="bg-white rounded-lg shadow-sm">
           {/* Section header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
