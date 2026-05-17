@@ -490,26 +490,25 @@ export default function ParentDashboard() {
       </div>
 
       {/* Main content */}
-      <div className="w-full px-4 py-6 md:px-6 max-w-2xl space-y-8">
+      <div className="w-full max-w-4xl mx-auto px-4 py-6 md:px-6 space-y-6">
         {/* Pending alerts */}
         <PendingEnrollmentAlert />
         <PendingParentReferrals />
         <PendingWaiverAlert />
         <PendingInvitations />
 
-        {/* STEP 2: Upcoming lessons section */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-lg font-semibold">Upcoming lessons</h2>
-              <p className="text-sm text-gray-500 uppercase tracking-wide">Next 30 days</p>
+        {/* Upcoming lessons section */}
+        <div className="bg-white rounded-lg shadow-sm">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-[#2a5e84]" />
+              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Upcoming Lessons</h2>
             </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/parent/schedule" className="text-[#23a1c0] hover:text-[#1d8ba6]">
-                View all
-              </Link>
+            <Button variant="ghost" size="sm" className="h-7 text-xs text-[#23a1c0] hover:text-[#1d8ba6] px-2" asChild>
+              <Link href="/parent/schedule">View all</Link>
             </Button>
           </div>
+          <div className="p-4">
 
           {bookings.length === 0 ? (
             swimmers.length === 0 ? (
@@ -810,80 +809,113 @@ export default function ParentDashboard() {
               })}
             </>
           )}
+          </div>{/* end p-4 */}
         </div>
 
-        {/* STEP 4: My swimmers section */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-lg font-semibold">My swimmers</h2>
-              <p className="text-sm text-gray-500 uppercase tracking-wide">All enrolled swimmers</p>
+        {/* My Swimmers — compact rows */}
+        <div className="bg-white rounded-lg shadow-sm">
+          {/* Section header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-[#2a5e84]" />
+              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">My Swimmers</h2>
+              {swimmers.length > 0 && (
+                <span className="text-xs font-medium bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">
+                  {swimmers.length}
+                </span>
+              )}
             </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/parent/swimmers" className="text-[#23a1c0] hover:text-[#1d8ba6]">
-                View all
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" className="h-7 text-xs text-[#23a1c0] hover:text-[#1d8ba6] px-2" asChild>
+                <Link href="/parent/swimmers">View all</Link>
+              </Button>
+              <Button size="sm" className="h-7 text-xs bg-[#23a1c0] hover:bg-[#1d8ba6] text-white px-2" asChild>
+                <Link href="/enroll">
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add
+                </Link>
+              </Button>
+            </div>
           </div>
 
           {swimmers.length === 0 ? (
-            <div className="text-center py-8">
-              <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No swimmers yet</h3>
-              <p className="text-gray-500 mb-4">Add your first swimmer to get started with lessons</p>
-              <Button className="bg-[#23a1c0] hover:bg-[#1d8ba6] text-white" asChild>
+            <div className="text-center py-10 px-4">
+              <Users className="h-10 w-10 text-gray-200 mx-auto mb-3" />
+              <p className="text-sm font-medium text-gray-600 mb-1">No swimmers yet</p>
+              <p className="text-xs text-gray-400 mb-4">Add your first swimmer to get started</p>
+              <Button size="sm" className="bg-[#23a1c0] hover:bg-[#1d8ba6] text-white" asChild>
                 <Link href="/enroll">
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
                   Add swimmer
                 </Link>
               </Button>
             </div>
           ) : (
-            <div className="space-y-3">
-              {swimmers.map((swimmer) => (
-                <Link
-                  key={swimmer.id}
-                  href={`/parent/swimmers/${swimmer.id}`}
-                  className="block"
-                >
-                  <Card className="border border-gray-200 hover:border-[#23a1c0] transition-colors cursor-pointer">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-12 w-12 bg-[#2a5e84]">
-                            <AvatarFallback className="bg-[#2a5e84] text-white">
-                              {getSwimmerInitials(swimmer.first_name, swimmer.last_name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">
-                              {swimmer.first_name} {swimmer.last_name}
-                            </div>
-                            {renderPoSummary(swimmer)}
-                            <div className="flex items-center gap-2 mt-1">
-                              {swimmer.current_level && (
-                                <Badge
-                                  variant="outline"
-                                  className={`${getLevelColor(swimmer.current_level.name)} text-xs`}
-                                >
-                                  {swimmer.current_level.display_name}
-                                </Badge>
-                              )}
-                              <Badge
-                                variant="outline"
-                                className={`${getEnrollmentStatusBadge(swimmer.enrollment_status)} text-xs`}
-                              >
-                                {getEnrollmentStatusDisplay(swimmer.enrollment_status)}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-gray-400" />
+            <div className="divide-y divide-gray-50">
+              {swimmers.map((swimmer) => {
+                const remaining = swimmer.po_sessions_remaining ?? 0
+                const total = swimmer.po_sessions_authorized ?? 0
+                const pct = total > 0 ? Math.min(100, Math.round((swimmer.po_sessions_used ?? 0) / total * 100)) : 0
+                const poLow = swimmer.funding_source?.requires_authorization && swimmer.has_active_po && remaining <= 3 && remaining > 0
+                const poEmpty = swimmer.funding_source?.requires_authorization && swimmer.has_active_po && remaining === 0
+
+                return (
+                  <Link
+                    key={swimmer.id}
+                    href={`/parent/swimmers/${swimmer.id}`}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                  >
+                    {/* Avatar */}
+                    <Avatar className="h-9 w-9 shrink-0 bg-[#2a5e84]">
+                      {swimmer.photo_url && <AvatarImage src={swimmer.photo_url} />}
+                      <AvatarFallback className="bg-[#2a5e84] text-white text-xs font-semibold">
+                        {getSwimmerInitials(swimmer.first_name, swimmer.last_name)}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    {/* Name + badges + PO bar */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-gray-900 truncate">
+                          {swimmer.first_name} {swimmer.last_name}
+                        </span>
+                        {swimmer.current_level && (
+                          <Badge
+                            variant="outline"
+                            className={`${getLevelColor(swimmer.current_level.name)} text-xs py-0 px-1.5 h-5`}
+                          >
+                            {swimmer.current_level.display_name}
+                          </Badge>
+                        )}
+                        <Badge
+                          variant="outline"
+                          className={`${getEnrollmentStatusBadge(swimmer.enrollment_status)} text-xs py-0 px-1.5 h-5`}
+                        >
+                          {getEnrollmentStatusDisplay(swimmer.enrollment_status)}
+                        </Badge>
                       </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+
+                      {/* PO sessions bar — only for authorized swimmers */}
+                      {swimmer.funding_source?.requires_authorization && swimmer.has_active_po && total > 0 && (
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <div className="w-28 bg-gray-200 rounded-full h-1.5 shrink-0">
+                            <div
+                              className={`h-1.5 rounded-full transition-all ${poEmpty ? 'bg-red-500' : poLow ? 'bg-amber-500' : 'bg-teal-500'}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className={`text-xs font-medium ${poEmpty ? 'text-red-600' : poLow ? 'text-amber-600' : 'text-teal-600'}`}>
+                            {remaining}/{total} remaining
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Chevron */}
+                    <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-[#23a1c0] shrink-0 transition-colors" />
+                  </Link>
+                )
+              })}
             </div>
           )}
         </div>
