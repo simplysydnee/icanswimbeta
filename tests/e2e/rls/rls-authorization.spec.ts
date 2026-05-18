@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createSupabaseClient, createTestUser, cleanupTestUser } from '../utils/api-helpers';
+import { createSupabaseClient, createTestUser, cleanupTestUser } from '../../utils/api-helpers';
 
 /**
  * Comprehensive RLS (Row-Level Security) Test Suite

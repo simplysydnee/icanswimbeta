@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { ensureLoggedOut } from '../utils/auth-helpers';
+import { ensureLoggedOut } from '../../utils/auth-helpers';
 
 /**
  * Admin Schedule Page Tests

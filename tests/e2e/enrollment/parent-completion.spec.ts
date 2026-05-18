@@ -4,7 +4,7 @@ import {
   createCompletedReferral,
   deleteTestReferral,
   getReferralByToken
-} from '../helpers/db-seed'
+} from '../../helpers/db-seed'
 
 test.describe('Parent Completion Page', () => {
   let testReferral: { referral: any; token: string }

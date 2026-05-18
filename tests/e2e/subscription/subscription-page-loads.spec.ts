@@ -5,7 +5,7 @@ import {
   verifyPlanFeatures, 
   waitForSubscriptionPageLoad,
   EXPECTED_PLANS 
-} from '../utils/subscription-helpers';
+} from '../../utils/subscription-helpers';
 
 test.describe('Subscription Page Load Tests', () => {
   test.beforeEach(async ({ page }) => {

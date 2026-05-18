@@ -4,12 +4,12 @@ import {
   waitForSubscriptionPageLoad,
   getSubscribeButton,
   clickSubscribeButton 
-} from '../utils/subscription-helpers';
-import { 
-  ensureLoggedOut, 
+} from '../../utils/subscription-helpers';
+import {
+  ensureLoggedOut,
   setupAuthenticatedUser,
-  TEST_USERS 
-} from '../utils/auth-helpers';
+  TEST_USERS
+} from '../../utils/auth-helpers';
 
 test.describe('Authentication Integration Tests', () => {
   test.beforeEach(async ({ page }) => {

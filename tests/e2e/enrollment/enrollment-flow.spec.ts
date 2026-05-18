@@ -3,12 +3,12 @@ import {
   ensureLoggedOut,
   loginUser,
   TEST_USERS
-} from '../utils/auth-helpers';
+} from '../../utils/auth-helpers';
 import {
   generateTestEmail,
   DEFAULT_TEST_SWIMMER,
   completeEnrollmentFlow
-} from '../utils/enrollment-helpers';
+} from '../../utils/enrollment-helpers';
 
 test.describe('Enrollment and Signup Flow', () => {
   test.describe('New User Signup Flow', () => {

@@ -18,7 +18,7 @@ export const TEST_USERS = {
   },
   // User without subscription
   free: {
-    email: 'test-free@example.com', 
+    email: 'test-free@example.com',
     password: 'TestPassword123!',
   },
   // User with different subscription tiers
@@ -30,6 +30,14 @@ export const TEST_USERS = {
     email: 'test-enterprise@example.com',
     password: 'TestPassword123!',
   },
+
+  // SOW §11.2 booking-journey test accounts (seeded by scripts/seed-e2e-users.mjs)
+  parentPrivate: { email: 'anas.parent@icanswim209.com', password: 'TestICS2025!' },
+  parentVmrc: { email: 'anas.parent-vmrc@icanswim.com', password: 'TestICS2025!' },
+  instructor: { email: 'anas.instructor@icanswim.com', password: 'TestICS2025!' },
+  instructorOther: { email: 'anas.instructor-other@icanswim.com', password: 'TestICS2025!' },
+  coordinator: { email: 'anas.coordinator@icanswim.com', password: 'TestICS2025!' },
+  admin: { email: 'anas.admin@icanswim.com', password: 'TestICS2025!' },
 } as const;
 
 /**
