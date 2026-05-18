@@ -471,16 +471,16 @@ export default function ParentDashboard() {
               <p className="text-sm text-gray-300">{today}</p>
               <h1 className="text-2xl font-bold mt-1">Welcome back{firstName ? `, ${firstName}` : ''}!</h1>
             </div>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" className="text-white hover:bg-white/10" asChild>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button variant="ghost" size="sm" className="flex-1 sm:flex-none text-white hover:bg-white/10 text-xs sm:text-sm" asChild>
                 <Link href="/enroll">
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-3.5 w-3.5 mr-1.5 shrink-0" />
                   Add swimmer
                 </Link>
               </Button>
-              <Button size="sm" className="bg-[#23a1c0] hover:bg-[#1d8ba6] text-white" asChild>
+              <Button size="sm" className="flex-1 sm:flex-none bg-[#23a1c0] hover:bg-[#1d8ba6] text-white text-xs sm:text-sm" asChild>
                 <Link href="/parent/book">
-                  <Calendar className="h-4 w-4 mr-2" />
+                  <Calendar className="h-3.5 w-3.5 mr-1.5 shrink-0" />
                   Book lesson
                 </Link>
               </Button>
