@@ -48,6 +48,29 @@ interface Skill {
   date_mastered?: string
 }
 
+interface Assessment {
+  id: string
+  status: string
+  completed_at?: string
+  recommended_level?: string
+  notes?: string
+  assessed_by?: string
+  comfort_in_water?: string
+  session?: { start_time: string; location?: string; instructor?: { full_name: string } }
+}
+
+interface BookingHistory {
+  id: string
+  status: string
+  created_at: string
+  session?: {
+    start_time: string
+    end_time: string
+    location?: string
+    instructor?: { full_name: string }
+  }
+}
+
 interface ExpandableSwimmerCardProps {
   swimmer: {
     id: string
@@ -139,7 +162,99 @@ export function ExpandableSwimmerCard({
   const [activeTab, setActiveTab] = useState('overview')
   const [skills, setSkills] = useState<Skill[]>([])
   const [skillsLoading, setSkillsLoading] = useState(false)
+  const [assessments, setAssessments] = useState<Assessment[]>([])
+  const [assessmentsLoading, setAssessmentsLoading] = useState(false)
+  const [bookings, setBookings] = useState<BookingHistory[]>([])
+  const [bookingsLoading, setBookingsLoading] = useState(false)
+  // Inline edit state — emergency contact
+  const [editingEmergency, setEditingEmergency] = useState(false)
+  const [emergencyForm, setEmergencyForm] = useState({
+    emergency_contact_name: swimmer.emergency_contact_name ?? '',
+    emergency_contact_relationship: swimmer.emergency_contact_relationship ?? '',
+    emergency_contact_phone: swimmer.emergency_contact_phone ?? '',
+  })
+  const [emergencySaving, setEmergencySaving] = useState(false)
+  // Inline edit state — coordinator (funded swimmers only)
+  const [editingCoordinator, setEditingCoordinator] = useState(false)
+  const [coordinatorForm, setCoordinatorForm] = useState({
+    funding_coordinator_name: swimmer.funding_coordinator_name ?? '',
+    funding_coordinator_email: swimmer.funding_coordinator_email ?? '',
+    funding_coordinator_phone: swimmer.funding_coordinator_phone ?? '',
+  })
+  const [coordinatorSaving, setCoordinatorSaving] = useState(false)
   const supabase = createClient()
+
+  const saveEmergencyContact = async () => {
+    setEmergencySaving(true)
+    try {
+      const { error } = await supabase
+        .from('swimmers')
+        .update({
+          emergency_contact_name: emergencyForm.emergency_contact_name || null,
+          emergency_contact_relationship: emergencyForm.emergency_contact_relationship || null,
+          emergency_contact_phone: emergencyForm.emergency_contact_phone || null,
+        })
+        .eq('id', swimmer.id)
+      if (!error) setEditingEmergency(false)
+    } finally {
+      setEmergencySaving(false)
+    }
+  }
+
+  const saveCoordinator = async () => {
+    setCoordinatorSaving(true)
+    try {
+      const { error } = await supabase
+        .from('swimmers')
+        .update({
+          funding_coordinator_name: coordinatorForm.funding_coordinator_name || null,
+          funding_coordinator_email: coordinatorForm.funding_coordinator_email || null,
+          funding_coordinator_phone: coordinatorForm.funding_coordinator_phone || null,
+        })
+        .eq('id', swimmer.id)
+      if (!error) setEditingCoordinator(false)
+    } finally {
+      setCoordinatorSaving(false)
+    }
+  }
+
+  const fetchAssessments = useCallback(async () => {
+    if (!swimmer.id || assessments.length > 0) return
+    setAssessmentsLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('assessments')
+        .select(`
+          id, status, completed_at, recommended_level, notes, assessed_by,
+          comfort_in_water,
+          session:sessions(start_time, location, instructor:profiles!instructor_id(full_name))
+        `)
+        .eq('swimmer_id', swimmer.id)
+        .order('completed_at', { ascending: false })
+      if (!error && data) setAssessments(data as any)
+    } finally {
+      setAssessmentsLoading(false)
+    }
+  }, [swimmer.id, assessments.length, supabase])
+
+  const fetchBookings = useCallback(async () => {
+    if (!swimmer.id || bookings.length > 0) return
+    setBookingsLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          id, status, created_at,
+          session:sessions(start_time, end_time, location, instructor:profiles!instructor_id(full_name))
+        `)
+        .eq('swimmer_id', swimmer.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      if (!error && data) setBookings(data as any)
+    } finally {
+      setBookingsLoading(false)
+    }
+  }, [swimmer.id, bookings.length, supabase])
 
   const fetchSkills = useCallback(async () => {
     if (!swimmer.id || skills.length > 0) return
@@ -305,10 +420,13 @@ export function ExpandableSwimmerCard({
     return () => document.removeEventListener('keydown', handleEscape)
   }, [isExpanded, onCollapse])
 
-  // Fetch skills when expanded
+  // Fetch data when expanded or tab changes
   useEffect(() => {
-    if (isExpanded) fetchSkills()
-  }, [isExpanded, fetchSkills])
+    if (!isExpanded) return
+    fetchSkills()
+    if (activeTab === 'assessments') fetchAssessments()
+    if (activeTab === 'history') fetchBookings()
+  }, [isExpanded, activeTab, fetchSkills, fetchAssessments, fetchBookings])
 
   // Collapsed card view
   const collapsedCard = (
@@ -506,29 +624,37 @@ export function ExpandableSwimmerCard({
             {/* Mobile dropdown */}
             <div className="block md:hidden pb-2">
               <Select value={activeTab} onValueChange={setActiveTab}>
-                <SelectTrigger className="h-8 text-sm w-48">
+                <SelectTrigger className="h-8 text-sm w-52">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="overview">Overview</SelectItem>
                   <SelectItem value="medical">Medical</SelectItem>
                   <SelectItem value="progress">Progress</SelectItem>
+                  <SelectItem value="assessments">Assessments</SelectItem>
+                  <SelectItem value="history">Booking History</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {/* Desktop tabs */}
             <div className="hidden md:flex gap-0">
-              {['overview', 'medical', 'progress'].map((tab) => (
+              {[
+                { key: 'overview', label: 'Overview' },
+                { key: 'medical', label: 'Medical' },
+                { key: 'progress', label: 'Progress' },
+                { key: 'assessments', label: 'Assessments' },
+                { key: 'history', label: 'Booking History' },
+              ].map(({ key, label }) => (
                 <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 text-sm capitalize border-b-2 transition-colors ${
-                    activeTab === tab
+                  key={key}
+                  onClick={() => setActiveTab(key)}
+                  className={`px-4 py-2 text-sm border-b-2 transition-colors whitespace-nowrap ${
+                    activeTab === key
                       ? 'border-primary text-foreground font-medium'
                       : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {tab}
+                  {label}
                 </button>
               ))}
             </div>
@@ -583,19 +709,49 @@ export function ExpandableSwimmerCard({
                         </div>
                       )}
                       {swimmer.comfortable_in_water && (
-                        <div className="flex items-center justify-between text-sm border-b border-border/40 pb-1.5">
+                        <div className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground text-xs">Comfort in Water</span>
                           <span className="text-xs font-medium">{formatLabel(swimmer.comfortable_in_water)}</span>
                         </div>
                       )}
-                      {swimmer.previous_swim_lessons !== undefined && (
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground text-xs">Previous Lessons</span>
-                          <span className="text-xs font-medium">{formatYesNo(swimmer.previous_swim_lessons)}</span>
-                        </div>
-                      )}
                     </div>
                   </div>
+
+                  {/* Medical Summary (inline in Overview) */}
+                  {(swimmer.diagnosis?.length || swimmer.has_allergies || swimmer.has_medical_conditions || swimmer.history_of_seizures) && (
+                    <div className="border border-red-200 bg-red-50/30 rounded-lg p-3">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-red-700 mb-2 flex items-center gap-1.5">
+                        <Heart className="h-3.5 w-3.5" /> Medical Summary
+                      </h3>
+                      {swimmer.diagnosis && swimmer.diagnosis.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {swimmer.diagnosis.map((d, i) => (
+                            <Badge key={i} className="text-xs bg-purple-100 text-purple-700 border-purple-200">{d}</Badge>
+                          ))}
+                        </div>
+                      )}
+                      <div className="space-y-1">
+                        {swimmer.has_allergies && (
+                          <p className="text-xs flex items-center gap-1.5 text-red-700">
+                            <AlertCircle className="h-3 w-3 shrink-0" /> Allergies: {swimmer.allergies_description || 'On file'}
+                          </p>
+                        )}
+                        {swimmer.has_medical_conditions && (
+                          <p className="text-xs flex items-center gap-1.5 text-red-700">
+                            <AlertCircle className="h-3 w-3 shrink-0" /> Medical conditions on file
+                          </p>
+                        )}
+                        {swimmer.history_of_seizures && (
+                          <p className="text-xs flex items-center gap-1.5 text-red-700">
+                            <AlertCircle className="h-3 w-3 shrink-0" /> Seizure history
+                          </p>
+                        )}
+                      </div>
+                      <button onClick={() => setActiveTab('medical')} className="text-xs text-red-600 underline mt-2 hover:text-red-800">
+                        View full medical details
+                      </button>
+                    </div>
+                  )}
 
                   {/* Swim Goals */}
                   {swimmer.swim_goals && swimmer.swim_goals.length > 0 && (
@@ -614,36 +770,80 @@ export function ExpandableSwimmerCard({
                     </div>
                   )}
 
-                  {/* Emergency Contact */}
-                  {hasEmergencyContact && (
-                    <div className="bg-muted/30 rounded-lg p-3">
-                      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 flex items-center gap-1.5">
+                  {/* Emergency Contact — inline editable */}
+                  <div className="bg-muted/30 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                         <ShieldAlert className="h-3.5 w-3.5" /> Emergency Contact
                       </h3>
+                      {!editingEmergency ? (
+                        <button onClick={() => setEditingEmergency(true)} className="text-xs text-[#23a1c0] hover:underline flex items-center gap-1">
+                          <Edit className="h-3 w-3" /> Edit
+                        </button>
+                      ) : (
+                        <div className="flex gap-2">
+                          <button onClick={() => setEditingEmergency(false)} className="text-xs text-muted-foreground hover:underline">Cancel</button>
+                          <button onClick={saveEmergencyContact} disabled={emergencySaving} className="text-xs text-[#23a1c0] hover:underline font-medium disabled:opacity-50">
+                            {emergencySaving ? 'Saving...' : 'Save'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {editingEmergency ? (
+                      <div className="space-y-2">
+                        <div>
+                          <label className="text-xs text-muted-foreground">Name</label>
+                          <input
+                            className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded-md bg-background"
+                            value={emergencyForm.emergency_contact_name}
+                            onChange={e => setEmergencyForm(f => ({ ...f, emergency_contact_name: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground">Relationship</label>
+                          <input
+                            className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded-md bg-background"
+                            value={emergencyForm.emergency_contact_relationship}
+                            onChange={e => setEmergencyForm(f => ({ ...f, emergency_contact_relationship: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground">Phone</label>
+                          <input
+                            type="tel"
+                            className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded-md bg-background"
+                            value={emergencyForm.emergency_contact_phone}
+                            onChange={e => setEmergencyForm(f => ({ ...f, emergency_contact_phone: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+                    ) : (
                       <div className="space-y-1.5">
-                        {swimmer.emergency_contact_name && (
+                        {(emergencyForm.emergency_contact_name || swimmer.emergency_contact_name) ? (
                           <div className="flex items-center justify-between border-b border-border/40 pb-1.5">
                             <span className="text-xs text-muted-foreground">Name</span>
-                            <span className="text-xs font-medium">{swimmer.emergency_contact_name}</span>
+                            <span className="text-xs font-medium">{emergencyForm.emergency_contact_name || swimmer.emergency_contact_name}</span>
                           </div>
-                        )}
-                        {swimmer.emergency_contact_relationship && (
+                        ) : null}
+                        {(emergencyForm.emergency_contact_relationship || swimmer.emergency_contact_relationship) ? (
                           <div className="flex items-center justify-between border-b border-border/40 pb-1.5">
                             <span className="text-xs text-muted-foreground">Relationship</span>
-                            <span className="text-xs font-medium">{swimmer.emergency_contact_relationship}</span>
+                            <span className="text-xs font-medium">{emergencyForm.emergency_contact_relationship || swimmer.emergency_contact_relationship}</span>
                           </div>
-                        )}
-                        {swimmer.emergency_contact_phone && (
+                        ) : null}
+                        {(emergencyForm.emergency_contact_phone || swimmer.emergency_contact_phone) ? (
                           <div className="flex items-center justify-between">
                             <span className="text-xs text-muted-foreground">Phone</span>
-                            <a href={`tel:${swimmer.emergency_contact_phone}`} className="text-xs text-blue-600 hover:underline font-medium">
-                              {swimmer.emergency_contact_phone}
+                            <a href={`tel:${emergencyForm.emergency_contact_phone || swimmer.emergency_contact_phone}`} className="text-xs text-blue-600 hover:underline font-medium">
+                              {emergencyForm.emergency_contact_phone || swimmer.emergency_contact_phone}
                             </a>
                           </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground italic">No emergency contact on file. Click Edit to add one.</p>
                         )}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   {/* Funding details */}
                   {hasFundingDetails && (
@@ -659,7 +859,7 @@ export function ExpandableSwimmerCard({
                           </div>
                         )}
                         {swimmer.authorized_sessions_total != null && (
-                          <div className="space-y-1">
+                          <div className="space-y-1 border-b border-border/40 pb-1.5">
                             <div className="flex items-center justify-between">
                               <span className="text-xs text-muted-foreground">Sessions</span>
                               <span className="text-xs font-semibold text-violet-700">
@@ -674,10 +874,72 @@ export function ExpandableSwimmerCard({
                             </div>
                           </div>
                         )}
-                        {swimmer.funding_coordinator_name && (
-                          <div className="flex items-center justify-between border-t border-border/40 pt-1.5 mt-1.5">
-                            <span className="text-xs text-muted-foreground">Coordinator</span>
-                            <span className="text-xs font-medium">{swimmer.funding_coordinator_name}</span>
+                      </div>
+
+                      {/* Coordinator — inline editable */}
+                      <div className="mt-2 pt-2 border-t border-border/40">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-medium text-muted-foreground">Coordinator</span>
+                          {!editingCoordinator ? (
+                            <button onClick={() => setEditingCoordinator(true)} className="text-xs text-[#23a1c0] hover:underline flex items-center gap-1">
+                              <Edit className="h-3 w-3" /> Edit
+                            </button>
+                          ) : (
+                            <div className="flex gap-2">
+                              <button onClick={() => setEditingCoordinator(false)} className="text-xs text-muted-foreground hover:underline">Cancel</button>
+                              <button onClick={saveCoordinator} disabled={coordinatorSaving} className="text-xs text-[#23a1c0] hover:underline font-medium disabled:opacity-50">
+                                {coordinatorSaving ? 'Saving...' : 'Save'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        {editingCoordinator ? (
+                          <div className="space-y-2">
+                            <div>
+                              <label className="text-xs text-muted-foreground">Name</label>
+                              <input
+                                className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded-md bg-background"
+                                value={coordinatorForm.funding_coordinator_name}
+                                onChange={e => setCoordinatorForm(f => ({ ...f, funding_coordinator_name: e.target.value }))}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-muted-foreground">Email</label>
+                              <input
+                                type="email"
+                                className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded-md bg-background"
+                                value={coordinatorForm.funding_coordinator_email}
+                                onChange={e => setCoordinatorForm(f => ({ ...f, funding_coordinator_email: e.target.value }))}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-muted-foreground">Phone</label>
+                              <input
+                                type="tel"
+                                className="w-full mt-0.5 px-2 py-1 text-xs border border-border rounded-md bg-background"
+                                value={coordinatorForm.funding_coordinator_phone}
+                                onChange={e => setCoordinatorForm(f => ({ ...f, funding_coordinator_phone: e.target.value }))}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            {coordinatorForm.funding_coordinator_name && (
+                              <p className="text-xs font-medium">{coordinatorForm.funding_coordinator_name}</p>
+                            )}
+                            {coordinatorForm.funding_coordinator_email && (
+                              <a href={`mailto:${coordinatorForm.funding_coordinator_email}`} className="text-xs text-blue-600 hover:underline block">
+                                {coordinatorForm.funding_coordinator_email}
+                              </a>
+                            )}
+                            {coordinatorForm.funding_coordinator_phone && (
+                              <a href={`tel:${coordinatorForm.funding_coordinator_phone}`} className="text-xs text-blue-600 hover:underline block">
+                                {coordinatorForm.funding_coordinator_phone}
+                              </a>
+                            )}
+                            {!coordinatorForm.funding_coordinator_name && !coordinatorForm.funding_coordinator_email && (
+                              <p className="text-xs text-muted-foreground italic">No coordinator on file. Click Edit to add one.</p>
+                            )}
                           </div>
                         )}
                       </div>
@@ -931,6 +1193,117 @@ export function ExpandableSwimmerCard({
                           </div>
                         </div>
                       )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* ── ASSESSMENTS TAB ── */}
+            {activeTab === 'assessments' && (
+              <div className="space-y-4">
+                {assessmentsLoading && (
+                  <div className="text-center py-8 text-sm text-muted-foreground animate-pulse">Loading assessments...</div>
+                )}
+                {!assessmentsLoading && assessments.length === 0 && (
+                  <div className="text-center py-10 text-muted-foreground">
+                    <Activity className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">No assessment reports on file.</p>
+                  </div>
+                )}
+                {!assessmentsLoading && assessments.map((a) => {
+                  const sessionDate = a.session?.start_time
+                    ? new Date(a.session.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    : a.completed_at
+                      ? new Date(a.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                      : null
+                  const statusColor = a.status === 'completed'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : a.status === 'scheduled'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-muted text-muted-foreground'
+                  return (
+                    <div key={a.id} className="bg-muted/30 rounded-lg p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold">{sessionDate ?? 'Date unknown'}</span>
+                          {a.session?.location && (
+                            <span className="text-xs text-muted-foreground">· {a.session.location}</span>
+                          )}
+                        </div>
+                        <Badge className={`text-xs px-1.5 py-0 h-4 capitalize ${statusColor}`}>{a.status}</Badge>
+                      </div>
+                      {a.session?.instructor && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <User className="h-3 w-3" /> {(a.session.instructor as any).full_name}
+                        </p>
+                      )}
+                      {a.recommended_level && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-muted-foreground">Recommended Level:</span>
+                          <span className="text-xs font-semibold text-[#23a1c0]">{a.recommended_level}</span>
+                        </div>
+                      )}
+                      {a.comfort_in_water && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-muted-foreground">Water Comfort:</span>
+                          <span className="text-xs font-medium">{formatLabel(a.comfort_in_water)}</span>
+                        </div>
+                      )}
+                      {a.notes && (
+                        <div className="border-t border-border/40 pt-2 mt-1">
+                          <p className="text-xs text-muted-foreground italic">{a.notes}</p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* ── BOOKING HISTORY TAB ── */}
+            {activeTab === 'history' && (
+              <div className="space-y-2">
+                {bookingsLoading && (
+                  <div className="text-center py-8 text-sm text-muted-foreground animate-pulse">Loading booking history...</div>
+                )}
+                {!bookingsLoading && bookings.length === 0 && (
+                  <div className="text-center py-10 text-muted-foreground">
+                    <Calendar className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">No booking history found.</p>
+                  </div>
+                )}
+                {!bookingsLoading && bookings.map((b) => {
+                  const sessionDate = b.session?.start_time
+                    ? new Date(b.session.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+                    : null
+                  const sessionTime = b.session?.start_time
+                    ? new Date(b.session.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+                    : null
+                  const statusMap: Record<string, string> = {
+                    confirmed: 'bg-emerald-100 text-emerald-700',
+                    completed: 'bg-blue-100 text-blue-700',
+                    cancelled: 'bg-red-100 text-red-700',
+                    pending: 'bg-amber-100 text-amber-700',
+                    late_cancel: 'bg-orange-100 text-orange-700',
+                  }
+                  const statusColor = statusMap[b.status] ?? 'bg-muted text-muted-foreground'
+                  return (
+                    <div key={b.id} className="bg-muted/30 rounded-lg p-3 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold truncate">{sessionDate ?? 'Date unknown'}{sessionTime ? ` · ${sessionTime}` : ''}</p>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          {b.session?.location && (
+                            <span className="text-xs text-muted-foreground">{b.session.location}</span>
+                          )}
+                          {b.session?.instructor && (
+                            <span className="text-xs text-muted-foreground">· {(b.session.instructor as any).full_name}</span>
+                          )}
+                        </div>
+                      </div>
+                      <Badge className={`text-xs px-1.5 py-0 h-4 capitalize shrink-0 ${statusColor}`}>
+                        {b.status.replace('_', ' ')}
+                      </Badge>
                     </div>
                   )
                 })}
