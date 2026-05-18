@@ -158,7 +158,7 @@ export default function SwimmerProgressPage() {
           skills_working_on,
           skills_mastered,
           created_at,
-          instructor:profiles(full_name),
+          instructor:profiles!instructor_id(full_name),
           session:sessions(start_time, location)
         `)
         .eq('swimmer_id', swimmerId)
