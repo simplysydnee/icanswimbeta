@@ -112,7 +112,6 @@ async function updateTargetStatus(
   notes?: string
 ) {
   const supabase = createClient()
-  console.log('updateTargetStatus called:', { swimmerId, targetId, targetName, status, instructorId, instructorIdType: typeof instructorId })
 
   try {
     // Normalize instructorId - could be string or object with id property
@@ -124,7 +123,6 @@ async function updateTargetStatus(
       return null;
     };
     const updatedBy = normalizeInstructorId(instructorId);
-    console.log('Using instructorId for updated_by:', { instructorId: updatedBy, original: instructorId })
 
     const now = new Date().toISOString()
     const updateData: any = {
@@ -143,7 +141,6 @@ async function updateTargetStatus(
 
     if (isPlaceholder) {
       // Placeholder target - always insert new
-      console.log('Inserting new target for placeholder:', targetName)
       result = await supabase
         .from('swimmer_targets')
         .insert({
@@ -165,7 +162,6 @@ async function updateTargetStatus(
 
       if (checkError && checkError.code === 'PGRST116') {
         // Record doesn't exist, insert new
-        console.log('Target not found, inserting new:', targetName)
         result = await supabase
           .from('swimmer_targets')
           .insert({
@@ -187,7 +183,6 @@ async function updateTargetStatus(
         throw new Error(`Failed to check target: ${checkError.message || 'Unknown error'}`)
       } else {
         // Record exists, update
-        console.log('Updating existing target:', targetId)
         result = await supabase
           .from('swimmer_targets')
           .update(updateData)
@@ -207,7 +202,6 @@ async function updateTargetStatus(
       throw new Error(`Failed to update target status: ${result.error.message || 'Unknown error'}`)
     }
 
-    console.log('Target status updated successfully:', result.data)
     return result.data
 
   } catch (error) {
@@ -227,7 +221,6 @@ export default function TargetsTab({
   swimmerId,
   instructorId
 }: TargetsTabProps) {
-  console.log('TargetsTab instructorId:', instructorId, typeof instructorId);
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const [updatingTargetId, setUpdatingTargetId] = useState<string | null>(null)

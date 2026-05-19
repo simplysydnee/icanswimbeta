@@ -58,6 +58,10 @@ export interface AssessmentData {
 
   // Important Safety Notes
   importantNotesText: string;
+
+  // Swim Level & Priority
+  swimLevelId?: string;
+  isPriorityBooking?: boolean;
 }
 
 interface AssessmentWizardProps {
@@ -95,6 +99,8 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
     sharedWithParent: false,
     approvalStatus: '',
     importantNotesText: '',
+    swimLevelId: undefined,
+    isPriorityBooking: false,
     ...initialData,
   }));
 

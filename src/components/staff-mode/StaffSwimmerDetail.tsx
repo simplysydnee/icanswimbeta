@@ -136,14 +136,8 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
 
     if (swimmerError) {
       console.error('Error fetching swimmer:', swimmerError)
-      console.error('Full error details:', JSON.stringify(swimmerError, null, 2))
-      console.error('Swimmer ID being queried:', swimmerId)
       throw new Error(swimmerError.message || 'Failed to fetch swimmer details')
     }
-
-    console.log('✅ Swimmer query successful:', swimmer)
-    console.log('✅ Swimmer keys:', Object.keys(swimmer || {}))
-    console.log('✅ Swimmer parent_email value:', swimmer?.parent_email)
 
     // Fetch skills for progress calculation
     const { data: skills, error: skillsError } = await supabase
@@ -206,10 +200,6 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
       throw new Error('Failed to fetch strategies')
     }
 
-    // Debug logging
-    console.log('🔍 Strategies raw data:', strategies);
-    console.log('🔍 Strategy names:', strategies?.map(s => s.strategy_name));
-
     // Create a map of existing strategies by normalized name for flexible lookup (matching StrategiesTab logic)
     const existingStrategiesMap = new Map<string, boolean>()
     strategies?.forEach(strategy => {
@@ -217,11 +207,8 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
       // Only keep the first occurrence if there are duplicates
       if (!existingStrategiesMap.has(normalized)) {
         existingStrategiesMap.set(normalized, strategy.is_used)
-      } else {
-        console.warn(`Duplicate strategy name found (normalized): ${normalized}`, strategy)
       }
     })
-    console.log('🔍 Existing strategies map (normalized -> is_used):', Array.from(existingStrategiesMap.entries()))
 
     // Count active standard strategies (matching StrategiesTab logic)
     let strategiesCount = 0
@@ -230,11 +217,8 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
       const existingIsUsed = existingStrategiesMap.get(normalizedStandardName)
       if (existingIsUsed === true) {
         strategiesCount++
-        console.log(`🔍 Counting active standard strategy: ${standardStrategy.name} (normalized: ${normalizedStandardName})`)
       }
     }
-
-    console.log('🔍 Final strategies count:', strategiesCount)
 
     const { data: notes, error: notesError } = await supabase
       .from('progress_notes')
@@ -249,12 +233,7 @@ async function fetchSwimmerDetail(swimmerId: string): Promise<SwimmerDetail> {
     }
 
     // Transform the data
-    console.log('🔍 fetchSwimmerDetail: swimmer.parent_email =', swimmer.parent_email);
-    console.log('🔍 fetchSwimmerDetail: swimmer.parent_name =', swimmer.parent_name);
     const parentProfile = swimmer.profiles?.[0] || {}
-    console.log('🔍 fetchSwimmerDetail: parentProfile.email =', parentProfile.email);
-    console.log('🔍 fetchSwimmerDetail: parentProfile.full_name =', parentProfile.full_name);
-    console.log('🔍 fetchSwimmerDetail: parentProfile.phone =', parentProfile.phone);
 
     // Calculate waiver completion status
     const hasLiability = !!(swimmer.signed_waiver && swimmer.liability_waiver_signature)
@@ -385,10 +364,24 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
 
   const getLevelBadge = (sequence: number) => {
     if (sequence <= 2) {
-      return '🔴⚪' // Red/White group
-    } else {
-      return '🟡🟢🔵' // Yellow/Green/Blue group
+      return (
+        <Badge className="bg-red-100 text-red-800 border border-red-300 text-xs py-0 px-2 font-semibold">
+          Red/White
+        </Badge>
+      )
     }
+    if (sequence <= 4) {
+      return (
+        <Badge className="bg-yellow-100 text-yellow-800 border border-yellow-300 text-xs py-0 px-2 font-semibold">
+          Yellow/Green
+        </Badge>
+      )
+    }
+    return (
+      <Badge className="bg-blue-100 text-blue-800 border border-blue-300 text-xs py-0 px-2 font-semibold">
+        Blue
+      </Badge>
+    )
   }
 
   const formatDate = (dateString: string) => {
@@ -522,9 +515,8 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
                   {swimmer.first_name} {swimmer.last_name}
                 </h1>
 
-                <Badge variant="outline" className="text-[#2a5e84] border-[#2a5e84] text-xs py-0 px-2">
-                  {getLevelBadge(swimmer.level_sequence)} {swimmer.level_name}
-                </Badge>
+                {getLevelBadge(swimmer.level_sequence)}
+                <span className="text-gray-700 text-sm font-medium">{swimmer.level_name}</span>
 
                 {age !== null && (
                   <span className="text-gray-600 text-sm">
@@ -671,7 +663,7 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
       </div>
 
       {/* Tab Content Area */}
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-6xl mx-auto px-4 py-3">
           {/* Profile Tab */}
           <TabsContent value="profile" className="mt-0">
             <Card>
@@ -824,13 +816,7 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
             <ProgressTab
               swimmerId={swimmerId}
               levelName={swimmer.level_name}
-              instructorId={(() => {
-                console.log('🔍 selectedInstructor:', selectedInstructor);
-                console.log('🔍 selectedInstructor?.id:', selectedInstructor?.id);
-                const id = selectedInstructor?.id || '';
-                console.log('🔍 Final instructorId being passed:', id, typeof id);
-                return id;
-              })()}
+              instructorId={selectedInstructor?.id || ''}
             />
           </TabsContent>
 
@@ -860,14 +846,6 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
           </TabsContent>
       </div>
 
-      {/* Footer */}
-      <div className="max-w-6xl mx-auto px-4 py-4 border-t border-gray-200">
-        <div className="text-center text-gray-500 text-sm">
-          <p>Staff Mode • {selectedInstructor?.name || 'Instructor'}'s Swimmer • {swimmer.first_name} {swimmer.last_name}</p>
-          <p className="mt-1">Use the tabs above to view and manage different aspects of this swimmer's profile.</p>
-        </div>
-      </div>
-
       {/* Edit Important Notes Modal */}
       <EditImportantNotesModal
         open={showEditNotesModal}
@@ -887,20 +865,7 @@ export default function StaffSwimmerDetail({ swimmerId }: StaffSwimmerDetailProp
         onOpenChange={setShowWaiverEmailModal}
         swimmerId={swimmerId}
         swimmerName={`${swimmer.first_name} ${swimmer.last_name}`}
-        defaultEmail={(() => {
-          // Debug: log the full swimmer object to see available fields
-          console.log('🔍 StaffSwimmerDetail debug - full swimmer object:', swimmer);
-          console.log('🔍 StaffSwimmerDetail: parent_email=', swimmer.parent_email, 'parent_name=', swimmer.parent_name, 'parent_phone=', swimmer.parent_phone);
-          console.log('🔍 StaffSwimmerDetail: profiles array=', swimmer.profiles);
-
-          // The parent_email field should already be populated from the query
-          // but let's try multiple possible locations for parent email
-          const profilesEmail = swimmer.profiles?.[0]?.email;
-          const email = swimmer.parent_email || profilesEmail || '';
-
-          console.log('🔍 StaffSwimmerDetail: email found=', email, 'swimmerId=', swimmerId);
-          return email;
-        })()}
+        defaultEmail={swimmer.parent_email || swimmer.profiles?.[0]?.email || ''}
         onSuccess={(email) => {
           toast({
             title: 'Waiver email sent',

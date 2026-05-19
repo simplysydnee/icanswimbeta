@@ -217,15 +217,15 @@ export function InternalNotesTab({ swimmerId }: InternalNotesTabProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
+      <CardHeader className="py-2 px-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <MessageSquare className="h-4 w-4" />
           Internal Notes
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 px-3 pb-3 pt-0">
         {/* Add Note Section */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <Textarea
             placeholder="Add an internal note..."
             value={newNote}
@@ -259,7 +259,7 @@ export function InternalNotesTab({ swimmerId }: InternalNotesTabProps) {
             <p>No notes yet</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {notes.map((note) => {
               const isOwned = note.created_by !== null && note.created_by === currentUserId;
               const isEditing = editingId === note.id;
@@ -269,7 +269,7 @@ export function InternalNotesTab({ swimmerId }: InternalNotesTabProps) {
               return (
                 <div
                   key={note.id}
-                  className="border rounded-lg p-4 space-y-1 group relative"
+                  className="border rounded-lg p-3 space-y-1 group relative"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 text-sm min-w-0">

@@ -35,7 +35,6 @@ tsconfig.tsbuildinfo
 .env.migration
 
 # Environment files with secrets
-.env.local
 .env.*.local
 .env.migration
 .env.migrate_*
@@ -54,3 +53,4 @@ index-*.ts
 *-waiver-v2.ts
 temp_auto_push.bat
 temp_interactive_push.bat
+config.bat
