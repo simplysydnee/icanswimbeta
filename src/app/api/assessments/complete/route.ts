@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getUser } from '@/lib/auth/server';
-import { DEFAULT_FUNDING_SOURCE_CONFIG } from '@/lib/constants';
 import { emailService } from '@/lib/email-service';
 import { generateAssessmentCompletionEmail, type AssessmentEmailData } from '@/lib/emails/assessment-completion';
 
@@ -41,6 +40,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       swimmerId,
+      bookingId,
+      sessionId,
       instructor,
       assessmentDate,
       strengths,
@@ -51,6 +52,15 @@ export async function POST(request: NextRequest) {
       safetyGoals,
       approvalStatus,
       importantNotesText,
+      // Step 5 (Notes) — all optional
+      lessonDate,
+      attendanceStatus,
+      lessonSummary,
+      swimmerMood,
+      waterComfort,
+      instructorNotesPrivate,
+      parentNotes,
+      sharedWithParent,
     } = body;
 
     // Validate required fields
@@ -70,11 +80,8 @@ export async function POST(request: NextRequest) {
         last_name,
         parent_id,
         payment_type,
-        funding_source_id,
         enrollment_status,
         assessment_status,
-        funded_sessions_used,
-        funded_sessions_authorized,
         important_notes,
         parent:profiles!swimmers_parent_id_fkey (
           id,
@@ -87,8 +94,24 @@ export async function POST(request: NextRequest) {
 
     if (swimmerError || !swimmer) {
       return NextResponse.json(
-        { error: 'Swimmer not found' },
+        {
+          error: 'Swimmer not found',
+          details: swimmerError?.message,
+          code: swimmerError?.code,
+          hint: swimmerError?.hint,
+        },
         { status: 404 }
+      );
+    }
+
+    // Defense-in-depth: only complete assessments for swimmers actually scheduled
+    if (swimmer.assessment_status !== 'scheduled') {
+      return NextResponse.json(
+        {
+          error: 'Swimmer does not have a scheduled assessment',
+          details: `Current assessment_status is '${swimmer.assessment_status}'.`,
+        },
+        { status: 409 }
       );
     }
 
@@ -105,12 +128,18 @@ export async function POST(request: NextRequest) {
       p_safety_goals: safetyGoals || '',
       p_approval_status: approvalStatus,
       p_created_by: user.id,
+      p_booking_id: bookingId || null,
     });
 
     if (transactionError) {
       console.error('Transaction error:', transactionError);
       return NextResponse.json(
-        { error: 'Failed to submit assessment' },
+        {
+          error: 'Failed to submit assessment',
+          details: transactionError.message,
+          code: transactionError.code,
+          hint: transactionError.hint,
+        },
         { status: 500 }
       );
     }
@@ -133,7 +162,6 @@ export async function POST(request: NextRequest) {
 
     // Add important notes if provided
     if (importantNotesArray.length > 0) {
-      // Get existing notes (ensure it's an array)
       const existingNotes = swimmer.important_notes || [];
       const mergedNotes = [...existingNotes, ...importantNotesArray];
       swimmerUpdates.important_notes = mergedNotes;
@@ -144,17 +172,6 @@ export async function POST(request: NextRequest) {
       swimmerUpdates.approval_status = 'approved';
       swimmerUpdates.approved_at = new Date().toISOString();
       swimmerUpdates.approved_by = user.id;
-
-      // For funded clients, create lessons PO
-      if (swimmer.payment_type === 'funded' || swimmer.funding_source_id) {
-        await createLessonsPO(
-          supabase,
-          swimmerId,
-          swimmer.funding_source_id,
-          user.id,
-          swimmer.parent_id
-        );
-      }
     } else if (approvalStatus === 'dropped') {
       swimmerUpdates.enrollment_status = 'waitlist';
       swimmerUpdates.approval_status = 'declined';
@@ -170,15 +187,89 @@ export async function POST(request: NextRequest) {
       // Don't fail the whole request
     }
 
+    // Insert a progress note if Step 5 captured anything
+    const hasNoteContent =
+      (lessonSummary && lessonSummary.trim().length > 0) ||
+      (instructorNotesPrivate && instructorNotesPrivate.trim().length > 0) ||
+      (parentNotes && parentNotes.trim().length > 0) ||
+      !!swimmerMood ||
+      !!waterComfort ||
+      (attendanceStatus && attendanceStatus !== 'present');
+
+    if (hasNoteContent) {
+      try {
+        const nowIso = new Date().toISOString();
+        // Upsert on (swimmer_id, booking_id) so a draft progress_notes row
+        // created during Step 5 wizard saves gets updated instead of
+        // duplicated. The partial unique index added by migration
+        // 20260519000003 makes this safe.
+        const noteRow: Record<string, any> = {
+          swimmer_id: swimmerId,
+          instructor_id: user.id,
+          updated_by: user.id,
+          session_id: sessionId || null,
+          booking_id: bookingId || null,
+          lesson_date: lessonDate || new Date().toISOString().split('T')[0],
+          lesson_summary: lessonSummary?.trim() ? lessonSummary : null,
+          attendance_status: attendanceStatus || 'present',
+          swimmer_mood: swimmerMood || null,
+          water_comfort: waterComfort || null,
+          instructor_notes: instructorNotesPrivate?.trim()
+            ? instructorNotesPrivate
+            : null,
+          parent_notes: parentNotes?.trim() ? parentNotes : null,
+          shared_with_parent: !!sharedWithParent,
+          updated_at: nowIso,
+        };
+
+        // Supabase upsert needs onConflict to match the partial unique index.
+        const noteOp = bookingId
+          ? supabase
+              .from('progress_notes')
+              .upsert(
+                { ...noteRow, created_at: nowIso },
+                { onConflict: 'swimmer_id,booking_id' }
+              )
+          : supabase
+              .from('progress_notes')
+              .insert({ ...noteRow, created_at: nowIso });
+
+        const { error: noteError } = await noteOp;
+
+        if (noteError) {
+          console.error('Error inserting progress note:', noteError);
+        }
+      } catch (noteException) {
+        console.error('Exception inserting progress note:', noteException);
+      }
+    }
+
+    // Mark the assessment booking completed (best-effort)
+    if (bookingId) {
+      const { error: bookingError } = await supabase
+        .from('bookings')
+        .update({
+          status: 'completed',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', bookingId);
+
+      if (bookingError) {
+        console.error('Error marking booking completed:', bookingError);
+      }
+    }
+
     // Send email notification to parent
-    const parent = swimmer.parent?.[0];
+    const parent = Array.isArray((swimmer as any).parent)
+      ? (swimmer as any).parent?.[0]
+      : (swimmer as any).parent;
     if (parent?.email) {
       try {
         const emailData: AssessmentEmailData = {
           clientName: `${swimmer.first_name} ${swimmer.last_name}`,
           parentName: parent.full_name || 'Parent',
           parentEmail: parent.email,
-          isPrivatePay: swimmer.payment_type === 'private_pay' || !swimmer.funding_source_id,
+          isPrivatePay: swimmer.payment_type === 'private_pay',
           status: approvalStatus as 'approved' | 'dropped',
           assessmentData: {
             strengths,
@@ -217,67 +308,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error submitting assessment:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
-  }
-}
-
-async function createLessonsPO(
-  supabase: any,
-  swimmerId: string,
-  fundingSourceId: string | null,
-  createdBy: string,
-  parentId: string
-) {
-  try {
-    // Calculate PO dates
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + DEFAULT_FUNDING_SOURCE_CONFIG.PO_DURATION_MONTHS);
-
-    // Generate PO number
-    const poNumber = `PO-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-
-    // Create PO record
-    const { error: poError } = await supabase
-      .from('purchase_orders')
-      .insert({
-        swimmer_id: swimmerId,
-        funding_source_id: fundingSourceId,
-        parent_id: parentId,
-        created_by: createdBy,
-        po_type: 'lessons',
-        po_number: poNumber,
-        authorized_sessions: DEFAULT_FUNDING_SOURCE_CONFIG.LESSONS_PER_PO,
-        used_sessions: 0,
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString(),
-        status: 'pending',
-        notes: 'Automatically created after assessment approval',
-      });
-
-    if (poError) {
-      console.error('Error creating PO:', poError);
-      return;
-    }
-
-    // Update swimmer's PO info
-    const { error: swimmerError } = await supabase
-      .from('swimmers')
-      .update({
-        current_po_number: poNumber,
-        po_expires_at: endDate.toISOString(),
-        funded_sessions_authorized: DEFAULT_FUNDING_SOURCE_CONFIG.LESSONS_PER_PO,
-        funded_sessions_used: 0,
-      })
-      .eq('id', swimmerId);
-
-    if (swimmerError) {
-      console.error('Error updating swimmer PO info:', swimmerError);
-    }
-
-  } catch (error) {
-    console.error('Error in createLessonsPO:', error);
   }
 }
