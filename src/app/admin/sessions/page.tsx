@@ -718,7 +718,7 @@ function AdminSessionsContent() {
             </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {/* Date Range (within month) */}
               <div className="sm:col-span-2">
                 <Label className="text-sm text-muted-foreground mb-2 block">Date Range (within month)</Label>
@@ -727,16 +727,16 @@ function AdminSessionsContent() {
                     type="date"
                     value={filters.startDate}
                     onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="flex-1"
+                    className="flex-1 min-w-0"
                     min={dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month - 1, 1), 'yyyy-MM-dd')}
                     max={dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month, 0), 'yyyy-MM-dd')}
                   />
-                  <span className="text-muted-foreground text-sm">to</span>
+                  <span className="text-muted-foreground text-sm shrink-0">to</span>
                   <Input
                     type="date"
                     value={filters.endDate}
                     onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
-                    className="flex-1"
+                    className="flex-1 min-w-0"
                     min={dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month - 1, 1), 'yyyy-MM-dd')}
                     max={dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month, 0), 'yyyy-MM-dd')}
                   />
@@ -940,9 +940,120 @@ function AdminSessionsContent() {
                 )}
               </div>
             ) : (
-              <div className="rounded-md border overflow-x-auto">
+              <>
+                {/* ── Mobile card list ── */}
+                <div className="block sm:hidden space-y-2">
+                  {filteredSessions.map((session) => {
+                    const booking = session.bookings?.[0]
+                    const isBooked = booking && booking.status !== 'cancelled'
+                    const swimmer = booking?.swimmer
+
+                    return (
+                      <div
+                        key={session.id}
+                        className={`border rounded-lg p-3 ${selectedSessionIds.has(session.id) ? 'bg-muted/50 border-primary/40' : 'bg-background'}`}
+                      >
+                        {/* Row 1: checkbox + date + status + actions */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2 min-w-0">
+                            <Checkbox
+                              checked={selectedSessionIds.has(session.id)}
+                              onCheckedChange={(checked) => handleSelectSession(session.id, !!checked)}
+                              aria-label={`Select session ${session.id}`}
+                              className="h-4 w-4 mt-0.5 shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <div className="font-semibold text-sm">
+                                {format(new Date(session.start_time), 'EEE, MMM d')}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {format(new Date(session.start_time), 'h:mm a')} – {format(new Date(session.end_time), 'h:mm a')}
+                              </div>
+                              {session.location && (
+                                <div className="text-xs text-muted-foreground/70 truncate">{session.location}</div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Badge className={getStatusColor(session.status) + ' text-xs px-1.5 py-0.5'}>
+                              {session.status === 'available' ? 'Open' : session.status.charAt(0).toUpperCase() + session.status.slice(1).replace('_', '-')}
+                            </Badge>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                  <MoreHorizontal className="h-3.5 w-3.5" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => setViewingSession(session)}>
+                                  <Eye className="h-4 w-4 mr-2" /> View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleEditSession(session)}>
+                                  <Edit className="h-4 w-4 mr-2" /> Edit Session
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setChangingInstructor(session)}>
+                                  <Users className="h-4 w-4 mr-2" /> Change Instructor
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setReschedulingSession(session)}>
+                                  <Calendar className="h-4 w-4 mr-2" /> Reschedule
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                {session.status === 'draft' && (
+                                  <DropdownMenuItem onClick={() => openSessions({ sessionIds: [session.id] }, { onSuccess: () => { toast({ title: 'Session opened', description: 'Session is now available for booking.' }); refetch(); } })}>
+                                    <CheckCircle className="h-4 w-4 mr-2" /> Open for Booking
+                                  </DropdownMenuItem>
+                                )}
+                                {(session.status === 'open' || session.status === 'available') && (
+                                  <DropdownMenuItem onClick={() => handleAddSwimmer(session)}>
+                                    <UserPlus className="h-4 w-4 mr-2" /> Add Swimmer
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => setCancellingSession(session)} className="text-orange-600">
+                                  <XCircle className="h-4 w-4 mr-2" /> Cancel
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => { if (confirm('Delete this session?')) deleteSessions({ sessionIds: [session.id] }, { onSuccess: () => { toast({ title: 'Session deleted' }); refetch(); } }); }}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" /> Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+
+                        {/* Row 2: instructor + type + capacity + client */}
+                        <div className="mt-2 ml-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground">{session.instructor_name || 'Unassigned'}</span>
+                          {session.session_type && <span>{session.session_type}</span>}
+                          <span>{session.booking_count || 0}/{session.max_capacity || 1} booked</span>
+                          {isBooked && swimmer && (
+                            <button
+                              onClick={() => router.push(`/admin/swimmers/${swimmer.id}`)}
+                              className="font-medium text-[#23a1c0] hover:underline"
+                            >
+                              {swimmer.first_name} {swimmer.last_name}
+                            </button>
+                          )}
+                          {(session.status === 'open' || session.status === 'available') && (
+                            <button
+                              onClick={() => handleAddSwimmer(session)}
+                              className="text-green-600 font-medium hover:underline flex items-center gap-1"
+                            >
+                              <UserPlus className="h-3 w-3" /> Add swimmer
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* ── Desktop table ── */}
+                <div className="hidden sm:block rounded-md border overflow-x-auto">
                 <Table className="text-sm">
-                  <TableHeader className="hidden sm:table-header-group">
+                  <TableHeader>
                     <TableRow>
                       <TableHead className="w-10 px-2">
                         <Checkbox
@@ -957,13 +1068,13 @@ function AdminSessionsContent() {
                       <TableHead className="px-2">Type</TableHead>
                       <TableHead className="px-2">Client</TableHead>
                       <TableHead className="px-2">Status</TableHead>
-                      <TableHead className="px-2 hidden sm:table-cell">Capacity</TableHead>
+                      <TableHead className="px-2">Capacity</TableHead>
                       <TableHead className="px-2 text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredSessions.map((session) => {
-                      const booking = session.bookings?.[0] // Get first booking if exists
+                      const booking = session.bookings?.[0]
                       const isBooked = booking && booking.status !== 'cancelled'
                       const swimmer = booking?.swimmer
 
@@ -1033,7 +1144,7 @@ function AdminSessionsContent() {
                           </TableCell>
 
                           {/* Capacity */}
-                          <TableCell className="px-2 py-2 hidden sm:table-cell">
+                          <TableCell className="px-2 py-2">
                             <span className="text-xs">
                               {session.booking_count || 0}/{session.max_capacity || 1}
                             </span>
@@ -1157,7 +1268,8 @@ function AdminSessionsContent() {
                     )}
                   </TableBody>
                 </Table>
-              </div>
+                </div>
+              </>
             )}
 
             {/* Summary */}
