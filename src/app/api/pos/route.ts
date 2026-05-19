@@ -224,7 +224,10 @@ export async function GET(request: NextRequest) {
         isPurchaseOrderNeedingAttention(po)
       );
       if (countOnly) {
-        return NextResponse.json({ attentionCount: attentionFull.length });
+        return NextResponse.json({
+          attentionCount: attentionFull.length,
+          attentionIds: attentionFull.map((p: any) => p.id),
+        });
       }
       statsSource = attentionFull;
       outputData = limit > 0 ? attentionFull.slice(0, limit) : attentionFull;
@@ -237,7 +240,7 @@ export async function GET(request: NextRequest) {
         data: [],
         stats: [],
         fundingSourceStats: [],
-        ...(attention === 'needs' ? { attentionCount: 0 } : {}),
+        ...(attention === 'needs' ? { attentionCount: 0, attentionIds: [] } : {}),
       });
     }
 
@@ -442,7 +445,10 @@ export async function GET(request: NextRequest) {
       approachingLimitCount: approachingLimitCount ?? 0,
       expiringSoonCount: expiringSoonCount ?? 0,
       ...(attention === 'needs'
-        ? { attentionCount: statsSource.length }
+        ? {
+            attentionCount: statsSource.length,
+            attentionIds: statsSource.map((p: any) => p.id),
+          }
         : {}),
     });
   } catch (error) {
