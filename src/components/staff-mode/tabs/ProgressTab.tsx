@@ -133,7 +133,6 @@ async function updateSkillStatus(
   instructorId: string
 ) {
   const supabase = createClient()
-  console.log('updateSkillStatus called:', { swimmerId, skillId, status, instructorId, instructorIdType: typeof instructorId })
 
   try {
     // Normalize instructorId - could be string or object with id property
@@ -145,7 +144,6 @@ async function updateSkillStatus(
       return null;
     };
     const updatedBy = normalizeInstructorId(instructorId);
-    console.log('Using instructorId for updated_by:', { instructorId: updatedBy, original: instructorId })
 
     const now = new Date().toISOString()
     const today = now.split('T')[0]
@@ -199,7 +197,6 @@ async function updateSkillStatus(
       throw new Error(`Failed to update skill status: ${result.error.message || 'Unknown error'}`)
     }
 
-    console.log('Skill status updated successfully')
     return { success: true }
   } catch (error) {
     console.error('Error in updateSkillStatus:', {
@@ -220,7 +217,6 @@ async function updateSkillNote(
   instructorId: string
 ) {
   const supabase = createClient()
-  console.log('updateSkillNote called:', { swimmerId, skillId, instructor_notes, instructorId, instructorIdType: typeof instructorId })
 
   try {
     // Normalize instructorId - could be string or object with id property
@@ -232,7 +228,6 @@ async function updateSkillNote(
       return null;
     };
     const updatedBy = normalizeInstructorId(instructorId);
-    console.log('Using instructorId for note update:', { instructorId: updatedBy, original: instructorId })
 
     const now = new Date().toISOString()
     const updateData = {
@@ -281,7 +276,6 @@ async function updateSkillNote(
       throw new Error(`Failed to update skill note: ${result.error.message || 'Unknown error'}`)
     }
 
-    console.log('Skill note updated successfully')
     return { success: true }
   } catch (error) {
     console.error('Error in updateSkillNote:', {
@@ -300,7 +294,6 @@ export default function ProgressTab({
   levelName,
   instructorId
 }: ProgressTabProps) {
-  console.log('ProgressTab instructorId:', instructorId, typeof instructorId);
   const { toast } = useToast()
   const queryClient = useQueryClient()
   const [updatingSkillId, setUpdatingSkillId] = useState<string | null>(null)
@@ -355,7 +348,6 @@ export default function ProgressTab({
   })
 
   const handleUpdateSkill = (skillId: string, newStatus: 'not_started' | 'in_progress' | 'mastered') => {
-    console.log('handleUpdateSkill called:', { skillId, newStatus })
     setUpdatingSkillId(skillId)
     updateMutation.mutate({ skillId, status: newStatus })
   }
@@ -554,11 +546,6 @@ export default function ProgressTab({
       )}
 
 
-      {/* Footer Note */}
-      <div className="text-center text-gray-500 text-sm">
-        <p>Track skill progress using the status switches and add notes for each skill. Mark skills as "In Progress" when introduced, and "Mastered" when consistently demonstrated.</p>
-        <p className="mt-1">All updates are tracked with timestamp and instructor ID for accountability.</p>
-      </div>
     </div>
   )
 }

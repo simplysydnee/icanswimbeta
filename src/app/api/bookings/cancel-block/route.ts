@@ -108,9 +108,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Cancel each booking atomically via cancel_booking RPC
-    // Block cancellations are planned and timely — DO NOT create floating
-    // sessions (those are for late/single cancellations). The cancelled slot
-    // is reopened for a new family to pick up as recurring.
+    // Block cancellations always create floating sessions but don't mark
+    // swimmers as flexible (passing p_late_cancel_type='block_cancel')
     for (const booking of blockBookings) {
       const sessionStart = new Date(booking.session.start_time)
 
@@ -125,9 +124,9 @@ export async function POST(request: NextRequest) {
           p_booking_id: booking.id,
           p_cancelled_by: user.id,
           p_cancel_reason: reason || 'Block cancellation',
-          p_cancel_source: 'parent',
+          p_cancel_source: isAdmin ? 'admin' : 'parent',
           p_is_late_cancel: false,
-          p_late_cancel_type: null,
+          p_late_cancel_type: 'block_cancel',
           p_late_cancel_note: null,
         });
 

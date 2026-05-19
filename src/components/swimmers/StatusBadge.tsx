@@ -108,6 +108,7 @@ export const assessmentStatusConfig = {
 } as const;
 
 // Funding Type Configuration
+// Values must match what is stored in the `payment_type` column of the swimmers table
 export const fundingTypeConfig = {
   private_pay: {
     label: 'Private Pay',
@@ -117,16 +118,8 @@ export const fundingTypeConfig = {
     border: 'border-sky-200',
     size: 'default'
   },
-  funding_source: {
-    label: 'Funded',
-    icon: Building2,
-    bg: 'bg-violet-100',
-    text: 'text-violet-800',
-    border: 'border-violet-200',
-    size: 'large'
-  },
-/*
-  vmrc: {
+  // DB value: 'funded'
+  funded: {
     label: 'Funded',
     icon: Building2,
     bg: 'bg-violet-100',
@@ -134,8 +127,9 @@ export const fundingTypeConfig = {
     border: 'border-violet-200',
     size: 'default'
   },
-  cvrc: {
-    label: 'CVRC',
+  // Legacy alias used in some places
+  funding_source: {
+    label: 'Funded',
     icon: Building2,
     bg: 'bg-violet-100',
     text: 'text-violet-800',
@@ -158,7 +152,6 @@ export const fundingTypeConfig = {
     border: 'border-gray-200',
     size: 'default'
   },
-  */
 } as const;
 
 // Type definitions
@@ -263,6 +256,72 @@ export function StatusBadge({ type, value, className, showIcon = true, size }: S
       {IconComponent && <IconComponent className="h-3.5 w-3.5" />}
       {statusConfig.label}
     </Badge>
+  );
+}
+
+// Status dot colors for compact inline display
+const statusDotColors = {
+  // Enrollment
+  waitlist: 'bg-amber-500',
+  pending: 'bg-orange-500',
+  pending_approval: 'bg-blue-500',
+  enrolled: 'bg-emerald-500',
+  expired: 'bg-red-500',
+  declined: 'bg-gray-400',
+  dropped: 'bg-gray-600',
+  // Approval
+  approved: 'bg-emerald-500',
+  // Assessment
+  not_scheduled: 'bg-orange-500',
+  not_started: 'bg-amber-500',
+  scheduled: 'bg-cyan-500',
+  completed: 'bg-teal-500',
+  // Funding
+  private_pay: 'bg-sky-500',
+  funding_source: 'bg-violet-500',
+  funded: 'bg-violet-500',
+  scholarship: 'bg-pink-500',
+  other: 'bg-gray-500',
+} as const;
+
+interface StatusDotProps {
+  type: StatusType;
+  value: string;
+  showLabel?: boolean;
+  size?: 'sm' | 'md';
+  className?: string;
+}
+
+export function StatusDot({ type, value, showLabel = true, size = 'sm', className }: StatusDotProps) {
+  // Get config to get label
+  let config: Record<string, { label: string }>;
+  switch (type) {
+    case 'enrollment':
+      config = enrollmentStatusConfig;
+      break;
+    case 'approval':
+      config = approvalStatusConfig;
+      break;
+    case 'assessment':
+      config = assessmentStatusConfig;
+      break;
+    case 'funding':
+      config = fundingTypeConfig;
+      break;
+    default:
+      config = {};
+  }
+  
+  const statusConfig = config[value?.toLowerCase()] || config[value] || { label: value || '—' };
+  const dotColor = statusDotColors[value?.toLowerCase() as keyof typeof statusDotColors] || 'bg-gray-400';
+  const dotSize = size === 'sm' ? 'h-2 w-2' : 'h-2.5 w-2.5';
+  const labelSize = size === 'sm' ? 'text-xs' : 'text-sm';
+  
+  return (
+    <span className={cn('inline-flex items-center gap-1.5', className)}>
+      <span className={cn('rounded-full flex-shrink-0', dotSize, dotColor)} />
+      {showLabel && <span className={labelSize}>{statusConfig.label}</span>}
+    </span>
   );
 }
 
