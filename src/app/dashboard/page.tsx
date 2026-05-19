@@ -11,15 +11,14 @@ export default function DashboardRedirect() {
   const router = useRouter();
   const [hasTimedOut, setHasTimedOut] = useState(false);
 
-  // Timeout after 8 seconds to prevent infinite loading
+  // Timeout after 15 seconds — auth layer now guarantees isLoadingProfile resolves
   useEffect(() => {
     const timer = setTimeout(() => {
       const isLoading = loading || isLoadingProfile;
       if (isLoading) {
-        console.error('Dashboard: Auth loading timed out after 8 seconds');
         setHasTimedOut(true);
       }
-    }, 8000);
+    }, 15000);
 
     return () => clearTimeout(timer);
   }, [loading, isLoadingProfile]);
@@ -27,51 +26,31 @@ export default function DashboardRedirect() {
   useEffect(() => {
     const isLoading = loading || isLoadingProfile;
 
-    console.log('Dashboard redirect effect:', {
-      isLoading,
-      user: !!user,
-      role,
-      loading,
-      isLoadingProfile
-    });
+    if (isLoading) return;
 
-    // Early redirect for non-authenticated users
-    if (!isLoading && !user) {
-      console.log('Dashboard: No user, redirecting to login');
+    if (!user) {
       router.replace('/login');
       return;
     }
 
-    if (!isLoading && user) {
-      // Special redirect for staff@icanswim209.com
-      const userEmail = user.email?.toLowerCase();
-      if (userEmail === 'staff@icanswim209.com') {
-        console.log('Dashboard: Redirecting staff@icanswim209.com to /staff-mode');
-        router.replace('/staff-mode');
-        return;
-      }
+    const userEmail = user.email?.toLowerCase();
+    if (userEmail === 'staff@icanswim209.com') {
+      router.replace('/staff-mode');
+      return;
+    }
 
-      // Only redirect if we have a definite role
-      console.log('Dashboard: User exists, role:', role);
-      if (role === 'admin') {
-        console.log('Dashboard: Redirecting admin to /admin');
-        router.replace('/admin');
-      } else if (role === 'instructor') {
-        console.log('Dashboard: Redirecting instructor to /instructor');
-        router.replace('/instructor');
-      } else if (role === 'coordinator') {
-        console.log('Dashboard: Redirecting coordinator to /coordinator/pos');
-        router.replace('/coordinator/pos');
-      } else if (role === 'parent') {
-        console.log('Dashboard: Redirecting parent to /parent');
-        router.replace('/parent');
-      } else if (role === null || role === undefined) {
-        console.log('Dashboard: Role is null/undefined, using default parent role');
-        // Use parent as default role if role is not determined
-        router.replace('/parent');
-      }
-      // If role is null/undefined, don't redirect - wait for role to be determined
-      // or show appropriate UI
+    if (role === null || role === undefined) return;
+
+    if (role === 'admin') {
+      router.replace('/admin');
+    } else if (role === 'instructor') {
+      router.replace('/instructor');
+    } else if (role === 'coordinator') {
+      router.replace('/coordinator/pos');
+    } else if (role === 'parent') {
+      router.replace('/parent');
+    } else {
+      router.replace('/parent');
     }
   }, [user, role, loading, isLoadingProfile, router]);
 

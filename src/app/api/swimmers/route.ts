@@ -285,6 +285,9 @@ export async function GET(req: Request) {
           requiresAuthorization: funding.requires_authorization,
           type: funding.type,
         } : null,
+        // fundingSourceName is what SwimmerManagementTable reads for the funding column.
+        // Prefer the joined funding_source name; fall back to payment_type label.
+        fundingSourceName: funding?.name ?? null,
         activePurchaseOrder,
         nextSession,
         lessonsCompleted,
