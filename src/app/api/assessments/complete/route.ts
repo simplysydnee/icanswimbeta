@@ -61,12 +61,23 @@ export async function POST(request: NextRequest) {
       instructorNotesPrivate,
       parentNotes,
       sharedWithParent,
+      // Approval-step swim level + priority booking (from main)
+      swimLevelId,
+      isPriorityBooking,
     } = body;
 
     // Validate required fields
     if (!swimmerId || !instructor || !assessmentDate || !strengths?.trim() || !challenges?.trim() || !approvalStatus) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // Swim level is required when approving
+    if (approvalStatus === 'approved' && !swimLevelId) {
+      return NextResponse.json(
+        { error: 'Swim level is required when approving a swimmer' },
         { status: 400 }
       );
     }
@@ -172,6 +183,24 @@ export async function POST(request: NextRequest) {
       swimmerUpdates.approval_status = 'approved';
       swimmerUpdates.approved_at = new Date().toISOString();
       swimmerUpdates.approved_by = user.id;
+
+      // Set swim level (from main)
+      if (swimLevelId) {
+        swimmerUpdates.current_level_id = swimLevelId;
+      }
+
+      // Set priority booking (from main)
+      if (isPriorityBooking) {
+        swimmerUpdates.is_priority_booking = true;
+        swimmerUpdates.priority_booking_reason = 'manual';
+        swimmerUpdates.priority_booking_set_at = new Date().toISOString();
+        swimmerUpdates.priority_booking_set_by = user.id;
+      }
+
+      // NOTE: PO creation intentionally NOT brought back from main per the
+      // 2026-05-19 product direction. Lessons PO is now handled out of this
+      // route. If/when PO auto-creation is reinstated, restore the
+      // createLessonsPO helper too.
     } else if (approvalStatus === 'dropped') {
       swimmerUpdates.enrollment_status = 'waitlist';
       swimmerUpdates.approval_status = 'declined';

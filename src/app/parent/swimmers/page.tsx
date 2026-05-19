@@ -378,12 +378,12 @@ export default function SwimmersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Swimmers</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">My Swimmers</h1>
+          <p className="text-muted-foreground mt-1">
             Manage all your swimmers in one place
           </p>
         </div>
-        <GradientButton asChild>
+        <GradientButton asChild className="shrink-0 whitespace-nowrap">
           <Link href="/enroll">
             <Plus className="h-4 w-4 mr-2" />
             Add New Swimmer
@@ -396,9 +396,9 @@ export default function SwimmersPage() {
       {swimmers.length === 0 ? (
         <Card>
           <CardContent className="pt-6">
-            <div className="text-center py-12">
-              <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-medium mb-2">No swimmers yet</h3>
+            <div className="text-center py-8 md:py-12">
+              <Users className="h-12 w-12 md:h-16 md:w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg md:text-xl font-medium mb-2">No swimmers yet</h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 Add your first swimmer to get started with swim lessons. You&apos;ll be able to track their progress and book sessions.
               </p>

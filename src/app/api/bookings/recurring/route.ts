@@ -322,28 +322,7 @@ export async function POST(request: Request) {
       bookings.push({ id: result.booking_id, session_id: sessionId });
     }
 
-    // Update purchase order — same logic as before, now using nBookings
-    if (fundingSourceId && activePoId) {
-      const nextSessionsBooked = currentBookingCount + nBookings;
-
-      const { error: poUpdateError, data: poUpdated } = await serviceSupabase
-        .from('purchase_orders')
-        .update({ sessions_booked: nextSessionsBooked })
-        .eq('id', activePoId)
-        .select('sessions_booked')
-        .maybeSingle();
-
-      if (poUpdateError) {
-        console.error('Purchase order update failed:', poUpdateError);
-        throw new Error('Failed to update purchase order usage');
-      }
-
-      if (!poUpdated) {
-        throw new Error('Purchase order not found');
-      }
-
-      console.log('Purchase order updated:', poUpdated);
-    }
+    // PO increment now handled atomically inside book_session RPC
 
     try {
       const { data: parentProfile } = await serviceSupabase

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -13,7 +13,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { CheckCircle, XCircle, AlertCircle, FileText, User, Calendar, Droplets, AlertTriangle, Target } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { CheckCircle, XCircle, AlertCircle, FileText, User, Calendar, Droplets, AlertTriangle, Target, Loader2, Star } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface ApprovalStepProps {
@@ -30,15 +38,28 @@ interface ApprovalStepProps {
     safetyGoals: string;
     approvalStatus: 'approved' | 'dropped' | '';
     importantNotesText: string;
+    swimLevelId?: string;
+    isPriorityBooking?: boolean;
   };
-  onChange: (data: { approvalStatus?: 'approved' | 'dropped'; importantNotesText?: string }) => void;
+  onChange: (data: { approvalStatus?: 'approved' | 'dropped'; importantNotesText?: string; swimLevelId?: string; isPriorityBooking?: boolean }) => void;
   onSubmit: () => void;
   isSubmitting: boolean;
+}
+
+interface SwimLevel {
+  id: string;
+  name: string;
+  displayName: string;
+  description: string;
+  sequence: number;
 }
 
 export function ApprovalStep({ data, onChange, onSubmit, isSubmitting }: ApprovalStepProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [hasImportantNotes, setHasImportantNotes] = useState(data.importantNotesText.trim() !== '');
+  const [swimLevels, setSwimLevels] = useState<SwimLevel[]>([]);
+  const [isLoadingLevels, setIsLoadingLevels] = useState(true);
+  const [levelsError, setLevelsError] = useState<string | null>(null);
 
   const handleApprovalChange = (value: 'approved' | 'dropped') => {
     onChange({ approvalStatus: value });
@@ -74,6 +95,25 @@ export function ApprovalStep({ data, onChange, onSubmit, isSubmitting }: Approva
   const instructorName = data.instructor
     ? data.instructor.charAt(0).toUpperCase() + data.instructor.slice(1)
     : 'Not selected';
+
+  // Fetch swim levels
+  useEffect(() => {
+    const fetchLevels = async () => {
+      try {
+        setLevelsError(null);
+        const response = await fetch('/api/swim-levels');
+        if (!response.ok) throw new Error('Failed to load levels');
+        const levels = await response.json();
+        setSwimLevels(levels);
+      } catch (err) {
+        console.error('Error fetching swim levels:', err);
+        setLevelsError('Failed to load swim levels');
+      } finally {
+        setIsLoadingLevels(false);
+      }
+    };
+    fetchLevels();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -247,6 +287,68 @@ export function ApprovalStep({ data, onChange, onSubmit, isSubmitting }: Approva
         </div>
       )}
 
+      {/* Swim Level + Priority Booking (only when approved) */}
+      {data.approvalStatus === 'approved' && (
+        <div className="space-y-4 border-t pt-4 mt-6">
+          <h3 className="text-base font-semibold">Swim Level & Priority</h3>
+
+          {/* Swim Level Selector */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              Swim Level Placement <span className="text-red-500">*</span>
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Assign the swimmer's starting level based on assessment results
+            </p>
+            {isLoadingLevels ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading levels...
+              </div>
+            ) : levelsError ? (
+              <div className="text-sm text-red-600">{levelsError}</div>
+            ) : (
+              <Select
+                value={data.swimLevelId || ''}
+                onValueChange={(value) => onChange({ swimLevelId: value })}
+              >
+                <SelectTrigger className="w-full md:w-80">
+                  <SelectValue placeholder="Select a level..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {swimLevels.map((level) => (
+                    <SelectItem key={level.id} value={level.id}>
+                      {level.displayName} — {level.description}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          {/* Priority Booking Checkbox */}
+          <div className="flex items-start gap-3 p-3 border rounded-lg">
+            <Checkbox
+              id="priority-booking"
+              checked={data.isPriorityBooking || false}
+              onCheckedChange={(checked) =>
+                onChange({ isPriorityBooking: checked === true })
+              }
+            />
+            <div className="space-y-1">
+              <Label htmlFor="priority-booking" className="flex items-center gap-2 cursor-pointer font-medium">
+                <Star className="h-4 w-4 text-amber-500" />
+                Enable Priority Booking
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Restricts booking to instructors assigned via priority scheduling.
+                The swimmer will only see and book with their assigned instructors.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Important Safety Notes */}
       <div className="space-y-3 border-t border-amber-200 pt-4 mt-6">
         <div className="flex items-center gap-2">
@@ -299,7 +401,11 @@ export function ApprovalStep({ data, onChange, onSubmit, isSubmitting }: Approva
       <div className="pt-4 border-t">
         <Button
           onClick={handleOpenConfirm}
-          disabled={!data.approvalStatus || isSubmitting}
+          disabled={
+            !data.approvalStatus ||
+            (data.approvalStatus === 'approved' && !data.swimLevelId) ||
+            isSubmitting
+          }
           className="w-full"
           size="lg"
         >
@@ -319,6 +425,11 @@ export function ApprovalStep({ data, onChange, onSubmit, isSubmitting }: Approva
         {!data.approvalStatus && (
           <p className="text-sm text-red-600 mt-2 text-center">
             Please select an approval status before submitting
+          </p>
+        )}
+        {data.approvalStatus === 'approved' && !data.swimLevelId && (
+          <p className="text-sm text-red-600 mt-2 text-center">
+            Please select a swim level before submitting
           </p>
         )}
       </div>
@@ -350,7 +461,22 @@ export function ApprovalStep({ data, onChange, onSubmit, isSubmitting }: Approva
             <DialogDescription>
               Once submitted, this assessment cannot be edited. The swimmer will be{' '}
               {data.approvalStatus === 'approved' ? 'enrolled in' : 'dropped from'} lessons
-              and parents will be notified automatically.
+              {data.approvalStatus === 'approved' && data.swimLevelId && (
+                <>
+                  {' '}and placed at{' '}
+                  <strong>
+                    {swimLevels.find((l) => l.id === data.swimLevelId)?.displayName ||
+                      'the selected'}
+                  </strong>{' '}
+                  level
+                </>
+              )}
+              {data.approvalStatus === 'approved' && data.isPriorityBooking && (
+                <>
+                  {' '}with <strong>priority booking</strong> enabled
+                </>
+              )}
+              . Parents will be notified automatically.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">

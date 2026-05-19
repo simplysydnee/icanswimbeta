@@ -256,13 +256,29 @@ export async function notifyCoordinatorPendingRenewalPO(poId: string) {
     });
     const subject = `New POS Authorization Needed — ${swimmerName} (New Fiscal Year)`;
 
-    // 9. Send email
-    await emailService.sendPOSNotification({
-      to: coordinatorEmail,
-      toName: coordinatorName || undefined,
+    // 9. Send email directly via Resend API (bypassing send-booking-email edge function)
+    const resendBody = {
+      from: 'I Can Swim Billing <billing@icanswim209.com>',
+      reply_to: 'info@icanswim209.com',
+      to: [coordinatorEmail],
       subject,
       html,
+    };
+
+    const resendResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(resendBody),
     });
+
+    if (!resendResponse.ok) {
+      const errText = await resendResponse.text();
+      console.error('notifyCoordinatorPendingRenewalPO: Resend API error', errText);
+      throw new Error(`Resend API error: ${errText}`);
+    }
 
     console.log(`Coordinator renewal PO notification sent to ${coordinatorEmail} for PO ${poId}`);
   } catch (error) {

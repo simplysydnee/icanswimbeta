@@ -10,7 +10,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 
 interface SwimLevel {
@@ -111,96 +110,56 @@ export function LevelSelector({
 
   if (isFetchingLevels) {
     return (
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Current Swim Level</Label>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Loading levels...</span>
-        </div>
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        <span>Loading...</span>
       </div>
     );
   }
 
+  // Compact inline select
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium">Current Swim Level</Label>
-      {!selectedLevel ? (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
-              <span className="text-amber-600 font-bold">!</span>
+    <div className="flex items-center gap-1.5">
+      <Select
+        value={selectedLevel}
+        onValueChange={handleLevelChange}
+        disabled={disabled || isLoading || isFetchingLevels}
+      >
+        <SelectTrigger className="h-7 w-auto min-w-[140px] text-xs px-2">
+          {isLoading ? (
+            <div className="flex items-center gap-1.5">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span>Updating...</span>
             </div>
-            <div>
-              <p className="font-medium text-amber-800">No Swim Level Assigned</p>
-              <p className="text-xs text-amber-600">Assign a starting level to begin tracking progress</p>
-            </div>
-          </div>
-          <Select
-            value={selectedLevel}
-            onValueChange={handleLevelChange}
-            disabled={disabled || isLoading || isFetchingLevels}
-          >
-            <SelectTrigger className="w-full bg-white">
-              <SelectValue placeholder="Assign Starting Level..." />
-            </SelectTrigger>
-            <SelectContent>
-              {levels.map((level) => (
-                <SelectItem key={level.id} value={level.id}>
-                  <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: level.color || '#ccc' }} />
-                    <span>{level.display_name || level.name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      ) : (
-        <>
-          <Select
-            value={selectedLevel}
-            onValueChange={handleLevelChange}
-            disabled={disabled || isLoading || isFetchingLevels}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue>
-                <div className="flex items-center gap-2">
+          ) : (
+            <SelectValue placeholder="Assign level...">
+              {selectedLevel && (
+                <div className="flex items-center gap-1.5">
                   <div
-                    className="h-3 w-3 rounded-full"
-                    style={{
-                      backgroundColor: levels.find(l => l.id === selectedLevel)?.color || '#ccc'
-                    }}
+                    className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: levels.find(l => l.id === selectedLevel)?.color || '#ccc' }}
                   />
-                  <span>
+                  <span className="truncate">
                     {levels.find(l => l.id === selectedLevel)?.display_name ||
                      levels.find(l => l.id === selectedLevel)?.name ||
-                     'Current Level'}
+                     'Select level'}
                   </span>
                 </div>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {levels.map((level) => (
-                <SelectItem key={level.id} value={level.id}>
-                  <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: level.color || '#ccc' }} />
-                    <span>{level.display_name || level.name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {isLoading && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              <span>Updating level...</span>
-            </div>
+              )}
+            </SelectValue>
           )}
-          <p className="text-xs text-muted-foreground">
-            Change swimmer's level manually (e.g., if they skip a level or need adjustment)
-          </p>
-        </>
-      )}
+        </SelectTrigger>
+        <SelectContent>
+          {levels.map((level) => (
+            <SelectItem key={level.id} value={level.id} className="text-sm">
+              <div className="flex items-center gap-2">
+                <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: level.color || '#ccc' }} />
+                <span>{level.display_name || level.name}</span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
