@@ -953,10 +953,9 @@ function AdminSessionsContent() {
                         />
                       </TableHead>
                       <TableHead className="px-2">Date & Time</TableHead>
-                      <TableHead className="px-2 hidden md:table-cell">Location</TableHead>
                       <TableHead className="px-2">Instructor</TableHead>
                       <TableHead className="px-2">Type</TableHead>
-                      <TableHead className="px-2 hidden lg:table-cell">Client</TableHead>
+                      <TableHead className="px-2">Client</TableHead>
                       <TableHead className="px-2">Status</TableHead>
                       <TableHead className="px-2 hidden sm:table-cell">Capacity</TableHead>
                       <TableHead className="px-2 text-right">Actions</TableHead>
@@ -983,7 +982,7 @@ function AdminSessionsContent() {
                             />
                           </TableCell>
 
-                          {/* Date & Time */}
+                          {/* Date & Time + Location */}
                           <TableCell className="px-2 py-2">
                             <div className="font-medium">
                               {format(new Date(session.start_time), 'MMM d')}
@@ -991,11 +990,11 @@ function AdminSessionsContent() {
                             <div className="text-xs text-muted-foreground">
                               {format(new Date(session.start_time), 'h:mm a')} - {format(new Date(session.end_time), 'h:mm a')}
                             </div>
-                          </TableCell>
-
-                          {/* Location */}
-                          <TableCell className="px-2 py-2 hidden md:table-cell">
-                            <span className="text-xs">{session.location || '-'}</span>
+                            {session.location && (
+                              <div className="text-xs text-muted-foreground/70 truncate max-w-[120px]">
+                                {session.location}
+                              </div>
+                            )}
                           </TableCell>
 
                           {/* Instructor */}
@@ -1012,12 +1011,15 @@ function AdminSessionsContent() {
                             </span>
                           </TableCell>
 
-                          {/* Client */}
-                          <TableCell className="px-2 py-2 hidden lg:table-cell">
+                          {/* Client — clicking opens swimmer detail */}
+                          <TableCell className="px-2 py-2">
                             {isBooked && swimmer ? (
-                              <span className="text-xs font-medium text-cyan-700">
+                              <button
+                                onClick={() => router.push(`/admin/swimmers/${swimmer.id}`)}
+                                className="text-xs font-medium text-[#23a1c0] hover:underline text-left"
+                              >
                                 {swimmer.first_name} {swimmer.last_name}
-                              </span>
+                              </button>
                             ) : (
                               <span className="text-xs text-muted-foreground">-</span>
                             )}
