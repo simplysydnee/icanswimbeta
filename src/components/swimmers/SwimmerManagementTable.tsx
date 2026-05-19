@@ -796,9 +796,14 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
                     <div className="flex flex-col gap-1">
                       <StatusBadge
                         type="funding"
-                        value={swimmer.fundingSourceName || swimmer.paymentType}
+                        value={swimmer.paymentType || 'private_pay'}
                         showIcon={true}
                       />
+                      {swimmer.fundingSourceName && (
+                        <div className="text-xs text-muted-foreground font-medium truncate max-w-[120px]">
+                          {swimmer.fundingSourceName}
+                        </div>
+                      )}
                       {swimmer.hasFundingAuthorization && swimmer.vmrcCurrentPosNumber && (
                         <div className="text-xs text-violet-600 font-medium">
                           PO: {swimmer.vmrcCurrentPosNumber}
