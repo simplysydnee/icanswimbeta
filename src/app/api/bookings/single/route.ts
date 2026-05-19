@@ -339,34 +339,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Update funding source PO if applicable — only increment for confirmed bookings
-    if (fundingSourceId && activePoId && bookingStatus === 'confirmed') {
-      const nextSessionsBooked = (Number(currentBookingCount) || 0) + 1;
-
-      const { error: poUpdateError, data: poUpdated } = await serviceSupabase
-        .from('purchase_orders')
-        .update({ sessions_booked: nextSessionsBooked })
-        .eq('id', activePoId)
-        .select('sessions_booked')
-        .maybeSingle();
-
-      if (poUpdateError) {
-        console.error('Purchase order update failed:', poUpdateError);
-        return NextResponse.json(
-          { error: 'Failed to update purchase order usage' },
-          { status: 500 }
-        );
-      }
-
-      if (!poUpdated) {
-        return NextResponse.json(
-          { error: 'Purchase order not found' },
-          { status: 404 }
-        );
-      }
-
-      console.log('Purchase order updated:', poUpdated);
-    }
+    // PO increment now handled atomically inside book_session RPC
     // Send emails — branch on booking status
     try {
       const { data: parentProfile } = await serviceSupabase

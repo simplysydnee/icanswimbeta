@@ -27,7 +27,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
       </div>
 
       {/* Mobile layout */}
-      <div className="md:hidden">
+      <div className="md:hidden overflow-x-hidden">
         {/* Responsive header - always visible */}
         <ResponsiveHeader />
 

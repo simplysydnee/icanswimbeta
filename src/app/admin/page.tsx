@@ -93,216 +93,309 @@ export default function AdminDashboard() {
     setLoading(true);
     const supabase = createClient();
 
+    // Timeout helper — rejects if the promise doesn't settle within ms
+    const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> => {
+      let timer: ReturnType<typeof setTimeout>;
+      return Promise.race([
+        promise,
+        new Promise<T>((_, reject) => {
+          timer = setTimeout(() => reject(new Error('Query timed out')), ms);
+        }),
+      ]).finally(() => clearTimeout(timer!));
+    };
+
     try {
-      // Use count queries instead of fetching all records
-      const { count: totalSwimmers, error: totalError } = await supabase
-        .from('swimmers')
-        .select('*', { count: 'exact', head: true });
+      // ── Group 1: Swimmer counts (6 lightweight count queries in parallel) ──
+      const swimmerCountsPromise = withTimeout(
+        (async () => {
+          const [total, active, waitlisted, privatePay, funded, pendingApproval] =
+            await Promise.all([
+              supabase
+                .from('swimmers')
+                .select('*', { count: 'exact', head: true })
+                .then((r) => r.count ?? 0),
+              supabase
+                .from('swimmers')
+                .select('*', { count: 'exact', head: true })
+                .eq('enrollment_status', 'enrolled')
+                .then((r) => r.count ?? 0),
+              supabase
+                .from('swimmers')
+                .select('*', { count: 'exact', head: true })
+                .eq('enrollment_status', 'waitlist')
+                .then((r) => r.count ?? 0),
+              supabase
+                .from('swimmers')
+                .select('*', { count: 'exact', head: true })
+                .eq('funding_source_id', PRIVATE_PAY_FUNDING_SOURCE_ID)
+                .then((r) => r.count ?? 0),
+              supabase
+                .from('swimmers')
+                .select('*', { count: 'exact', head: true })
+                .not('funding_source_id', 'is', null)
+                .neq('funding_source_id', PRIVATE_PAY_FUNDING_SOURCE_ID)
+                .then((r) => r.count ?? 0),
+              supabase
+                .from('swimmers')
+                .select('*', { count: 'exact', head: true })
+                .eq('approval_status', 'pending')
+                .then((r) => r.count ?? 0),
+            ]);
+          return {
+            totalSwimmers: total,
+            activeSwimmers: active,
+            waitlistedSwimmers: waitlisted,
+            privatePayCount: privatePay,
+            fundedCount: funded,
+            pendingApprovals: pendingApproval,
+          };
+        })(),
+        20000,
+      );
 
-      const { count: activeSwimmers, error: activeError } = await supabase
-        .from('swimmers')
-        .select('*', { count: 'exact', head: true })
-        .eq('enrollment_status', 'enrolled');
+      // ── Group 2: POs needing action ──
+      const poPromise = withTimeout(
+        (async () => {
+          try {
+            const { data: activePos } = await supabase
+              .from('purchase_orders')
+              .select('id, swimmer_id, sessions_used, sessions_authorized')
+              .eq('status', 'active')
+              .gt('sessions_authorized', 0);
+            if (!activePos || activePos.length === 0) return 0;
 
-      const { count: waitlistedSwimmers, error: waitlistError } = await supabase
-        .from('swimmers')
-        .select('*', { count: 'exact', head: true })
-        .eq('enrollment_status', 'waitlist');
+            const exhaustedPos = activePos.filter(
+              (po) => po.sessions_used >= po.sessions_authorized,
+            );
+            if (exhaustedPos.length === 0) return 0;
 
-      const { count: privatePayCount, error: privateError } = await supabase
-        .from('swimmers')
-        .select('*', { count: 'exact', head: true })
-        .eq('funding_source_id', PRIVATE_PAY_FUNDING_SOURCE_ID);
+            const swimmerIds = [
+              ...new Set(exhaustedPos.map((po) => po.swimmer_id)),
+            ].filter((id): id is string => id != null);
+            if (swimmerIds.length === 0) return 0;
 
-      const { count: fundedCount, error: fundedError } = await supabase
-        .from('swimmers')
-        .select('*', { count: 'exact', head: true })
-        .not('funding_source_id', 'is', null)
-        .neq('funding_source_id', PRIVATE_PAY_FUNDING_SOURCE_ID);
+            const today = new Date().toISOString().split('T')[0];
+            const { data: futureBookings } = await supabase
+              .from('bookings')
+              .select('swimmer_id')
+              .in('swimmer_id', swimmerIds)
+              .in('status', ['confirmed', 'pending_auth'])
+              .gte('session_date', today);
 
-      // Fetch pending approval swimmers
-      const { count: pendingApprovalCount } = await supabase
-        .from('swimmers')
-        .select('*', { count: 'exact', head: true })
-        .eq('approval_status', 'pending');
-
-      // Fetch POs Needing Action — active POs where sessions are exhausted
-      // and the swimmer has future bookings
-      let pendingPOs = 0;
-      try {
-        // Step 1: Get active POs with authorized sessions
-        const { data: activePos } = await supabase
-          .from('purchase_orders')
-          .select('id, swimmer_id, sessions_used, sessions_authorized')
-          .eq('status', 'active')
-          .gt('sessions_authorized', 0);
-
-        if (activePos && activePos.length > 0) {
-          // Step 2: Filter in JS (Supabase doesn't support column-to-column comparison)
-          const exhaustedPos = activePos.filter(
-            (po) => po.sessions_used >= po.sessions_authorized
-          );
-
-          if (exhaustedPos.length > 0) {
-            // Step 3: Get unique swimmer IDs (filter out nulls — PostgREST rejects null in IN())
-            const swimmerIds = [...new Set(exhaustedPos.map((po) => po.swimmer_id))]
-              .filter((id): id is string => id != null)
-
-            // Step 4: Check which have future confirmed/pending_auth bookings
-            if (swimmerIds.length > 0) {
-              const today = new Date().toISOString().split('T')[0];
-              const { data: futureBookings } = await supabase
-                .from('bookings')
-                .select('swimmer_id')
-                .in('swimmer_id', swimmerIds)
-                .in('status', ['confirmed', 'pending_auth'])
-                .gte('session_date', today);
-
-              const swimmersWithFutureBookings = new Set(
-                (futureBookings || []).map((b) => b.swimmer_id)
-              );
-
-              // Step 5: Count distinct POs whose swimmers have future bookings
-              pendingPOs = exhaustedPos.filter((po) =>
-                swimmersWithFutureBookings.has(po.swimmer_id)
-              ).length;
-            }
+            const swimmersWithFutureBookings = new Set(
+              (futureBookings || []).map((b) => b.swimmer_id),
+            );
+            return exhaustedPos.filter((po) =>
+              swimmersWithFutureBookings.has(po.swimmer_id),
+            ).length;
+          } catch (error) {
+            console.error('Error fetching POs needing action:', error);
+            return 0;
           }
-        }
-      } catch (error) {
-        console.error('Error fetching POs needing action:', error);
+        })(),
+        15000,
+      );
+
+      // ── Group 3: Pending referrals ──
+      const referralsPromise = withTimeout(
+        (async () => {
+          const { count } = await supabase
+            .from('referral_requests')
+            .select('*', { count: 'exact', head: true })
+            .in('status', ['ready_for_review', 'awaiting_parent']);
+          return count ?? 0;
+        })(),
+        10000,
+      );
+
+      // ── Group 4: Today's sessions + progress notes ──
+      const sessionsPromise = withTimeout(
+        (async () => {
+          const today = new Date();
+          const dateStr = format(today, 'yyyy-MM-dd');
+          const startOfDayUTC = `${dateStr}T08:00:00.000Z`;
+          const endOfDayUTC = `${format(addDays(today, 1), 'yyyy-MM-dd')}T08:00:00.000Z`;
+
+          const sessionsTodayCount = await supabase
+            .from('sessions')
+            .select('*', { count: 'exact', head: true })
+            .gte('start_time', startOfDayUTC)
+            .lt('start_time', endOfDayUTC)
+            .neq('status', 'cancelled')
+            .then((r) => r.count ?? 0);
+
+          const { data: sessions } = await supabase
+            .from('sessions')
+            .select(
+              `
+              id, start_time, end_time, location, status,
+              instructor:profiles!instructor_id(full_name),
+              bookings(id, status, swimmer:swimmers(id, first_name, last_name)),
+              progress_notes(id)
+            `,
+            )
+            .gte('start_time', startOfDayUTC)
+            .lt('start_time', endOfDayUTC)
+            .neq('status', 'cancelled')
+            .order('start_time', { ascending: true });
+
+          return { sessionsTodayCount, sessions: sessions ?? [] };
+        })(),
+        20000,
+      );
+
+      // ── Group 5: Revenue month-to-date ──
+      const revenuePromise = withTimeout(
+        (async () => {
+          const startOfMonthUTC = startOfMonth(new Date()).toISOString();
+          const nowUTC = new Date().toISOString();
+          const { data: bookingsMTD } = await supabase
+            .from('bookings')
+            .select(
+              `
+              session:sessions(price_cents, start_time),
+              swimmer:swimmers(funding_source_id, payment_type)
+            `,
+            )
+            .eq('status', 'completed')
+            .gte('session.start_time', startOfMonthUTC)
+            .lt('session.start_time', nowUTC);
+
+          let privatePayRevenue = 0;
+          let fundedRevenue = 0;
+          bookingsMTD?.forEach((booking) => {
+            const price = booking.session?.price_cents || 9000;
+            const fundingSourceId = booking.swimmer?.funding_source_id;
+            const paymentType = booking.swimmer?.payment_type;
+            if (
+              fundingSourceId === PRIVATE_PAY_FUNDING_SOURCE_ID ||
+              paymentType === 'private_pay'
+            ) {
+              privatePayRevenue += price;
+            } else {
+              fundedRevenue += price;
+            }
+          });
+          return { privatePayRevenue, fundedRevenue };
+        })(),
+        20000,
+      );
+
+      // ── Group 6: Waiver completion stats ──
+      const waiverPromise = withTimeout(
+        (async () => {
+          try {
+            const waiverResponse = await fetch('/api/waivers/completion-status', {
+              headers: { 'Content-Type': 'application/json' },
+            });
+            if (waiverResponse.ok) {
+              const ws = await waiverResponse.json();
+              return {
+                totalSwimmers: ws.totalSwimmers,
+                completedSwimmers: ws.completedSwimmers,
+                completionRate: ws.completionRate,
+                missingLiability: ws.missingLiability,
+                missingPhotoRelease: ws.missingPhotoRelease,
+                missingCancellationPolicy: ws.missingCancellationPolicy,
+                needingWaivers: ws.needingWaivers,
+              };
+            }
+          } catch (error) {
+            console.error('Error fetching waiver completion stats:', error);
+          }
+          return null;
+        })(),
+        15000,
+      );
+
+      // ── Fire all groups in parallel ──
+      const [
+        swimmerCountsResult,
+        poResult,
+        referralResult,
+        sessionsResult,
+        revenueResult,
+        waiverResult,
+      ] = await Promise.allSettled([
+        swimmerCountsPromise,
+        poPromise,
+        referralsPromise,
+        sessionsPromise,
+        revenuePromise,
+        waiverPromise,
+      ]);
+
+      // ── Extract results with safe fallbacks ──
+      const counts = swimmerCountsResult.status === 'fulfilled'
+        ? swimmerCountsResult.value
+        : { totalSwimmers: 0, activeSwimmers: 0, waitlistedSwimmers: 0, privatePayCount: 0, fundedCount: 0, pendingApprovals: 0 };
+      if (swimmerCountsResult.status === 'rejected') {
+        console.error('Swimmer counts query failed:', swimmerCountsResult.reason);
       }
 
-      // Fetch pending referrals
-      const { count: pendingReferralCount } = await supabase
-        .from('referral_requests')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['ready_for_review', 'awaiting_parent']);
+      const pendingPOs = poResult.status === 'fulfilled' ? poResult.value : 0;
+      if (poResult.status === 'rejected') {
+        console.error('PO query failed:', poResult.reason);
+      }
 
-      // Fetch today's sessions with timezone-aware query
-      // Midnight Pacific = 8 AM UTC
-      const today = new Date();
-      const dateStr = format(today, 'yyyy-MM-dd');
-      const startOfDayUTC = `${dateStr}T08:00:00.000Z`;
-      const endOfDayUTC = `${format(addDays(today, 1), 'yyyy-MM-dd')}T08:00:00.000Z`;
+      const pendingReferralCount = referralResult.status === 'fulfilled' ? referralResult.value : 0;
+      if (referralResult.status === 'rejected') {
+        console.error('Referral query failed:', referralResult.reason);
+      }
 
-      // Get count of sessions today
-      const { count: sessionsTodayCount } = await supabase
-        .from('sessions')
-        .select('*', { count: 'exact', head: true })
-        .gte('start_time', startOfDayUTC)
-        .lt('start_time', endOfDayUTC)
-        .neq('status', 'cancelled');
+      const sessionData = sessionsResult.status === 'fulfilled'
+        ? sessionsResult.value
+        : { sessionsTodayCount: 0, sessions: [] as Session[] };
+      if (sessionsResult.status === 'rejected') {
+        console.error('Sessions query failed:', sessionsResult.reason);
+      }
 
-      const { data: sessions } = await supabase
-        .from('sessions')
-        .select(`
-          id,
-          start_time,
-          end_time,
-          location,
-          status,
-          instructor:profiles!instructor_id(full_name),
-          bookings(
-            id,
-            status,
-            swimmer:swimmers(id, first_name, last_name)
-          ),
-          progress_notes(id)
-        `)
-        .gte('start_time', startOfDayUTC)
-        .lt('start_time', endOfDayUTC)
-        .neq('status', 'cancelled')
-        .order('start_time', { ascending: true });
+      const revenue = revenueResult.status === 'fulfilled'
+        ? revenueResult.value
+        : { privatePayRevenue: 0, fundedRevenue: 0 };
+      if (revenueResult.status === 'rejected') {
+        console.error('Revenue query failed:', revenueResult.reason);
+      }
 
-      // Calculate bookings needing progress updates from session data
+      const waiverCompletion = waiverResult.status === 'fulfilled' ? waiverResult.value : null;
+      if (waiverResult.status === 'rejected') {
+        console.error('Waiver query failed:', waiverResult.reason);
+      }
+
+      // ── Calculate progress notes from session data ──
       let bookingsNeedingProgress = 0;
-      sessions?.forEach(s => {
+      sessionData.sessions?.forEach((s) => {
         const sessionTime = new Date(s.start_time);
         const now = new Date();
-        const isPastOrCurrent = sessionTime <= now;
-
-        if (isPastOrCurrent && s.bookings && s.bookings.length > 0) {
-          // Filter out cancelled bookings
-          const activeBookings = s.bookings.filter((b: any) => b.status !== 'cancelled');
-          if (activeBookings.length === 0) return;
-
-          if (!s.progress_notes || s.progress_notes.length === 0) {
-            bookingsNeedingProgress += activeBookings.length;
-          } else if (s.progress_notes.length < activeBookings.length) {
-            bookingsNeedingProgress += (activeBookings.length - s.progress_notes.length);
-          }
+        if (sessionTime > now) return;
+        if (!s.bookings || s.bookings.length === 0) return;
+        const activeBookings = s.bookings.filter(
+          (b: any) => b.status !== 'cancelled',
+        );
+        if (activeBookings.length === 0) return;
+        if (!s.progress_notes || s.progress_notes.length === 0) {
+          bookingsNeedingProgress += activeBookings.length;
+        } else if (s.progress_notes.length < activeBookings.length) {
+          bookingsNeedingProgress +=
+            activeBookings.length - s.progress_notes.length;
         }
       });
 
-      // Get revenue month-to-date from bookings
-      const startOfMonthUTC = startOfMonth(new Date()).toISOString();
-      const nowUTC = new Date().toISOString();
-
-      // Fetch all completed bookings month-to-date with swimmer's funding source
-      const { data: bookingsMTD } = await supabase
-        .from('bookings')
-        .select(`
-          session:sessions(price_cents, start_time),
-          swimmer:swimmers(funding_source_id, payment_type)
-        `)
-        .eq('status', 'completed')
-        .gte('session.start_time', startOfMonthUTC)
-        .lt('session.start_time', nowUTC);
-
-      let privatePayRevenue = 0;
-      let fundedRevenue = 0;
-
-      bookingsMTD?.forEach(booking => {
-        const price = booking.session?.price_cents || 9000; // Default $90
-        const fundingSourceId = booking.swimmer?.funding_source_id;
-        const paymentType = booking.swimmer?.payment_type;
-
-        if (fundingSourceId === PRIVATE_PAY_FUNDING_SOURCE_ID || paymentType === 'private_pay') {
-          privatePayRevenue += price;
-        } else {
-          // Any other funding source (including VMRC, CVRC, etc.) is considered funded
-          fundedRevenue += price;
-        }
-      });
-
-      // Fetch waiver completion stats
-      let waiverCompletion = null;
-      try {
-        const waiverResponse = await fetch('/api/waivers/completion-status', {
-          headers: { 'Content-Type': 'application/json' }
-        });
-        if (waiverResponse.ok) {
-          const waiverStats = await waiverResponse.json();
-          waiverCompletion = {
-            totalSwimmers: waiverStats.totalSwimmers,
-            completedSwimmers: waiverStats.completedSwimmers,
-            completionRate: waiverStats.completionRate,
-            missingLiability: waiverStats.missingLiability,
-            missingPhotoRelease: waiverStats.missingPhotoRelease,
-            missingCancellationPolicy: waiverStats.missingCancellationPolicy,
-            needingWaivers: waiverStats.needingWaivers
-          };
-        }
-      } catch (error) {
-        console.error('Error fetching waiver completion stats:', error);
-      }
-
-      setTodaysSessions(sessions || []);
+      setTodaysSessions(sessionData.sessions);
       setStats({
-        totalSwimmers: totalSwimmers ?? 0,
-        activeSwimmers: activeSwimmers ?? 0,
-        waitlistedSwimmers: waitlistedSwimmers ?? 0,
-        privatePayCount: privatePayCount ?? 0,
-        fundedCount: fundedCount ?? 0,
-        sessionsToday: sessionsTodayCount ?? 0,
-        pendingApprovals: pendingApprovalCount ?? 0,
-        pendingReferrals: pendingReferralCount ?? 0,
+        totalSwimmers: counts.totalSwimmers,
+        activeSwimmers: counts.activeSwimmers,
+        waitlistedSwimmers: counts.waitlistedSwimmers,
+        privatePayCount: counts.privatePayCount,
+        fundedCount: counts.fundedCount,
+        sessionsToday: sessionData.sessionsTodayCount,
+        pendingApprovals: counts.pendingApprovals,
+        pendingReferrals: pendingReferralCount,
         pendingPOs,
-        sessionsNeedingProgress: bookingsNeedingProgress ?? 0,
-        privatePayRevenue: privatePayRevenue ?? 0,
-        fundedRevenue: fundedRevenue ?? 0,
-        waiverCompletion
+        sessionsNeedingProgress: bookingsNeedingProgress,
+        privatePayRevenue: revenue.privatePayRevenue,
+        fundedRevenue: revenue.fundedRevenue,
+        waiverCompletion,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);

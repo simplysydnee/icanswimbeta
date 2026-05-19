@@ -22,6 +22,8 @@ interface AssessmentData {
   safetyGoals: string;
   approvalStatus: 'approved' | 'dropped' | '';
   importantNotesText: string;
+  swimLevelId?: string;
+  isPriorityBooking?: boolean;
 }
 
 export default function CompleteAssessmentPage() {

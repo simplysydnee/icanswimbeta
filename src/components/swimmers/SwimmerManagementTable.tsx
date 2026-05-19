@@ -63,6 +63,7 @@ export interface Swimmer {
     displayName: string;
     color?: string;
   } | null;
+  currentLevelName?: string | null;
   paymentType: string;
   fundingSourceName?: string;
   hasFundingAuthorization: boolean;
@@ -635,8 +636,22 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
                     <p className="font-medium truncate text-base">
                       {swimmer.firstName || ''} {swimmer.lastName || ''}
                     </p>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {swimmer.currentLevel?.name || swimmer.currentLevel?.displayName || 'No level assigned'}
+                    <p className="text-sm truncate">
+                      {swimmer.currentLevelName ? (
+                        <span className={cn(
+                          "inline-block px-2 py-0.5 rounded-full text-xs font-semibold",
+                          swimmer.currentLevelName.toLowerCase() === 'white' && "bg-gray-100 text-gray-700",
+                          swimmer.currentLevelName.toLowerCase() === 'red' && "bg-red-100 text-red-700",
+                          swimmer.currentLevelName.toLowerCase() === 'yellow' && "bg-yellow-100 text-yellow-700",
+                          swimmer.currentLevelName.toLowerCase() === 'green' && "bg-green-100 text-green-700",
+                          swimmer.currentLevelName.toLowerCase() === 'blue' && "bg-blue-100 text-blue-700",
+                          !['white','red','yellow','green','blue'].includes(swimmer.currentLevelName.toLowerCase()) && "bg-gray-100 text-gray-700"
+                        )}>
+                          {swimmer.currentLevelName}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">No level assigned</span>
+                      )}
                     </p>
                   </div>
                   <div className="shrink-0">
@@ -814,10 +829,18 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
 
                   {/* Level */}
                   <TableCell>
-                    {swimmer.currentLevel ? (
-                      <div className="text-sm font-medium">
-                        {swimmer.currentLevel.displayName}
-                      </div>
+                    {swimmer.currentLevelName ? (
+                      <span className={cn(
+                        "inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold",
+                        swimmer.currentLevelName.toLowerCase() === 'white' && "bg-gray-100 text-gray-700",
+                        swimmer.currentLevelName.toLowerCase() === 'red' && "bg-red-100 text-red-700",
+                        swimmer.currentLevelName.toLowerCase() === 'yellow' && "bg-yellow-100 text-yellow-700",
+                        swimmer.currentLevelName.toLowerCase() === 'green' && "bg-green-100 text-green-700",
+                        swimmer.currentLevelName.toLowerCase() === 'blue' && "bg-blue-100 text-blue-700",
+                        !['white','red','yellow','green','blue'].includes(swimmer.currentLevelName.toLowerCase()) && "bg-gray-100 text-gray-700"
+                      )}>
+                        {swimmer.currentLevelName}
+                      </span>
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}
@@ -825,14 +848,18 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
 
                   {/* Lessons */}
                   <TableCell>
-                    <div className="flex items-center gap-1">
-                      <span className="font-medium">{swimmer.lessonsCompleted}</span>
-                      {getLessonMilestone(swimmer.lessonsCompleted) && (
-                        <span className="text-lg">
-                          {getLessonMilestone(swimmer.lessonsCompleted)}
-                        </span>
-                      )}
-                    </div>
+                    {swimmer.lessonsCompleted > 0 ? (
+                      <div className="flex items-center gap-1">
+                        <span className="font-medium">{swimmer.lessonsCompleted}</span>
+                        {getLessonMilestone(swimmer.lessonsCompleted) && (
+                          <span className="text-lg">
+                            {getLessonMilestone(swimmer.lessonsCompleted)}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </TableCell>
 
                   {/* Next Session */}

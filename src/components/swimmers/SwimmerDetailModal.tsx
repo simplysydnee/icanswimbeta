@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { StatusBadge, StatusDot } from './StatusBadge';
 import { EmailComposerModal } from '@/components/email/EmailComposerModal';
+import { cn } from '@/lib/utils';
 import ProgressUpdateModal from '@/components/progress/ProgressUpdateModal';
 import EditImportantNotesModal from '@/components/staff-mode/modals/EditImportantNotesModal';
 import { EnhancedSkillChecklist } from '@/components/instructor/EnhancedSkillChecklist';
@@ -1196,19 +1197,48 @@ export function SwimmerDetailModal({
 
           {/* Progress Tab - Compact Grid Layout */}
           <TabsContent value="progress" className="mt-4 space-y-4">
-            {/* Top Row: Level + Progress Bar */}
+            {/* Top Row: Level + Stats */}
             <div className="chart-section">
               <div className="flex flex-wrap items-center gap-4 mb-3">
-                {/* Current Level Display */}
+                {/* Current Level Badge */}
                 {currentLevel && (
                   <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: currentLevel.color || '#ccc' }} />
-                    <span className="text-sm font-medium">{currentLevel.displayName}</span>
-                    <span className="text-sm text-muted-foreground">
-                      ({swimmerSkills.filter(s => s.status === 'mastered').length}/{swimmerSkills.length} mastered)
+                    <span className={cn(
+                      "inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold",
+                      currentLevel.displayName?.toLowerCase() === 'white' && "bg-gray-100 text-gray-700",
+                      currentLevel.displayName?.toLowerCase() === 'red' && "bg-red-100 text-red-700",
+                      currentLevel.displayName?.toLowerCase() === 'yellow' && "bg-yellow-100 text-yellow-700",
+                      currentLevel.displayName?.toLowerCase() === 'green' && "bg-green-100 text-green-700",
+                      currentLevel.displayName?.toLowerCase() === 'blue' && "bg-blue-100 text-blue-700",
+                      !['white','red','yellow','green','blue'].includes(currentLevel.displayName?.toLowerCase() ?? '') && "bg-gray-100 text-gray-700"
+                    )}>
+                      {currentLevel.displayName}
                     </span>
                   </div>
                 )}
+
+                {/* Lessons Completed */}
+                <div className="flex items-center gap-1.5 text-sm">
+                  <span className="text-muted-foreground">Lessons:</span>
+                  <span className="font-semibold">{swimmer?.lessonsCompleted ?? 0}</span>
+                </div>
+
+                {/* Skills Mastered */}
+                <div className="flex items-center gap-1.5 text-sm">
+                  <span className="text-muted-foreground">Mastered:</span>
+                  <span className="font-semibold text-emerald-700">
+                    {swimmerSkills.filter(s => s.status === 'mastered').length}
+                  </span>
+                </div>
+
+                {/* Skills In Progress */}
+                <div className="flex items-center gap-1.5 text-sm">
+                  <span className="text-muted-foreground">In Progress:</span>
+                  <span className="font-semibold text-amber-700">
+                    {swimmerSkills.filter(s => s.status === 'in_progress').length}
+                  </span>
+                </div>
+
                 {/* Admin Level Selector - Inline */}
                 {isAdmin && swimmer && (
                   <div className="flex items-center gap-2 ml-auto">

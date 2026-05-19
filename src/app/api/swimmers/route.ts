@@ -117,6 +117,7 @@ export async function GET(req: Request) {
         bookings(
           id,
           status,
+          booking_type,
           session:sessions(
             start_time,
             instructor:instructor_id(full_name)
@@ -187,18 +188,22 @@ export async function GET(req: Request) {
 
     // Transform snake_case → camelCase for frontend consistency
     function transformSwimmer(raw: any) {
-      const completedBookings = raw.bookings?.filter((b: any) => b.status === 'completed') || [];
-      const lessonsCompleted = completedBookings.length;
+      const completedLessons = raw.bookings?.filter(
+        (b: any) => b.status === 'completed' && b.booking_type === 'lesson'
+      ) || [];
+      const lessonsCompleted = completedLessons.length;
 
       const now = new Date();
-      const upcomingBookings = raw.bookings?.filter((b: any) =>
+      const upcomingLessons = raw.bookings?.filter((b: any) =>
         b.status === 'confirmed' &&
+        b.booking_type === 'lesson' &&
         b.session &&
         b.session.length > 0 &&
         new Date(b.session[0].start_time) > now
       ) || [];
+      const lessonsUpcoming = upcomingLessons.length;
 
-      const nextBooking = upcomingBookings.sort((a: any, b: any) =>
+      const nextBooking = upcomingLessons.sort((a: any, b: any) =>
         new Date(a.session[0].start_time).getTime() - new Date(b.session[0].start_time).getTime()
       )[0];
 
@@ -235,6 +240,9 @@ export async function GET(req: Request) {
         assessmentStatus: raw.assessment_status,
         approvalStatus: raw.approval_status,
         currentLevelId: raw.current_level_id,
+        currentLevelName: level?.name
+          ? level.name.charAt(0).toUpperCase() + level.name.slice(1)
+          : null,
         paymentType: raw.payment_type,
         fundingSourceId: raw.funding_source_id,
         flexibleSwimmer: raw.flexible_swimmer,
@@ -291,6 +299,7 @@ export async function GET(req: Request) {
         activePurchaseOrder,
         nextSession,
         lessonsCompleted,
+        lessonsUpcoming,
         bookings: raw.bookings,
       };
     }

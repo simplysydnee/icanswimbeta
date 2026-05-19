@@ -20,6 +20,9 @@ import { useAllSessions, useOpenSessions, useDeleteSessions, useInstructors } fr
 import { format, parseISO, startOfDay, endOfDay, startOfMonth, endOfMonth, addMonths, subMonths, format as dateFnsFormat } from 'date-fns';
 import { AddSwimmerToSessionDialog } from '@/components/admin/AddSwimmerToSessionDialog';
 import { EditSessionDialog } from '@/components/admin/EditSessionDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { createClient } from '@/lib/supabase/client';
 
 
 // Status color helper
@@ -99,6 +102,29 @@ function AdminSessionsContent() {
   const [selectedSessionForAddSwimmer, setSelectedSessionForAddSwimmer] = useState<any>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedSessionForEdit, setSelectedSessionForEdit] = useState<any>(null);
+
+  // Swimmer profile modal
+  const [viewingSwimmerProfile, setViewingSwimmerProfile] = useState<any>(null);
+  const [swimmerProfileLoading, setSwimmerProfileLoading] = useState(false);
+
+  const handleViewSwimmer = async (swimmerId: string) => {
+    if (!swimmerId) return;
+    setSwimmerProfileLoading(true);
+    setViewingSwimmerProfile({ id: swimmerId }); // Show loading state
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('swimmers')
+      .select('*, parent:parent_id(id, full_name, email, phone), current_level:swim_levels(name, display_name, color)')
+      .eq('id', swimmerId)
+      .single();
+    if (error) {
+      console.error('Error fetching swimmer:', error);
+      setViewingSwimmerProfile(null);
+    } else {
+      setViewingSwimmerProfile(data);
+    }
+    setSwimmerProfileLoading(false);
+  };
 
   // Month navigation functions
   const navigateToMonth = (month: number, year: number) => {
@@ -1126,8 +1152,8 @@ function AdminSessionsContent() {
                           <TableCell className="px-2 py-2">
                             {isBooked && swimmer ? (
                               <button
-                                onClick={() => router.push(`/admin/swimmers/${swimmer.id}`)}
-                                className="text-xs font-medium text-[#23a1c0] hover:underline text-left"
+                                onClick={() => handleViewSwimmer(swimmer.id)}
+                                className="text-xs font-medium text-cyan-700 hover:text-cyan-900 hover:underline cursor-pointer text-left"
                               >
                                 {swimmer.first_name} {swimmer.last_name}
                               </button>
@@ -1261,7 +1287,7 @@ function AdminSessionsContent() {
                     })}
                     {filteredSessions.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                           No sessions found
                         </TableCell>
                       </TableRow>
@@ -1617,6 +1643,85 @@ function AdminSessionsContent() {
             </div>
           </div>
         )}
+
+        {/* Swimmer Profile Dialog */}
+        <Dialog open={!!viewingSwimmerProfile} onOpenChange={(open) => { if (!open) setViewingSwimmerProfile(null) }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {swimmerProfileLoading ? 'Loading...' : viewingSwimmerProfile?.first_name ? `${viewingSwimmerProfile.first_name} ${viewingSwimmerProfile.last_name}` : 'Swimmer Profile'}
+              </DialogTitle>
+            </DialogHeader>
+            {swimmerProfileLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : viewingSwimmerProfile ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-14 w-14">
+                    <AvatarFallback className="bg-cyan-100 text-cyan-700 text-lg">
+                      {((viewingSwimmerProfile.first_name?.[0] || '') + (viewingSwimmerProfile.last_name?.[0] || '')).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold text-base">{viewingSwimmerProfile.first_name} {viewingSwimmerProfile.last_name}</p>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {viewingSwimmerProfile.enrollment_status && (
+                        <Badge variant="outline" className="text-xs">
+                          {viewingSwimmerProfile.enrollment_status.replace('_', ' ')}
+                        </Badge>
+                      )}
+                      {viewingSwimmerProfile.current_level?.display_name && (
+                        <Badge className="text-xs" style={{ backgroundColor: viewingSwimmerProfile.current_level.color || '#6b7280' }}>
+                          {viewingSwimmerProfile.current_level.display_name}
+                        </Badge>
+                      )}
+                      {viewingSwimmerProfile.gender && (
+                        <Badge variant="secondary" className="text-xs">{viewingSwimmerProfile.gender}</Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  {viewingSwimmerProfile.parent?.full_name && (
+                    <>
+                      <span className="text-muted-foreground">Parent</span>
+                      <span>{viewingSwimmerProfile.parent.full_name}</span>
+                    </>
+                  )}
+                  {viewingSwimmerProfile.parent?.email && (
+                    <>
+                      <span className="text-muted-foreground">Email</span>
+                      <span className="truncate">{viewingSwimmerProfile.parent.email}</span>
+                    </>
+                  )}
+                  {viewingSwimmerProfile.parent?.phone && (
+                    <>
+                      <span className="text-muted-foreground">Phone</span>
+                      <span>{viewingSwimmerProfile.parent.phone}</span>
+                    </>
+                  )}
+                  {viewingSwimmerProfile.date_of_birth && (
+                    <>
+                      <span className="text-muted-foreground">Date of Birth</span>
+                      <span>{format(parseISO(viewingSwimmerProfile.date_of_birth), 'MMM d, yyyy')}</span>
+                    </>
+                  )}
+                  {viewingSwimmerProfile.current_level?.display_name && (
+                    <>
+                      <span className="text-muted-foreground">Current Level</span>
+                      <span>{viewingSwimmerProfile.current_level.display_name}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            ) : null}
+          </DialogContent>
+        </Dialog>
 
         {/* New Dialogs */}
         <AddSwimmerToSessionDialog

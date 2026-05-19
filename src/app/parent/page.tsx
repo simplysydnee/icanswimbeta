@@ -462,7 +462,7 @@ export default function ParentDashboard() {
   const today = format(new Date(), 'EEEE, MMMM d')
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* STEP 1: Header - Dark navy background */}
       <div className="bg-[#1a3a4f] text-white px-4 py-6 md:p-6">
         <div className="w-full max-w-5xl mx-auto">
@@ -471,14 +471,14 @@ export default function ParentDashboard() {
               <p className="text-sm text-gray-300">{today}</p>
               <h1 className="text-2xl font-bold mt-1">Welcome back{firstName ? `, ${firstName}` : ''}!</h1>
             </div>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" className="text-white hover:bg-white/10" asChild>
+            <div className="flex gap-2 shrink-0">
+              <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 whitespace-nowrap" asChild>
                 <Link href="/enroll">
                   <Plus className="h-4 w-4 mr-2" />
                   Add swimmer
                 </Link>
               </Button>
-              <Button size="sm" className="bg-[#23a1c0] hover:bg-[#1d8ba6] text-white" asChild>
+              <Button size="sm" className="bg-[#23a1c0] hover:bg-[#1d8ba6] text-white whitespace-nowrap" asChild>
                 <Link href="/parent/book">
                   <Calendar className="h-4 w-4 mr-2" />
                   Book lesson
@@ -525,7 +525,7 @@ export default function ParentDashboard() {
                   const buttonConfig = getSwimmerEmptyAction(swimmer)
                   return (
                     <Card key={swimmer.id} className="border border-dashed border-gray-300">
-                      <CardContent className="p-5">
+                      <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           <Avatar className="h-10 w-10 bg-[#2a5e84] shrink-0">
                             <AvatarFallback className="bg-[#2a5e84] text-white text-sm">
@@ -544,7 +544,7 @@ export default function ParentDashboard() {
                             {buttonConfig.showButton && (
                               <Button
                                 size="sm"
-                                className="mt-3 bg-[#23a1c0] hover:bg-[#1d8ba6] text-white"
+                                className="mt-3 bg-[#23a1c0] hover:bg-[#1d8ba6] text-white w-full md:w-auto"
                                 asChild
                               >
                                 <Link href={buttonConfig.buttonHref}>
@@ -776,7 +776,7 @@ export default function ParentDashboard() {
                 const buttonConfig = getSwimmerEmptyAction(swimmer)
                 return (
                   <Card key={swimmer.id} className="border border-dashed border-gray-300 mt-4">
-                    <CardContent className="p-5">
+                    <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         <Avatar className="h-10 w-10 bg-[#2a5e84] shrink-0">
                           <AvatarFallback className="bg-[#2a5e84] text-white text-sm">
@@ -792,7 +792,7 @@ export default function ParentDashboard() {
                           {buttonConfig.showButton && (
                             <Button
                               size="sm"
-                              className="mt-3 bg-[#23a1c0] hover:bg-[#1d8ba6] text-white"
+                              className="mt-3 bg-[#23a1c0] hover:bg-[#1d8ba6] text-white w-full md:w-auto"
                               asChild
                             >
                               <Link href={buttonConfig.buttonHref}>
