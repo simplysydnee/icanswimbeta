@@ -1,10 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -47,7 +55,7 @@ interface SwimLevel {
 }
 
 export function ApprovalStep({ data, onChange, onSubmit, isSubmitting }: ApprovalStepProps) {
-  const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [hasImportantNotes, setHasImportantNotes] = useState(data.importantNotesText.trim() !== '');
   const [swimLevels, setSwimLevels] = useState<SwimLevel[]>([]);
   const [isLoadingLevels, setIsLoadingLevels] = useState(true);
@@ -71,11 +79,11 @@ export function ApprovalStep({ data, onChange, onSubmit, isSubmitting }: Approva
     onChange({ importantNotesText: text });
   };
 
-  const handleSubmit = () => {
-    if (!confirmSubmit) {
-      setConfirmSubmit(true);
-      return;
-    }
+  const handleOpenConfirm = () => {
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmedSubmit = () => {
     onSubmit();
   };
 
@@ -239,7 +247,7 @@ export function ApprovalStep({ data, onChange, onSubmit, isSubmitting }: Approva
                 </Label>
                 <p className="text-sm text-muted-foreground mt-1 ml-7">
                   Swimmer is ready to begin regular lessons. They will be enrolled in the system
-                  and parents will be notified. For funded clients, a lessons PO will be created.
+                  and parents will be notified.
                 </p>
               </div>
             </div>
@@ -391,78 +399,28 @@ export function ApprovalStep({ data, onChange, onSubmit, isSubmitting }: Approva
 
       {/* Submit Button */}
       <div className="pt-4 border-t">
-        {!confirmSubmit ? (
-          <Button
-            onClick={handleSubmit}
-            disabled={!data.approvalStatus || (data.approvalStatus === 'approved' && !data.swimLevelId) || isSubmitting}
-            className="w-full"
-            size="lg"
-          >
-            {isSubmitting ? (
-              <>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2"></div>
-                Submitting Assessment...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="h-5 w-5 mr-2" />
-                Review and Submit Assessment
-              </>
-            )}
-          </Button>
-        ) : (
-          <div className="space-y-4">
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-red-800">Final Confirmation</h4>
-                  <p className="text-sm text-red-700 mt-1">
-                    Are you sure you want to submit this assessment? Once submitted, it cannot be edited.
-                    The swimmer will be {data.approvalStatus === 'approved' ? 'enrolled in' : 'dropped from'} lessons
-                    {data.approvalStatus === 'approved' && data.swimLevelId && (
-                      <> and placed at <strong>{swimLevels.find(l => l.id === data.swimLevelId)?.displayName || 'the selected'}</strong> level</>
-                    )}
-                    {data.approvalStatus === 'approved' && data.isPriorityBooking && (
-                      <> with <strong>priority booking</strong> enabled</>
-                    )}
-                    . Parents will be notified automatically.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                onClick={onSubmit}
-                disabled={isSubmitting}
-                className="flex-1"
-                size="lg"
-                variant="destructive"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2"></div>
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="h-5 w-5 mr-2" />
-                    Yes, Submit Assessment
-                  </>
-                )}
-              </Button>
-              <Button
-                onClick={() => setConfirmSubmit(false)}
-                variant="outline"
-                className="flex-1"
-                size="lg"
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        )}
+        <Button
+          onClick={handleOpenConfirm}
+          disabled={
+            !data.approvalStatus ||
+            (data.approvalStatus === 'approved' && !data.swimLevelId) ||
+            isSubmitting
+          }
+          className="w-full"
+          size="lg"
+        >
+          {isSubmitting ? (
+            <>
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2"></div>
+              Submitting Assessment...
+            </>
+          ) : (
+            <>
+              <CheckCircle className="h-5 w-5 mr-2" />
+              Review and Submit Assessment
+            </>
+          )}
+        </Button>
 
         {!data.approvalStatus && (
           <p className="text-sm text-red-600 mt-2 text-center">
@@ -475,6 +433,79 @@ export function ApprovalStep({ data, onChange, onSubmit, isSubmitting }: Approva
           </p>
         )}
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={confirmOpen}
+        onOpenChange={(open) => {
+          if (isSubmitting) return;
+          setConfirmOpen(open);
+        }}
+      >
+        <DialogContent
+          onEscapeKeyDown={(e) => {
+            if (isSubmitting) e.preventDefault();
+          }}
+          onPointerDownOutside={(e) => {
+            if (isSubmitting) e.preventDefault();
+          }}
+          onInteractOutside={(e) => {
+            if (isSubmitting) e.preventDefault();
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              Confirm Assessment Submission
+            </DialogTitle>
+            <DialogDescription>
+              Once submitted, this assessment cannot be edited. The swimmer will be{' '}
+              {data.approvalStatus === 'approved' ? 'enrolled in' : 'dropped from'} lessons
+              {data.approvalStatus === 'approved' && data.swimLevelId && (
+                <>
+                  {' '}and placed at{' '}
+                  <strong>
+                    {swimLevels.find((l) => l.id === data.swimLevelId)?.displayName ||
+                      'the selected'}
+                  </strong>{' '}
+                  level
+                </>
+              )}
+              {data.approvalStatus === 'approved' && data.isPriorityBooking && (
+                <>
+                  {' '}with <strong>priority booking</strong> enabled
+                </>
+              )}
+              . Parents will be notified automatically.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmedSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2"></div>
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                  Submit Assessment
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

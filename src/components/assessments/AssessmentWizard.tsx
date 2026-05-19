@@ -1,28 +1,33 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight, Save } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { format } from 'date-fns';
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { SwimSkillsStep } from './steps/SwimSkillsStep';
 import { RoadblocksStep } from './steps/RoadblocksStep';
 import { GoalsStep } from './steps/GoalsStep';
+import { NotesStep } from './steps/NotesStep';
 import { ApprovalStep } from './steps/ApprovalStep';
 import { Progress } from '@/components/ui/progress';
 
 const STEPS = [
-  { id: 'basic', title: 'Basic Info', component: BasicInfoStep },
-  { id: 'skills', title: 'Swim Skills', component: SwimSkillsStep },
-  { id: 'roadblocks', title: 'Roadblocks', component: RoadblocksStep },
-  { id: 'goals', title: 'Goals', component: GoalsStep },
-  { id: 'approval', title: 'Approval', component: ApprovalStep },
+  { id: 'basic', title: 'Basic Info' },
+  { id: 'skills', title: 'Swim Skills' },
+  { id: 'roadblocks', title: 'Roadblocks' },
+  { id: 'goals', title: 'Goals' },
+  { id: 'notes', title: 'Notes' },
+  { id: 'approval', title: 'Approval' },
 ];
 
-interface AssessmentData {
+export interface AssessmentData {
   // Basic Info
   swimmerId: string;
   swimmerName?: string;
+  bookingId: string;
+  sessionId: string;
   instructor: string;
   assessmentDate: Date;
   strengths: string;
@@ -37,6 +42,16 @@ interface AssessmentData {
   // Goals
   swimSkillsGoals: string;
   safetyGoals: string;
+
+  // Notes (Step 5)
+  lessonDate: string;
+  attendanceStatus: 'present' | 'absent' | 'late';
+  lessonSummary: string;
+  swimmerMood: 'happy' | 'neutral' | 'frustrated' | 'tired' | '';
+  waterComfort: 'comfortable' | 'cautious' | 'anxious' | '';
+  instructorNotesPrivate: string;
+  parentNotes: string;
+  sharedWithParent: boolean;
 
   // Approval
   approvalStatus: 'approved' | 'dropped' | '';
@@ -54,14 +69,18 @@ interface AssessmentWizardProps {
   initialData?: Partial<AssessmentData>;
 }
 
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
 export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Initialize data with defaults
   const [data, setData] = useState<AssessmentData>(() => ({
     swimmerId: '',
+    bookingId: '',
+    sessionId: '',
     instructor: '',
     assessmentDate: new Date(),
     strengths: '',
@@ -70,6 +89,14 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
     roadblocks: {},
     swimSkillsGoals: '',
     safetyGoals: '',
+    lessonDate: format(new Date(), 'yyyy-MM-dd'),
+    attendanceStatus: 'present',
+    lessonSummary: '',
+    swimmerMood: '',
+    waterComfort: '',
+    instructorNotesPrivate: '',
+    parentNotes: '',
+    sharedWithParent: false,
     approvalStatus: '',
     importantNotesText: '',
     swimLevelId: undefined,
@@ -77,66 +104,61 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
     ...initialData,
   }));
 
-  // Auto-save to localStorage
-  useEffect(() => {
-    const saveToStorage = () => {
-      try {
-        localStorage.setItem('assessment_wizard_draft', JSON.stringify({
-          data,
-          currentStep,
-          timestamp: new Date().toISOString(),
-        }));
-        setSaveStatus('saved');
-      } catch (error) {
-        console.error('Failed to save draft:', error);
-      }
-    };
-
-    const timer = setTimeout(saveToStorage, 1000);
-    return () => clearTimeout(timer);
-  }, [data, currentStep]);
-
-  // Load draft from localStorage on mount
-  useEffect(() => {
-    try {
-      const draft = localStorage.getItem('assessment_wizard_draft');
-      if (draft) {
-        const parsed = JSON.parse(draft);
-        // Only load if draft is less than 24 hours old
-        const draftTime = new Date(parsed.timestamp);
-        const now = new Date();
-        const hoursDiff = (now.getTime() - draftTime.getTime()) / (1000 * 60 * 60);
-
-        if (hoursDiff < 24) {
-          setData(parsed.data);
-          setCurrentStep(parsed.currentStep);
-          setSaveStatus('saved');
-        } else {
-          localStorage.removeItem('assessment_wizard_draft');
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load draft:', error);
-    }
-  }, []);
-
   const handleDataChange = useCallback((newData: Partial<AssessmentData>) => {
-    setData(prev => ({ ...prev, ...newData }));
-    setSaveStatus('saving');
+    setData((prev) => ({ ...prev, ...newData }));
   }, []);
 
-  const handleNext = () => {
+  // Hydrate the wizard from a server-side draft (called by Step 1 after the
+  // swimmer is selected). Splat the persisted fields onto the existing state
+  // so locally-typed values that arrived between selection and fetch aren't
+  // lost.
+  const handleHydrate = useCallback((draft: Partial<AssessmentData>) => {
+    setData((prev) => ({ ...prev, ...draft }));
+  }, []);
+
+  const persistDraft = useCallback(
+    async (latest: AssessmentData) => {
+      // Saves require at least swimmer/booking/date — no point hitting the
+      // server before Step 1 has been completed.
+      if (!latest.swimmerId || !latest.bookingId || !latest.assessmentDate) {
+        return;
+      }
+      try {
+        setSaveStatus('saving');
+        setSaveError(null);
+        const response = await fetch('/api/assessments/wizard/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(latest),
+        });
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          const detail =
+            err?.details || err?.error || `Save failed (${response.status})`;
+          throw new Error(detail);
+        }
+        setSaveStatus('saved');
+      } catch (err) {
+        console.error('Failed to persist wizard draft:', err);
+        setSaveStatus('error');
+        setSaveError(err instanceof Error ? err.message : 'Failed to save');
+      }
+    },
+    []
+  );
+
+  const handleNext = async () => {
     if (currentStep < STEPS.length - 1) {
-      setCurrentStep(prev => prev + 1);
-      // Scroll to top on step change
+      await persistDraft(data);
+      setCurrentStep((prev) => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  const handleBack = () => {
+  const handleBack = async () => {
     if (currentStep > 0) {
-      setCurrentStep(prev => prev - 1);
-      // Scroll to top on step change
+      await persistDraft(data);
+      setCurrentStep((prev) => prev - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -145,8 +167,6 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
     try {
       setIsSubmitting(true);
       await onSubmit(data);
-      // Clear draft on successful submit
-      localStorage.removeItem('assessment_wizard_draft');
     } catch (error) {
       console.error('Failed to submit assessment:', error);
       throw error;
@@ -160,11 +180,13 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
 
     if (step.id === 'basic') {
       return (
-        data.swimmerId &&
-        data.instructor &&
-        data.assessmentDate &&
-        data.strengths.trim() &&
-        data.challenges.trim()
+        !!data.swimmerId &&
+        !!data.bookingId &&
+        !!data.sessionId &&
+        !!data.instructor &&
+        !!data.assessmentDate &&
+        data.strengths.trim().length > 0 &&
+        data.challenges.trim().length > 0
       );
     }
 
@@ -179,8 +201,6 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
   const isLastStep = currentStep === STEPS.length - 1;
   const progress = ((currentStep + 1) / STEPS.length) * 100;
 
-  const CurrentStepComponent = STEPS[currentStep].component;
-
   return (
     <div className="space-y-6">
       {/* Progress Bar */}
@@ -190,8 +210,11 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
             Step {currentStep + 1} of {STEPS.length}: {STEPS[currentStep].title}
           </div>
           <div className="text-sm text-muted-foreground">
-            {saveStatus === 'saving' && 'Saving...'}
+            {saveStatus === 'saving' && 'Saving…'}
             {saveStatus === 'saved' && 'Draft saved'}
+            {saveStatus === 'error' && (
+              <span className="text-red-600">Couldn't save draft</span>
+            )}
           </div>
         </div>
         <Progress value={progress} className="h-2" />
@@ -219,6 +242,16 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
         ))}
       </div>
 
+      {saveStatus === 'error' && saveError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-700">
+            <span className="font-medium">Draft save failed:</span> {saveError}.
+            You can keep working — your inputs are kept locally and we'll retry
+            on the next step.
+          </p>
+        </div>
+      )}
+
       {/* Current Step Content */}
       <Card>
         <CardContent className="pt-6">
@@ -226,12 +259,16 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
             <BasicInfoStep
               data={{
                 swimmerId: data.swimmerId,
+                swimmerName: data.swimmerName,
+                bookingId: data.bookingId,
+                sessionId: data.sessionId,
                 instructor: data.instructor,
                 assessmentDate: data.assessmentDate,
                 strengths: data.strengths,
                 challenges: data.challenges,
               }}
               onChange={handleDataChange}
+              onHydrate={handleHydrate}
             />
           )}
 
@@ -260,6 +297,22 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
           )}
 
           {currentStep === 4 && (
+            <NotesStep
+              data={{
+                lessonDate: data.lessonDate,
+                attendanceStatus: data.attendanceStatus,
+                lessonSummary: data.lessonSummary,
+                swimmerMood: data.swimmerMood,
+                waterComfort: data.waterComfort,
+                instructorNotesPrivate: data.instructorNotesPrivate,
+                parentNotes: data.parentNotes,
+                sharedWithParent: data.sharedWithParent,
+              }}
+              onChange={handleDataChange}
+            />
+          )}
+
+          {currentStep === 5 && (
             <ApprovalStep
               data={data}
               onChange={(approvalData) => handleDataChange(approvalData)}
@@ -276,7 +329,7 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
           <Button
             onClick={handleBack}
             variant="outline"
-            disabled={currentStep === 0}
+            disabled={currentStep === 0 || saveStatus === 'saving'}
           >
             <ChevronLeft className="h-4 w-4 mr-2" />
             Back
@@ -284,7 +337,7 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
 
           <Button
             onClick={handleNext}
-            disabled={!canProceed}
+            disabled={!canProceed || saveStatus === 'saving'}
           >
             Next
             <ChevronRight className="h-4 w-4 ml-2" />
@@ -301,29 +354,17 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
               variant="outline"
               className="flex-1"
               size="lg"
+              disabled={saveStatus === 'saving'}
             >
               <ChevronLeft className="h-4 w-4 mr-2" />
               Back
-            </Button>
-            <Button
-              onClick={() => {
-                // Save draft button
-                setSaveStatus('saving');
-                setTimeout(() => setSaveStatus('saved'), 500);
-              }}
-              variant="outline"
-              className="flex-1"
-              size="lg"
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Save Draft
             </Button>
           </div>
         </div>
       )}
 
       {/* Validation Error */}
-      {!canProceed && currentStep !== 4 && (
+      {!canProceed && !isLastStep && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-sm text-red-700 text-center">
             Please complete all required fields before proceeding
@@ -336,9 +377,9 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
         <h4 className="font-medium text-blue-800 mb-2">Tips for this step:</h4>
         {currentStep === 0 && (
           <ul className="text-sm text-blue-700 space-y-1">
-            <li>• Select the correct swimmer from today's scheduled assessments</li>
-            <li>• Choose the instructor who conducted the assessment</li>
-            <li>• Be specific about strengths and challenges - parents will see this</li>
+            <li>• Select the swimmer whose assessment you're completing &mdash; the list shows only swimmers with a scheduled assessment</li>
+            <li>• Instructor and date are auto-filled from the assessment booking</li>
+            <li>• Be specific about strengths and challenges &mdash; parents will see this</li>
             <li>• Use positive, constructive language</li>
           </ul>
         )}
@@ -367,6 +408,14 @@ export function AssessmentWizard({ onSubmit, initialData }: AssessmentWizardProp
           </ul>
         )}
         {currentStep === 4 && (
+          <ul className="text-sm text-blue-700 space-y-1">
+            <li>• All fields are optional &mdash; leave the step blank to skip creating a progress note</li>
+            <li>• "Share with parent" must be checked for the parent notes to be visible to family</li>
+            <li>• Instructor notes are private and only visible to staff</li>
+            <li>• A progress note is only saved if you fill at least one field</li>
+          </ul>
+        )}
+        {currentStep === 5 && (
           <ul className="text-sm text-blue-700 space-y-1">
             <li>• Review all information carefully before submitting</li>
             <li>• "Approved" enrolls swimmer in regular lessons</li>

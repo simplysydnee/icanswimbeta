@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { MobileNav } from './mobile-nav'
 import { useAuth } from '@/contexts/AuthContext'
 import { UserMenu } from './UserMenu'
@@ -31,6 +31,29 @@ type AttentionPo = {
   } | null
 }
 
+const SEEN_IDS_STORAGE_KEY = 'icanswim:po-attention:seen-ids'
+
+function readSeenIds(): Set<string> {
+  if (typeof window === 'undefined') return new Set()
+  try {
+    const raw = window.localStorage.getItem(SEEN_IDS_STORAGE_KEY)
+    if (!raw) return new Set()
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? new Set(parsed.filter((v) => typeof v === 'string')) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+function writeSeenIds(ids: string[]): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(SEEN_IDS_STORAGE_KEY, JSON.stringify(ids))
+  } catch {
+    // localStorage may be unavailable (private mode, quota); badge will simply not persist.
+  }
+}
+
 export function ResponsiveHeader() {
   const { role } = useAuth()
   const pathname = usePathname()
@@ -39,7 +62,13 @@ export function ResponsiveHeader() {
 
   const [attentionCount, setAttentionCount] = useState(0)
   const [attentionRows, setAttentionRows] = useState<AttentionPo[]>([])
+  const [attentionIds, setAttentionIds] = useState<string[]>([])
   const [attentionLoading, setAttentionLoading] = useState(false)
+  const [seenIds, setSeenIds] = useState<Set<string>>(() => new Set())
+
+  useEffect(() => {
+    setSeenIds(readSeenIds())
+  }, [])
 
   const fetchAttention = useCallback(async () => {
     setAttentionLoading(true)
@@ -48,17 +77,23 @@ export function ResponsiveHeader() {
       if (!listRes.ok) {
         setAttentionCount(0)
         setAttentionRows([])
+        setAttentionIds([])
         return
       }
       const j = await listRes.json()
       const rows = Array.isArray(j.data) ? (j.data as AttentionPo[]) : []
+      const ids = Array.isArray(j.attentionIds)
+        ? (j.attentionIds as unknown[]).filter((v): v is string => typeof v === 'string')
+        : rows.map((r) => r.id)
       setAttentionRows(rows)
+      setAttentionIds(ids)
       setAttentionCount(
-        typeof j.attentionCount === 'number' ? j.attentionCount : rows.length
+        typeof j.attentionCount === 'number' ? j.attentionCount : ids.length
       )
     } catch {
       setAttentionCount(0)
       setAttentionRows([])
+      setAttentionIds([])
     } finally {
       setAttentionLoading(false)
     }
@@ -68,10 +103,26 @@ export function ResponsiveHeader() {
     if (!isAdminPoAttention) {
       setAttentionCount(0)
       setAttentionRows([])
+      setAttentionIds([])
       return
     }
     void fetchAttention()
   }, [isAdminPoAttention, pathname, fetchAttention])
+
+  const unreadCount = useMemo(
+    () => attentionIds.reduce((n, id) => (seenIds.has(id) ? n : n + 1), 0),
+    [attentionIds, seenIds]
+  )
+
+  const handlePopoverOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open || !isAdminPoAttention) return
+      const snapshot = new Set(attentionIds)
+      writeSeenIds(attentionIds)
+      setSeenIds(snapshot)
+    },
+    [attentionIds, isAdminPoAttention]
+  )
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -90,13 +141,13 @@ export function ResponsiveHeader() {
 
         {/* Right side - notifications & profile */}
         <div className="flex items-center gap-2">
-          <Popover>
+          <Popover onOpenChange={handlePopoverOpenChange}>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
-                {isAdminPoAttention && attentionCount > 0 ? (
+                {isAdminPoAttention && unreadCount > 0 ? (
                   <Badge className="absolute -top-0.5 -right-0.5 h-5 min-w-5 px-1 flex items-center justify-center p-0 text-[10px] border-0 bg-red-600 hover:bg-red-600 text-white pointer-events-none">
-                    {attentionCount > 99 ? '99+' : attentionCount}
+                    {unreadCount > 99 ? '99+' : unreadCount}
                   </Badge>
                 ) : null}
               </Button>

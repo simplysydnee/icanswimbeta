@@ -1,7 +1,7 @@
 'use client';
 
 import { RoleGuard } from '@/components/auth/RoleGuard';
-import { AssessmentWizard } from '@/components/assessments/AssessmentWizard';
+import { AssessmentWizard, type AssessmentData } from '@/components/assessments/AssessmentWizard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ClipboardCheck, Smartphone, Save, Upload } from 'lucide-react';
@@ -9,31 +9,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
 
-interface AssessmentData {
-  swimmerId: string;
-  swimmerName?: string;
-  instructor: string;
-  assessmentDate: Date;
-  strengths: string;
-  challenges: string;
-  swimSkills: Record<string, 'emerging' | 'na' | 'no' | 'yes'>;
-  roadblocks: Record<string, { needsAddressing: boolean; intervention: string }>;
-  swimSkillsGoals: string;
-  safetyGoals: string;
-  approvalStatus: 'approved' | 'dropped' | '';
-  importantNotesText: string;
-  swimLevelId?: string;
-  isPriorityBooking?: boolean;
-}
-
 export default function CompleteAssessmentPage() {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async (data: AssessmentData) => {
     try {
-      setIsSubmitting(true);
       setSubmitError(null);
 
       const response = await fetch('/api/assessments/complete', {
@@ -46,7 +27,10 @@ export default function CompleteAssessmentPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit assessment');
+        const message = errorData.details
+          ? `${errorData.error || 'Failed to submit assessment'}: ${errorData.details}`
+          : errorData.error || 'Failed to submit assessment';
+        throw new Error(message);
       }
 
       // Redirect to success page or assessments list
@@ -55,8 +39,6 @@ export default function CompleteAssessmentPage() {
       console.error('Error submitting assessment:', error);
       setSubmitError(error instanceof Error ? error.message : 'Failed to submit assessment');
       throw error;
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -68,7 +50,7 @@ export default function CompleteAssessmentPage() {
           <div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Complete Assessment</h1>
             <p className="text-muted-foreground">
-              5-step wizard for poolside assessment completion
+              6-step wizard for poolside assessment completion
             </p>
           </div>
           <Button variant="outline" asChild>
@@ -142,7 +124,7 @@ export default function CompleteAssessmentPage() {
                     <div>
                       <div className="font-medium text-sm">Basic Information</div>
                       <div className="text-xs text-muted-foreground">
-                        Select swimmer, instructor, date, and provide strengths/challenges
+                        Pick a swimmer with a scheduled assessment; instructor and date auto-fill
                       </div>
                     </div>
                   </div>
@@ -182,6 +164,17 @@ export default function CompleteAssessmentPage() {
                   <div className="flex items-start gap-3">
                     <div className="h-6 w-6 rounded-full bg-cyan-100 flex items-center justify-center flex-shrink-0">
                       <span className="text-cyan-700 text-xs font-bold">5</span>
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm">Notes</div>
+                      <div className="text-xs text-muted-foreground">
+                        Optional lesson note (summary, mood, water comfort, share with parent)
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="h-6 w-6 rounded-full bg-cyan-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-cyan-700 text-xs font-bold">6</span>
                     </div>
                     <div>
                       <div className="font-medium text-sm">Approval & Submit</div>
@@ -287,8 +280,8 @@ export default function CompleteAssessmentPage() {
                     <div className="font-medium text-blue-800 text-sm">If Approved:</div>
                     <ul className="text-xs text-blue-700 mt-1 space-y-1">
                       <li>• Swimmer enrolled in regular lessons</li>
+                      <li>• Assessment booking marked completed</li>
                       <li>• Parents notified with assessment summary</li>
-                      <li>• For funded clients: Lessons PO created</li>
                       <li>• Booking opens for regular sessions</li>
                     </ul>
                   </div>
