@@ -1,6 +1,7 @@
 'use client';
 
 import { RoleGuard } from '@/components/auth/RoleGuard';
+import { AssessmentDetailsModal } from '@/components/admin/AssessmentDetailsModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -52,6 +53,7 @@ export default function AdminAssessmentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [detailsId, setDetailsId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAssessments();
@@ -371,7 +373,11 @@ export default function AdminAssessmentsPage() {
                             Complete Assessment
                           </Button>
                         )}
-                        <Button variant="outline" className="w-full md:w-auto">
+                        <Button
+                          variant="outline"
+                          className="w-full md:w-auto"
+                          onClick={() => setDetailsId(assessment.id)}
+                        >
                           View Details
                           <ChevronRight className="h-4 w-4 ml-2" />
                         </Button>
@@ -383,6 +389,14 @@ export default function AdminAssessmentsPage() {
             )}
           </CardContent>
         </Card>
+
+        <AssessmentDetailsModal
+          assessmentId={detailsId}
+          open={detailsId !== null}
+          onOpenChange={(open) => {
+            if (!open) setDetailsId(null);
+          }}
+        />
       </div>
     </RoleGuard>
   );
