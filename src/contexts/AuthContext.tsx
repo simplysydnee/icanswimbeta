@@ -69,14 +69,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoadingProfile(true)
 
-      // Set a global timeout for the entire fetchUserProfile operation (reduced from 30s)
+      // Set a global timeout for the entire fetchUserProfile operation
       const globalTimeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Auth fetch timeout after 10 seconds')), 10000)
+        setTimeout(() => reject(new Error('Auth fetch timeout after 20 seconds')), 20000)
       );
 
-      // Set a timeout for individual database queries (reduced from 10s)
+      // Set a timeout for individual database queries
       const queryTimeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Database query timeout after 5 seconds')), 5000)
+        setTimeout(() => reject(new Error('Database query timeout after 15 seconds')), 15000)
       );
 
       // Fetch profile
@@ -258,10 +258,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Check if it's a timeout error
+      // Check if it's a timeout error — retry once before giving up
       const errorMessage = String(error);
       if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
-        // Create a minimal profile object to allow the UI to render
+        if (retryCount === 0) {
+          // Give it one more try with a short delay before showing an error
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return fetchUserProfile(userId, userEmail, 1);
+        }
+        // After retry, create a minimal profile so the UI can still render
         const minimalProfile: UserWithRole = {
           id: userId,
           email: userEmail || '',

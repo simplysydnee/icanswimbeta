@@ -11,14 +11,14 @@ export default function DashboardRedirect() {
   const router = useRouter();
   const [hasTimedOut, setHasTimedOut] = useState(false);
 
-  // Timeout after 8 seconds to prevent infinite loading
+  // Timeout after 30 seconds — gives deployed Supabase cold starts enough time
   useEffect(() => {
     const timer = setTimeout(() => {
       const isLoading = loading || isLoadingProfile;
       if (isLoading) {
         setHasTimedOut(true);
       }
-    }, 8000);
+    }, 30000);
 
     return () => clearTimeout(timer);
   }, [loading, isLoadingProfile]);
