@@ -17,7 +17,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertCircle, Loader2, Calendar, FilterX, Plus, MoreHorizontal, Eye, Edit, UserPlus, Users, XCircle, CheckCircle, Trash2, Download, X, CalendarCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAllSessions, useOpenSessions, useDeleteSessions, useInstructors } from '@/hooks';
-import { format, parseISO, startOfDay, endOfDay, startOfMonth, endOfMonth, addMonths, subMonths, format as dateFnsFormat } from 'date-fns';
+import { format, parseISO, startOfDay, endOfDay, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
+import { studioTime12, studioTime24, studioShortDate, studioFullDate, studioDateString, studioDayOfWeek } from '@/lib/timezone';
 import { AddSwimmerToSessionDialog } from '@/components/admin/AddSwimmerToSessionDialog';
 import { EditSessionDialog } from '@/components/admin/EditSessionDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -37,6 +38,14 @@ function getStatusColor(status: string) {
     case 'no_show': return 'bg-red-100 text-red-700 border-red-300'
     default: return 'bg-gray-100 text-gray-700 border-gray-300'
   }
+}
+
+// Session type badge helper (matches parent dashboard colors)
+function getSessionTypeBadge(sessionType?: string) {
+  if (sessionType === 'assessment') {
+    return 'bg-[#7dc842] text-white border-[#7dc842]';
+  }
+  return 'bg-[#23a1c0] text-white border-[#23a1c0]';
 }
 
 function AdminSessionsContent() {
@@ -78,6 +87,8 @@ function AdminSessionsContent() {
 
   // State
   const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'list' | 'group'>('group');
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
@@ -85,6 +96,7 @@ function AdminSessionsContent() {
     instructorFilter: 'all',
     locationFilter: 'all',
     search: '',
+    daysOfWeek: [] as string[],
   });
 
   // Modal states
@@ -194,13 +206,15 @@ function AdminSessionsContent() {
       });
     }
 
-    // Apply time of day filter
+    // Apply time of day filter (using studio timezone)
     if (filters.timeFilter !== 'all') {
       filtered = filtered.filter(s => {
-        const hour = parseISO(s.start_time).getHours();
+        const hour = parseInt(studioTime24(s.start_time).split(':')[0], 10);
         if (filters.timeFilter === 'morning') return hour >= 6 && hour < 12;
         if (filters.timeFilter === 'afternoon') return hour >= 12 && hour < 17;
         if (filters.timeFilter === 'evening') return hour >= 17 && hour < 22;
+        if (filters.timeFilter === 'am') return hour >= 0 && hour < 12;
+        if (filters.timeFilter === 'pm') return hour >= 12 && hour < 24;
         return true;
       });
     }
@@ -208,6 +222,11 @@ function AdminSessionsContent() {
     // Apply instructor filter
     if (filters.instructorFilter !== 'all') {
       filtered = filtered.filter(s => s.instructor_id === filters.instructorFilter);
+    }
+
+    // Apply day of week filter
+    if (filters.daysOfWeek.length > 0) {
+      filtered = filtered.filter(s => filters.daysOfWeek.includes(s.day_of_week));
     }
 
     // Apply location filter
@@ -232,6 +251,41 @@ function AdminSessionsContent() {
 
     return filtered;
   }, [allSessions, statusFilter, filters]);
+
+  // Group sessions by instructor_id + day_of_week + time slot for group view
+  const groupedSessions = useMemo(() => {
+    const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const groups = new Map<string, any[]>();
+
+    filteredSessions.forEach(session => {
+      const day = session.day_of_week;
+      const time = studioTime24(session.start_time);
+      const instructorId = session.instructor_id || 'unassigned';
+      const key = `${instructorId}|${day}|${time}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(session);
+    });
+
+    return Array.from(groups.entries())
+      .map(([key, sessions]) => ({
+        key,
+        dayOfWeek: sessions[0].day_of_week,
+        timeLabel: studioTime12(sessions[0].start_time),
+        endTimeLabel: studioTime12(sessions[0].end_time),
+        instructor: sessions[0].instructor_name || 'Unassigned',
+        instructorId: sessions[0].instructor_id,
+        location: sessions[0].location || '',
+        sessions: sessions.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()),
+        // Determine if this is a recurring slot (multiple dates) or single
+        isRecurring: sessions.length > 1 || sessions.some(s => s.day_of_week && sessions.filter(x => x.day_of_week === s.day_of_week).length > 1),
+        weeksCount: sessions.length,
+      }))
+      .sort((a, b) => {
+        const dayDiff = dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek);
+        if (dayDiff !== 0) return dayDiff;
+        return a.timeLabel.localeCompare(b.timeLabel);
+      });
+  }, [filteredSessions]);
 
   // Calculate statistics
   const stats = useMemo(() => data?.stats || {
@@ -314,8 +368,29 @@ function AdminSessionsContent() {
       return;
     }
 
+    // Filter to only draft sessions
+    const draftIds = allSessions
+      .filter(s => selectedSessionIds.has(s.id) && s.status === 'draft')
+      .map(s => s.id);
+
+    if (draftIds.length === 0) {
+      toast({
+        title: 'No draft sessions selected',
+        description: 'Only draft sessions can be opened for booking.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (draftIds.length < selectedSessionIds.size) {
+      toast({
+        title: 'Filtering to draft sessions',
+        description: `${selectedSessionIds.size - draftIds.length} non-draft session(s) were skipped.`,
+      });
+    }
+
     openSessions(
-      { sessionIds: Array.from(selectedSessionIds) },
+      { sessionIds: draftIds },
       {
         onSuccess: (result) => {
           toast({
@@ -355,8 +430,9 @@ function AdminSessionsContent() {
 
     if (!confirmed) return;
 
+    // Send month+year instead of all session IDs to avoid URL length limits
     openSessions(
-      { sessionIds: draftSessions.map(s => s.id) },
+      { month: currentMonthYear.month, year: currentMonthYear.year },
       {
         onSuccess: (result) => {
           toast({
@@ -463,14 +539,15 @@ function AdminSessionsContent() {
       instructorFilter: 'all',
       locationFilter: 'all',
       search: '',
+      daysOfWeek: [],
     });
   };
 
   const exportToCSV = () => {
     const csvData = filteredSessions.map(s => ({
-      'Date': format(parseISO(s.start_time), 'yyyy-MM-dd'),
-      'Time': format(parseISO(s.start_time), 'h:mm a'),
-      'End Time': format(parseISO(s.end_time), 'h:mm a'),
+      'Date': studioDateString(s.start_time),
+      'Time': studioTime12(s.start_time),
+      'End Time': studioTime12(s.end_time),
       'Location': s.location,
       'Instructor': s.instructor_name || 'Unassigned',
       'Status': s.status,
@@ -537,9 +614,9 @@ function AdminSessionsContent() {
 
   return (
     <RoleGuard allowedRoles={['admin']}>
-      <div className="container py-8">
+      <div className="container py-4">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div>
             <h1 className="text-2xl font-bold">Session Management</h1>
             <p className="text-muted-foreground">
@@ -569,7 +646,7 @@ function AdminSessionsContent() {
         </div>
 
         {/* Month Navigation Bar */}
-        <div className="mb-6">
+        <div className="mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div className="flex items-center gap-2">
               <Button
@@ -583,7 +660,7 @@ function AdminSessionsContent() {
 
               <div className="text-center">
                 <h2 className="text-xl font-bold">
-                  {dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month - 1, 1), 'MMMM yyyy')}
+                  {format(new Date(currentMonthYear.year, currentMonthYear.month - 1, 1), 'MMMM yyyy')}
                 </h2>
               </div>
 
@@ -617,12 +694,12 @@ function AdminSessionsContent() {
 
           {/* Compact Stats Row */}
           <div className="text-sm text-muted-foreground mb-4">
-            {dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month - 1, 1), 'MMMM yyyy')}:{' '}
+            {format(new Date(currentMonthYear.year, currentMonthYear.month - 1, 1), 'MMMM yyyy')}:{' '}
             {stats.total} total sessions | {stats.open} open | {stats.booked} booked | {stats.completed} completed
           </div>
 
           {/* Status Tabs */}
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="flex flex-wrap gap-2 mb-4">
             <Button
               variant={statusFilter === 'all' ? 'default' : 'outline'}
               size="sm"
@@ -725,7 +802,7 @@ function AdminSessionsContent() {
 
         {/* Active Filter Indicator */}
         {statusFilter !== 'all' && (
-          <div className="flex items-center gap-2 mb-6">
+          <div className="flex items-center gap-2 mb-4">
             <Badge variant="secondary" className="capitalize">
               Showing: {statusFilter === 'open' ? 'Open' : statusFilter.replace('_', '-')} sessions
             </Badge>
@@ -736,15 +813,15 @@ function AdminSessionsContent() {
         )}
 
         {/* Filters Section */}
-        <Card className="mb-6">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Filters</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Filter sessions within {dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month - 1, 1), 'MMMM yyyy')} by date, time, instructor, location, or search
+        <Card className="mb-4">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Filters</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Filter sessions within {format(new Date(currentMonthYear.year, currentMonthYear.month - 1, 1), 'MMMM yyyy')} by date, time, instructor, location, or search
             </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               {/* Date Range (within month) */}
               <div className="sm:col-span-2">
                 <Label className="text-sm text-muted-foreground mb-2 block">Date Range (within month)</Label>
@@ -754,8 +831,6 @@ function AdminSessionsContent() {
                     value={filters.startDate}
                     onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
                     className="flex-1 min-w-0"
-                    min={dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month - 1, 1), 'yyyy-MM-dd')}
-                    max={dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month, 0), 'yyyy-MM-dd')}
                   />
                   <span className="text-muted-foreground text-sm shrink-0">to</span>
                   <Input
@@ -763,13 +838,11 @@ function AdminSessionsContent() {
                     value={filters.endDate}
                     onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
                     className="flex-1 min-w-0"
-                    min={dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month - 1, 1), 'yyyy-MM-dd')}
-                    max={dateFnsFormat(new Date(currentMonthYear.year, currentMonthYear.month, 0), 'yyyy-MM-dd')}
                   />
                 </div>
               </div>
 
-              {/* Time of Day */}
+              {/* Time of Day with AM/PM */}
               <div>
                 <Label className="text-sm text-muted-foreground mb-2 block">Time of Day</Label>
                 <Select value={filters.timeFilter} onValueChange={(value) => setFilters(prev => ({ ...prev, timeFilter: value }))}>
@@ -778,9 +851,34 @@ function AdminSessionsContent() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Times</SelectItem>
+                    <SelectItem value="am">AM (midnight-noon)</SelectItem>
+                    <SelectItem value="pm">PM (noon-midnight)</SelectItem>
                     <SelectItem value="morning">Morning (6am-12pm)</SelectItem>
                     <SelectItem value="afternoon">Afternoon (12pm-5pm)</SelectItem>
-                    <SelectItem value="evening">Evening (5pm-9pm)</SelectItem>
+                    <SelectItem value="evening">Evening (5pm-10pm)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Day of Week */}
+              <div>
+                <Label className="text-sm text-muted-foreground mb-2 block">Day of Week</Label>
+                <Select value={filters.daysOfWeek[0] || 'all'} onValueChange={(value) => setFilters(prev => ({
+                  ...prev,
+                  daysOfWeek: value === 'all' ? [] : [value]
+                }))}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All Days" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Days</SelectItem>
+                    <SelectItem value="monday">Monday</SelectItem>
+                    <SelectItem value="tuesday">Tuesday</SelectItem>
+                    <SelectItem value="wednesday">Wednesday</SelectItem>
+                    <SelectItem value="thursday">Thursday</SelectItem>
+                    <SelectItem value="friday">Friday</SelectItem>
+                    <SelectItem value="saturday">Saturday</SelectItem>
+                    <SelectItem value="sunday">Sunday</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -818,7 +916,7 @@ function AdminSessionsContent() {
               </div>
 
               {/* Search + Clear */}
-              <div className="sm:col-span-2 lg:col-span-1 xl:col-span-1">
+              <div className="sm:col-span-2 md:col-span-4">
                 <Label className="text-sm text-muted-foreground mb-2 block">Search</Label>
                 <div className="flex gap-2">
                   <Input
@@ -851,11 +949,37 @@ function AdminSessionsContent() {
                   {statusFilter === 'no_show' && 'No-Show Sessions'}
                 </CardTitle>
                 <CardDescription>
-                  {filteredSessions.length} session{filteredSessions.length !== 1 ? 's' : ''} found
+                  {viewMode === 'group'
+                    ? `${groupedSessions.length} time slot${groupedSessions.length !== 1 ? 's' : ''} · ${filteredSessions.length} individual session${filteredSessions.length !== 1 ? 's' : ''}`
+                    : `${filteredSessions.length} session${filteredSessions.length !== 1 ? 's' : ''} found`
+                  }
                 </CardDescription>
               </div>
 
               <div className="flex items-center gap-2">
+                {/* View mode toggle */}
+                <div className="flex border rounded-md overflow-hidden mr-2">
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                      viewMode === 'list'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-background text-muted-foreground hover:bg-accent'
+                    }`}
+                  >
+                    List
+                  </button>
+                  <button
+                    onClick={() => setViewMode('group')}
+                    className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                      viewMode === 'group'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-background text-muted-foreground hover:bg-accent'
+                    }`}
+                  >
+                    Group
+                  </button>
+                </div>
                 <span className="text-sm text-muted-foreground">
                   {selectedSessionIds.size} of {filteredSessions.length} selected
                 </span>
@@ -866,7 +990,7 @@ function AdminSessionsContent() {
           <CardContent>
             {/* Bulk Actions */}
             {selectedSessionIds.size > 0 && (
-              <div className="flex flex-wrap items-center gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+              <div className="flex flex-wrap items-center gap-3 mb-4 p-3 border rounded-lg bg-muted/50">
                 <div className="flex items-center gap-2">
                   <Checkbox
                     checked={selectedSessionIds.size === filteredSessions.length && filteredSessions.length > 0}
@@ -881,17 +1005,15 @@ function AdminSessionsContent() {
                 <Separator orientation="vertical" className="h-6" />
 
                 <div className="flex flex-wrap gap-2">
-                  {statusFilter === 'draft' && (
-                    <Button
-                      onClick={handleOpenSelected}
-                      disabled={selectedSessionIds.size === 0 || isOpening}
-                      className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      {isOpening && <Loader2 className="h-4 w-4 animate-spin" />}
-                      <CalendarCheck className="h-4 w-4 mr-2" />
-                      Open for Booking ({selectedSessionIds.size})
-                    </Button>
-                  )}
+                  <Button
+                    onClick={handleOpenSelected}
+                    disabled={selectedSessionIds.size === 0 || isOpening}
+                    className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    {isOpening && <Loader2 className="h-4 w-4 animate-spin" />}
+                    <CalendarCheck className="h-4 w-4 mr-2" />
+                    Open for Booking ({selectedSessionIds.size})
+                  </Button>
 
                   <Button
                     variant="outline"
@@ -965,7 +1087,8 @@ function AdminSessionsContent() {
                   </Button>
                 )}
               </div>
-            ) : (
+            ) : null}
+            {filteredSessions.length > 0 && viewMode === 'list' ? (
               <>
                 {/* ── Mobile card list ── */}
                 <div className="block sm:hidden space-y-2">
@@ -990,10 +1113,10 @@ function AdminSessionsContent() {
                             />
                             <div className="min-w-0">
                               <div className="font-semibold text-sm">
-                                {format(new Date(session.start_time), 'EEE, MMM d')}
+                                {studioShortDate(session.start_time)}
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                {format(new Date(session.start_time), 'h:mm a')} – {format(new Date(session.end_time), 'h:mm a')}
+                                {studioTime12(session.start_time)} – {studioTime12(session.end_time)}
                               </div>
                               {session.location && (
                                 <div className="text-xs text-muted-foreground/70 truncate">{session.location}</div>
@@ -1052,7 +1175,11 @@ function AdminSessionsContent() {
                         {/* Row 2: instructor + type + capacity + client */}
                         <div className="mt-2 ml-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                           <span className="font-medium text-foreground">{session.instructor_name || 'Unassigned'}</span>
-                          {session.session_type && <span>{session.session_type}</span>}
+                          {session.session_type && (
+                            <Badge className={getSessionTypeBadge(session.session_type) + ' text-xs'}>
+                              {session.session_type === 'assessment' ? 'Assessment' : 'Lesson'}
+                            </Badge>
+                          )}
                           <span>{session.booking_count || 0}/{session.max_capacity || 1} booked</span>
                           {isBooked && swimmer && (
                             <button
@@ -1122,10 +1249,10 @@ function AdminSessionsContent() {
                           {/* Date & Time + Location */}
                           <TableCell className="px-2 py-2">
                             <div className="font-medium">
-                              {format(new Date(session.start_time), 'MMM d')}
+                              {studioShortDate(session.start_time)}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {format(new Date(session.start_time), 'h:mm a')} - {format(new Date(session.end_time), 'h:mm a')}
+                              {studioTime12(session.start_time)} - {studioTime12(session.end_time)}
                             </div>
                             {session.location && (
                               <div className="text-xs text-muted-foreground/70 truncate max-w-[120px]">
@@ -1143,9 +1270,13 @@ function AdminSessionsContent() {
 
                           {/* Session Type */}
                           <TableCell className="px-2 py-2">
-                            <span className="text-xs font-medium">
-                              {session.session_type || ''}
-                            </span>
+                            {session.session_type ? (
+                              <Badge className={getSessionTypeBadge(session.session_type) + ' text-xs px-1.5 py-0.5'}>
+                                {session.session_type === 'assessment' ? 'Assessment' : 'Lesson'}
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
                           </TableCell>
 
                           {/* Client — clicking opens swimmer detail */}
@@ -1295,14 +1426,103 @@ function AdminSessionsContent() {
                   </TableBody>
                 </Table>
                 </div>
-              </>
-            )}
+
+                </>
+              ) : null}
+            {filteredSessions.length > 0 && viewMode !== 'list' ? (
+                <>
+                {/* ── Group view ── */}
+                <div className="space-y-3">
+                    {groupedSessions.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">No groups found</h3>
+                        <p className="text-muted-foreground">Try adjusting your filters.</p>
+                      </div>
+                    ) : (
+                      groupedSessions.map(group => {
+                        const isExpanded = expandedGroups.has(group.key);
+                        return (
+                          <div key={group.key} className="border rounded-lg overflow-hidden">
+                            {/* Group header */}
+                            <button
+                              onClick={() => {
+                                setExpandedGroups(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(group.key)) next.delete(group.key);
+                                  else next.add(group.key);
+                                  return next;
+                                });
+                              }}
+                              className="w-full flex items-center justify-between px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="text-sm font-semibold capitalize min-w-[80px]">{group.dayOfWeek}</div>
+                                <div className="text-sm font-medium">{group.timeLabel} – {group.endTimeLabel}</div>
+                                <Badge variant="secondary" className="text-xs">{group.instructor}</Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {group.isRecurring ? `Recurring — ${group.weeksCount} weeks` : 'Single session'}
+                                </span>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {isExpanded ? '▲' : '▼'}
+                              </div>
+                            </button>
+
+                            {/* Expanded dates */}
+                            {isExpanded && (
+                              <div className="divide-y">
+                                {group.sessions.map(session => {
+                                  const booking = session.bookings?.find((b: any) => b.status !== 'cancelled');
+                                  const swimmer = booking?.swimmer;
+                                  return (
+                                    <div
+                                      key={session.id}
+                                      className="flex items-center justify-between px-4 py-2.5 hover:bg-muted/20 cursor-pointer transition-colors"
+                                      onClick={() => setViewingSession(session)}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <span className="text-sm font-medium min-w-[90px]">
+                                          {studioShortDate(session.start_time)}
+                                        </span>
+                                        {swimmer ? (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleViewSwimmer(swimmer.id);
+                                            }}
+                                            className="text-sm text-cyan-700 hover:underline"
+                                          >
+                                            {swimmer.first_name} {swimmer.last_name}
+                                          </button>
+                                        ) : (
+                                          <span className="text-sm text-muted-foreground italic">—</span>
+                                        )}
+                                      </div>
+                                      <Badge className={getStatusColor(session.status) + ' text-xs'}>
+                                        {session.status === 'available' ? 'Open' : session.status.charAt(0).toUpperCase() + session.status.slice(1).replace('_', '-')}
+                                      </Badge>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </>
+              ) : null}
 
             {/* Summary */}
             <div className="mt-6 pt-6 border-t">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="text-sm text-muted-foreground">
-                  Showing {filteredSessions.length} session{filteredSessions.length !== 1 ? 's' : ''}
+                  {viewMode === 'group'
+                    ? `Showing ${groupedSessions.length} time slot${groupedSessions.length !== 1 ? 's' : ''} · ${filteredSessions.length} individual session${filteredSessions.length !== 1 ? 's' : ''}`
+                    : `Showing ${filteredSessions.length} session${filteredSessions.length !== 1 ? 's' : ''}`
+                  }
                   {statusFilter !== 'all' && ` (filtered by ${statusFilter})`}
                 </div>
                 <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -1318,16 +1538,14 @@ function AdminSessionsContent() {
           <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white border rounded-lg shadow-lg p-4 flex items-center gap-4 z-50">
             <span className="font-medium">{selectedSessionIds.size} selected</span>
 
-            {statusFilter === 'draft' && (
-              <Button
-                size="sm"
-                onClick={handleOpenSelected}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                <CalendarCheck className="h-4 w-4 mr-2" />
-                Open for Booking
-              </Button>
-            )}
+            <Button
+              size="sm"
+              onClick={handleOpenSelected}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <CalendarCheck className="h-4 w-4 mr-2" />
+              Open for Booking
+            </Button>
             <Button size="sm" variant="outline" onClick={() => setBulkChangingInstructor(true)}>
               Change Instructor
             </Button>
@@ -1354,37 +1572,215 @@ function AdminSessionsContent() {
         )}
 
         {/* Modals */}
+        {/* ── Session Detail Modal (with actions) ── */}
         {viewingSession && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-full md:max-w-2xl w-full">
+            <div className="bg-white rounded-lg p-6 max-w-full md:max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Session Details</h2>
                 <Button variant="ghost" size="sm" onClick={() => setViewingSession(null)}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="space-y-4">
-                <p><strong>Date:</strong> {format(parseISO(viewingSession.start_time), 'EEEE, MMMM d, yyyy')}</p>
-                <p><strong>Time:</strong> {format(parseISO(viewingSession.start_time), 'h:mm a')} - {format(parseISO(viewingSession.end_time), 'h:mm a')}</p>
-                <p><strong>Location:</strong> {viewingSession.location}</p>
-                <p><strong>Instructor:</strong> {viewingSession.instructor_name || 'Unassigned'}</p>
-                <p><strong>Status:</strong> {viewingSession.status}</p>
-                <p><strong>Capacity:</strong> {viewingSession.booking_count || 0}/{viewingSession.max_capacity}</p>
-                <p><strong>Type:</strong> {viewingSession.session_type}</p>
-                {viewingSession.bookings && viewingSession.bookings.length > 0 && (
-                  <div>
-                    <p className="font-medium mb-2">Bookings:</p>
-                    <ul className="list-disc pl-5">
-                      {viewingSession.bookings.map((b: any) => (
-                        <li key={b.id}>
-                          {b.swimmer?.first_name} {b.swimmer?.last_name} ({b.status})
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Date</span>
+                  <p className="font-medium">{studioFullDate(viewingSession.start_time)}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Time</span>
+                  <p className="font-medium">{studioTime12(viewingSession.start_time)} – {studioTime12(viewingSession.end_time)}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Instructor</span>
+                  <p className="font-medium">{viewingSession.instructor_name || 'Unassigned'}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Location</span>
+                  <p className="font-medium">{viewingSession.location || '—'}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Status</span>
+                  <p>
+                    <Badge className={getStatusColor(viewingSession.status) + ' text-xs'}>
+                      {viewingSession.status === 'available' ? 'Open' : viewingSession.status.charAt(0).toUpperCase() + viewingSession.status.slice(1).replace('_', '-')}
+                    </Badge>
+                  </p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Capacity</span>
+                  <p className="font-medium">{viewingSession.booking_count || 0}/{viewingSession.max_capacity}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Type</span>
+                  {viewingSession.session_type ? (
+                    <Badge className={getSessionTypeBadge(viewingSession.session_type) + ' text-xs'}>
+                      {viewingSession.session_type === 'assessment' ? 'Assessment' : 'Lesson'}
+                    </Badge>
+                  ) : (
+                    <p className="text-muted-foreground">—</p>
+                  )}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Price</span>
+                  <p className="font-medium">${(viewingSession.price_cents / 100).toFixed(2)}</p>
+                </div>
               </div>
-              <div className="flex justify-end gap-2 mt-6">
+
+              {/* Booked swimmers */}
+              {viewingSession.bookings && viewingSession.bookings.filter((b: any) => b.status !== 'cancelled').length > 0 && (
+                <div className="mt-4 pt-4 border-t">
+                  <p className="font-medium text-sm mb-2">Booked Swimmers</p>
+                  <div className="space-y-2">
+                    {viewingSession.bookings.filter((b: any) => b.status !== 'cancelled').map((booking: any) => (
+                      <div key={booking.id} className="flex items-center justify-between bg-muted/30 rounded-md p-2">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback className="bg-cyan-100 text-cyan-700 text-xs">
+                              {((booking.swimmer?.first_name?.[0] || '') + (booking.swimmer?.last_name?.[0] || '')).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <button
+                              onClick={() => handleViewSwimmer(booking.swimmer?.id)}
+                              className="font-medium text-sm text-cyan-700 hover:underline"
+                            >
+                              {booking.swimmer?.first_name} {booking.swimmer?.last_name}
+                            </button>
+                            <p className="text-xs text-muted-foreground">
+                              {booking.parent?.full_name} · {booking.parent?.email}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-xs capitalize">{booking.status}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="mt-6 pt-4 border-t flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setViewingSession(null);
+                    handleEditSession(viewingSession);
+                  }}
+                >
+                  <Edit className="h-4 w-4 mr-1.5" /> Edit Session
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setViewingSession(null);
+                    setChangingInstructor(viewingSession);
+                  }}
+                >
+                  <Users className="h-4 w-4 mr-1.5" /> Change Instructor
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setViewingSession(null);
+                    setReschedulingSession(viewingSession);
+                  }}
+                >
+                  <Calendar className="h-4 w-4 mr-1.5" /> Reschedule
+                </Button>
+
+                {viewingSession.status === 'draft' && (
+                  <Button
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => {
+                      openSessions(
+                        { sessionIds: [viewingSession.id] },
+                        {
+                          onSuccess: () => {
+                            toast({ title: 'Session opened', description: 'Session is now available for booking.' });
+                            setViewingSession(null);
+                            refetch();
+                          },
+                        }
+                      );
+                    }}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-1.5" /> Open for Booking
+                  </Button>
+                )}
+
+                {(viewingSession.status === 'open' || viewingSession.status === 'available') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-green-600 border-green-300"
+                    onClick={() => {
+                      setViewingSession(null);
+                      handleAddSwimmer(viewingSession);
+                    }}
+                  >
+                    <UserPlus className="h-4 w-4 mr-1.5" /> Add Swimmer
+                  </Button>
+                )}
+
+                {viewingSession.bookings && viewingSession.bookings.some((b: any) => b.status === 'booked') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      toast({
+                        title: 'Feature coming soon',
+                        description: 'Mark as completed will be implemented soon.',
+                      });
+                    }}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-1.5" /> Mark Completed
+                  </Button>
+                )}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-orange-600 border-orange-300"
+                  onClick={() => {
+                    setViewingSession(null);
+                    setCancellingSession(viewingSession);
+                  }}
+                >
+                  <XCircle className="h-4 w-4 mr-1.5" /> Cancel
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-300"
+                  onClick={() => {
+                    if (confirm('Are you sure you want to delete this session?')) {
+                      deleteSessions(
+                        { sessionIds: [viewingSession.id] },
+                        {
+                          onSuccess: () => {
+                            toast({ title: 'Session deleted' });
+                            setViewingSession(null);
+                            refetch();
+                          },
+                        }
+                      );
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-1.5" /> Delete
+                </Button>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-4">
                 <Button variant="outline" onClick={() => setViewingSession(null)}>
                   Close
                 </Button>
@@ -1404,7 +1800,7 @@ function AdminSessionsContent() {
                 </Button>
               </div>
               <p className="text-muted-foreground mb-4">
-                Change instructor for session on {format(parseISO(changingInstructor.start_time), 'MMM d, yyyy h:mm a')}
+                Change instructor for session on {studioShortDate(changingInstructor.start_time)} at {studioTime12(changingInstructor.start_time)}
               </p>
               <div className="space-y-4">
                 <div>
@@ -1453,7 +1849,7 @@ function AdminSessionsContent() {
                 </Button>
               </div>
               <p className="text-muted-foreground mb-4">
-                Reschedule session from {format(parseISO(reschedulingSession.start_time), 'MMM d, yyyy h:mm a')}
+                Reschedule session from {studioShortDate(reschedulingSession.start_time)} at {studioTime12(reschedulingSession.start_time)}
               </p>
               <div className="space-y-4">
                 <div>
@@ -1506,7 +1902,7 @@ function AdminSessionsContent() {
                 </Button>
               </div>
               <p className="text-muted-foreground mb-4">
-                Cancel session on {format(parseISO(cancellingSession.start_time), 'MMM d, yyyy h:mm a')}?
+                Cancel session on {studioShortDate(cancellingSession.start_time)} at {studioTime12(cancellingSession.start_time)}?
               </p>
               <div className="space-y-4">
                 <div className="text-sm text-muted-foreground">

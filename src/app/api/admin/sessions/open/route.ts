@@ -3,7 +3,9 @@ import { NextResponse } from 'next/server';
 import { SESSION_STATUS } from '@/config/constants';
 
 interface OpenSessionsRequest {
-  sessionIds: string[];
+  sessionIds?: string[];
+  month?: number;
+  year?: number;
 }
 
 interface OpenSessionsResponse {
@@ -43,72 +45,74 @@ export async function POST(request: Request) {
 
     // ========== STEP 3: Parse Request Body ==========
     const body = await request.json();
-    const { sessionIds }: OpenSessionsRequest = body;
+    const { sessionIds, month, year }: OpenSessionsRequest = body;
 
-    if (!sessionIds || !Array.isArray(sessionIds) || sessionIds.length === 0) {
+    // Validate — need either sessionIds OR month+year
+    const hasIds = sessionIds && Array.isArray(sessionIds) && sessionIds.length > 0;
+    const hasMonthYear = typeof month === 'number' && typeof year === 'number';
+
+    if (!hasIds && !hasMonthYear) {
       return NextResponse.json(
-        { error: 'Invalid request - sessionIds array is required' },
+        { error: 'Invalid request — provide sessionIds array or month+year' },
         { status: 400 }
       );
     }
 
-    // ========== STEP 4: Validate Session IDs ==========
-    // Check if all sessions exist and are in draft status
-    const { data: sessions, error: checkError } = await supabase
-      .from('sessions')
-      .select('id, status')
-      .in('id', sessionIds);
+    let updatedCount = 0;
 
-    if (checkError) {
-      console.error('Error checking sessions:', checkError);
-      return NextResponse.json(
-        { error: `Failed to validate sessions: ${checkError.message}` },
-        { status: 500 }
-      );
+    if (hasIds) {
+      // ─── Batch approach: split IDs into chunks of 100 to avoid URL length limits ───
+      const CHUNK_SIZE = 100;
+      for (let i = 0; i < sessionIds.length; i += CHUNK_SIZE) {
+        const chunk = sessionIds.slice(i, i + CHUNK_SIZE);
+        const { data: updated, error: updateError } = await supabase
+          .from('sessions')
+          .update({
+            status: SESSION_STATUS.AVAILABLE,
+            updated_at: new Date().toISOString(),
+            open_at: new Date().toISOString(),
+          })
+          .in('id', chunk)
+          .eq('status', SESSION_STATUS.DRAFT)
+          .select('id');
+
+        if (updateError) {
+          console.error(`Error opening sessions chunk ${i}:`, updateError);
+          // Continue with other chunks instead of failing entirely
+          continue;
+        }
+
+        updatedCount += updated?.length || 0;
+      }
+    } else {
+      // ─── Filter approach: use month/year to avoid sending any IDs ───
+      const startDate = new Date(year, month - 1, 1).toISOString();
+      const endDate = new Date(year, month, 1).toISOString();
+
+      const { data: updated, error: updateError } = await supabase
+        .from('sessions')
+        .update({
+          status: SESSION_STATUS.AVAILABLE,
+          updated_at: new Date().toISOString(),
+          open_at: new Date().toISOString(),
+        })
+        .gte('start_time', startDate)
+        .lt('start_time', endDate)
+        .eq('status', SESSION_STATUS.DRAFT)
+        .select('id');
+
+      if (updateError) {
+        console.error('Error opening sessions by month:', updateError);
+        return NextResponse.json(
+          { error: `Failed to open sessions: ${updateError.message}` },
+          { status: 500 }
+        );
+      }
+
+      updatedCount = updated?.length || 0;
     }
 
-    if (!sessions || sessions.length === 0) {
-      return NextResponse.json(
-        { error: 'No sessions found with the provided IDs' },
-        { status: 404 }
-      );
-    }
-
-    // Check if all sessions are drafts
-    const nonDraftSessions = sessions.filter(s => s.status !== SESSION_STATUS.DRAFT);
-    if (nonDraftSessions.length > 0) {
-      const nonDraftIds = nonDraftSessions.map(s => s.id);
-      return NextResponse.json(
-        {
-          error: 'Cannot open sessions - some sessions are not drafts',
-          nonDraftSessionIds: nonDraftIds,
-        },
-        { status: 400 }
-      );
-    }
-
-    // ========== STEP 5: Update Sessions ==========
-    const { data: updatedSessions, error: updateError } = await supabase
-      .from('sessions')
-      .update({
-        status: SESSION_STATUS.AVAILABLE,
-        updated_at: new Date().toISOString(),
-        open_at: new Date().toISOString(),
-      })
-      .in('id', sessionIds)
-      .eq('status', SESSION_STATUS.DRAFT)
-      .select('id');
-
-    if (updateError) {
-      console.error('Error opening sessions:', updateError);
-      return NextResponse.json(
-        { error: `Failed to open sessions: ${updateError.message}` },
-        { status: 500 }
-      );
-    }
-
-    // ========== STEP 6: Return Response ==========
-    const updatedCount = updatedSessions?.length || 0;
+    // ========== STEP 4: Return Response ==========
     console.log(`✅ Opened ${updatedCount} draft sessions`);
 
     const response: OpenSessionsResponse = {

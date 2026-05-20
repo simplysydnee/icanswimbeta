@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import { Calendar, Clock, User } from 'lucide-react'
-import { format } from 'date-fns'
+import { studioTime12, studioShortDate } from '@/lib/timezone'
 
 interface BookingCardProps {
   booking: {
@@ -50,11 +50,11 @@ export function BookingCard({ booking, onClick }: BookingCardProps) {
           <>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              <span>{format(sessionDate, 'EEE, MMM d, yyyy')}</span>
+              <span>{studioShortDate(booking.session.start_time)}</span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              <span>{format(sessionDate, 'h:mm a')}</span>
+              <span>{studioTime12(booking.session.start_time)}</span>
             </div>
           </>
         )}

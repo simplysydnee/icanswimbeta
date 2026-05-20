@@ -157,6 +157,9 @@ export async function GET(request: Request) {
         .lt('start_time', endDate);
     }
 
+    // Apply limit AFTER all filters (PostgREST respects this ordering)
+    sessionsQuery = sessionsQuery.range(0, 19999);
+
     const { data: sessions, error: sessionsError } = await sessionsQuery;
 
     if (sessionsError) {

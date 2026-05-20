@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { format, parseISO, differenceInYears } from 'date-fns'
+import { parseISO, differenceInYears } from 'date-fns'
+import { studioTime12, studioFullDate } from '@/lib/timezone'
 import {
   Sheet,
   SheetContent,
@@ -112,37 +113,6 @@ function getAge(dob: string | null): number | null {
   return differenceInYears(new Date(), parseISO(dob))
 }
 
-function getPacificHourMinute(utcTimeString: string): { hour: number; minute: number } {
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Los_Angeles',
-    hour: 'numeric',
-    minute: 'numeric',
-    hour12: false,
-  })
-  const date = parseISO(utcTimeString)
-  const parts = formatter.formatToParts(date)
-  const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10)
-  const minute = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10)
-  return { hour, minute }
-}
-
-function formatPacificTime(utcTimeString: string): string {
-  const { hour, minute } = getPacificHourMinute(utcTimeString)
-  const period = hour >= 12 ? 'PM' : 'AM'
-  const displayHour = hour % 12 || 12
-  return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`
-}
-
-function formatPacificDate(utcTimeString: string): string {
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Los_Angeles',
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  })
-  return formatter.format(parseISO(utcTimeString))
-}
 
 export function SessionDetailSheet({ sessionId, open, onOpenChange, onDataChange }: SessionDetailSheetProps) {
   const router = useRouter()
@@ -435,7 +405,7 @@ export function SessionDetailSheet({ sessionId, open, onOpenChange, onDataChange
               <SheetHeader className="px-5 py-4 border-b shrink-0">
                 <SheetTitle className="text-lg">Session Details</SheetTitle>
                 <SheetDescription>
-                  {formatPacificDate(detail.start_time)}
+                  {studioFullDate(detail.start_time)}
                 </SheetDescription>
               </SheetHeader>
 
@@ -522,12 +492,12 @@ export function SessionDetailSheet({ sessionId, open, onOpenChange, onDataChange
                   <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                     <div className="flex items-center gap-3">
                       <Calendar className="h-4 w-4 text-gray-400 shrink-0" />
-                      <span className="text-sm text-gray-900">{formatPacificDate(detail.start_time)}</span>
+                      <span className="text-sm text-gray-900">{studioFullDate(detail.start_time)}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <Clock className="h-4 w-4 text-gray-400 shrink-0" />
                       <span className="text-sm text-gray-900">
-                        {formatPacificTime(detail.start_time)} - {formatPacificTime(detail.end_time)}
+                        {studioTime12(detail.start_time)} - {studioTime12(detail.end_time)}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">

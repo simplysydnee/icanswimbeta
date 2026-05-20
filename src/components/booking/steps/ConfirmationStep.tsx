@@ -5,8 +5,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Calendar, Clock, User, MapPin, AlertTriangle, Loader2, Lock, AlertCircle, DollarSign } from 'lucide-react';
-import { format } from 'date-fns';
 import Link from 'next/link';
+import { studioTime12, studioFullDate } from '@/lib/timezone';
 import { useSessionHold } from '@/hooks/useSessionHold';
 import { isSwimmerFunded, ASSESSMENT_PRICE_CENTS, type BookingSwimmer } from '@/lib/booking-utils';
 import { formatPrice } from '@/lib/utils';
@@ -346,13 +346,13 @@ export function ConfirmationStep({
               <Calendar className="h-5 w-5 text-cyan-600 mt-0.5" />
               <div className="flex-1">
                 <p className="font-medium">
-                  {session.startTime ? format(new Date(session.startTime), 'EEEE, MMMM d, yyyy') : 'Date TBD'}
+                  {session.startTime ? studioFullDate(session.startTime) : 'Date TBD'}
                 </p>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                   <span className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
-                    {session.startTime ? format(new Date(session.startTime), 'h:mm a') : 'Time TBD'}
-                    {session.endTime && ` - ${format(new Date(session.endTime), 'h:mm a')}`}
+                    {session.startTime ? studioTime12(session.startTime) : 'Time TBD'}
+                    {session.endTime && ` - ${studioTime12(session.endTime)}`}
                   </span>
                   {session.location && (
                     <span className="flex items-center gap-1">

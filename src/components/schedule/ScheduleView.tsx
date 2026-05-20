@@ -41,6 +41,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { format, addDays, subDays, startOfWeek, addWeeks, subWeeks, parseISO, isSameDay } from 'date-fns'
+import { studioTime12, studioShortDate, studioFullDate } from '@/lib/timezone'
 
 // Instructor color palette - maximally distinct hues for easy differentiation
 const INSTRUCTOR_COLORS = [
@@ -649,8 +650,8 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
               swimmerName: session.swimmer_name,
               oldInstructorName: selectedInstructorForCancel.full_name,
               newInstructorName: instructors.find(i => i.id === newInstructorId)?.full_name || 'Substitute Instructor',
-              date: format(parseISO(session.start_time), 'EEEE, MMMM d, yyyy'),
-              time: format(parseISO(session.start_time), 'h:mm a'),
+              date: studioFullDate(session.start_time),
+              time: studioTime12(session.start_time),
               reason: cancelReason
             })
           })
@@ -921,7 +922,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                 {session.swimmer_name || 'Open Slot'}
                               </p>
                               <p className="text-sm text-gray-600 mt-0.5">
-                                {format(parseISO(session.start_time), 'h:mm a')} - {format(parseISO(session.end_time), 'h:mm a')}
+                                {studioTime12(session.start_time)} - {studioTime12(session.end_time)}
                               </p>
                               <div className="flex items-center gap-2 mt-1.5">
                                 <Badge variant="outline" className="text-xs">
@@ -1029,7 +1030,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                     {session.swimmer_name || 'Open Slot'}
                                   </p>
                                   <p className="text-xs text-gray-600">
-                                    {format(parseISO(session.start_time), 'h:mm')} - {format(parseISO(session.end_time), 'h:mm a')}
+                                    {studioTime12(session.start_time)} - {studioTime12(session.end_time)}
                                   </p>
                                   <div className="flex gap-1 mt-1 flex-wrap">
                                     <Badge variant="outline" className="text-xs">
@@ -1128,7 +1129,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                               <div className="flex justify-between items-start">
                                 <div>
                                   <p className={`font-semibold ${color.text}`}>
-                                    {format(parseISO(session.start_time), 'h:mm a')}
+                                    {studioTime12(session.start_time)}
                                   </p>
                                   <p className="text-gray-700 font-medium mt-1">
                                     {session.swimmer_name || 'Open'}
@@ -1257,7 +1258,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                                       >
                                         <div className="flex justify-between items-start">
                                           <span className={`font-semibold ${color.text}`}>
-                                            {format(parseISO(session.start_time), 'h:mm a')}
+                                            {studioTime12(session.start_time)}
                                           </span>
                                           {role === 'admin' && (
                                             <Button
@@ -1317,7 +1318,7 @@ export function ScheduleView({ role, userId }: ScheduleViewProps) {
                 <div className="bg-gray-50 p-3 rounded-lg">
                   <p className="font-medium">{selectedSession.swimmer_name || 'Open Slot'}</p>
                   <p className="text-sm text-gray-600">
-                    {format(parseISO(selectedSession.start_time), 'h:mm a')} - {format(parseISO(selectedSession.end_time), 'h:mm a')}
+                    {studioTime12(selectedSession.start_time)} - {studioTime12(selectedSession.end_time)}
                   </p>
                   <p className="text-sm text-gray-500">Currently: {selectedSession.instructor_name}</p>
                 </div>

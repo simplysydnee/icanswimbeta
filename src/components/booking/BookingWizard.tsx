@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { studioTime12, studioFullDate } from '@/lib/timezone';
 import { ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Calendar, Clock, MapPin, User } from 'lucide-react';
 
 import type { Swimmer, AvailableSession, BookingStep, SessionType } from '@/types/booking';
@@ -526,13 +527,13 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
                   <div className="flex items-center gap-2 text-sm">
                     <Calendar className="h-4 w-4 text-green-600" />
                     <span className="font-medium text-green-800">
-                      {format(new Date(sessionStart!), 'EEEE, MMMM d, yyyy')}
+                      {studioFullDate(assessmentSessionDetails.startTime)}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Clock className="h-4 w-4 text-green-600" />
                     <span className="text-green-700">
-                      {format(new Date(sessionStart!), 'h:mm a')}
+                      {studioTime12(assessmentSessionDetails.startTime)}
                     </span>
                   </div>
                   {sessionLocation && (

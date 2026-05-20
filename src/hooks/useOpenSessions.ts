@@ -1,7 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface OpenSessionsRequest {
-  sessionIds: string[];
+  sessionIds?: string[];
+  month?: number;
+  year?: number;
 }
 
 interface OpenSessionsResponse {

@@ -1,7 +1,8 @@
 'use client';
 
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { User, Calendar, Clock, MapPin } from 'lucide-react';
+import { studioTime12, studioShortDate } from '@/lib/timezone';
 
 import type { Swimmer, AvailableSession } from '@/types/booking';
 import { StatusBadge } from './StatusBadge';
@@ -120,11 +121,11 @@ export function BookingSummary({
                 <div className="space-y-2 pl-6">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>{formatTime12Hour(format(parseISO(selectedSession.startTime), 'HH:mm'))}</span>
+                    <span>{studioTime12(selectedSession.startTime)}</span>
                   </div>
 
                   <div className="text-sm">
-                    {format(parseISO(selectedSession.startTime), 'EEEE, MMM d, yyyy')}
+                    {studioShortDate(selectedSession.startTime)}
                   </div>
 
                   <div className="flex items-center gap-2">
