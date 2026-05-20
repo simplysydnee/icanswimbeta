@@ -37,16 +37,16 @@ export function PendingWaiverAlert() {
 
       <AlertTitle className="text-[#d97706] font-semibold pr-6">
         Action Required: {count === 1
-          ? `${firstSwimmer.first_name} ${firstSwimmer.last_name} Needs Waivers Completed`
+          ? 'Waivers Need to Be Completed'
           : `${count} Swimmers Need Waivers Completed`}
       </AlertTitle>
 
       <AlertDescription className="mt-2">
         <p className="text-gray-700 mb-3">
           {count === 1
-            ? `${firstSwimmer.first_name} needs waiver forms completed before they can participate in swim lessons.`
-            : `${count} swimmers need waiver forms completed before they can participate in swim lessons.`}
-          {' '}This includes liability waiver, cancellation policy, photo release, and emergency contact information.
+            ? `${firstSwimmer.first_name} ${firstSwimmer.last_name} needs their waiver forms completed before they can participate in swim lessons.`
+            : `The following swimmers need waiver forms completed before they can participate: ${incompleteSwimmers.map(s => `${s.first_name} ${s.last_name}`).join(', ')}.`}
+          {' '}This includes the liability waiver, cancellation policy, photo release, and emergency contact information.
         </p>
 
         <div className="flex flex-wrap gap-2">

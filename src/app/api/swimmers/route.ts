@@ -142,7 +142,7 @@ export async function GET(req: Request) {
         query = query.range(from, to);
       }
 
-      const excludedKeys = ["page", "limit", "sortBy", "sortOrder", "search", "enrollmentStatus"];
+      const excludedKeys = ["page", "limit", "sortBy", "sortOrder", "search", "enrollmentStatus", "funding", "priority", "level"];
       Object.keys(queryParams).forEach((key) => {
         if (excludedKeys.includes(key)) return;
         const value = queryParams[key];
@@ -150,6 +150,21 @@ export async function GET(req: Request) {
 
         query = query.eq(key, value);
       });
+
+      // Map frontend filter params to actual DB columns
+      if (queryParams.funding && queryParams.funding !== 'all') {
+        // Normalize: 'funding_source' and 'funded' both map to payment_type = 'funding_source'
+        const fundingValue = queryParams.funding === 'funded' ? 'funding_source' : queryParams.funding;
+        query = query.eq('payment_type', fundingValue);
+      }
+      if (queryParams.priority && queryParams.priority !== 'all') {
+        query = query.eq('is_priority_booking', queryParams.priority === 'priority');
+      }
+      if (queryParams.level && queryParams.level !== 'all' && queryParams.level !== 'none') {
+        // level values are color names (white, red, yellow, green, blue)
+        // We need to filter via the swim_levels join. PostgREST supports nested filters.
+        query = query.eq('swim_levels.name', queryParams.level);
+      }
 
       const { data, error, count } = await query;
 
@@ -165,7 +180,7 @@ export async function GET(req: Request) {
     // Batch query active purchase orders for funded swimmers
     let poMap: Record<string, any> = {};
     const fundedSwimmers = (data || []).filter(
-      s => s.funding_source?.[0]?.requires_authorization === true
+      s => (s.funding_source as any)?.requires_authorization === true
     );
     if (fundedSwimmers.length > 0) {
       const swimmerIds = fundedSwimmers.map(s => s.id);
@@ -198,22 +213,21 @@ export async function GET(req: Request) {
         b.status === 'confirmed' &&
         b.booking_type === 'lesson' &&
         b.session &&
-        b.session.length > 0 &&
-        new Date(b.session[0].start_time) > now
+        new Date(b.session.start_time) > now
       ) || [];
       const lessonsUpcoming = upcomingLessons.length;
 
       const nextBooking = upcomingLessons.sort((a: any, b: any) =>
-        new Date(a.session[0].start_time).getTime() - new Date(b.session[0].start_time).getTime()
+        new Date(a.session.start_time).getTime() - new Date(b.session.start_time).getTime()
       )[0];
 
-      const level = raw.swim_levels?.[0] ? {
-        name: raw.swim_levels[0].name,
-        displayName: raw.swim_levels[0].display_name,
-        color: raw.swim_levels[0].color,
+      const level = raw.swim_levels ? {
+        name: raw.swim_levels.name,
+        displayName: raw.swim_levels.display_name,
+        color: raw.swim_levels.color,
       } : null;
 
-      const funding = raw.funding_source?.[0] || null;
+      const funding = raw.funding_source || null;
 
       const rawPo = poMap[raw.id] || null;
       const activePurchaseOrder = rawPo ? {
@@ -222,9 +236,9 @@ export async function GET(req: Request) {
         unexcusedLateCancelCount: rawPo.unexcused_late_cancel_count,
       } : null;
 
-      const nextSession = nextBooking?.session?.[0] ? {
-        startTime: nextBooking.session[0].start_time,
-        instructorName: nextBooking.session[0].instructor?.[0]?.full_name,
+      const nextSession = nextBooking?.session ? {
+        startTime: nextBooking.session.start_time,
+        instructorName: nextBooking.session.instructor?.full_name,
       } : null;
 
       return {
@@ -243,7 +257,11 @@ export async function GET(req: Request) {
         currentLevelName: level?.name
           ? level.name.charAt(0).toUpperCase() + level.name.slice(1)
           : null,
-        paymentType: raw.payment_type,
+        // Derive display payment type: if swimmer has a funded/regional-center funding source,
+        // show as 'funding_source' even when payment_type is incorrectly 'private_pay'
+        paymentType: (raw.payment_type === 'private_pay' && funding?.type === 'regional_center')
+          ? 'funding_source'
+          : raw.payment_type,
         fundingSourceId: raw.funding_source_id,
         flexibleSwimmer: raw.flexible_swimmer,
         authorizedSessionsUsed: raw.authorized_sessions_used,

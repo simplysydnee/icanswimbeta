@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import { notifyCoordinatorPendingRenewalPO } from '@/lib/email/pos-notifications'
+
 import { notifyParentLateCancelWarning, notifyAdminLateCancelWarning } from '@/lib/email/cancellation-notifications'
 
 function getServiceSupabase() {
@@ -358,7 +358,7 @@ export async function PATCH(
                 .single()
 
               if (renewalPO) {
-                await notifyCoordinatorPendingRenewalPO(renewalPO.id)
+                // Email is now sent manually from the admin PO page
               }
             }
           }

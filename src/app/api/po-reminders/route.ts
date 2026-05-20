@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import {
-  notifyCoordinatorPendingRenewalPO,
   notifyCoordinatorPOExtension,
   notifyParentPendingAuth,
   notifyCoordinatorEnterAuthNumber,
@@ -44,8 +43,6 @@ export async function POST(request: Request) {
           // Resend coordinator email based on PO type
           if (po.is_extension) {
             await notifyCoordinatorPOExtension(po.id);
-          } else {
-            await notifyCoordinatorPendingRenewalPO(po.id);
           }
 
           // Send parent pending auth email

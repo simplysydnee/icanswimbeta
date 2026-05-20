@@ -48,6 +48,7 @@ import {
   AlertTriangle,
   Check,
   Pencil,
+  Mail,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
@@ -252,6 +253,12 @@ function POSPageContent() {
   const [approving, setApproving] = useState(false);
   const [remindingPoId, setRemindingPoId] = useState<string | null>(null);
   const [warningPoId, setWarningPoId] = useState<string | null>(null);
+
+  // Send renewal email modal
+  const [sendEmailModalOpen, setSendEmailModalOpen] = useState(false);
+  const [sendEmailPo, setSendEmailPo] = useState<PurchaseOrder | null>(null);
+  const [sendEmailSubject, setSendEmailSubject] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   // Cancel lesson modal
   const [cancelLessonModalOpen, setCancelLessonModalOpen] = useState(false);
@@ -579,6 +586,66 @@ function POSPageContent() {
       });
     } finally {
       setWarningPoId(null);
+    }
+  };
+
+  const openSendEmailModal = (po: PurchaseOrder) => {
+    const swimmerName = po.swimmer
+      ? `${po.swimmer.first_name} ${po.swimmer.last_name}`
+      : 'Swimmer';
+    setSendEmailPo(po);
+    setSendEmailSubject(`New POS Authorization Needed — ${swimmerName}`);
+    setSendEmailModalOpen(true);
+  };
+
+  const handleSendRenewalEmail = async () => {
+    if (!sendEmailPo) return;
+
+    setSendingEmail(true);
+    try {
+      const response = await fetch(`/api/pos/${sendEmailPo.id}/send-renewal-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to send email');
+      }
+
+      const data = await response.json();
+
+      // Update PO notes in local state to show sent timestamp
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+      const sentNote = `Renewal email sent ${dateStr}`;
+      setPurchaseOrders((prev) =>
+        prev.map((p) =>
+          p.id === sendEmailPo.id
+            ? { ...p, notes: p.notes ? `${p.notes}\n${sentNote}` : sentNote }
+            : p
+        )
+      );
+
+      setSendEmailModalOpen(false);
+      toast({
+        title: `Renewal email sent to ${data.coordinatorName}`,
+      });
+    } catch (error) {
+      console.error('Error sending renewal email:', error);
+      toast({
+        title: 'Failed to send renewal email',
+        description: error instanceof Error ? error.message : 'Please try again',
+        variant: 'destructive',
+      });
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -1140,6 +1207,41 @@ function POSPageContent() {
         </CardContent>
       </Card>
 
+      {/* Pending Lessons POs Alert */}
+      {(() => {
+        const pendingLessonCount = purchaseOrders.filter(
+          (po) => po.status === 'pending' && po.po_type === 'lessons'
+        ).length;
+        if (pendingLessonCount === 0) return null;
+        return (
+          <div className="flex items-center gap-3 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-950">
+            <Mail className="h-5 w-5 shrink-0 text-teal-600" />
+            <button
+              onClick={() => {
+                setStatusFilter('pending');
+                setPoTypeFilter('lessons');
+              }}
+              className="font-medium underline-offset-2 hover:underline text-teal-700"
+            >
+              📧 {pendingLessonCount} renewal {pendingLessonCount === 1 ? 'email' : 'emails'} ready to send
+            </button>
+            <span className="text-teal-500 text-xs">
+              Review and send coordinator renewal emails
+            </span>
+            {(statusFilter === 'pending' && poTypeFilter === 'lessons') && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-teal-300 ml-auto"
+                onClick={() => { setStatusFilter('all'); setPoTypeFilter('all'); }}
+              >
+                Clear filter
+              </Button>
+            )}
+          </div>
+        );
+      })()}
+
       {/* PO List */}
       {filteredPOs.length === 0 ? (
         <Card>
@@ -1483,6 +1585,20 @@ function POSPageContent() {
                         </div>
                       ) : (
                         <div className="flex items-center justify-center gap-0.5">
+                          {po.status === 'pending' && po.po_type === 'lessons' && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={() => openSendEmailModal(po)}
+                                  className="p-1.5 rounded-md hover:bg-teal-50 text-gray-500 hover:text-teal-600 transition"
+                                >
+                                  <Mail className="h-4 w-4" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top">Send renewal email to coordinator</TooltipContent>
+                            </Tooltip>
+                          )}
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <button
@@ -1629,6 +1745,90 @@ function POSPageContent() {
               {selectedPO?.status === 'pending' ? 'Approve' :
                selectedPO?.status === 'approved_pending_auth' ? 'Save Auth#' :
                'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Renewal Email Modal */}
+      <Dialog
+        open={sendEmailModalOpen}
+        onOpenChange={(open) => {
+          setSendEmailModalOpen(open);
+          if (!open) {
+            setSendEmailPo(null);
+            setSendingEmail(false);
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Send POS Renewal Email</DialogTitle>
+            <DialogDescription>
+              To: {sendEmailPo?.swimmer?.funding_coordinator_name || 'Coordinator'}
+              {sendEmailPo?.swimmer?.funding_coordinator_email
+                ? ` <${sendEmailPo.swimmer.funding_coordinator_email}>`
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Info summary */}
+            <div className="rounded-lg border bg-gray-50 p-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Swimmer:</span>
+                <span className="font-medium">
+                  {sendEmailPo?.swimmer?.first_name} {sendEmailPo?.swimmer?.last_name}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Sessions:</span>
+                <span className="font-medium">{sendEmailPo?.sessions_authorized} authorized</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Period:</span>
+                <span className="font-medium">
+                  {sendEmailPo?.start_date ? formatPODate(sendEmailPo.start_date, 'MMM d, yyyy') : '—'}
+                  {' → '}
+                  {sendEmailPo?.end_date ? formatPODate(sendEmailPo.end_date, 'MMM d, yyyy') : '—'}
+                </span>
+              </div>
+            </div>
+
+            {/* Subject line */}
+            <div className="space-y-2">
+              <Label htmlFor="email-subject">Subject</Label>
+              <Input
+                id="email-subject"
+                value={sendEmailSubject}
+                onChange={(e) => setSendEmailSubject(e.target.value)}
+                disabled={sendingEmail}
+              />
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              The email includes the swimmer's progress report and an approve button for the coordinator.
+              Review the email content before sending.
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSendEmailModalOpen(false)}
+              disabled={sendingEmail}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={handleSendRenewalEmail}
+              disabled={sendingEmail}
+            >
+              {sendingEmail && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Send Email →
             </Button>
           </DialogFooter>
         </DialogContent>
