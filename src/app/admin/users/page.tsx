@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   MoreHorizontal,
   Plus,
@@ -27,6 +29,9 @@ import {
   ChevronRight,
   ChevronsRight,
   ChevronsUpDown,
+  Mail,
+  Eye,
+  Circle,
 } from 'lucide-react';
 
 type Role = 'parent' | 'instructor' | 'admin' | 'coordinator';
@@ -40,6 +45,8 @@ interface User {
   role: Role;
   swimmer_count: number;
   client_count: number;
+  last_login_at: string | null;
+  login_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -105,6 +112,10 @@ function UsersPageInner() {
   const [newCoordinatorName, setNewCoordinatorName] = useState('');
   const [showNewCoordinatorForm, setShowNewCoordinatorForm] = useState(false);
   const [reassignSwimmerId, setReassignSwimmerId] = useState<string>('');
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteResults, setInviteResults] = useState<{ email: string; success: boolean; error?: string }[] | null>(null);
 
   const [newUser, setNewUser] = useState({
     email: '',
@@ -651,6 +662,57 @@ function UsersPageInner() {
     });
   };
 
+  // Selection handlers
+  const toggleSelectUser = (id: string) => {
+    setSelectedUserIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedUserIds.size === users.length && users.length > 0) {
+      setSelectedUserIds(new Set());
+    } else {
+      setSelectedUserIds(new Set(users.map(u => u.id)));
+    }
+  };
+
+  const allSelected = users.length > 0 && selectedUserIds.size === users.length;
+
+  const handleBulkInvite = async () => {
+    const ids = Array.from(selectedUserIds);
+    if (ids.length === 0) return;
+
+    setInviteLoading(true);
+    setInviteResults(null);
+
+    try {
+      const res = await fetch('/api/admin/users/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds: ids }),
+      });
+      const json = await res.json();
+      setInviteResults(json.results ?? []);
+    } catch (error) {
+      console.error('Bulk invite error:', error);
+      setInviteResults([{ email: '', success: false, error: 'Network error — check console' }]);
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
+  const getLoginStatusDot = (user: User) => {
+    if (!user.last_login_at) return { color: 'text-gray-300', label: 'Never logged in' };
+    const daysSince = (Date.now() - new Date(user.last_login_at).getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSince < 1) return { color: 'text-green-500', label: `Logged in ${Math.round(daysSince * 24)} hours ago` };
+    if (daysSince < 7) return { color: 'text-yellow-500', label: `Logged in ${Math.round(daysSince)} days ago` };
+    return { color: 'text-red-500', label: `Logged in ${Math.round(daysSince)} days ago` };
+  };
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -704,13 +766,44 @@ function UsersPageInner() {
         </div>
       ) : (
         <div className="bg-white rounded-lg border">
+          {/* Bulk action bar */}
+          {selectedUserIds.size > 0 && (
+            <div className="flex items-center gap-3 px-4 py-2 bg-primary/5 border-b border-primary/20">
+              <span className="text-sm font-medium">{selectedUserIds.size} selected</span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setInviteDialogOpen(true)}
+                disabled={inviteLoading}
+              >
+                <Mail className="h-4 w-4 mr-1.5" />
+                Send Invite
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="ml-auto text-muted-foreground"
+                onClick={() => setSelectedUserIds(new Set())}
+              >
+                Clear selection
+              </Button>
+            </div>
+          )}
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Select all"
+                  />
+                </TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
                 <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -718,13 +811,22 @@ function UsersPageInner() {
             <TableBody>
               {users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     {search || roleFilter !== 'all' ? 'No users match your filters' : 'No users found'}
                   </TableCell>
                 </TableRow>
               ) : (
-                users.map((user) => (
+                users.map((user) => {
+                  const dot = getLoginStatusDot(user);
+                  return (
                   <TableRow key={`${user.id}-${user.role}`}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedUserIds.has(user.id)}
+                        onCheckedChange={() => toggleSelectUser(user.id)}
+                        aria-label={`Select ${user.full_name || user.email}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">
                       {user.full_name || '—'}
                     </TableCell>
@@ -746,6 +848,23 @@ function UsersPageInner() {
                           </Badge>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1.5 cursor-default">
+                              <Circle className={`h-3 w-3 fill-current ${dot.color}`} />
+                              <span className="text-xs text-muted-foreground">
+                                {user.login_count ?? 0}
+                              </span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="left">
+                            {dot.label}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </TableCell>
                     <TableCell>{formatDate(user.created_at)}</TableCell>
                     <TableCell className="text-right">
@@ -770,6 +889,22 @@ function UsersPageInner() {
                             <Edit className="h-4 w-4 mr-2" />
                             Edit
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedUserIds(new Set([user.id]));
+                            setInviteDialogOpen(true);
+                          }}>
+                            <Mail className="h-4 w-4 mr-2" />
+                            Send Invite
+                          </DropdownMenuItem>
+                          {(user.role === 'parent' || user.role === 'coordinator') && (
+                            <DropdownMenuItem onClick={() => {
+                              const portal = user.role === 'parent' ? 'parent' : 'coordinator';
+                              window.open(`/admin/view-as/${portal}/${user.id}`, '_blank');
+                            }}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Portal
+                            </DropdownMenuItem>
+                          )}
                           {user.role === 'parent' && (
                             <DropdownMenuItem onClick={() => {
                               setSelectedUser(user);
@@ -779,19 +914,15 @@ function UsersPageInner() {
                               Link Swimmer
                             </DropdownMenuItem>
                           )}
-                          {(() => {
-                            console.log('Checking role for Transfer Client:', user.email, 'role:', user.role, 'is coordinator?', user.role === 'coordinator');
-                            return user.role === 'coordinator' && (
-                              <DropdownMenuItem onClick={() => {
-                                console.log('Transfer Client clicked for coordinator:', user.email, 'role:', user.role);
-                                setSelectedUser(user);
-                                setTransferDialogOpen(true);
-                              }}>
-                                <ArrowRightLeft className="h-4 w-4 mr-2" />
-                                Transfer Client
-                              </DropdownMenuItem>
-                            );
-                          })()}
+                          {user.role === 'coordinator' && (
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedUser(user);
+                              setTransferDialogOpen(true);
+                            }}>
+                              <ArrowRightLeft className="h-4 w-4 mr-2" />
+                              Transfer Client
+                            </DropdownMenuItem>
+                          )}
                           {user.role === 'coordinator' && (
                             <DropdownMenuItem onClick={() => {
                               setSelectedUser(user);
@@ -815,7 +946,8 @@ function UsersPageInner() {
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ))
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -1308,6 +1440,84 @@ function UsersPageInner() {
               Transfer Client
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Invite Users Dialog */}
+      <Dialog open={inviteDialogOpen} onOpenChange={(open) => {
+        setInviteDialogOpen(open);
+        if (!open) {
+          if (!inviteLoading) {
+            setInviteResults(null);
+            setSelectedUserIds(new Set());
+          }
+        }
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Send Invitation{selectedUserIds.size > 1 ? 's' : ''}</DialogTitle>
+            <DialogDescription>
+              Send login invitation emails to {selectedUserIds.size} selected user{selectedUserIds.size > 1 ? 's' : ''}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            {inviteResults ? (
+              <div className="space-y-3">
+                <h4 className="font-medium text-sm">Results</h4>
+                <div className="max-h-64 overflow-y-auto space-y-2">
+                  {inviteResults.map((r, i) => (
+                    <div key={i} className={`flex items-center gap-2 text-sm p-2 rounded ${r.success ? 'bg-green-50' : 'bg-red-50'}`}>
+                      {r.success ? (
+                        <Check className="h-4 w-4 text-green-600 shrink-0" />
+                      ) : (
+                        <span className="h-4 w-4 text-red-600 shrink-0">✗</span>
+                      )}
+                      <span className={r.success ? 'text-green-800' : 'text-red-800'}>
+                        {r.email}: {r.success ? 'Invitation sent' : r.error}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <Button variant="outline" className="w-full mt-2" onClick={() => {
+                  setInviteDialogOpen(false);
+                  setInviteResults(null);
+                  setSelectedUserIds(new Set());
+                }}>
+                  Done
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  An invitation email will be sent to:
+                </p>
+                <div className="max-h-64 overflow-y-auto space-y-1">
+                  {users.filter(u => selectedUserIds.has(u.id)).map(u => (
+                    <div key={u.id} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
+                      <span>{u.full_name || 'Unnamed'}</span>
+                      <span className="text-muted-foreground">{u.email}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {!inviteResults && (
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {
+                setInviteDialogOpen(false);
+                setSelectedUserIds(new Set());
+              }}>
+                Cancel
+              </Button>
+              <Button onClick={handleBulkInvite} disabled={inviteLoading}>
+                {inviteLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Send Invitation{selectedUserIds.size > 1 ? 's' : ''}
+              </Button>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
 

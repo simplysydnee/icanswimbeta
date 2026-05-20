@@ -74,6 +74,8 @@ export async function GET(req: Request) {
       phone: string | null;
       created_at: string;
       updated_at: string;
+      last_login_at: string | null;
+      login_count: number | null;
     };
 
     // Always query user_roles -> profiles!inner so that multi-role users
@@ -83,7 +85,7 @@ export async function GET(req: Request) {
     let q = supabase
       .from('user_roles')
       .select(
-        'role, profiles!inner(id, email, full_name, phone, created_at, updated_at)',
+        'role, profiles!inner(id, email, full_name, phone, created_at, updated_at, last_login_at, login_count)',
         { count: 'exact' }
       )
       .order('created_at', { referencedTable: 'profiles', ascending: false });
@@ -154,6 +156,8 @@ export async function GET(req: Request) {
       phone: profile.phone,
       created_at: profile.created_at,
       updated_at: profile.updated_at,
+      last_login_at: profile.last_login_at,
+      login_count: profile.login_count ?? 0,
       role: rowRole,
       swimmer_count: rowRole === 'parent' ? swimmerCount.get(profile.id) ?? 0 : 0,
       client_count: rowRole === 'coordinator' ? clientCount.get(profile.id) ?? 0 : 0,

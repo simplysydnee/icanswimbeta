@@ -17,7 +17,7 @@ export async function GET(request: Request) {
           getAll() {
             return cookieStore.getAll()
           },
-          setAll(cookiesToSet) {
+          setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
             try {
               cookiesToSet.forEach(({ name, value, options }) =>
                 cookieStore.set(name, value, options)
@@ -56,6 +56,14 @@ export async function GET(request: Request) {
         if (profileError) {
           console.error('Error ensuring profile exists:', profileError)
           // Continue anyway - profile will be created on next login
+        }
+
+        // Track login
+        try {
+          await supabase.rpc('update_last_login')
+        } catch (loginErr) {
+          console.error('Error tracking login:', loginErr)
+          // Non-fatal
         }
 
         // Ensure user has a role (default to 'parent')

@@ -256,6 +256,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setIsLoadingProfile(false)
           })
           setLoading(false)
+          // Track login on every sign-in event (covers OAuth redirects)
+          ;(async () => { try { await supabase.rpc('update_last_login') } catch {} })()
         }
         // INITIAL_SESSION and TOKEN_REFRESHED are handled by initializeAuth —
         // do not call router.refresh() for these events or it creates a reload loop.
@@ -280,6 +282,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Login error:', error)
         throw error
       }
+
+      // Track login (fire-and-forget)
+      try { await supabase.rpc('update_last_login') } catch {}
 
       const redirectPath = redirectTo || '/dashboard'
       router.push(redirectPath)
