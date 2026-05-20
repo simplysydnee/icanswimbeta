@@ -201,7 +201,10 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
       let endpoint = '';
       let payload: any = { swimmerId: selectedSwimmer.id };
 
-      if (currentStep === 'assessment') {
+      const isWaitlistConfirm =
+        currentStep === 'confirm' && selectedSwimmer.enrollmentStatus === 'waitlist';
+
+      if (currentStep === 'assessment' || isWaitlistConfirm) {
         // Assessment booking
         if (!selectedSessionId) {
           throw new Error('No session selected');
@@ -439,7 +442,73 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
             </div>
           );
         } else if (isWaitlist) {
-          // Assessment booked — show success with stored session details
+          const sessionStart =
+            assessmentSessionDetails?.startTime ?? selectedSession?.startTime ?? null;
+          const sessionLocation =
+            assessmentSessionDetails?.location ?? selectedSession?.location ?? null;
+          const sessionInstructor =
+            assessmentSessionDetails?.instructorName ?? selectedSession?.instructorName ?? null;
+          const sessionReady = sessionStart !== null;
+
+          if (!bookingResult?.success) {
+            return (
+              <div className="space-y-6">
+                <div>
+                  <p className="font-semibold">Review your assessment</p>
+                  <p className="text-sm text-muted-foreground">
+                    Confirm the details below to book {selectedSwimmer?.firstName ?? 'your swimmer'}&apos;s assessment.
+                  </p>
+                </div>
+
+                {sessionReady ? (
+                  <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">
+                        {format(new Date(sessionStart!), 'EEEE, MMMM d, yyyy')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span>{format(new Date(sessionStart!), 'h:mm a')}</span>
+                    </div>
+                    {sessionLocation && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span>{sessionLocation}</span>
+                      </div>
+                    )}
+                    {sessionInstructor && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span>{sessionInstructor}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      No session selected. Go back and pick a date and time.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <p className="font-medium mb-1">By confirming:</p>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      <li>You agree to our 24-hour cancellation policy</li>
+                      <li>You&apos;ll receive a confirmation email with assessment details</li>
+                      <li>Once approved, you can book regular lessons</li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              </div>
+            );
+          }
+
           return (
             <div className="space-y-6">
               <div className="flex items-center gap-3 text-green-600">
@@ -452,31 +521,30 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
                 </div>
               </div>
 
-              {/* Session details from AssessmentTab selection */}
-              {assessmentSessionDetails && (
+              {sessionReady && (
                 <div className="rounded-lg border border-green-200 bg-green-50 p-4 space-y-2">
                   <div className="flex items-center gap-2 text-sm">
                     <Calendar className="h-4 w-4 text-green-600" />
                     <span className="font-medium text-green-800">
-                      {format(new Date(assessmentSessionDetails.startTime), 'EEEE, MMMM d, yyyy')}
+                      {format(new Date(sessionStart!), 'EEEE, MMMM d, yyyy')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Clock className="h-4 w-4 text-green-600" />
                     <span className="text-green-700">
-                      {format(new Date(assessmentSessionDetails.startTime), 'h:mm a')}
+                      {format(new Date(sessionStart!), 'h:mm a')}
                     </span>
                   </div>
-                  {assessmentSessionDetails.location && (
+                  {sessionLocation && (
                     <div className="flex items-center gap-2 text-sm">
                       <MapPin className="h-4 w-4 text-green-600" />
-                      <span className="text-green-700">{assessmentSessionDetails.location}</span>
+                      <span className="text-green-700">{sessionLocation}</span>
                     </div>
                   )}
-                  {assessmentSessionDetails.instructorName && (
+                  {sessionInstructor && (
                     <div className="flex items-center gap-2 text-sm">
                       <User className="h-4 w-4 text-green-600" />
-                      <span className="text-green-700">{assessmentSessionDetails.instructorName}</span>
+                      <span className="text-green-700">{sessionInstructor}</span>
                     </div>
                   )}
                 </div>
@@ -605,9 +673,20 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
 
             {/* Navigation buttons */}
             <div className="flex justify-between mt-8 pt-6 border-t">
-              
+
               {currentStep === 'confirm' ? (
-                <div />
+                selectedSwimmer?.enrollmentStatus === 'waitlist' && !bookingResult?.success ? (
+                  <Button
+                    variant="outline"
+                    onClick={handleBack}
+                    disabled={isSubmitting}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-2" />
+                    Back
+                  </Button>
+                ) : (
+                  <div />
+                )
               ) : (
                 <Button
                   variant="outline"
@@ -621,16 +700,23 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
 
               {currentStep === 'confirm' ? (
                 selectedSwimmer?.enrollmentStatus === 'waitlist' ? (
-                  // For assessments, go back to parent dashboard
-                  <Link href="/parent">
-                    <Button>
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Done
+                  bookingResult?.success ? (
+                    <Link href="/parent">
+                      <Button>
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Done
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={isSubmitting || !selectedSessionId}
+                    >
+                      {isSubmitting ? 'Booking…' : 'Confirm Assessment Booking'}
                     </Button>
-                  </Link>
+                  )
                 ) : (
                   // For regular bookings, ConfirmationStep has its own buttons
-                  // Show empty div to maintain layout
                   <div></div>
                 )
               ) : (
