@@ -2,10 +2,14 @@
 
 import { ResponsiveHeader } from '@/components/layout/responsive-header';
 import { Sidebar } from '@/components/layout/sidebar';
+import { ViewAsBanner } from '@/components/admin/ViewAsBanner';
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
+      {/* View-as banner when admin is impersonating */}
+      <ViewAsBanner />
+
       {/* Desktop sidebar - hidden on mobile */}
       {/* Use grid layout for proper sidebar + content coordination */}
       <div className="hidden md:grid md:grid-cols-[auto_1fr] min-h-screen">

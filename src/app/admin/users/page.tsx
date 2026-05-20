@@ -898,8 +898,7 @@ function UsersPageInner() {
                           </DropdownMenuItem>
                           {(user.role === 'parent' || user.role === 'coordinator') && (
                             <DropdownMenuItem onClick={() => {
-                              const portal = user.role === 'parent' ? 'parent' : 'coordinator';
-                              window.open(`/admin/view-as/${portal}/${user.id}`, '_blank');
+                              router.push(`/admin/view-as/launch/${user.id}`);
                             }}>
                               <Eye className="h-4 w-4 mr-2" />
                               View Portal

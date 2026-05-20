@@ -3,10 +3,12 @@
 import { ResponsiveHeader } from '@/components/layout/responsive-header';
 import { Sidebar } from '@/components/layout/sidebar';
 import { RoleGuard } from '@/components/auth/RoleGuard';
+import { ViewAsBanner } from '@/components/admin/ViewAsBanner';
 
 export default function CoordinatorLayout({ children }: { children: React.ReactNode }) {
   return (
     <RoleGuard allowedRoles={['coordinator', 'admin']}>
+      <ViewAsBanner />
       <div className="min-h-screen bg-background">
         {/* Desktop sidebar - hidden on mobile */}
         {/* Use grid layout for proper sidebar + content coordination */}
