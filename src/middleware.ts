@@ -143,8 +143,6 @@ export const config = {
     '/signup',
     '/reset-password',
     '/forgot-password',
-    '/auth/callback',
-    '/auth/confirm',
     '/api/:path*',
   ],
 }

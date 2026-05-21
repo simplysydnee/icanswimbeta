@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
-import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,7 +42,6 @@ import {
   Download,
   RefreshCw,
   Calendar,
-  Plus,
   Bell,
   AlertTriangle,
   Check,
@@ -88,6 +86,8 @@ interface PurchaseOrder {
     last_name: string;
     date_of_birth: string;
     parent_id: string;
+    funding_coordinator_name?: string;
+    funding_coordinator_email?: string;
     bookings?: Array<{
       booking_id?: string;
       status?: string;
@@ -259,6 +259,13 @@ function POSPageContent() {
   const [sendEmailPo, setSendEmailPo] = useState<PurchaseOrder | null>(null);
   const [sendEmailSubject, setSendEmailSubject] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
+
+  // Track which POs have had renewal emails sent (key = PO id, value = date string)
+  const [sentRenewalEmailDates, setSentRenewalEmailDates] = useState<Record<string, string>>({});
+
+  // Delete pending PO
+  const [deletePendingPoId, setDeletePendingPoId] = useState<string | null>(null);
+  const [deletingPendingPo, setDeletingPendingPo] = useState(false);
 
   // Cancel lesson modal
   const [cancelLessonModalOpen, setCancelLessonModalOpen] = useState(false);
@@ -589,6 +596,39 @@ function POSPageContent() {
     }
   };
 
+  const getRenewalEmailSentDate = (po: PurchaseOrder): string | null => {
+    // Check in-memory tracking first (current session sends)
+    if (sentRenewalEmailDates[po.id]) return sentRenewalEmailDates[po.id];
+    // Fall back to notes from API response
+    const notes = po.notes || '';
+    const match = notes.match(/Renewal email sent (.+)$/m);
+    return match ? match[1] : null;
+  };
+
+  const handleDeletePendingPO = async (poId: string) => {
+    setDeletingPendingPo(true);
+    const supabase = createClient();
+    try {
+      const { error } = await supabase
+        .from('purchase_orders')
+        .delete()
+        .eq('id', poId)
+        .eq('status', 'pending');
+      if (error) throw error;
+      setPurchaseOrders((prev) => prev.filter((p) => p.id !== poId));
+      setDeletePendingPoId(null);
+      toast({ title: 'Pending renewal request deleted' });
+    } catch (error) {
+      console.error('Error deleting pending PO:', error);
+      toast({
+        title: 'Failed to delete pending PO',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingPendingPo(false);
+    }
+  };
+
   const openSendEmailModal = (po: PurchaseOrder) => {
     const swimmerName = po.swimmer
       ? `${po.swimmer.first_name} ${po.swimmer.last_name}`
@@ -633,6 +673,12 @@ function POSPageContent() {
         )
       );
 
+      const shortDate = now.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+      setSentRenewalEmailDates((prev) => ({ ...prev, [sendEmailPo.id]: shortDate }));
       setSendEmailModalOpen(false);
       toast({
         title: `Renewal email sent to ${data.coordinatorName}`,
@@ -923,14 +969,6 @@ function POSPageContent() {
             </div>
           )}
           <div className="flex gap-2">
-            {activeTab === 'purchase-orders' && (
-              <Button size="sm" asChild>
-                <Link href="/admin/pos/new">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create PO
-                </Link>
-              </Button>
-            )}
             <Button variant="outline" size="sm" onClick={activeTab === 'purchase-orders' ? fetchPurchaseOrders : fetchFundingSources}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
@@ -1586,17 +1624,54 @@ function POSPageContent() {
                       ) : (
                         <div className="flex items-center justify-center gap-0.5">
                           {po.status === 'pending' && po.po_type === 'lessons' && (
+                            (() => {
+                              const sentDate = getRenewalEmailSentDate(po);
+                              if (sentDate) {
+                                return (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        type="button"
+                                        onClick={() => openSendEmailModal(po)}
+                                        className="inline-flex items-center gap-1 p-1.5 text-xs text-green-600 hover:bg-teal-50 rounded-md transition"
+                                      >
+                                        <Check className="h-3.5 w-3.5" />
+                                        Sent {sentDate}
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">Resend renewal email</TooltipContent>
+                                  </Tooltip>
+                                );
+                              }
+                              return (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      onClick={() => openSendEmailModal(po)}
+                                      className="p-1.5 rounded-md hover:bg-teal-50 text-gray-500 hover:text-teal-600 transition"
+                                    >
+                                      <Mail className="h-4 w-4" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">Send renewal email to coordinator</TooltipContent>
+                                </Tooltip>
+                              );
+                            })()
+                          )}
+                          {po.status === 'pending' && po.po_type === 'lessons' && !getRenewalEmailSentDate(po) && (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <button
                                   type="button"
-                                  onClick={() => openSendEmailModal(po)}
-                                  className="p-1.5 rounded-md hover:bg-teal-50 text-gray-500 hover:text-teal-600 transition"
+                                  onClick={() => setDeletePendingPoId(po.id)}
+                                  disabled={deletingPendingPo}
+                                  className="p-1.5 rounded-md hover:bg-red-50 text-gray-500 hover:text-red-600 disabled:opacity-40 transition"
                                 >
-                                  <Mail className="h-4 w-4" />
+                                  <XCircle className="h-4 w-4" />
                                 </button>
                               </TooltipTrigger>
-                              <TooltipContent side="top">Send renewal email to coordinator</TooltipContent>
+                              <TooltipContent side="top">Delete pending renewal request</TooltipContent>
                             </Tooltip>
                           )}
                           <Tooltip>
@@ -1761,55 +1836,91 @@ function POSPageContent() {
           }
         }}
       >
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Send POS Renewal Email</DialogTitle>
+            <DialogTitle>Preview & Send Renewal Email</DialogTitle>
             <DialogDescription>
-              To: {sendEmailPo?.swimmer?.funding_coordinator_name || 'Coordinator'}
-              {sendEmailPo?.swimmer?.funding_coordinator_email
-                ? ` <${sendEmailPo.swimmer.funding_coordinator_email}>`
-                : ''}
+              Review the new PO request and email content before sending to the coordinator.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-2">
-            {/* Info summary */}
-            <div className="rounded-lg border bg-gray-50 p-4 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Swimmer:</span>
-                <span className="font-medium">
-                  {sendEmailPo?.swimmer?.first_name} {sendEmailPo?.swimmer?.last_name}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Sessions:</span>
-                <span className="font-medium">{sendEmailPo?.sessions_authorized} authorized</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Period:</span>
-                <span className="font-medium">
-                  {sendEmailPo?.start_date ? formatPODate(sendEmailPo.start_date, 'MMM d, yyyy') : '—'}
-                  {' → '}
-                  {sendEmailPo?.end_date ? formatPODate(sendEmailPo.end_date, 'MMM d, yyyy') : '—'}
-                </span>
+          <div className="space-y-6 py-2">
+            {/* Section A — New PO Summary */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">New PO Request</h3>
+              <div className="rounded-lg border bg-gray-50 p-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Swimmer:</span>
+                  <span className="font-medium">
+                    {sendEmailPo?.swimmer?.first_name} {sendEmailPo?.swimmer?.last_name}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Sessions:</span>
+                  <span className="font-medium">{sendEmailPo?.sessions_authorized}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Period:</span>
+                  <span className="font-medium">
+                    {sendEmailPo?.start_date ? formatPODate(sendEmailPo.start_date, 'MMM d, yyyy') : '—'}
+                    {' → '}
+                    {sendEmailPo?.end_date ? formatPODate(sendEmailPo.end_date, 'MMM d, yyyy') : '—'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Coordinator:</span>
+                  <span className="font-medium">
+                    {sendEmailPo?.swimmer?.funding_coordinator_name
+                      ? `${sendEmailPo.swimmer.funding_coordinator_name} ${sendEmailPo.swimmer.funding_coordinator_email ? `<${sendEmailPo.swimmer.funding_coordinator_email}>` : ''}`
+                      : sendEmailPo?.coordinator?.full_name || 'Not assigned'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Status:</span>
+                  <span className="font-medium text-amber-600">Pending Authorization</span>
+                </div>
               </div>
             </div>
 
-            {/* Subject line */}
-            <div className="space-y-2">
-              <Label htmlFor="email-subject">Subject</Label>
-              <Input
-                id="email-subject"
-                value={sendEmailSubject}
-                onChange={(e) => setSendEmailSubject(e.target.value)}
-                disabled={sendingEmail}
-              />
-            </div>
+            {/* Section B — Email Preview */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">Email Preview</h3>
+              <div className="space-y-3 rounded-lg border p-4">
+                {/* Subject line */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="email-subject">Subject</Label>
+                  <Input
+                    id="email-subject"
+                    value={sendEmailSubject}
+                    onChange={(e) => setSendEmailSubject(e.target.value)}
+                    disabled={sendingEmail}
+                    className="text-sm"
+                  />
+                </div>
 
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              The email includes the swimmer's progress report and an approve button for the coordinator.
-              Review the email content before sending.
-            </p>
+                {/* Email content preview */}
+                <div className="rounded-md border bg-white p-4 text-sm text-gray-700 space-y-2 max-h-64 overflow-y-auto">
+                  <p className="font-medium text-gray-900">Dear {sendEmailPo?.swimmer?.funding_coordinator_name || sendEmailPo?.coordinator?.full_name || 'Coordinator'},</p>
+                  <p>
+                    A new Purchase Order has been created for <strong>{sendEmailPo?.swimmer?.first_name} {sendEmailPo?.swimmer?.last_name}</strong>.
+                    Please review and authorize {sendEmailPo?.sessions_authorized || 12} lessons for the period{' '}
+                    {sendEmailPo?.start_date ? formatPODate(sendEmailPo.start_date, 'MMM d, yyyy') : '—'}
+                    {' → '}
+                    {sendEmailPo?.end_date ? formatPODate(sendEmailPo.end_date, 'MMM d, yyyy') : '—'}.
+                  </p>
+                  <p>The email will include:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Swimmer progress report with mastered skills</li>
+                    <li>Upcoming skills to work on</li>
+                    <li><strong>Approve button</strong> for the coordinator to authorize the PO</li>
+                  </ul>
+                  <p className="text-xs text-muted-foreground pt-2 border-t">
+                    The full HTML email is generated server-side when sent. It includes the complete progress report,
+                    skill tracking details, and a secure approval link.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
@@ -1820,6 +1931,15 @@ function POSPageContent() {
               disabled={sendingEmail}
             >
               Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="border-gray-300"
+              onClick={() => document.getElementById('email-subject')?.focus()}
+              disabled={sendingEmail}
+            >
+              Edit Subject
             </Button>
             <Button
               type="button"
@@ -1924,6 +2044,37 @@ function POSPageContent() {
         }}
         onUpdate={fetchPurchaseOrders}
       />
+
+      {/* Delete Pending PO Confirmation */}
+      <Dialog open={deletePendingPoId !== null} onOpenChange={(open) => { if (!open) setDeletePendingPoId(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete Renewal Request</DialogTitle>
+            <DialogDescription>
+              Delete this renewal request? This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeletePendingPoId(null)}
+              disabled={deletingPendingPo}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => deletePendingPoId && handleDeletePendingPO(deletePendingPoId)}
+              disabled={deletingPendingPo}
+            >
+              {deletingPendingPo && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Funding Source Detail Modal */}
       {selectedFundingSourceForDetail && (
