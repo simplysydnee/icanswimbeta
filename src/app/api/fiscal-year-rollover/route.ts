@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import {
-  notifyCoordinatorFiscalYearRollover,
-  RolloverClient,
-} from '@/lib/email/pos-notifications';
+import { RolloverClient } from '@/lib/email/pos-notifications';
 import { generateApproveToken, getApproveUrl } from '@/lib/po-utils';
 
 export async function POST(request: Request) {
@@ -118,7 +115,7 @@ export async function POST(request: Request) {
     // Process each coordinator group
     let totalClients = 0;
     let totalCreatedPOs = 0;
-    const coordinatorEmailsSent: string[] = [];
+    let coordinatorsWithPos = 0;
 
     for (const [email, group] of coordinatorMap) {
       const rolloverClients: RolloverClient[] = [];
@@ -170,17 +167,16 @@ export async function POST(request: Request) {
       }
 
       if (rolloverClients.length > 0) {
-        await notifyCoordinatorFiscalYearRollover(email, group.name, rolloverClients);
-        coordinatorEmailsSent.push(email);
         totalClients += rolloverClients.length;
-        results.push(`Rollover email sent to ${group.name || email} (${rolloverClients.length} clients)`);
+        coordinatorsWithPos++;
+        results.push(`Rollover POs created for ${group.name || email} (${rolloverClients.length} clients)`);
       }
     }
 
     // Send admin notification
     if (totalClients > 0) {
-      const adminHtml = buildAdminRolloverNotification(totalClients, coordinatorEmailsSent.length, totalCreatedPOs);
-      const adminSubject = `7/1 Fiscal Year Rollover Complete — ${totalClients} clients across ${coordinatorEmailsSent.length} coordinators`;
+      const adminHtml = buildAdminRolloverNotification(totalClients, coordinatorsWithPos, totalCreatedPOs);
+      const adminSubject = `7/1 Fiscal Year Rollover Complete — ${totalClients} clients across ${coordinatorsWithPos} coordinators`;
 
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -204,7 +200,7 @@ export async function POST(request: Request) {
       success: true,
       totalClients,
       totalCreatedPOs,
-      coordinatorCount: coordinatorEmailsSent.length,
+      coordinatorCount: coordinatorsWithPos,
       results,
       newPeriod: { start: july1Str, end: oct1Str },
     });

@@ -150,7 +150,6 @@ export async function POST(request: Request) {
     let poCoordinatorId: string | null = null;
     let bookingStatus: string = 'confirmed';
     let sessionsRemaining: number = 0;
-    let isNewFiscalYearPO: boolean = false;
     if (fundingSourceId && session.session_type === 'lesson') {
       console.log('Funding source requires authorization:', fundingSourceRow?.requires_authorization);
       if (fundingSourceRow?.requires_authorization) {
@@ -199,7 +198,6 @@ export async function POST(request: Request) {
 
             if (isNewFiscalYear) {
               // === Scenario B: New fiscal year — create a brand new PO ===
-              isNewFiscalYearPO = true;
               sessionsRemaining = (expiredPO.sessions_authorized ?? 0) - (expiredPO.sessions_used ?? 0);
 
               // July 1 start date = fiscal year end + 1 day
@@ -388,111 +386,6 @@ export async function POST(request: Request) {
               fundingSourceName: fundingSourceRow?.name ?? undefined,
             });
           }
-        }
-      } else if (bookingStatus === 'pending_auth' && sessionsRemaining > 0) {
-        if (isNewFiscalYearPO) {
-          // Scenario B — new fiscal year, new authorization required
-          if (parentProfile?.email) {
-            const scBSubject = `Lesson Request Received — ${swimmer.first_name} ${swimmer.last_name}`;
-            const scBContent = `
-              <h2 style="color: #2a5e84; margin-top: 0;">Lesson Request Received</h2>
-              <p>Hi ${parentProfile.full_name || 'Parent'},</p>
-              <p>We've received your lesson request for <strong>${swimmer.first_name} ${swimmer.last_name}</strong> on <strong>${format(new Date(session.start_time), 'EEEE, MMMM d, yyyy')}</strong>.</p>
-              <p>Your current service authorization has expired and the lesson date falls in a new fiscal year. You still have <strong>${sessionsRemaining} lessons remaining</strong>, but a new authorization number is needed.</p>
-
-              <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:16px 18px;margin:18px 0;">
-                <div style="font-size:14px;font-weight:600;color:#7a5000;margin-bottom:6px;">📋 New Authorization Required — New Fiscal Year</div>
-                <p style="font-size:13px;color:#5a4a00;line-height:1.6;margin:0;">
-                  Since this lesson falls in a new fiscal year, we have submitted a request for a new authorization for ${swimmer.first_name} covering their remaining ${sessionsRemaining} lessons. Your lesson will be confirmed once your coordinator approves the new authorization.
-                </p>
-              </div>
-
-              <p style="font-size:13px;color:#5a7a8e;line-height:1.5;">
-                Please reach out to your coordinator directly as there may be documents that need to be signed on their end to process this request.
-              </p>
-
-              <div style="background:#e8f4fd;border:1px solid #b8d8f0;border-radius:8px;padding:14px 18px;margin:18px 0;">
-                <div style="font-size:14px;font-weight:600;color:#1a5a7a;margin-bottom:8px;">📅 Upcoming Lesson</div>
-                <table cellpadding="0" cellspacing="0" style="font-size:13px;color:#1a5a7a;">
-                  <tr><td style="padding:2px 8px 2px 0;">📅</td><td>${format(new Date(session.start_time), 'EEEE, MMMM d, yyyy')}</td></tr>
-                  <tr><td style="padding:2px 8px 2px 0;">⏰</td><td>${format(new Date(session.start_time), 'h:mm a')}</td></tr>
-                  <tr><td style="padding:2px 8px 2px 0;">📍</td><td>${session.location || 'TBD'}</td></tr>
-                  <tr><td style="padding:2px 8px 2px 0;">👤</td><td>${instructorProfile?.full_name || 'Any Available Instructor'}</td></tr>
-                </table>
-              </div>
-
-              <div style="background:#f0f6fa;border:1px solid #dde8f0;border-radius:8px;padding:14px 18px;margin:18px 0;">
-                <div style="font-size:14px;font-weight:600;color:#1a3347;margin-bottom:6px;">Questions? Contact us:</div>
-                <div style="font-size:13px;color:#3d5a6e;line-height:1.8;">
-                  💬 Text: <a href="sms:2096437969" style="color:#23a1c0;">209-643-7969</a><br>
-                  📞 Call: <a href="tel:2097787877" style="color:#23a1c0;">(209) 778-7877</a><br>
-                  ✉️ <a href="mailto:info@icanswim209.com" style="color:#23a1c0;">info@icanswim209.com</a>
-                </div>
-              </div>
-            `;
-            const scBHtml = (await import('@/lib/emails/email-wrapper')).wrapEmailWithHeader(scBContent);
-            await emailService.sendEmail({
-              to: parentProfile.email,
-              templateType: 'custom',
-              toName: parentProfile.full_name || undefined,
-              customData: { subject: scBSubject, html: scBHtml },
-            });
-          }
-
-          // Notify coordinator about the new fiscal year PO
-          const { notifyCoordinatorNewFiscalYearPO } = await import('@/lib/email/pos-notifications');
-          await notifyCoordinatorNewFiscalYearPO(activePoId!, sessionsRemaining);
-        } else {
-          // Scenario A — existing extension flow
-          if (parentProfile?.email) {
-            const extSubject = `Lesson Request Received — ${swimmer.first_name} ${swimmer.last_name}`;
-            const extContent = `
-              <h2 style="color: #2a5e84; margin-top: 0;">Lesson Request Received</h2>
-              <p>Hi ${parentProfile.full_name || 'Parent'},</p>
-              <p>We've received your lesson request for <strong>${swimmer.first_name} ${swimmer.last_name}</strong> on <strong>${format(new Date(session.start_time), 'EEEE, MMMM d, yyyy')}</strong>.</p>
-              <p>Your current service authorization has expired, but you still have <strong>${sessionsRemaining} lessons remaining</strong>. We have already contacted your coordinator to request an extension — no action is needed from you at this time.</p>
-
-              <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:16px 18px;margin:18px 0;">
-                <div style="font-size:14px;font-weight:600;color:#7a5000;margin-bottom:6px;">📋 Authorization Extension Requested</div>
-                <p style="font-size:13px;color:#5a4a00;line-height:1.6;margin:0;">
-                  We have submitted a request to extend ${swimmer.first_name}'s authorization to cover their remaining ${sessionsRemaining} lessons. Your lesson will be confirmed once your coordinator approves the extension.
-                </p>
-              </div>
-
-              <p style="font-size:13px;color:#5a7a8e;line-height:1.5;">
-                Please reach out to your coordinator directly as there may be documents that need to be signed on their end to process this request.
-              </p>
-
-              <div style="background:#e8f4fd;border:1px solid #b8d8f0;border-radius:8px;padding:14px 18px;margin:18px 0;">
-                <div style="font-size:14px;font-weight:600;color:#1a5a7a;margin-bottom:8px;">📅 Upcoming Lesson</div>
-                <table cellpadding="0" cellspacing="0" style="font-size:13px;color:#1a5a7a;">
-                  <tr><td style="padding:2px 8px 2px 0;">📅</td><td>${format(new Date(session.start_time), 'EEEE, MMMM d, yyyy')}</td></tr>
-                  <tr><td style="padding:2px 8px 2px 0;">⏰</td><td>${format(new Date(session.start_time), 'h:mm a')}</td></tr>
-                  <tr><td style="padding:2px 8px 2px 0;">📍</td><td>${session.location || 'TBD'}</td></tr>
-                  <tr><td style="padding:2px 8px 2px 0;">👤</td><td>${instructorProfile?.full_name || 'Any Available Instructor'}</td></tr>
-                </table>
-              </div>
-
-              <div style="background:#f0f6fa;border:1px solid #dde8f0;border-radius:8px;padding:14px 18px;margin:18px 0;">
-                <div style="font-size:14px;font-weight:600;color:#1a3347;margin-bottom:6px;">Questions? Contact us:</div>
-                <div style="font-size:13px;color:#3d5a6e;line-height:1.8;">
-                  💬 Text: <a href="sms:2096437969" style="color:#23a1c0;">209-643-7969</a><br>
-                  📞 Call: <a href="tel:2097787877" style="color:#23a1c0;">(209) 778-7877</a><br>
-                  ✉️ <a href="mailto:info@icanswim209.com" style="color:#23a1c0;">info@icanswim209.com</a>
-                </div>
-              </div>
-            `;
-            const extHtml = (await import('@/lib/emails/email-wrapper')).wrapEmailWithHeader(extContent);
-            await emailService.sendEmail({
-              to: parentProfile.email,
-              templateType: 'custom',
-              toName: parentProfile.full_name || undefined,
-              customData: { subject: extSubject, html: extHtml },
-            });
-          }
-
-          const { notifyCoordinatorPOExtension } = await import('@/lib/email/pos-notifications');
-          await notifyCoordinatorPOExtension(activePoId!);
         }
       }
     } catch (emailError) {
