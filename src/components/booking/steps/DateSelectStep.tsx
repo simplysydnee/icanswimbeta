@@ -302,15 +302,24 @@ export function DateSelectStep({
   //   return acc;
   // }, {} as Record<string, AvailableSession[]>);
 
-  // Get unique days from range sessions for recurring mode (day-of-week in studio TZ)
+  // Sessions in the currently viewed month — drives the day-of-week tiles and time
+  // picker so each only shows what's actually available in that month. (Section 5's
+  // `matchedSessionsInRange` stays unscoped so it can list every booking across the
+  // 6-month fetch window.)
+  const sessionsInViewedMonth = useMemo(() => {
+    const targetMonth = studioMonthString(monthStart);
+    return visibleRangeSessions.filter(s => studioMonthString(s.startTime) === targetMonth);
+  }, [visibleRangeSessions, monthStart]);
+
+  // Get unique days from sessions in the viewed month (day-of-week in studio TZ)
   const uniqueDays = Array.from(
-    new Set(visibleRangeSessions.map(s => studioDayOfWeek(s.startTime)))
+    new Set(sessionsInViewedMonth.map(s => studioDayOfWeek(s.startTime)))
   ).sort();
 
-  // Get unique times for selected day in recurring mode (studio TZ HH:mm)
+  // Get unique times for selected day in the viewed month (studio TZ HH:mm)
   const uniqueTimes = recurringDay !== null
     ? Array.from(new Set(
-        visibleRangeSessions
+        sessionsInViewedMonth
           .filter(s => studioDayOfWeek(s.startTime) === recurringDay)
           .map(s => studioTime24(s.startTime))
       )).sort()
