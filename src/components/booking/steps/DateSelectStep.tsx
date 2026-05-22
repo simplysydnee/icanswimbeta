@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, addMonths, addWeeks, startOfWeek, endOfWeek, isBefore, startOfDay, startOfMonth, endOfMonth, parseISO } from 'date-fns';
 import { ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, User } from 'lucide-react';
@@ -291,38 +291,6 @@ export function DateSelectStep({
     [rangeSessions, instructorId]
   );
 
-  // Auto-skip the month picker to the first month with availability for the chosen
-  // instructor (and, once picked, the chosen day/time). Fires as soon as rangeSessions
-  // loads — *before* day/time selection — so the parent never lands on an empty May.
-  // Once the parent clicks Previous/Next, hasUserNavigatedRef stops further auto-skips.
-  const hasUserNavigatedRef = useRef(false);
-  useEffect(() => {
-    if (sessionType !== 'recurring' || hasUserNavigatedRef.current) return;
-    if (!rangeSessions.length) return;
-
-    // Use the most-specific filter that's currently active.
-    let candidates: AvailableSession[];
-    if (recurringDay !== null && recurringTime !== null) {
-      candidates = matchedSessionsInRange;
-    } else if (recurringDay !== null) {
-      candidates = visibleRangeSessions.filter(
-        s => studioDayOfWeek(s.startTime) === recurringDay
-      );
-    } else {
-      candidates = visibleRangeSessions;
-    }
-    if (!candidates.length) return;
-
-    const currentMonthStr = studioMonthString(monthStart);
-    if (candidates.some(s => studioMonthString(s.startTime) === currentMonthStr)) return;
-
-    // Sort defensively before picking the earliest match.
-    const earliest = [...candidates].sort(
-      (a, b) => a.startTime.localeCompare(b.startTime)
-    )[0];
-    setSelectedMonth(startOfMonth(parseISO(earliest.startTime)));
-  }, [sessionType, recurringDay, recurringTime, rangeSessions, visibleRangeSessions, matchedSessionsInRange, monthStart]);
-
   // Note: sessionsByDate is no longer used in the new Calendly-style design
   // Keeping the variable commented out in case it's needed elsewhere
   // const sessionsByDate = weekSessions.reduce((acc, session) => {
@@ -610,10 +578,7 @@ export function DateSelectStep({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              hasUserNavigatedRef.current = true;
-              setSelectedMonth(addMonths(selectedMonth, -1));
-            }}
+            onClick={() => setSelectedMonth(addMonths(selectedMonth, -1))}
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Previous
@@ -626,10 +591,7 @@ export function DateSelectStep({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              hasUserNavigatedRef.current = true;
-              setSelectedMonth(addMonths(selectedMonth, 1));
-            }}
+            onClick={() => setSelectedMonth(addMonths(selectedMonth, 1))}
           >
             Next
             <ChevronRight className="h-4 w-4 ml-1" />
