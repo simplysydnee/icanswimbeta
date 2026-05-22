@@ -42,6 +42,7 @@ interface ConfirmationStepProps {
   sessionType: 'single' | 'recurring' | 'assessment';
   onConfirm: () => Promise<void>;
   onBack: () => void;
+  onStartOver?: () => void;
   isSubmitting: boolean;
   bookingResult?: {
     success: boolean;
@@ -172,6 +173,7 @@ export function ConfirmationStep({
   sessionType,
   onConfirm,
   onBack,
+  onStartOver,
   isSubmitting,
   bookingResult,
 }: ConfirmationStepProps) {
@@ -265,9 +267,15 @@ export function ConfirmationStep({
         </div>
 
         <div className="flex gap-3 justify-center">
-          <Link href="/parent/book">
-            <Button variant="outline">Book Another Session</Button>
-          </Link>
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (onStartOver) onStartOver();
+              else window.location.href = '/parent/book';
+            }}
+          >
+            Book Another Session
+          </Button>
           <Link href="/parent">
             <Button>Return to Dashboard</Button>
           </Link>

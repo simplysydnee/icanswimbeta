@@ -188,6 +188,28 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
     return stepInfo[step];
   };
 
+  // Reset wizard to a totally fresh state — used by the "Book Another Session" CTA
+  // on the success screen so the parent lands back at step 1 with nothing selected.
+  const handleStartOver = () => {
+    setSelectedSwimmer(null);
+    setSessionType(null);
+    setSelectedInstructorId(null);
+    setInstructorPreference('any');
+    setInstructorName(null);
+    setSelectedSessionId(null);
+    setSelectedSession(null);
+    setRecurringDay(null);
+    setRecurringTime(null);
+    setRecurringStartDate(null);
+    setRecurringEndDate(null);
+    setSelectedRecurringSessions([]);
+    setIsSubmitting(false);
+    setError(null);
+    setBookingResult(null);
+    setCurrentStep('select-swimmer');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // Submit function
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -243,22 +265,30 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
           throw new Error('No sessions selected');
         }
 
-        // Check for conflicts for each session
-        for (const session of selectedRecurringSessions) {
-          const conflictResponse = await fetch('/api/bookings/check-conflict', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              swimmerId: selectedSwimmer.id,
-              startTime: session.startTime,
-              endTime: session.endTime,
-            }),
-          });
+        // Single batched conflict check for all recurring sessions — one round-trip
+        // instead of N. The server runs the same per-session overlap logic in memory
+        // against one bulk-fetched bookings query.
+        const conflictResponse = await fetch('/api/bookings/check-conflict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            swimmerId: selectedSwimmer.id,
+            sessions: selectedRecurringSessions.map(s => ({
+              sessionId: s.id,
+              startTime: s.startTime,
+              endTime: s.endTime,
+            })),
+          }),
+        });
 
-          const conflictData = await conflictResponse.json();
-          if (conflictData.hasConflict) {
-            throw new Error(`Conflict detected for session on ${new Date(session.startTime).toLocaleDateString()}: ${conflictData.message}`);
-          }
+        const conflictData = await conflictResponse.json();
+        if (conflictData.hasConflict) {
+          const firstConflict = conflictData.perSession?.find((p: any) => p.hasConflict);
+          const when = firstConflict?.startTime
+            ? new Date(firstConflict.startTime).toLocaleDateString()
+            : '';
+          const detail = firstConflict?.message ?? conflictData.message ?? 'Booking conflict detected';
+          throw new Error(`Conflict detected${when ? ` for session on ${when}` : ''}: ${detail}`);
         }
 
         endpoint = '/api/bookings/recurring';
@@ -599,6 +629,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
               sessionType={effectiveSessionType}
               onConfirm={handleSubmit}
               onBack={handleBack}
+              onStartOver={handleStartOver}
               isSubmitting={isSubmitting}
               bookingResult={bookingResult || undefined}
             />
