@@ -31,61 +31,7 @@ function ymdUTC(iso: string): string {
   return new Date(iso).toISOString().slice(0, 10);
 }
 
-function todayYmdUTC(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function utcDow(ymd: string): number {
-  return new Date(`${ymd}T12:00:00.000Z`).getUTCDay();
-}
-
-function addDaysUTC(ymd: string, n: number): string {
-  const d = new Date(`${ymd}T12:00:00.000Z`);
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
-}
-
-/** First booking date: template date if >= today, else first same weekday >= today (UTC). */
-function firstBookingYmd(templateYmd: string, currentYmd: string): string {
-  if (templateYmd >= currentYmd) return templateYmd;
-  const want = utcDow(templateYmd);
-  let d = currentYmd;
-  for (let i = 0; i < 7; i++) {
-    if (utcDow(d) === want) return d;
-    d = addDaysUTC(d, 1);
-  }
-  return currentYmd;
-}
-
-/** Weekly dates from first through until (inclusive). */
-function weeklyUntilInclusive(first: string, until: string): string[] {
-  const out: string[] = [];
-  let d = first;
-  while (d <= until) {
-    out.push(d);
-    d = addDaysUTC(d, 7);
-  }
-  return out;
-}
-
-function occurrenceDateTime(ymd: string, templateStartIso: string): Date {
-  const t = parseISO(templateStartIso);
-  return new Date(
-    Date.UTC(
-      Number(ymd.slice(0, 4)),
-      Number(ymd.slice(5, 7)) - 1,
-      Number(ymd.slice(8, 10)),
-      t.getUTCHours(),
-      t.getUTCMinutes(),
-      t.getUTCSeconds(),
-      t.getUTCMilliseconds()
-    )
-  );
-}
-
 export async function POST(request: Request) {
-  const bookingIds: string[] = [];
-
   try {
     const supabase = await createClient();
     const serviceSupabase = getServiceSupabase();
@@ -109,7 +55,7 @@ export async function POST(request: Request) {
     }
     const untilDay = format(untilParsed, 'yyyy-MM-dd');
 
-    const sessionId = [...new Set(sessionIds as string[])][0];
+    const uniqueIds = [...new Set(sessionIds as string[])];
 
     const { data: swimmer } = await serviceSupabase
       .from('swimmers')
@@ -143,57 +89,53 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    const { data: session, error: sessErr } = await serviceSupabase
+    // Bulk fetch every requested session row. Each one is its own occurrence
+    // (Model B: one sessions row per weekly date), so we book each one individually.
+    const { data: rawSessions, error: sessErr } = await serviceSupabase
       .from('sessions')
       .select(
         'id, start_time, end_time, status, is_full, max_capacity, booking_count, instructor_id, location, is_recurring'
       )
-      .eq('id', sessionId)
-      .single();
+      .in('id', uniqueIds);
 
-    if (sessErr || !session) {
-      return NextResponse.json({ error: 'Session not available' }, { status: 400 });
+    if (sessErr || !rawSessions || rawSessions.length === 0) {
+      return NextResponse.json({ error: 'Sessions not available' }, { status: 400 });
     }
-
-    const s0 = session as SessionRow;
-    if (!['available', 'open'].includes(s0.status) || s0.is_full) {
-      return NextResponse.json({ error: 'Session not available', sessionId }, { status: 400 });
-    }
-    const cap = s0.max_capacity ?? 1;
-    const count = s0.booking_count ?? 0;
-    if (count >= cap) {
-      return NextResponse.json(
-        {
-          error: 'Session at capacity',
-          sessionId,
-          booking_count: count,
-          max_capacity: cap,
-        },
-        { status: 400 }
-      );
-    }
-
-    if (!s0.is_recurring) {
+    if (rawSessions.length !== uniqueIds.length) {
+      const found = new Set(rawSessions.map(r => r.id));
       return NextResponse.json({
-        error:
-          'Recurring bookings can only include weekly recurring sessions. Floating sessions must be booked individually.',
-        nonRecurringSessionIds: [sessionId],
-        code: 'NON_RECURRING_SESSION_IN_RECURRING_BOOKING',
+        error: 'Some sessions not found',
+        missingSessionIds: uniqueIds.filter(id => !found.has(id)),
       }, { status: 400 });
     }
 
-    const templateYmd = ymdUTC(s0.start_time);
-    const firstYmd = firstBookingYmd(templateYmd, todayYmdUTC());
-    const weeklyDates = weeklyUntilInclusive(firstYmd, untilDay);
+    // Sort chronologically so the email/confirmation list and PO anchor are predictable.
+    const sessions = (rawSessions as SessionRow[]).slice().sort(
+      (a, b) => a.start_time.localeCompare(b.start_time)
+    );
+    const s0 = sessions[0]; // anchor for PO lookup; instructor/location for emails
 
-    if (weeklyDates.length === 0) {
-      return NextResponse.json(
-        { error: 'No lesson dates on or before until date', until: untilDay },
-        { status: 400 }
-      );
+    // Validate the full set up front — any bad row aborts before the RPC runs.
+    const invalidSessions: { id: string; reason: string }[] = [];
+    for (const s of sessions) {
+      const reason =
+        !['available', 'open'].includes(s.status) ? 'session_not_available'
+        : s.is_full ? 'session_full'
+        : !s.is_recurring ? 'not_recurring'
+        : (s.booking_count ?? 0) >= (s.max_capacity ?? 1) ? 'session_at_capacity'
+        : ymdUTC(s.start_time) > untilDay ? 'past_until_date'
+        : null;
+      if (reason) invalidSessions.push({ id: s.id, reason });
+    }
+    if (invalidSessions.length > 0) {
+      return NextResponse.json({
+        error: 'Some sessions are not bookable',
+        invalidSessions,
+      }, { status: 400 });
     }
 
-    const anchorStart = `${firstYmd}T12:00:00.000Z`;
+    // PO lookup anchored on the first chronological session.
+    const anchorStart = s0.start_time;
 
     let activePoId: string | null = null;
     let currentBookingCount = 0;
@@ -245,84 +187,62 @@ export async function POST(request: Request) {
       poCoordinatorId = activePo.coordinator_id ?? null;
     }
 
-    const inPo = (d: string) =>
-      (!poStartStr || d >= poStartStr) && (!poEndStr || d <= poEndStr);
-    const datesInPo =
-      fundingSourceId && fundingSourceRow?.requires_authorization
-        ? weeklyDates.filter(inPo)
-        : weeklyDates;
+    // PO date window filter applies to the actual sessions, not generated dates.
+    const inPoWindow = (s: SessionRow) => {
+      const d = ymdUTC(s.start_time);
+      return (!poStartStr || d >= poStartStr) && (!poEndStr || d <= poEndStr);
+    };
+    const sessionsInPo = (fundingSourceId && fundingSourceRow?.requires_authorization)
+      ? sessions.filter(inPoWindow)
+      : sessions;
 
-    const capacitySlots = cap - count;
-    const poSlots =
-      fundingSourceId && fundingSourceRow?.requires_authorization && activePoId
-        ? poAuthorized - currentBookingCount
-        : Number.POSITIVE_INFINITY;
-
-    const nBookings = Math.min(datesInPo.length, Math.max(0, capacitySlots), Math.max(0, poSlots));
-
-    if (nBookings <= 0) {
-      if (capacitySlots <= 0) {
-        return NextResponse.json(
-          { error: 'Session at capacity', booking_count: count, max_capacity: cap },
-          { status: 400 }
-        );
-      }
-      if (Number.isFinite(poSlots) && poSlots <= 0) {
-        return NextResponse.json(
-          {
-            error: 'Not enough funding source sessions available',
-            remainingSessions: Math.max(0, poSlots),
-          },
-          { status: 400 }
-        );
-      }
-      if (datesInPo.length === 0 && weeklyDates.length > 0) {
-        return NextResponse.json(
-          { error: 'All dates fall outside purchase order window', until: untilDay },
-          { status: 400 }
-        );
-      }
-      return NextResponse.json({ error: 'No bookings can be created with current limits' }, { status: 400 });
+    if (sessionsInPo.length === 0) {
+      return NextResponse.json(
+        { error: 'All sessions fall outside purchase order window', until: untilDay },
+        { status: 400 }
+      );
     }
 
-    const sessionDatesToBook = datesInPo.slice(0, nBookings);
-
-    // ═══════════════════════════════════════════════════════════════════
-    // Atomically create bookings via book_session RPC (row-level lock)
-    // Called once per date — each call increments booking_count by 1
-    // ═══════════════════════════════════════════════════════════════════
-    const bookings: { id: string; session_id: string }[] = [];
-
-    for (const sessionDateYmd of sessionDatesToBook) {
-      const { data: result, error: rpcError } = await serviceSupabase.rpc('book_session', {
-        p_session_id: sessionId,
-        p_swimmer_id: swimmerId,
-        p_parent_id: parentId,
-        p_booking_type: 'lesson',
-        p_purchase_order_id: activePoId ?? null,
-        p_status: 'confirmed',
-      });
-
-      if (rpcError || result?.error) {
-        // Rollback already-created bookings via cancel_booking
-        for (const bid of bookingIds) {
-          await serviceSupabase.rpc('cancel_booking', {
-            p_booking_id: bid,
-            p_cancelled_by: parentId,
-            p_cancel_reason: 'Rollback from recurring booking failure',
-            p_cancel_source: 'system',
-            p_is_late_cancel: false,
-          });
-        }
-        const code = result?.error || 'rpc_error';
-        throw new Error(`book_session failed for ${sessionDateYmd}: ${code}${rpcError ? ' (' + rpcError.message + ')' : ''}`);
+    // PO authorization gate on the FULL requested set — no per-session capacity cap.
+    if (activePoId) {
+      const poSlotsAvailable = poAuthorized - currentBookingCount;
+      if (sessionsInPo.length > poSlotsAvailable) {
+        return NextResponse.json({
+          error: 'Not enough funding source sessions available',
+          requested: sessionsInPo.length,
+          remaining: Math.max(0, poSlotsAvailable),
+        }, { status: 400 });
       }
-
-      bookingIds.push(result.booking_id);
-      bookings.push({ id: result.booking_id, session_id: sessionId });
     }
 
-    // PO increment now handled atomically inside book_session RPC
+    const sessionsToBook = sessionsInPo;
+
+    // ═══════════════════════════════════════════════════════════════════
+    // One RPC call → Postgres transaction. If any individual book_session
+    // fails mid-loop, RAISE EXCEPTION inside book_recurring_sessions rolls
+    // back every prior insert + booking_count++ + sessions_booked++ atomically.
+    // No client-side compensating actions needed.
+    // ═══════════════════════════════════════════════════════════════════
+    const { data: rpcResult, error: rpcError } = await serviceSupabase.rpc('book_recurring_sessions', {
+      p_session_ids: sessionsToBook.map(s => s.id),
+      p_swimmer_id: swimmerId,
+      p_parent_id: parentId,
+      p_booking_type: 'lesson',
+      p_purchase_order_id: activePoId ?? null,
+      p_status: 'confirmed',
+    });
+
+    if (rpcError) {
+      throw new Error(rpcError.message);
+    }
+
+    const rpcBookingIds: string[] = (rpcResult?.booking_ids ?? []) as string[];
+    const rpcSessionDates: string[] = (rpcResult?.session_dates ?? []) as string[];
+    const bookings = rpcBookingIds.map((id, i) => ({
+      id,
+      session_id: sessionsToBook[i].id,
+      session_date: rpcSessionDates[i] ?? ymdUTC(sessionsToBook[i].start_time),
+    }));
 
     try {
       const { data: parentProfile } = await serviceSupabase
@@ -331,8 +251,8 @@ export async function POST(request: Request) {
         .eq('id', parentId)
         .single();
 
-      const sessionsForEmail = sessionDatesToBook.map(ymd => {
-        const dt = occurrenceDateTime(ymd, s0.start_time);
+      const sessionsForEmail = sessionsToBook.map(s => {
+        const dt = parseISO(s.start_time);
         return {
           date: format(dt, 'EEEE, MMMM d, yyyy'),
           time: format(dt, 'h:mm a'),
@@ -375,8 +295,8 @@ export async function POST(request: Request) {
                 .single()
             : { data: null };
 
-          for (const ymd of sessionDatesToBook) {
-            const dt = occurrenceDateTime(ymd, s0.start_time);
+          for (const s of sessionsToBook) {
+            const dt = parseISO(s.start_time);
             await emailService.sendFundedSingleLessonCoordinatorNotification({
               coordinatorEmail: coordinatorProfile.email,
               coordinatorName: coordinatorProfile.full_name || 'Coordinator',
@@ -406,10 +326,11 @@ export async function POST(request: Request) {
       confirmationNumber,
       until: untilDay,
       bookingsCreated: bookings.length,
-      sessionDatesBooked: sessionDatesToBook,
+      sessionDatesBooked: bookings.map(b => b.session_date),
       bookings: bookings.map(b => ({
         id: b.id,
         sessionId: b.session_id,
+        sessionDate: b.session_date,
         status: 'confirmed',
       })),
       fundingSourceId,
@@ -417,22 +338,8 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Recurring booking creation error:', error);
 
-    const serviceSupabase = getServiceSupabase();
-
-    // Rollback via cancel_booking (atomic, logs to cancellations table)
-    for (const bid of bookingIds) {
-      try {
-        await serviceSupabase.rpc('cancel_booking', {
-          p_booking_id: bid,
-          p_cancelled_by: parentId,
-          p_cancel_reason: 'Rollback on recurring booking error',
-          p_cancel_source: 'system',
-          p_is_late_cancel: false,
-        });
-      } catch (cancelErr) {
-        console.error(`Failed to rollback booking ${bid}:`, cancelErr);
-      }
-    }
+    // No compensating rollback: book_recurring_sessions RPC is atomic, so any
+    // mid-loop failure inside Postgres already rolled back every prior insert.
 
     const message = error instanceof Error ? error.message : 'Internal server error';
 

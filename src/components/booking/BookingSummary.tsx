@@ -1,6 +1,6 @@
 'use client';
 
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { User, Calendar, Clock, MapPin } from 'lucide-react';
 import { studioTime12, studioShortDate } from '@/lib/timezone';
 
@@ -56,13 +56,13 @@ export function BookingSummary({
   const funded = swimmer ? isSwimmerFunded(swimmer) : false;
   const fundingSourceName = swimmer?.fundingSourceName || swimmer?.fundingSourceShortName;
 
-  // Helper to format date range
+  // Helper to format date range — derived from the selected sessions themselves so the
+  // summary reflects exactly what will be booked (no separate "book until" input anymore).
   const formatDateRange = () => {
-    if (!recurringEndDate) return '';
-    if (recurringStartDate) {
-      return `${format(recurringStartDate, 'MMM d, yyyy')} → book until ${format(recurringEndDate, 'MMM d, yyyy')}`;
-    }
-    return `Book until ${format(recurringEndDate, 'MMM d, yyyy')}`;
+    if (!selectedRecurringSessions.length) return '';
+    const first = parseISO(selectedRecurringSessions[0].startTime);
+    const last = parseISO(selectedRecurringSessions[selectedRecurringSessions.length - 1].startTime);
+    return `${format(first, 'MMM d, yyyy')} → ${format(last, 'MMM d, yyyy')}`;
   };
 
   // Helper to get day name from day number
@@ -162,7 +162,7 @@ export function BookingSummary({
                     </div>
                   )}
 
-                  {recurringEndDate && (
+                  {selectedRecurringSessions.length > 0 && (
                     <div className="text-sm">{formatDateRange()}</div>
                   )}
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import Link from 'next/link';
 import { studioTime12, studioFullDate } from '@/lib/timezone';
 import { ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Calendar, Clock, MapPin, User } from 'lucide-react';
@@ -84,6 +84,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
   const [bookingResult, setBookingResult] = useState<{
     success: boolean;
     bookingId?: string;
+    bookingsCreated?: number;
     error?: string;
   } | null>(null);
 
@@ -163,7 +164,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
         if (sessionType === 'single') {
           return selectedSessionId !== null;
         } else {
-          return selectedRecurringSessions.length > 0 && recurringEndDate !== null;
+          return selectedRecurringSessions.length > 0;
         }
       case 'assessment':
         return selectedSessionId !== null;
@@ -172,7 +173,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
       default:
         return false;
     }
-  }, [currentStep, selectedSwimmer, sessionType, instructorPreference, selectedInstructorId, selectedSessionId, selectedRecurringSessions, recurringEndDate]);
+  }, [currentStep, selectedSwimmer, sessionType, instructorPreference, selectedInstructorId, selectedSessionId, selectedRecurringSessions]);
 
   // Step titles
   const getStepInfo = (step: BookingStep) => {
@@ -262,10 +263,16 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
 
         endpoint = '/api/bookings/recurring';
         payload.sessionIds = sessionIds;
-        if (!recurringEndDate) {
-          throw new Error('Please choose a Book until date for your recurring schedule');
+        // Derive `until` from the last selected session (sessions arrive sorted from
+        // the available-sessions API, but sort defensively in case that ever changes).
+        const sortedSessions = [...selectedRecurringSessions].sort(
+          (a, b) => a.startTime.localeCompare(b.startTime)
+        );
+        const lastSession = sortedSessions[sortedSessions.length - 1];
+        if (!lastSession) {
+          throw new Error('No sessions selected for recurring schedule');
         }
-        payload.until = format(recurringEndDate, 'yyyy-MM-dd');
+        payload.until = format(parseISO(lastSession.startTime), 'yyyy-MM-dd');
       }
 
       response = await fetch(endpoint, {
@@ -283,10 +290,13 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
       // Use booking ID from API response
       const bookingId: string | undefined =
         result?.booking?.id ?? result?.bookings?.[0]?.id;
+      const bookingsCreated: number =
+        result?.bookingsCreated ?? result?.bookings?.length ?? (bookingId ? 1 : 0);
 
       setBookingResult({
         success: true,
         bookingId,
+        bookingsCreated,
       });
 
     } catch (err) {

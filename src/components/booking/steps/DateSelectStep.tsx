@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format, addMonths, addWeeks, startOfWeek, endOfWeek, isBefore, startOfDay, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { format, addMonths, addWeeks, startOfWeek, endOfWeek, isBefore, startOfDay, startOfMonth, endOfMonth, parseISO } from 'date-fns';
 import { ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, User } from 'lucide-react';
 import type { AvailableSession, EnrollmentStatus } from '@/types/booking';
 import { Button } from '@/components/ui/button';
@@ -98,14 +98,15 @@ export function DateSelectStep({
   }, [recurringEndDate]);
 
   const monthStart = useMemo(() => startOfMonth(selectedMonth), [selectedMonth]);
-  const monthEnd = useMemo(() => endOfMonth(selectedMonth), [selectedMonth]);
 
-  // Fetch range must match the month UI so recurring sessions load when instructor is chosen
+  // Fetch a 6-month forward window so the picker knows every month with availability,
+  // independent of which month the user is currently viewing.
   useEffect(() => {
     if (sessionType !== 'recurring') return;
-    setLocalStartDate(monthStart);
-    setLocalEndDate(monthEnd);
-  }, [sessionType, monthStart, monthEnd]);
+    const today = new Date();
+    setLocalStartDate(startOfMonth(today));
+    setLocalEndDate(endOfMonth(addMonths(today, 5)));
+  }, [sessionType]);
 
   // Calculate week range for single mode
   const weekEnd = endOfWeek(currentWeekStart);
@@ -259,46 +260,68 @@ export function DateSelectStep({
     enabled: sessionType === 'recurring' && !!localStartDate && !!localEndDate,
   });
 
-  const allDaysInMonth = useMemo(
-    () => eachDayOfInterval({ start: monthStart, end: monthEnd }),
-    [monthStart, monthEnd]
-  );
-
-  const selectedDaysInMonth = useMemo(() => {
-    if (recurringDay === null) return [];
-    return allDaysInMonth.filter(date => date.getDay() === recurringDay);
-  }, [allDaysInMonth, recurringDay]);
-
-  const matchedSessionsInMonth = useMemo(() => {
+  const matchedSessionsInRange = useMemo(() => {
     if (recurringDay === null || recurringTime === null || !rangeSessions.length) return [];
 
-    const targetMonth = studioMonthString(monthStart);
     return rangeSessions.filter(session => (
       studioDayOfWeek(session.startTime) === recurringDay &&
       studioTime24(session.startTime) === recurringTime &&
-      studioMonthString(session.startTime) === targetMonth
+      (!instructorId || session.instructorId === instructorId)
     ));
-  }, [rangeSessions, recurringDay, recurringTime, monthStart]);
+  }, [rangeSessions, recurringDay, recurringTime, instructorId]);
 
   useEffect(() => {
-    if (sessionType === 'recurring' && matchedSessionsInMonth.length > 0) {
-      const matchedIds = matchedSessionsInMonth.map(s => s.id);
+    if (sessionType === 'recurring' && matchedSessionsInRange.length > 0) {
+      const matchedIds = matchedSessionsInRange.map(s => s.id);
       if (JSON.stringify(matchedIds) !== JSON.stringify(selectedRecurringSessions)) {
         onSetRecurring({
           sessionIds: matchedIds,
-          sessions: matchedSessionsInMonth,
-          startDate: monthStart,
+          sessions: matchedSessionsInRange,
+          startDate: parseISO(matchedSessionsInRange[0].startTime),
         });
       }
     }
-  }, [matchedSessionsInMonth, selectedRecurringSessions, sessionType, onSetRecurring, monthStart]);
+  }, [matchedSessionsInRange, selectedRecurringSessions, sessionType, onSetRecurring]);
 
-  // Default "book until" to end of the viewed month once day + time are chosen (user can change in calendar below)
+  // Belt-and-suspenders: even though the API filters by instructorId, defend the UI lists
+  // against any stale-cache leakage so a chosen instructor never has other instructors'
+  // sessions surface in day/time pickers or the preview.
+  const visibleRangeSessions = useMemo(
+    () => rangeSessions.filter(s => !instructorId || s.instructorId === instructorId),
+    [rangeSessions, instructorId]
+  );
+
+  // Auto-skip the month picker to the first month with availability for the chosen
+  // instructor (and, once picked, the chosen day/time). Fires as soon as rangeSessions
+  // loads — *before* day/time selection — so the parent never lands on an empty May.
+  // Once the parent clicks Previous/Next, hasUserNavigatedRef stops further auto-skips.
+  const hasUserNavigatedRef = useRef(false);
   useEffect(() => {
-    if (sessionType !== 'recurring' || recurringTime == null) return;
-    if (recurringEndDate != null) return;
-    onSetRecurring({ endDate: monthEnd });
-  }, [sessionType, recurringTime, recurringEndDate, monthEnd, onSetRecurring]);
+    if (sessionType !== 'recurring' || hasUserNavigatedRef.current) return;
+    if (!rangeSessions.length) return;
+
+    // Use the most-specific filter that's currently active.
+    let candidates: AvailableSession[];
+    if (recurringDay !== null && recurringTime !== null) {
+      candidates = matchedSessionsInRange;
+    } else if (recurringDay !== null) {
+      candidates = visibleRangeSessions.filter(
+        s => studioDayOfWeek(s.startTime) === recurringDay
+      );
+    } else {
+      candidates = visibleRangeSessions;
+    }
+    if (!candidates.length) return;
+
+    const currentMonthStr = studioMonthString(monthStart);
+    if (candidates.some(s => studioMonthString(s.startTime) === currentMonthStr)) return;
+
+    // Sort defensively before picking the earliest match.
+    const earliest = [...candidates].sort(
+      (a, b) => a.startTime.localeCompare(b.startTime)
+    )[0];
+    setSelectedMonth(startOfMonth(parseISO(earliest.startTime)));
+  }, [sessionType, recurringDay, recurringTime, rangeSessions, visibleRangeSessions, matchedSessionsInRange, monthStart]);
 
   // Note: sessionsByDate is no longer used in the new Calendly-style design
   // Keeping the variable commented out in case it's needed elsewhere
@@ -313,13 +336,13 @@ export function DateSelectStep({
 
   // Get unique days from range sessions for recurring mode (day-of-week in studio TZ)
   const uniqueDays = Array.from(
-    new Set(rangeSessions.map(s => studioDayOfWeek(s.startTime)))
+    new Set(visibleRangeSessions.map(s => studioDayOfWeek(s.startTime)))
   ).sort();
 
   // Get unique times for selected day in recurring mode (studio TZ HH:mm)
   const uniqueTimes = recurringDay !== null
     ? Array.from(new Set(
-        rangeSessions
+        visibleRangeSessions
           .filter(s => studioDayOfWeek(s.startTime) === recurringDay)
           .map(s => studioTime24(s.startTime))
       )).sort()
@@ -576,7 +599,7 @@ export function DateSelectStep({
       <div className="space-y-2">
         <h3 className="font-semibold">Recurring Weekly Schedule</h3>
         <p className="text-sm text-muted-foreground">
-          Book all {DAYS_OF_WEEK[recurringDay || 0]}s in {format(monthStart, 'MMMM yyyy')} at your preferred time
+          Pick a day of the week and a time — every matching session in the next 6 months will be booked.
         </p>
       </div>
 
@@ -587,7 +610,10 @@ export function DateSelectStep({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setSelectedMonth(addMonths(selectedMonth, -1))}
+            onClick={() => {
+              hasUserNavigatedRef.current = true;
+              setSelectedMonth(addMonths(selectedMonth, -1));
+            }}
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Previous
@@ -600,7 +626,10 @@ export function DateSelectStep({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setSelectedMonth(addMonths(selectedMonth, 1))}
+            onClick={() => {
+              hasUserNavigatedRef.current = true;
+              setSelectedMonth(addMonths(selectedMonth, 1));
+            }}
           >
             Next
             <ChevronRight className="h-4 w-4 ml-1" />
@@ -675,59 +704,18 @@ export function DateSelectStep({
         </div>
       )}
 
-      {/* Book until — sent to API as `until` (inclusive) */}
-      {recurringDay !== null && recurringTime !== null && (
+      {/* Step 4: Sessions preview */}
+      {matchedSessionsInRange.length > 0 && (
         <div className="space-y-4">
-          <h4 className="font-medium">4. Book until (inclusive)</h4>
-          <p className="text-sm text-muted-foreground">
-            Last calendar day for your recurring series. Weekly bookings include any date on or before this day.
-          </p>
-          <div className="border rounded-lg p-4 flex justify-center">
-            <Calendar
-              mode="single"
-              selected={recurringEndDate ?? undefined}
-              onSelect={(date) => {
-                if (date) onSetRecurring({ endDate: date });
-              }}
-              disabled={(date) => isBefore(date, startOfDay(new Date()))}
-              className="w-full"
-              classNames={{
-                months: 'flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0',
-                month: 'space-y-4',
-                caption: 'flex justify-center pt-1 relative items-center',
-                caption_label: 'text-sm font-medium',
-                nav: 'space-x-1 flex items-center',
-                nav_button: 'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100',
-                nav_button_previous: 'absolute left-1',
-                nav_button_next: 'absolute right-1',
-                table: 'w-full border-collapse space-y-1',
-                head_row: 'flex',
-                head_cell: 'text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]',
-                row: 'flex w-full mt-2',
-                cell: 'text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20',
-                day: 'h-9 w-9 p-0 font-normal aria-selected:opacity-100',
-                day_selected:
-                  'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground',
-                day_today: 'bg-accent text-accent-foreground',
-                day_outside: 'text-muted-foreground opacity-50',
-                day_disabled: 'text-muted-foreground opacity-50',
-                day_hidden: 'invisible',
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Step 5: Sessions preview */}
-      {matchedSessionsInMonth.length > 0 && (
-        <div className="space-y-4">
-          <h4 className="font-medium">5. Sessions to Book</h4>
+          <h4 className="font-medium">4. Sessions to Book</h4>
           <div className="rounded-lg border p-4">
             <p className="font-medium mb-3">
-              {matchedSessionsInMonth.length} {DAYS_OF_WEEK[recurringDay!]} session{matchedSessionsInMonth.length !== 1 ? 's' : ''} in {format(monthStart, 'MMMM')}
+              {matchedSessionsInRange.length} {DAYS_OF_WEEK[recurringDay!]} session{matchedSessionsInRange.length !== 1 ? 's' : ''} from{' '}
+              {studioShortDate(matchedSessionsInRange[0].startTime)} through{' '}
+              {studioShortDate(matchedSessionsInRange[matchedSessionsInRange.length - 1].startTime)}
             </p>
             <div className="space-y-1 max-h-60 overflow-y-auto">
-              {matchedSessionsInMonth.map(session => (
+              {matchedSessionsInRange.map(session => (
                 <div
                   key={session.id}
                   className="flex items-center gap-2 text-sm py-1"
@@ -750,25 +738,18 @@ export function DateSelectStep({
       )}
 
       {/* Summary box */}
-      {matchedSessionsInMonth.length > 0 && (
+      {matchedSessionsInRange.length > 0 && (
         <div className="rounded-lg border border-green-200 bg-green-50 p-4">
           <div className="flex items-start gap-3">
             <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
             <div className="space-y-1">
               <h4 className="font-medium text-green-800">Ready to Book</h4>
               <p className="text-sm text-green-700">
-                {matchedSessionsInMonth.length} {DAYS_OF_WEEK[recurringDay!]} session{matchedSessionsInMonth.length !== 1 ? 's' : ''} in {format(monthStart, 'MMMM yyyy')}
+                {matchedSessionsInRange.length} {DAYS_OF_WEEK[recurringDay!]} session{matchedSessionsInRange.length !== 1 ? 's' : ''}
               </p>
               <p className="text-sm text-green-700">
                 Every {DAYS_OF_WEEK[recurringDay!]} at {formatTime12Hour(recurringTime!)}
               </p>
-
-              {/* Check for blackout dates */}
-              {selectedDaysInMonth.length > matchedSessionsInMonth.length && (
-                <p className="text-xs text-amber-700 mt-2">
-                  Note: {selectedDaysInMonth.length - matchedSessionsInMonth.length} {DAYS_OF_WEEK[recurringDay!]}{selectedDaysInMonth.length - matchedSessionsInMonth.length !== 1 ? 's' : ''} not available (blackout dates)
-                </p>
-              )}
             </div>
           </div>
         </div>
