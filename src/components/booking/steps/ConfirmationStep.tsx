@@ -42,10 +42,12 @@ interface ConfirmationStepProps {
   sessionType: 'single' | 'recurring' | 'assessment';
   onConfirm: () => Promise<void>;
   onBack: () => void;
+  onStartOver?: () => void;
   isSubmitting: boolean;
   bookingResult?: {
     success: boolean;
     bookingId?: string;
+    bookingsCreated?: number;
     error?: string;
   };
 }
@@ -171,6 +173,7 @@ export function ConfirmationStep({
   sessionType,
   onConfirm,
   onBack,
+  onStartOver,
   isSubmitting,
   bookingResult,
 }: ConfirmationStepProps) {
@@ -234,11 +237,23 @@ export function ConfirmationStep({
           </p>
         </div>
 
-        {bookingResult.bookingId && (
+        {bookingResult.bookingsCreated && bookingResult.bookingsCreated > 1 ? (
           <div className="bg-gray-50 rounded-lg p-4 inline-block max-w-full">
-            <p className="text-sm text-muted-foreground">Booking ID</p>
-            <p className="text-xl font-mono font-bold break-all">{bookingResult.bookingId}</p>
+            <p className="text-sm text-muted-foreground">Sessions Booked</p>
+            <p className="text-2xl font-bold">{bookingResult.bookingsCreated} sessions</p>
+            {bookingResult.bookingId && (
+              <p className="text-xs text-muted-foreground mt-2 font-mono break-all">
+                First booking: {bookingResult.bookingId}
+              </p>
+            )}
           </div>
+        ) : (
+          bookingResult.bookingId && (
+            <div className="bg-gray-50 rounded-lg p-4 inline-block max-w-full">
+              <p className="text-sm text-muted-foreground">Booking ID</p>
+              <p className="text-xl font-mono font-bold break-all">{bookingResult.bookingId}</p>
+            </div>
+          )
         )}
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
@@ -252,9 +267,15 @@ export function ConfirmationStep({
         </div>
 
         <div className="flex gap-3 justify-center">
-          <Link href="/parent/book">
-            <Button variant="outline">Book Another Session</Button>
-          </Link>
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (onStartOver) onStartOver();
+              else window.location.href = '/parent/book';
+            }}
+          >
+            Book Another Session
+          </Button>
           <Link href="/parent">
             <Button>Return to Dashboard</Button>
           </Link>
