@@ -307,7 +307,14 @@ export function DateSelectStep({
   // `matchedSessionsInRange` stays unscoped so it can list every booking across the
   // 6-month fetch window.)
   const sessionsInViewedMonth = useMemo(() => {
-    const targetMonth = studioMonthString(monthStart);
+    // Derive targetMonth from the local-TZ year+month of monthStart — that's what
+    // the picker label `format(monthStart, 'MMMM yyyy')` shows the user. Passing
+    // monthStart through `studioMonthString` instead would silently return the
+    // PREVIOUS month for any browser east of PT (the local-TZ midnight on the 1st
+    // resolves to the prior day in PT).
+    const y = monthStart.getFullYear();
+    const m = String(monthStart.getMonth() + 1).padStart(2, '0');
+    const targetMonth = `${y}-${m}`;
     return visibleRangeSessions.filter(s => studioMonthString(s.startTime) === targetMonth);
   }, [visibleRangeSessions, monthStart]);
 
