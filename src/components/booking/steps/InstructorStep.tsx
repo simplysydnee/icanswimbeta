@@ -142,7 +142,7 @@ export default function InstructorStep({
       )*/}
 
       {/* Any Available Instructor card */}
-      <button
+      {/* <button
         type="button"
         onClick={() => onSelectInstructor(null, 'any')}
         className={cn(
@@ -166,7 +166,7 @@ export default function InstructorStep({
           </div>
           <div className="flex-1">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-lg">Any Available Instructor</h3>
+              <h3 className="font-semibold text-lg">Any Available Instructoer</h3>
               {instructorPreference === 'any' && (
                 <Check className="h-5 w-5 text-primary" />
               )}
@@ -177,7 +177,7 @@ export default function InstructorStep({
             </p>
           </div>
         </div>
-      </button>
+      </button> */}
 
       {/* Divider */}
       <div className="relative">

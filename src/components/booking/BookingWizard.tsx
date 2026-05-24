@@ -41,7 +41,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
 
   // Instructor selection
   const [selectedInstructorId, setSelectedInstructorId] = useState<string | null>(null);
-  const [instructorPreference, setInstructorPreference] = useState<'any' | 'specific'>('any');
+  const [instructorPreference, setInstructorPreference] = useState<'any' | 'specific' | null>(null);
   const [instructorName, setInstructorName] = useState<string | null>(null);
 
   // Assessment session details (stored when AssessmentTab selects a session)
