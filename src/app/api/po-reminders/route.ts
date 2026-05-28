@@ -25,7 +25,12 @@ export async function POST(request: Request) {
   const now = new Date().toISOString();
 
   try {
-    // === Sequence 1: Pending POs at day 7 ===
+    // === Sequence 1: DISABLED 2026-05-27 ===
+    // The day-7 "POS Date Extension Needed" auto-reminder is disabled per client request —
+    // renewal emails are now fully manual via the /admin/pos UI.
+    // To restore: uncomment the block below AND re-schedule the cron in a new migration
+    // (see supabase/migrations/20260527000001_unschedule_po_renewal_reminder.sql for context).
+    /*
     // POs where status = 'pending', approved_at IS NULL, created_at <= NOW() - 7 days, reminder_sent_at IS NULL
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -61,6 +66,7 @@ export async function POST(request: Request) {
         }
       }
     }
+    */
 
     // === Sequence 2: Approved POs awaiting auth number at day 3 ===
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
@@ -94,7 +100,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       results,
-      pendingCount: pendingPOs?.length ?? 0,
+      pendingCount: 0,
       authPendingCount: approvedPOs?.length ?? 0,
     });
   } catch (error) {
