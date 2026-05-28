@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -258,7 +259,14 @@ function POSPageContent() {
   const [sendEmailModalOpen, setSendEmailModalOpen] = useState(false);
   const [sendEmailPo, setSendEmailPo] = useState<PurchaseOrder | null>(null);
   const [sendEmailSubject, setSendEmailSubject] = useState('');
+  const [sendEmailBody, setSendEmailBody] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [loadingDraft, setLoadingDraft] = useState(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
+  const [previewMode, setPreviewMode] = useState<'preview' | 'edit'>('preview');
+
+  // Focused "Renewals Ready" dialog opened from the teal banner
+  const [renewalsModalOpen, setRenewalsModalOpen] = useState(false);
 
   // Track which POs have had renewal emails sent (key = PO id, value = date string)
   const [sentRenewalEmailDates, setSentRenewalEmailDates] = useState<Record<string, string>>({});
@@ -629,13 +637,51 @@ function POSPageContent() {
     }
   };
 
-  const openSendEmailModal = (po: PurchaseOrder) => {
+  const openSendEmailModal = async (po: PurchaseOrder) => {
     const swimmerName = po.swimmer
       ? `${po.swimmer.first_name} ${po.swimmer.last_name}`
       : 'Swimmer';
     setSendEmailPo(po);
     setSendEmailSubject(`New POS Authorization Needed — ${swimmerName}`);
+    setSendEmailBody('');
+    setDraftError(null);
+    setPreviewMode('preview');
     setSendEmailModalOpen(true);
+    setLoadingDraft(true);
+    try {
+      const res = await fetch(`/api/pos/${po.id}/renewal-email-draft`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to load draft');
+      }
+      const data: { subject: string; html: string } = await res.json();
+      setSendEmailSubject(data.subject);
+      setSendEmailBody(data.html);
+    } catch (err) {
+      setDraftError(err instanceof Error ? err.message : 'Failed to load draft');
+    } finally {
+      setLoadingDraft(false);
+    }
+  };
+
+  const retryLoadDraft = async () => {
+    if (!sendEmailPo) return;
+    setDraftError(null);
+    setLoadingDraft(true);
+    try {
+      const res = await fetch(`/api/pos/${sendEmailPo.id}/renewal-email-draft`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to load draft');
+      }
+      const data: { subject: string; html: string } = await res.json();
+      setSendEmailSubject(data.subject);
+      setSendEmailBody(data.html);
+    } catch (err) {
+      setDraftError(err instanceof Error ? err.message : 'Failed to load draft');
+    } finally {
+      setLoadingDraft(false);
+    }
   };
 
   const handleSendRenewalEmail = async () => {
@@ -646,6 +692,7 @@ function POSPageContent() {
       const response = await fetch(`/api/pos/${sendEmailPo.id}/send-renewal-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject: sendEmailSubject, html: sendEmailBody }),
       });
 
       if (!response.ok) {
@@ -1255,10 +1302,7 @@ function POSPageContent() {
           <div className="flex items-center gap-3 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-950">
             <Mail className="h-5 w-5 shrink-0 text-teal-600" />
             <button
-              onClick={() => {
-                setStatusFilter('pending');
-                setPoTypeFilter('lessons');
-              }}
+              onClick={() => setRenewalsModalOpen(true)}
               className="font-medium underline-offset-2 hover:underline text-teal-700"
             >
               📧 {pendingLessonCount} renewal {pendingLessonCount === 1 ? 'email' : 'emails'} ready to send
@@ -1833,10 +1877,15 @@ function POSPageContent() {
           if (!open) {
             setSendEmailPo(null);
             setSendingEmail(false);
+            setSendEmailBody('');
+            setSendEmailSubject('');
+            setDraftError(null);
+            setLoadingDraft(false);
+            setPreviewMode('preview');
           }
         }}
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Preview & Send Renewal Email</DialogTitle>
             <DialogDescription>
@@ -1844,7 +1893,7 @@ function POSPageContent() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 py-2">
+          <div className="space-y-6 py-2 overflow-y-auto flex-1 min-h-0 pr-1">
             {/* Section A — New PO Summary */}
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-2">New PO Request</h3>
@@ -1882,9 +1931,9 @@ function POSPageContent() {
               </div>
             </div>
 
-            {/* Section B — Email Preview */}
+            {/* Section B — Email Preview / Edit */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Email Preview</h3>
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">Email</h3>
               <div className="space-y-3 rounded-lg border p-4">
                 {/* Subject line */}
                 <div className="space-y-1.5">
@@ -1893,32 +1942,52 @@ function POSPageContent() {
                     id="email-subject"
                     value={sendEmailSubject}
                     onChange={(e) => setSendEmailSubject(e.target.value)}
-                    disabled={sendingEmail}
+                    disabled={sendingEmail || loadingDraft}
                     className="text-sm"
                   />
                 </div>
 
-                {/* Email content preview */}
-                <div className="rounded-md border bg-white p-4 text-sm text-gray-700 space-y-2 max-h-64 overflow-y-auto">
-                  <p className="font-medium text-gray-900">Dear {sendEmailPo?.swimmer?.funding_coordinator_name || sendEmailPo?.coordinator?.full_name || 'Coordinator'},</p>
-                  <p>
-                    A new Purchase Order has been created for <strong>{sendEmailPo?.swimmer?.first_name} {sendEmailPo?.swimmer?.last_name}</strong>.
-                    Please review and authorize {sendEmailPo?.sessions_authorized || 12} lessons for the period{' '}
-                    {sendEmailPo?.start_date ? formatPODate(sendEmailPo.start_date, 'MMM d, yyyy') : '—'}
-                    {' → '}
-                    {sendEmailPo?.end_date ? formatPODate(sendEmailPo.end_date, 'MMM d, yyyy') : '—'}.
-                  </p>
-                  <p>The email will include:</p>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>Swimmer progress report with mastered skills</li>
-                    <li>Upcoming skills to work on</li>
-                    <li><strong>Approve button</strong> for the coordinator to authorize the PO</li>
-                  </ul>
-                  <p className="text-xs text-muted-foreground pt-2 border-t">
-                    The full HTML email is generated server-side when sent. It includes the complete progress report,
-                    skill tracking details, and a secure approval link.
-                  </p>
-                </div>
+                {/* Body — tabbed preview/edit */}
+                {loadingDraft ? (
+                  <div className="flex items-center justify-center h-96 rounded-md border bg-white text-sm text-muted-foreground">
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Loading email draft…
+                  </div>
+                ) : draftError ? (
+                  <div className="flex flex-col items-center justify-center h-96 gap-3 rounded-md border bg-red-50 text-sm text-red-700">
+                    <AlertCircle className="h-5 w-5" />
+                    <p>{draftError}</p>
+                    <Button type="button" variant="outline" size="sm" onClick={retryLoadDraft}>
+                      Retry
+                    </Button>
+                  </div>
+                ) : (
+                  <Tabs value={previewMode} onValueChange={(v) => setPreviewMode(v as 'preview' | 'edit')}>
+                    <TabsList>
+                      <TabsTrigger value="preview">Preview</TabsTrigger>
+                      <TabsTrigger value="edit">Edit HTML</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="preview">
+                      <iframe
+                        title="Renewal email preview"
+                        srcDoc={sendEmailBody}
+                        sandbox=""
+                        className="w-full h-96 rounded-md border bg-white"
+                      />
+                    </TabsContent>
+                    <TabsContent value="edit">
+                      <p className="text-xs text-amber-700 mb-2">
+                        ⚠️ This is raw HTML. Edit text carefully — broken tags may break the email layout.
+                      </p>
+                      <Textarea
+                        value={sendEmailBody}
+                        onChange={(e) => setSendEmailBody(e.target.value)}
+                        disabled={sendingEmail}
+                        className="font-mono text-xs h-96"
+                      />
+                    </TabsContent>
+                  </Tabs>
+                )}
               </div>
             </div>
           </div>
@@ -1934,21 +2003,106 @@ function POSPageContent() {
             </Button>
             <Button
               type="button"
-              variant="outline"
-              className="border-gray-300"
-              onClick={() => document.getElementById('email-subject')?.focus()}
-              disabled={sendingEmail}
-            >
-              Edit Subject
-            </Button>
-            <Button
-              type="button"
               className="bg-green-600 hover:bg-green-700 text-white"
               onClick={handleSendRenewalEmail}
-              disabled={sendingEmail}
+              disabled={sendingEmail || loadingDraft || !sendEmailBody || !!draftError}
             >
               {sendingEmail && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Send Email →
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Renewals Ready dialog — opens from teal banner */}
+      <Dialog open={renewalsModalOpen} onOpenChange={setRenewalsModalOpen}>
+        <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              Renewal Emails Ready ({purchaseOrders.filter((p) => p.status === 'pending' && p.po_type === 'lessons').length})
+            </DialogTitle>
+            <DialogDescription>
+              These purchase orders are awaiting coordinator authorization. Review and send each renewal email.
+            </DialogDescription>
+          </DialogHeader>
+
+          {(() => {
+            const renewalsList = purchaseOrders.filter(
+              (p) => p.status === 'pending' && p.po_type === 'lessons',
+            );
+            if (renewalsList.length === 0) {
+              return (
+                <div className="py-10 text-center text-sm text-muted-foreground">
+                  All caught up — no renewals pending.
+                </div>
+              );
+            }
+            return (
+              <div className="max-h-[60vh] overflow-y-auto rounded-md border">
+                <table className="min-w-full divide-y divide-gray-200 text-sm">
+                  <thead className="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th className="px-3 py-2 font-semibold text-left whitespace-nowrap">Swimmer</th>
+                      <th className="px-3 py-2 font-semibold text-left whitespace-nowrap">Sessions</th>
+                      <th className="px-3 py-2 font-semibold text-left whitespace-nowrap">Period</th>
+                      <th className="px-3 py-2 font-semibold text-left whitespace-nowrap">Coordinator</th>
+                      <th className="px-3 py-2 font-semibold text-left whitespace-nowrap">Status</th>
+                      <th className="px-3 py-2 font-semibold text-center whitespace-nowrap">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {renewalsList.map((po) => {
+                      const sentDate = sentRenewalEmailDates[po.id];
+                      const coordinatorLabel = po.swimmer?.funding_coordinator_name
+                        || po.coordinator?.full_name
+                        || 'Not assigned';
+                      return (
+                        <tr key={po.id} className="bg-white">
+                          <td className="px-3 py-2 whitespace-nowrap font-medium">
+                            {po.swimmer?.first_name} {po.swimmer?.last_name}
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap">{po.sessions_authorized}</td>
+                          <td className="px-3 py-2 whitespace-nowrap text-xs">
+                            {po.start_date ? formatPODate(po.start_date, 'MMM d') : '—'}
+                            {' → '}
+                            {po.end_date ? formatPODate(po.end_date, 'MMM d, yyyy') : '—'}
+                          </td>
+                          <td className="px-3 py-2 text-xs">{coordinatorLabel}</td>
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            {sentDate ? (
+                              <Badge className="bg-green-100 text-green-800 border-green-300">
+                                <Check className="h-3 w-3 mr-1" />
+                                Sent {sentDate}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-amber-700 border-amber-300">
+                                Pending
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-center whitespace-nowrap">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openSendEmailModal(po)}
+                            >
+                              <Mail className="h-3.5 w-3.5 mr-1" />
+                              Review & Send
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setRenewalsModalOpen(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
