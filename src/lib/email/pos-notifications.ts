@@ -110,177 +110,191 @@ export async function notifyParentPOSDeclined(data: POSEmailData & { reason?: st
 }
 
 
-export async function notifyCoordinatorPendingRenewalPO(poId: string) {
+export interface CoordinatorRenewalPayload {
+  subject: string;
+  html: string;
+  coordinatorName: string;
+  coordinatorEmail: string;
+}
+
+export async function buildCoordinatorPendingRenewalPayload(
+  poId: string,
+): Promise<CoordinatorRenewalPayload | null> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SECRET_KEY;
   if (!supabaseUrl || !serviceRoleKey) {
-    console.error('notifyCoordinatorPendingRenewalPO: missing Supabase service role config');
-    return;
+    console.error('buildCoordinatorPendingRenewalPayload: missing Supabase service role config');
+    return null;
   }
   const serviceSupabase = createSupabaseClient(supabaseUrl, serviceRoleKey);
 
+  const { data: po, error: poErr } = await serviceSupabase
+    .from('purchase_orders')
+    .select(`
+      id, swimmer_id, sessions_authorized, start_date, end_date, status,
+      swimmer:swimmers(
+        id, first_name, last_name, uci_number,
+        funding_coordinator_name, funding_coordinator_email
+      )
+    `)
+    .eq('id', poId)
+    .single();
+
+  if (poErr || !po) {
+    console.error('buildCoordinatorPendingRenewalPayload: PO not found', { poId, error: poErr });
+    return null;
+  }
+
+  const swimmer = Array.isArray(po.swimmer) ? po.swimmer[0] : po.swimmer;
+  if (!swimmer) {
+    console.error('buildCoordinatorPendingRenewalPayload: swimmer not found for PO', { poId });
+    return null;
+  }
+
+  const coordinatorEmail = swimmer.funding_coordinator_email?.trim();
+  const coordinatorName = swimmer.funding_coordinator_name?.trim();
+
+  if (!coordinatorEmail) {
+    console.warn(
+      'buildCoordinatorPendingRenewalPayload: no coordinator email on file; skipping email',
+      { poId, swimmerId: swimmer.id },
+    );
+    return null;
+  }
+
+  const swimmerName = `${swimmer.first_name ?? ''} ${swimmer.last_name ?? ''}`.trim();
+
+  const token = generateApproveToken();
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { error: updateErr } = await serviceSupabase
+    .from('purchase_orders')
+    .update({
+      approve_token: token,
+      approve_token_expires_at: expiresAt,
+    })
+    .eq('id', poId);
+
+  if (updateErr) {
+    console.error('buildCoordinatorPendingRenewalPayload: failed to store approve_token', updateErr);
+    // Continue — partial failure shouldn't block the email
+  }
+
+  const approveUrl = getApproveUrl(token);
+
+  const { data: allSkills } = await serviceSupabase
+    .from('swimmer_skills')
+    .select(`
+      status, date_mastered, date_started,
+      skill:skills(id, name, sequence, level_id, level:swim_levels(id, name, display_name, sequence))
+    `)
+    .eq('swimmer_id', swimmer.id)
+    .order('skill_id', { ascending: true });
+
+  const masteredSkills = (allSkills ?? [])
+    .filter((s: any) => s.status === 'mastered' && s.date_mastered)
+    .sort((a: any, b: any) => {
+      const aSeq = a.skill?.level?.sequence ?? 0;
+      const bSeq = b.skill?.level?.sequence ?? 0;
+      if (aSeq !== bSeq) return aSeq - bSeq;
+      return (a.skill?.sequence ?? 0) - (b.skill?.sequence ?? 0);
+    });
+
+  const notStartedSkills = (allSkills ?? [])
+    .filter((s: any) => s.status === 'not_started')
+    .sort((a: any, b: any) => {
+      const aSeq = a.skill?.level?.sequence ?? 0;
+      const bSeq = b.skill?.level?.sequence ?? 0;
+      if (aSeq !== bSeq) return aSeq - bSeq;
+      return (a.skill?.sequence ?? 0) - (b.skill?.sequence ?? 0);
+    });
+
+  const masteredRows = masteredSkills
+    .slice(0, 7)
+    .map((s: any) => {
+      const dateMet = s.date_mastered
+        ? new Date(s.date_mastered).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : '';
+      const levelName = s.skill?.level?.display_name || s.skill?.level?.name || '';
+      return buildMasteredSkillRow(levelName, s.skill?.name ?? '', dateMet);
+    })
+    .join('\n');
+
+  const upcomingRows = notStartedSkills
+    .slice(0, 4)
+    .map((s: any) => {
+      const levelName = s.skill?.level?.display_name || s.skill?.level?.name || '';
+      return buildUpcomingSkillRow(levelName, s.skill?.name ?? '');
+    })
+    .join('\n');
+
+  const { data: targets } = await serviceSupabase
+    .from('swimmer_targets')
+    .select('status')
+    .eq('swimmer_id', swimmer.id);
+
+  const targetsTotal = targets?.length ?? 0;
+  const targetsMastered = targets?.filter((t: any) => t.status === 'completed').length ?? 0;
+
+  const startDate = formatDate(po.start_date);
+  const endDate = formatDate(po.end_date);
+
+  const html = renderPORenewalCoordinatorEmail({
+    coordinatorName: coordinatorName || 'Coordinator',
+    swimmerName,
+    sessionsAuthorized: po.sessions_authorized ?? 12,
+    uciNumber: swimmer.uci_number || 'Pending',
+    startDate,
+    endDate,
+    masteredCount: masteredSkills.length,
+    targetsMastered,
+    targetsTotal,
+    approveUrl,
+    masteredSkillsHtml: masteredRows,
+    upcomingSkillsHtml: upcomingRows,
+    targetsHtml: '',
+  });
+  const subject = `New POS Authorization Needed — ${swimmerName} (New Fiscal Year)`;
+
+  return {
+    subject,
+    html,
+    coordinatorName: coordinatorName || 'Coordinator',
+    coordinatorEmail,
+  };
+}
+
+export async function sendCoordinatorRenewalEmail(args: {
+  to: string;
+  subject: string;
+  html: string;
+}): Promise<void> {
+  const result = await emailService.sendEmail({
+    to: args.to,
+    templateType: 'custom',
+    customData: { subject: args.subject, html: args.html },
+  });
+
+  if (!result.success) {
+    console.error('sendCoordinatorRenewalEmail: email service failed', result.error);
+    throw new Error(result.error || 'Failed to send renewal email');
+  }
+}
+
+export async function notifyCoordinatorPendingRenewalPO(poId: string) {
   try {
-    // 1. Look up PO with swimmer details
-    const { data: po, error: poErr } = await serviceSupabase
-      .from('purchase_orders')
-      .select(`
-        id, swimmer_id, sessions_authorized, start_date, end_date, status,
-        swimmer:swimmers(
-          id, first_name, last_name, uci_number,
-          funding_coordinator_name, funding_coordinator_email
-        )
-      `)
-      .eq('id', poId)
-      .single();
+    const payload = await buildCoordinatorPendingRenewalPayload(poId);
+    if (!payload) return;
 
-    if (poErr || !po) {
-      console.error('notifyCoordinatorPendingRenewalPO: PO not found', { poId, error: poErr });
-      return;
-    }
-
-    const swimmer = Array.isArray(po.swimmer) ? po.swimmer[0] : po.swimmer;
-    if (!swimmer) {
-      console.error('notifyCoordinatorPendingRenewalPO: swimmer not found for PO', { poId });
-      return;
-    }
-
-    const coordinatorEmail = swimmer.funding_coordinator_email?.trim();
-    const coordinatorName = swimmer.funding_coordinator_name?.trim();
-
-    if (!coordinatorEmail) {
-      console.warn(
-        'notifyCoordinatorPendingRenewalPO: no coordinator email on file; skipping email',
-        { poId, swimmerId: swimmer.id }
-      );
-      return;
-    }
-
-    const swimmerName = `${swimmer.first_name ?? ''} ${swimmer.last_name ?? ''}`.trim();
-
-    // 2. Generate approve token + 30-day expiry
-    const token = generateApproveToken();
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-    // 3. Store on PO
-    const { error: updateErr } = await serviceSupabase
-      .from('purchase_orders')
-      .update({
-        approve_token: token,
-        approve_token_expires_at: expiresAt,
-      })
-      .eq('id', poId);
-
-    if (updateErr) {
-      console.error('notifyCoordinatorPendingRenewalPO: failed to store approve_token', updateErr);
-      // Continue — partial failure shouldn't block the email
-    }
-
-    const approveUrl = getApproveUrl(token);
-
-    // 4. Look up skills — mastered and upcoming
-    const { data: allSkills } = await serviceSupabase
-      .from('swimmer_skills')
-      .select(`
-        status, date_mastered, date_started,
-        skill:skills(id, name, sequence, level_id, level:swim_levels(id, name, display_name, sequence))
-      `)
-      .eq('swimmer_id', swimmer.id)
-      .order('skill_id', { ascending: true });
-
-    const masteredSkills = (allSkills ?? [])
-      .filter((s: any) => s.status === 'mastered' && s.date_mastered)
-      .sort((a: any, b: any) => {
-        const aSeq = a.skill?.level?.sequence ?? 0;
-        const bSeq = b.skill?.level?.sequence ?? 0;
-        if (aSeq !== bSeq) return aSeq - bSeq;
-        return (a.skill?.sequence ?? 0) - (b.skill?.sequence ?? 0);
-      });
-
-    const notStartedSkills = (allSkills ?? [])
-      .filter((s: any) => s.status === 'not_started')
-      .sort((a: any, b: any) => {
-        const aSeq = a.skill?.level?.sequence ?? 0;
-        const bSeq = b.skill?.level?.sequence ?? 0;
-        if (aSeq !== bSeq) return aSeq - bSeq;
-        return (a.skill?.sequence ?? 0) - (b.skill?.sequence ?? 0);
-      });
-
-    const masteredRows = masteredSkills
-      .slice(0, 7)
-      .map((s: any) => {
-        const dateMet = s.date_mastered
-          ? new Date(s.date_mastered).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-          : '';
-        const levelName = s.skill?.level?.display_name || s.skill?.level?.name || '';
-        return buildMasteredSkillRow(levelName, s.skill?.name ?? '', dateMet);
-      })
-      .join('\n');
-
-    const upcomingRows = notStartedSkills
-      .slice(0, 4)
-      .map((s: any) => {
-        const levelName = s.skill?.level?.display_name || s.skill?.level?.name || '';
-        return buildUpcomingSkillRow(levelName, s.skill?.name ?? '');
-      })
-      .join('\n');
-
-    // 5. Look up targets
-    const { data: targets } = await serviceSupabase
-      .from('swimmer_targets')
-      .select('status')
-      .eq('swimmer_id', swimmer.id);
-
-    const targetsTotal = targets?.length ?? 0;
-    const targetsMastered = targets?.filter((t: any) => t.status === 'completed').length ?? 0;
-
-
-    // 7. Format dates
-    const startDate = formatDate(po.start_date);
-    const endDate = formatDate(po.end_date);
-
-    // 8. Build the rich HTML email
-    const html = renderPORenewalCoordinatorEmail({
-      coordinatorName: coordinatorName || 'Coordinator',
-      swimmerName,
-      sessionsAuthorized: po.sessions_authorized ?? 12,
-      uciNumber: swimmer.uci_number || 'Pending',
-      startDate,
-      endDate,
-      masteredCount: masteredSkills.length,
-      targetsMastered,
-      targetsTotal,
-      approveUrl,
-      masteredSkillsHtml: masteredRows,
-      upcomingSkillsHtml: upcomingRows,
-      targetsHtml: '',
-    });
-    const subject = `New POS Authorization Needed — ${swimmerName} (New Fiscal Year)`;
-
-    // 9. Send email directly via Resend API (bypassing send-booking-email edge function)
-    const resendBody = {
-      from: 'I Can Swim Billing <billing@icanswim209.com>',
-      reply_to: 'info@icanswim209.com',
-      to: [coordinatorEmail],
-      subject,
-      html,
-    };
-
-    const resendResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(resendBody),
+    await sendCoordinatorRenewalEmail({
+      to: payload.coordinatorEmail,
+      subject: payload.subject,
+      html: payload.html,
     });
 
-    if (!resendResponse.ok) {
-      const errText = await resendResponse.text();
-      console.error('notifyCoordinatorPendingRenewalPO: Resend API error', errText);
-      throw new Error(`Resend API error: ${errText}`);
-    }
-
-    console.log(`Coordinator renewal PO notification sent to ${coordinatorEmail} for PO ${poId}`);
+    console.log(
+      `Coordinator renewal PO notification sent to ${payload.coordinatorEmail} for PO ${poId}`,
+    );
   } catch (error) {
     console.error('Failed to send coordinator renewal PO notification:', error);
   }

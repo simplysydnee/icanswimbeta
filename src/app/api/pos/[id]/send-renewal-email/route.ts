@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { notifyCoordinatorPendingRenewalPO } from '@/lib/email/pos-notifications';
+import {
+  notifyCoordinatorPendingRenewalPO,
+  sendCoordinatorRenewalEmail,
+} from '@/lib/email/pos-notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +17,19 @@ export async function POST(
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Optional admin overrides — when present, send the edited content verbatim.
+    let overrides: { subject?: string; html?: string } = {};
+    try {
+      const raw = await request.text();
+      if (raw) overrides = JSON.parse(raw);
+    } catch {
+      // Empty or non-JSON body → fall through to auto-generated send.
+    }
+    const hasOverrides = typeof overrides.subject === 'string'
+      && overrides.subject.length > 0
+      && typeof overrides.html === 'string'
+      && overrides.html.length > 0;
 
     // Fetch PO with swimmer + coordinator info
     const { data: po, error: poError } = await supabase
@@ -44,8 +60,16 @@ export async function POST(
       );
     }
 
-    // Call the existing email function
-    await notifyCoordinatorPendingRenewalPO(params.id);
+    if (hasOverrides) {
+      await sendCoordinatorRenewalEmail({
+        to: coordinatorEmail,
+        subject: overrides.subject!,
+        html: overrides.html!,
+      });
+    } else {
+      // Auto-generated send — backward compatible.
+      await notifyCoordinatorPendingRenewalPO(params.id);
+    }
 
     // Update notes with sent timestamp
     const now = new Date();
@@ -73,6 +97,7 @@ export async function POST(
     });
   } catch (error) {
     console.error('Error sending renewal email:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
