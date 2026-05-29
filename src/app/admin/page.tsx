@@ -253,7 +253,7 @@ export default function AdminDashboard() {
             .from('bookings')
             .select(
               `
-              session:sessions(price_cents, start_time),
+              session:sessions!inner(price_cents, start_time),
               swimmer:swimmers(funding_source_id, payment_type)
             `,
             )
@@ -264,7 +264,7 @@ export default function AdminDashboard() {
           let privatePayRevenue = 0;
           let fundedRevenue = 0;
           bookingsMTD?.forEach((booking) => {
-            const price = booking.session?.price_cents || 9000;
+            const price = booking.session?.price_cents ?? 0;
             const fundingSourceId = booking.swimmer?.funding_source_id;
             const paymentType = booking.swimmer?.payment_type;
             if (
