@@ -374,14 +374,24 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
           />
         );
 
-      case 'select-instructor':
+      case 'select-instructor': {
+        const isAssessmentBooking =
+          !!selectedSwimmer && selectedSwimmer.assessmentStatus !== 'completed';
         return (
           <InstructorStep
             selectedInstructorId={selectedInstructorId}
             instructorPreference={instructorPreference}
             swimmerId={selectedSwimmer?.id || null}
-            sessionType={selectedSwimmer?.enrollmentStatus === 'waitlist' ? 'assessment' : 'lesson'}
-            isRecurring={sessionType === 'single' ? false : sessionType === 'recurring' ? true : undefined}
+            sessionType={isAssessmentBooking ? 'assessment' : 'lesson'}
+            isRecurring={
+              isAssessmentBooking
+                ? undefined
+                : sessionType === 'single'
+                ? false
+                : sessionType === 'recurring'
+                ? true
+                : undefined
+            }
             onSelectInstructor={(id, preference, instructorName) => {
               setSelectedInstructorId(id);
               setInstructorPreference(preference);
@@ -394,8 +404,11 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
             }}
           />
         );
+      }
 
-      case 'select-date':
+      case 'select-date': {
+        const isAssessmentBooking =
+          !!selectedSwimmer && selectedSwimmer.assessmentStatus !== 'completed';
         return (
           <DateSelectStep
             sessionType={sessionType || 'single'}
@@ -407,8 +420,16 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
             recurringEndDate={recurringEndDate}
             selectedRecurringSessions={selectedRecurringSessions.map(s => s.id)}
             swimmerId={selectedSwimmer?.id || null} // Pass swimmerId for flexible_swimmer check
-            isAssessmentBooking={selectedSwimmer?.enrollmentStatus === 'waitlist'}
-            isRecurring={sessionType === 'single' ? false : sessionType === 'recurring' ? true : undefined}
+            isAssessmentBooking={isAssessmentBooking}
+            isRecurring={
+              isAssessmentBooking
+                ? undefined
+                : sessionType === 'single'
+                ? false
+                : sessionType === 'recurring'
+                ? true
+                : undefined
+            }
             onSelectSession={(session) => {
               setSelectedSessionId(session.id);
               setSelectedSession(session);
@@ -424,6 +445,7 @@ export function BookingWizard({ preselectedSwimmerId }: BookingWizardProps) {
             }}
           />
         );
+      }
 
       case 'assessment':
         return (

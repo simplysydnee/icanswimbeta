@@ -3,7 +3,8 @@
 import { InstructorAvatar } from '@/components/ui/instructor-avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Users, User, AlertCircle, Check } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Users, User, AlertCircle, Check, CalendarDays } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { useInstructors } from '@/hooks/useInstructors'
@@ -37,8 +38,11 @@ export default function InstructorStep({
   const { data: instructorData, isLoading, error } = useInstructors()
   const { data: instructorsBySwimmer } = useInstructorsBySwimmer(swimmerId ?? null)
 
-  // Fetch which instructors have available sessions matching the booking context
-  const { data: availableInstructorIds = [], isLoading: isLoadingAvailability } = useQuery({
+  // Fetch which instructors have available sessions matching the booking context.
+  // Returns both: instructorIds (any future open session) and currentWeekInstructorIds
+  // (open session within the studio's current calendar week, used for the "available
+  // this week" badge).
+  const { data: availabilityData, isLoading: isLoadingAvailability } = useQuery({
     queryKey: ['available-instructors', sessionType, isRecurring],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -51,9 +55,14 @@ export default function InstructorStep({
       const response = await fetch(`/api/sessions/available?${params}`)
       if (!response.ok) throw new Error('Failed to fetch available instructors')
       const data = await response.json()
-      return data.instructorIds || []
+      return {
+        instructorIds: (data.instructorIds || []) as string[],
+        currentWeekInstructorIds: (data.currentWeekInstructorIds || []) as string[],
+      }
     },
   })
+  const availableInstructorIds = availabilityData?.instructorIds ?? []
+  const currentWeekInstructorIds = availabilityData?.currentWeekInstructorIds ?? []
 
   const baseInstructors = instructorData || []
   const preferredIds =
@@ -198,6 +207,7 @@ export default function InstructorStep({
             instructorPreference === 'specific' &&
             selectedInstructorId === instructor.id
           const hasNoAvailability = !isLoadingAvailability && availableInstructorIds.length > 0 && !availableInstructorIds.includes(instructor.id)
+          const hasThisWeekAvailability = currentWeekInstructorIds.includes(instructor.id)
           const isDisabled = (restrictToPreferred && !instructor.isPreferred) || hasNoAvailability
 
           return (
@@ -225,6 +235,15 @@ export default function InstructorStep({
                     <p className="text-sm text-muted-foreground">
                       {hasNoAvailability ? 'No availability' : 'Instructor'}
                     </p>
+                    {!hasNoAvailability && hasThisWeekAvailability && (
+                      <Badge
+                        variant="outline"
+                        className="mt-1 bg-green-50 text-green-700 border-green-200 text-[10px] font-medium gap-1"
+                      >
+                        <CalendarDays className="h-3 w-3" />
+                        Session available this week
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <div
