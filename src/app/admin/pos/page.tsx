@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -89,6 +89,9 @@ interface PurchaseOrder {
     parent_id: string;
     funding_coordinator_name?: string;
     funding_coordinator_email?: string;
+    is_vmrc_client?: boolean;
+    vmrc_coordinator_name?: string;
+    vmrc_coordinator_email?: string;
     bookings?: Array<{
       booking_id?: string;
       status?: string;
@@ -196,6 +199,32 @@ function parsePODate(dateStr: string): Date {
 function formatPODate(dateStr: string, fmt: string): string {
   if (!dateStr) return '—';
   return format(parsePODate(dateStr), fmt);
+}
+
+/**
+ * Resolve which coordinator should receive a renewal email for a swimmer.
+ * Primary: funding_coordinator_email. Fallback (when primary is null/empty AND
+ * is_vmrc_client = true): vmrc_coordinator_email. Returns null when neither resolves.
+ */
+function resolveCoordinatorRecipient(
+  swimmer: PurchaseOrder['swimmer'] | undefined,
+): { name: string; email: string } | null {
+  if (!swimmer) return null;
+  const fundingEmail = swimmer.funding_coordinator_email?.trim();
+  if (fundingEmail) {
+    return {
+      name: swimmer.funding_coordinator_name?.trim() || 'Coordinator',
+      email: fundingEmail,
+    };
+  }
+  const vmrcEmail = swimmer.vmrc_coordinator_email?.trim();
+  if (swimmer.is_vmrc_client && vmrcEmail) {
+    return {
+      name: swimmer.vmrc_coordinator_name?.trim() || 'VMRC Coordinator',
+      email: vmrcEmail,
+    };
+  }
+  return null;
 }
 
 function POSPageContent() {
@@ -914,6 +943,16 @@ function POSPageContent() {
     setBillingModalOpen(true);
   };
 
+  const renewalsReadyPOs = useMemo(
+    () => purchaseOrders.filter(
+      (po) =>
+        po.status === 'pending' &&
+        po.po_type === 'lessons' &&
+        resolveCoordinatorRecipient(po.swimmer) !== null,
+    ),
+    [purchaseOrders],
+  );
+
   const filteredPOs = purchaseOrders.filter(po => {
     if (attentionNeeds && !isPurchaseOrderNeedingAttention(po)) {
       return false;
@@ -1294,9 +1333,7 @@ function POSPageContent() {
 
       {/* Pending Lessons POs Alert */}
       {(() => {
-        const pendingLessonCount = purchaseOrders.filter(
-          (po) => po.status === 'pending' && po.po_type === 'lessons'
-        ).length;
+        const pendingLessonCount = renewalsReadyPOs.length;
         if (pendingLessonCount === 0) return null;
         return (
           <div className="flex items-center gap-3 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-950">
@@ -1667,7 +1704,7 @@ function POSPageContent() {
                         </div>
                       ) : (
                         <div className="flex items-center justify-center gap-0.5">
-                          {po.status === 'pending' && po.po_type === 'lessons' && (
+                          {po.status === 'pending' && po.po_type === 'lessons' && resolveCoordinatorRecipient(po.swimmer) !== null && (
                             (() => {
                               const sentDate = getRenewalEmailSentDate(po);
                               if (sentDate) {
@@ -1919,9 +1956,13 @@ function POSPageContent() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Coordinator:</span>
                   <span className="font-medium">
-                    {sendEmailPo?.swimmer?.funding_coordinator_name
-                      ? `${sendEmailPo.swimmer.funding_coordinator_name} ${sendEmailPo.swimmer.funding_coordinator_email ? `<${sendEmailPo.swimmer.funding_coordinator_email}>` : ''}`
-                      : sendEmailPo?.coordinator?.full_name || 'Not assigned'}
+                    {(() => {
+                      const recipient = resolveCoordinatorRecipient(sendEmailPo?.swimmer);
+                      if (recipient) {
+                        return `${recipient.name} <${recipient.email}>`;
+                      }
+                      return sendEmailPo?.coordinator?.full_name || 'Not assigned';
+                    })()}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -2019,7 +2060,7 @@ function POSPageContent() {
         <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>
-              Renewal Emails Ready ({purchaseOrders.filter((p) => p.status === 'pending' && p.po_type === 'lessons').length})
+              Renewal Emails Ready ({renewalsReadyPOs.length})
             </DialogTitle>
             <DialogDescription>
               These purchase orders are awaiting coordinator authorization. Review and send each renewal email.
@@ -2027,9 +2068,7 @@ function POSPageContent() {
           </DialogHeader>
 
           {(() => {
-            const renewalsList = purchaseOrders.filter(
-              (p) => p.status === 'pending' && p.po_type === 'lessons',
-            );
+            const renewalsList = renewalsReadyPOs;
             if (renewalsList.length === 0) {
               return (
                 <div className="py-10 text-center text-sm text-muted-foreground">
@@ -2053,9 +2092,12 @@ function POSPageContent() {
                   <tbody className="divide-y divide-gray-100">
                     {renewalsList.map((po) => {
                       const sentDate = sentRenewalEmailDates[po.id];
-                      const coordinatorLabel = po.swimmer?.funding_coordinator_name
-                        || po.coordinator?.full_name
-                        || 'Not assigned';
+                      const coordinatorLabel =
+                        (po.swimmer?.is_vmrc_client && po.swimmer?.vmrc_coordinator_name)
+                          ? po.swimmer.vmrc_coordinator_name
+                          : (po.swimmer?.funding_coordinator_name
+                              || po.coordinator?.full_name
+                              || 'Not assigned');
                       return (
                         <tr key={po.id} className="bg-white">
                           <td className="px-3 py-2 whitespace-nowrap font-medium">

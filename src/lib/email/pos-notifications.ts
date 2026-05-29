@@ -11,6 +11,36 @@ import {
 } from '../emails/po-renewal-coordinator'
 import { generateApproveToken, getApproveUrl } from '../po-utils'
 
+/**
+ * Resolve which coordinator should receive a renewal email for a swimmer.
+ * Primary: funding_coordinator_email. Fallback (when primary is null/empty AND
+ * is_vmrc_client = true): vmrc_coordinator_email. Returns null when neither resolves.
+ */
+function resolveCoordinatorRecipient(swimmer: {
+  funding_coordinator_name?: string | null;
+  funding_coordinator_email?: string | null;
+  is_vmrc_client?: boolean | null;
+  vmrc_coordinator_name?: string | null;
+  vmrc_coordinator_email?: string | null;
+} | null | undefined): { name: string; email: string } | null {
+  if (!swimmer) return null;
+  const fundingEmail = swimmer.funding_coordinator_email?.trim();
+  if (fundingEmail) {
+    return {
+      name: swimmer.funding_coordinator_name?.trim() || 'Coordinator',
+      email: fundingEmail,
+    };
+  }
+  const vmrcEmail = swimmer.vmrc_coordinator_email?.trim();
+  if (swimmer.is_vmrc_client && vmrcEmail) {
+    return {
+      name: swimmer.vmrc_coordinator_name?.trim() || 'VMRC Coordinator',
+      email: vmrcEmail,
+    };
+  }
+  return null;
+}
+
 interface POSEmailData {
   swimmerName: string;
   swimmerDOB: string;
@@ -135,7 +165,8 @@ export async function buildCoordinatorPendingRenewalPayload(
       id, swimmer_id, sessions_authorized, sessions_used, start_date, end_date, status,
       swimmer:swimmers(
         id, first_name, last_name, uci_number,
-        funding_coordinator_name, funding_coordinator_email
+        funding_coordinator_name, funding_coordinator_email,
+        is_vmrc_client, vmrc_coordinator_name, vmrc_coordinator_email
       )
     `)
     .eq('id', poId)
@@ -152,16 +183,16 @@ export async function buildCoordinatorPendingRenewalPayload(
     return null;
   }
 
-  const coordinatorEmail = swimmer.funding_coordinator_email?.trim();
-  const coordinatorName = swimmer.funding_coordinator_name?.trim();
-
-  if (!coordinatorEmail) {
+  const recipient = resolveCoordinatorRecipient(swimmer);
+  if (!recipient) {
     console.warn(
-      'buildCoordinatorPendingRenewalPayload: no coordinator email on file; skipping email',
+      'buildCoordinatorPendingRenewalPayload: no coordinator recipient resolvable; skipping email',
       { poId, swimmerId: swimmer.id },
     );
     return null;
   }
+  const coordinatorName = recipient.name;
+  const coordinatorEmail = recipient.email;
 
   const swimmerName = `${swimmer.first_name ?? ''} ${swimmer.last_name ?? ''}`.trim();
 

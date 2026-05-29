@@ -39,7 +39,8 @@ export async function POST(
         sessions_authorized, start_date, end_date, notes,
         swimmer:swimmers(
           id, first_name, last_name,
-          funding_coordinator_name, funding_coordinator_email
+          funding_coordinator_name, funding_coordinator_email,
+          is_vmrc_client, vmrc_coordinator_name, vmrc_coordinator_email
         )
       `)
       .eq('id', params.id)
@@ -50,12 +51,22 @@ export async function POST(
     }
 
     const swimmer = Array.isArray(po.swimmer) ? po.swimmer[0] : po.swimmer;
-    const coordinatorName = swimmer?.funding_coordinator_name?.trim() || 'Coordinator';
-    const coordinatorEmail = swimmer?.funding_coordinator_email?.trim();
 
-    if (!coordinatorEmail) {
+    // Inline recipient resolution: prefer funding_coordinator_email; fall back to
+    // vmrc_coordinator_email when swimmer is a VMRC client.
+    const fundingEmail = swimmer?.funding_coordinator_email?.trim();
+    const vmrcEmail = swimmer?.vmrc_coordinator_email?.trim();
+    let coordinatorName: string;
+    let coordinatorEmail: string;
+    if (fundingEmail) {
+      coordinatorName = swimmer?.funding_coordinator_name?.trim() || 'Coordinator';
+      coordinatorEmail = fundingEmail;
+    } else if (swimmer?.is_vmrc_client && vmrcEmail) {
+      coordinatorName = swimmer?.vmrc_coordinator_name?.trim() || 'VMRC Coordinator';
+      coordinatorEmail = vmrcEmail;
+    } else {
       return NextResponse.json(
-        { error: 'No coordinator email on file for this swimmer' },
+        { error: 'No coordinator email on file (neither funding coordinator nor VMRC fallback applies)' },
         { status: 400 }
       );
     }
