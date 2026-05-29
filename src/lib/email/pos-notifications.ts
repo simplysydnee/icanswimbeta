@@ -7,8 +7,39 @@ import {
   renderPORenewalCoordinatorEmail,
   buildMasteredSkillRow,
   buildUpcomingSkillRow,
+  buildInProgressSkillRow,
 } from '../emails/po-renewal-coordinator'
 import { generateApproveToken, getApproveUrl } from '../po-utils'
+
+/**
+ * Resolve which coordinator should receive a renewal email for a swimmer.
+ * Primary: funding_coordinator_email. Fallback (when primary is null/empty AND
+ * is_vmrc_client = true): vmrc_coordinator_email. Returns null when neither resolves.
+ */
+function resolveCoordinatorRecipient(swimmer: {
+  funding_coordinator_name?: string | null;
+  funding_coordinator_email?: string | null;
+  is_vmrc_client?: boolean | null;
+  vmrc_coordinator_name?: string | null;
+  vmrc_coordinator_email?: string | null;
+} | null | undefined): { name: string; email: string } | null {
+  if (!swimmer) return null;
+  const fundingEmail = swimmer.funding_coordinator_email?.trim();
+  if (fundingEmail) {
+    return {
+      name: swimmer.funding_coordinator_name?.trim() || 'Coordinator',
+      email: fundingEmail,
+    };
+  }
+  const vmrcEmail = swimmer.vmrc_coordinator_email?.trim();
+  if (swimmer.is_vmrc_client && vmrcEmail) {
+    return {
+      name: swimmer.vmrc_coordinator_name?.trim() || 'VMRC Coordinator',
+      email: vmrcEmail,
+    };
+  }
+  return null;
+}
 
 interface POSEmailData {
   swimmerName: string;
@@ -131,10 +162,11 @@ export async function buildCoordinatorPendingRenewalPayload(
   const { data: po, error: poErr } = await serviceSupabase
     .from('purchase_orders')
     .select(`
-      id, swimmer_id, sessions_authorized, start_date, end_date, status,
+      id, swimmer_id, sessions_authorized, sessions_used, start_date, end_date, status,
       swimmer:swimmers(
         id, first_name, last_name, uci_number,
-        funding_coordinator_name, funding_coordinator_email
+        funding_coordinator_name, funding_coordinator_email,
+        is_vmrc_client, vmrc_coordinator_name, vmrc_coordinator_email
       )
     `)
     .eq('id', poId)
@@ -151,16 +183,16 @@ export async function buildCoordinatorPendingRenewalPayload(
     return null;
   }
 
-  const coordinatorEmail = swimmer.funding_coordinator_email?.trim();
-  const coordinatorName = swimmer.funding_coordinator_name?.trim();
-
-  if (!coordinatorEmail) {
+  const recipient = resolveCoordinatorRecipient(swimmer);
+  if (!recipient) {
     console.warn(
-      'buildCoordinatorPendingRenewalPayload: no coordinator email on file; skipping email',
+      'buildCoordinatorPendingRenewalPayload: no coordinator recipient resolvable; skipping email',
       { poId, swimmerId: swimmer.id },
     );
     return null;
   }
+  const coordinatorName = recipient.name;
+  const coordinatorEmail = recipient.email;
 
   const swimmerName = `${swimmer.first_name ?? ''} ${swimmer.last_name ?? ''}`.trim();
 
@@ -191,26 +223,26 @@ export async function buildCoordinatorPendingRenewalPayload(
     .eq('swimmer_id', swimmer.id)
     .order('skill_id', { ascending: true });
 
+  const sortBySkillSequence = (a: any, b: any) => {
+    const aSeq = a.skill?.level?.sequence ?? 0;
+    const bSeq = b.skill?.level?.sequence ?? 0;
+    if (aSeq !== bSeq) return aSeq - bSeq;
+    return (a.skill?.sequence ?? 0) - (b.skill?.sequence ?? 0);
+  };
+
   const masteredSkills = (allSkills ?? [])
     .filter((s: any) => s.status === 'mastered' && s.date_mastered)
-    .sort((a: any, b: any) => {
-      const aSeq = a.skill?.level?.sequence ?? 0;
-      const bSeq = b.skill?.level?.sequence ?? 0;
-      if (aSeq !== bSeq) return aSeq - bSeq;
-      return (a.skill?.sequence ?? 0) - (b.skill?.sequence ?? 0);
-    });
+    .sort(sortBySkillSequence);
+
+  const inProgressSkills = (allSkills ?? [])
+    .filter((s: any) => s.status === 'in_progress')
+    .sort(sortBySkillSequence);
 
   const notStartedSkills = (allSkills ?? [])
     .filter((s: any) => s.status === 'not_started')
-    .sort((a: any, b: any) => {
-      const aSeq = a.skill?.level?.sequence ?? 0;
-      const bSeq = b.skill?.level?.sequence ?? 0;
-      if (aSeq !== bSeq) return aSeq - bSeq;
-      return (a.skill?.sequence ?? 0) - (b.skill?.sequence ?? 0);
-    });
+    .sort(sortBySkillSequence);
 
   const masteredRows = masteredSkills
-    .slice(0, 7)
     .map((s: any) => {
       const dateMet = s.date_mastered
         ? new Date(s.date_mastered).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -220,8 +252,17 @@ export async function buildCoordinatorPendingRenewalPayload(
     })
     .join('\n');
 
+  const inProgressRows = inProgressSkills
+    .map((s: any) => {
+      const dateStarted = s.date_started
+        ? new Date(s.date_started).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : '';
+      const levelName = s.skill?.level?.display_name || s.skill?.level?.name || '';
+      return buildInProgressSkillRow(levelName, s.skill?.name ?? '', dateStarted);
+    })
+    .join('\n');
+
   const upcomingRows = notStartedSkills
-    .slice(0, 4)
     .map((s: any) => {
       const levelName = s.skill?.level?.display_name || s.skill?.level?.name || '';
       return buildUpcomingSkillRow(levelName, s.skill?.name ?? '');
@@ -243,14 +284,18 @@ export async function buildCoordinatorPendingRenewalPayload(
     coordinatorName: coordinatorName || 'Coordinator',
     swimmerName,
     sessionsAuthorized: po.sessions_authorized ?? 12,
+    sessionsUsed: po.sessions_used ?? 0,
     uciNumber: swimmer.uci_number || 'Pending',
     startDate,
     endDate,
     masteredCount: masteredSkills.length,
+    inProgressCount: inProgressSkills.length,
     targetsMastered,
     targetsTotal,
+    allTargetsMet: targetsTotal > 0 && targetsMastered === targetsTotal,
     approveUrl,
     masteredSkillsHtml: masteredRows,
+    inProgressSkillsHtml: inProgressRows,
     upcomingSkillsHtml: upcomingRows,
     targetsHtml: '',
   });
