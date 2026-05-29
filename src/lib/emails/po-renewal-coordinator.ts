@@ -9,15 +9,19 @@ export interface PO_renewalTemplateData {
   coordinatorName: string
   swimmerName: string
   sessionsAuthorized: number
+  sessionsUsed: number
   uciNumber: string
   neededByDate?: string
   startDate: string
   endDate: string
   masteredCount: number
+  inProgressCount: number
   targetsMastered: number
   targetsTotal: number
+  allTargetsMet: boolean
   approveUrl: string
   masteredSkillsHtml: string
+  inProgressSkillsHtml: string
   upcomingSkillsHtml: string
   targetsHtml: string
 }
@@ -25,16 +29,23 @@ export interface PO_renewalTemplateData {
 export function renderPORenewalCoordinatorEmail(data: PO_renewalTemplateData): string {
   let html = TEMPLATE
 
+  const targetsBodyText = data.allTargetsMet
+    ? `All ${data.targetsMastered} individual program targets have been met this authorization period. New targets will be established at the start of the next period.`
+    : `${data.targetsMastered} of ${data.targetsTotal} program targets met this authorization period. The remainder will carry into the next period.`
+
   const replacements: Record<string, string> = {
     '{{coordinator_name}}': escapeHtml(data.coordinatorName),
     '{{swimmer_name}}': escapeHtml(data.swimmerName),
     '{{sessions_authorized}}': String(data.sessionsAuthorized),
+    '{{sessions_used}}': String(data.sessionsUsed),
     '{{uci_number}}': escapeHtml(data.uciNumber),
     '{{start_date}}': escapeHtml(data.startDate),
     '{{end_date}}': escapeHtml(data.endDate),
     '{{mastered_count}}': String(data.masteredCount),
+    '{{in_progress_count}}': String(data.inProgressCount),
     '{{targets_mastered}}': String(data.targetsMastered),
     '{{targets_total}}': String(data.targetsTotal),
+    '{{targets_body_text}}': escapeHtml(targetsBodyText),
     '{{approve_url}}': data.approveUrl,
     '{{{RESEND_UNSUBSCRIBE_URL}}}': '{{{RESEND_UNSUBSCRIBE_URL}}}',
   }
@@ -43,6 +54,10 @@ export function renderPORenewalCoordinatorEmail(data: PO_renewalTemplateData): s
   html = html.replace(
     '<!-- MASTERED SKILLS ROWS — insert dynamically -->',
     data.masteredSkillsHtml || '<tr><td style="padding:8px 10px;color:#8a9eb0;text-align:center;" colspan="3">No skills mastered yet</td></tr>'
+  )
+  html = html.replace(
+    '<!-- IN PROGRESS SKILLS ROWS — insert dynamically -->',
+    data.inProgressSkillsHtml || '<tr><td style="padding:8px 10px;color:#8a9eb0;text-align:center;" colspan="3">No skills currently in progress</td></tr>'
   )
   html = html.replace(
     '<!-- UPCOMING SKILLS ROWS — insert dynamically -->',
@@ -86,6 +101,16 @@ export function buildUpcomingSkillRow(
 ): string {
   const style = levelBadgeStyle(levelName)
   return `<tr style="background:#fafcfd;"><td style="padding:5px 10px;border-bottom:1px solid #f0f5f8;width:80px;"><span style="background:${style.bg};color:${style.color};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;">${escapeHtml(levelName)}</span></td><td style="padding:5px 10px;color:#1a3347;border-bottom:1px solid #f0f5f8;">${escapeHtml(skillName)}</td></tr>`
+}
+
+export function buildInProgressSkillRow(
+  levelName: string,
+  skillName: string,
+  dateStarted: string,
+): string {
+  const style = levelBadgeStyle(levelName)
+  const startedText = dateStarted ? `started ${dateStarted}` : 'In progress'
+  return `<tr><td style="padding:5px 10px;border-bottom:1px solid #f0f5f8;width:80px;"><span style="background:${style.bg};color:${style.color};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;">${escapeHtml(levelName)}</span></td><td style="padding:5px 10px;color:#1a3347;border-bottom:1px solid #f0f5f8;">${escapeHtml(skillName)}</td><td style="padding:5px 10px;color:#a16207;border-bottom:1px solid #f0f5f8;text-align:right;white-space:nowrap;font-size:11px;">${escapeHtml(startedText)}</td></tr>`
 }
 
 function escapeHtml(text: string): string {
@@ -143,7 +168,7 @@ const TEMPLATE = `<!DOCTYPE html>
     <tr><td style="padding:13px 16px;">
       <table cellpadding="0" cellspacing="0"><tr>
         <td style="font-size:20px;padding-right:12px;">✅</td>
-        <td><div style="font-size:14px;font-weight:600;color:#1a4a5e;line-height:1.4;">{{sessions_authorized}} of {{sessions_authorized}} Authorized Sessions Completed
+        <td><div style="font-size:14px;font-weight:600;color:#1a4a5e;line-height:1.4;">{{sessions_used}} of {{sessions_authorized}} Authorized Sessions Completed
           <span style="display:block;font-size:12px;font-weight:500;color:#5a8a9e;margin-top:2px;">Service: Adaptive Swim Lessons (Code 102) · UCI: {{uci_number}}</span>
         </div></td>
       </tr></table>
@@ -193,7 +218,24 @@ const TEMPLATE = `<!DOCTYPE html>
         <!-- MASTERED SKILLS ROWS — insert dynamically -->
       </tbody>
     </table>
-    <div style="font-size:11px;color:#8a9eb0;margin:0 0 16px;padding-left:2px;">+ additional skills mastered. Full list attached in PDF.</div>
+
+    <!-- Skills in progress -->
+    <div style="margin:14px 0 6px;display:flex;align-items:center;gap:7px;">
+      <span style="color:#d97706;">🟡</span>
+      <span style="font-size:13px;font-weight:600;color:#1a3347;">Skills in progress ({{in_progress_count}})</span>
+    </div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="font-size:12px;border-collapse:collapse;margin:0 0 16px;">
+      <thead>
+        <tr style="background:#fff8e1;">
+          <th style="text-align:left;padding:5px 10px;font-weight:600;color:#3d5a6e;border-bottom:1px solid #ffe082;width:80px;">Level</th>
+          <th style="text-align:left;padding:5px 10px;font-weight:600;color:#3d5a6e;border-bottom:1px solid #ffe082;">Skill</th>
+          <th style="text-align:right;padding:5px 10px;font-weight:600;color:#3d5a6e;border-bottom:1px solid #ffe082;white-space:nowrap;">Started</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- IN PROGRESS SKILLS ROWS — insert dynamically -->
+      </tbody>
+    </table>
 
     <!-- Upcoming skills -->
     <div style="margin:0 0 6px;display:flex;align-items:center;gap:7px;">
@@ -213,7 +255,7 @@ const TEMPLATE = `<!DOCTYPE html>
     </div>
     <table cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 24px;background:#f0fdf4;border-radius:8px;border:1px solid #9FE1CB;">
     <tr><td style="padding:10px 14px;font-size:12px;color:#085041;line-height:1.6;">
-      All {{targets_mastered}} individual program targets have been met this authorization period. New targets will be established at the start of the next period.
+      {{targets_body_text}}
     </td></tr></table>
 
     <!-- Divider -->

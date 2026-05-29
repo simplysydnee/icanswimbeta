@@ -1263,9 +1263,14 @@ export function SwimmerDetailModal({
             </div>
 
             {/* Skills Grid - 3 columns */}
-            {currentLevel ? (
-              swimmerSkills.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {swimmerSkills.length > 0 ? (
+              <>
+                {!currentLevel && (
+                  <div className="text-xs italic text-muted-foreground mb-2">
+                    No level assigned yet — showing skills tracked across all levels.
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {/* In Progress */}
                 <div className="bg-amber-50/50 border border-amber-200/50 rounded-lg p-3">
                   <h4 className="text-sm font-medium text-amber-800 mb-2 flex items-center gap-1.5">
@@ -1350,14 +1355,14 @@ export function SwimmerDetailModal({
                     )}
                   </div>
                 </div>
-              </div>
-              ) : (
-                <div className="text-center py-6 bg-muted/20 rounded-lg border border-dashed">
-                  <Target className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                  <p className="text-sm text-muted-foreground">No skills tracked yet for {currentLevel.displayName}</p>
-                  <p className="text-xs text-muted-foreground/70 mt-1">Skills will appear here once tracking begins</p>
                 </div>
-              )
+              </>
+            ) : currentLevel ? (
+              <div className="text-center py-6 bg-muted/20 rounded-lg border border-dashed">
+                <Target className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                <p className="text-sm text-muted-foreground">No skills tracked yet for {currentLevel.displayName}</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Skills will appear here once tracking begins</p>
+              </div>
             ) : (
               <div className="text-center py-6 text-muted-foreground">
                 <Circle className="h-8 w-8 mx-auto mb-2 opacity-50" />
