@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
       .from('purchase_orders')
       .select(`
         *,
-        swimmer:swimmers(id, first_name, last_name, date_of_birth, parent_id, funding_coordinator_name, funding_coordinator_email),
+        swimmer:swimmers(id, first_name, last_name, date_of_birth, parent_id, funding_coordinator_name, funding_coordinator_email, is_vmrc_client, vmrc_coordinator_name, vmrc_coordinator_email),
         funding_source:funding_sources(id, name, short_name, type),
         coordinator:profiles!coordinator_id(id, full_name, email)
       `)
