@@ -127,7 +127,30 @@ export async function GET(req: Request) {
       `, { count: 'exact' })
       .order('first_name');
 
-      query = query.order(sortBy, { ascending: sortOrder === "asc" });
+      // Map UI column keys to actual DB columns for server-side sort.
+      // 'lessons' and 'nextSession' are computed from the bookings join,
+      // so they're sorted in memory after transformation (see below).
+      const sortColumnMap: Record<string, string> = {
+        age: 'date_of_birth',
+        status: 'enrollment_status',
+        priority: 'is_priority_booking',
+        funding: 'payment_type',
+        level: 'current_level_id',
+        first_name: 'first_name',
+        date_of_birth: 'date_of_birth',
+        created_at: 'created_at',
+      };
+      const memorySortKeys = ['lessons', 'nextSession'];
+      const isMemorySort = memorySortKeys.includes(sortBy as string);
+
+      if (!isMemorySort) {
+        const col = sortColumnMap[sortBy as string] ?? 'first_name';
+        // For Age, invert: "ascending age" = youngest first = newest DOB first
+        const ascending = sortBy === 'age'
+          ? sortOrder === 'desc'
+          : sortOrder === 'asc';
+        query = query.order(col, { ascending });
+      }
 
       if (search && typeof search === 'string' && search.trim()) {
         const term = search.trim().replace(/[%_]/g, '\\$&');
@@ -135,14 +158,14 @@ export async function GET(req: Request) {
         query = query.or(`first_name.ilike.${pattern},last_name.ilike.${pattern}`);
       }
 
-      if (page && limit) {
+      if (!isMemorySort && page && limit) {
         const from = (page - 1) * limit;
         const to = from + limit - 1;
-      
+
         query = query.range(from, to);
       }
 
-      const excludedKeys = ["page", "limit", "sortBy", "sortOrder", "search", "enrollmentStatus", "funding", "priority", "level"];
+      const excludedKeys = ["page", "limit", "sortBy", "sortOrder", "search", "enrollmentStatus", "status", "funding", "priority", "level"];
       Object.keys(queryParams).forEach((key) => {
         if (excludedKeys.includes(key)) return;
         const value = queryParams[key];
@@ -152,6 +175,9 @@ export async function GET(req: Request) {
       });
 
       // Map frontend filter params to actual DB columns
+      if (queryParams.status && queryParams.status !== 'all') {
+        query = query.eq('enrollment_status', queryParams.status);
+      }
       if (queryParams.funding && queryParams.funding !== 'all') {
         // Normalize: 'funding_source' and 'funded' both map to payment_type = 'funding_source'
         const fundingValue = queryParams.funding === 'funded' ? 'funding_source' : queryParams.funding;
@@ -160,10 +186,22 @@ export async function GET(req: Request) {
       if (queryParams.priority && queryParams.priority !== 'all') {
         query = query.eq('is_priority_booking', queryParams.priority === 'priority');
       }
-      if (queryParams.level && queryParams.level !== 'all' && queryParams.level !== 'none') {
-        // level values are color names (white, red, yellow, green, blue)
-        // We need to filter via the swim_levels join. PostgREST supports nested filters.
-        query = query.eq('swim_levels.name', queryParams.level);
+      if (queryParams.level && queryParams.level !== 'all') {
+        if (queryParams.level === 'none') {
+          query = query.is('current_level_id', null);
+        } else {
+          const { data: levelRow } = await supabase
+            .from('swim_levels')
+            .select('id')
+            .eq('name', queryParams.level)
+            .maybeSingle();
+          if (levelRow) {
+            query = query.eq('current_level_id', levelRow.id);
+          } else {
+            // Unknown level name → force zero rows rather than error out
+            query = query.eq('current_level_id', '00000000-0000-0000-0000-000000000000');
+          }
+        }
       }
 
       const { data, error, count } = await query;
@@ -324,13 +362,35 @@ export async function GET(req: Request) {
 
     const transformed = data.map(transformSwimmer);
 
+    let finalRows = transformed;
+    let finalTotal: number = count ?? transformed.length;
+
+    if (isMemorySort) {
+      const dir = sortOrder === 'asc' ? 1 : -1;
+      if (sortBy === 'lessons') {
+        finalRows = [...finalRows].sort(
+          (a, b) => dir * ((a.lessonsCompleted ?? 0) - (b.lessonsCompleted ?? 0))
+        );
+      } else if (sortBy === 'nextSession') {
+        const t = (r: any) => r.nextSession?.startTime
+          ? new Date(r.nextSession.startTime).getTime()
+          : Number.POSITIVE_INFINITY;
+        finalRows = [...finalRows].sort((a, b) => dir * (t(a) - t(b)));
+      }
+      finalTotal = transformed.length;
+      if (page && limit) {
+        const from = (page - 1) * limit;
+        finalRows = finalRows.slice(from, from + limit);
+      }
+    }
+
     return NextResponse.json({
-      swimmers: transformed,
+      swimmers: finalRows,
       metadata: {
         page,
         limit,
-        total: count,
-        totalPages: Math.ceil((count ?? 0) / (limit || 1)),
+        total: finalTotal,
+        totalPages: Math.ceil((finalTotal ?? 0) / (limit || 1)),
       },
     });
     
@@ -358,7 +418,11 @@ const querySchema = Joi.object({
     .optional(),
 
   sortBy: Joi.string()
-    .valid("first_name", "date_of_birth", "created_at")
+    .valid(
+      "first_name", "date_of_birth", "created_at",
+      "age", "status", "priority", "funding", "level",
+      "lessons", "nextSession"
+    )
     .default("first_name"),
 
   sortOrder: Joi.string()
