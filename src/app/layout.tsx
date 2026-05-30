@@ -9,6 +9,7 @@ import { ToastProvider } from "@/components/ui/toast-provider";
 import { Footer } from "@/components/layout/footer";
 import { APP_CONFIG } from "@/lib/constants";
 import { Providers } from "./providers";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -95,6 +96,7 @@ export default function RootLayout({
                     <main className="flex-1 overflow-x-hidden">{children}</main>
                     <Footer />
                   </div>
+                  <SpeedInsights />
                 </Providers>
               </ToastProvider>
             </NavigationProvider>
