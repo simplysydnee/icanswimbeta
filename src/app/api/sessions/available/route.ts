@@ -1,6 +1,17 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import { studioDateString } from '@/lib/timezone'
+import { studioDateString, studioDayOfWeek } from '@/lib/timezone'
+
+/**
+ * Returns the UTC ISO timestamp for 00:00 in studio TZ on the given wall-clock
+ * date (yyyy-MM-dd). Handles PT's PDT/PST switch by candidate-checking which
+ * offset interprets back to the same wall-clock date.
+ */
+function studioMidnightUtcIso(ymd: string): string {
+  const candidatePdt = new Date(`${ymd}T00:00:00-07:00`)
+  if (studioDateString(candidatePdt) === ymd) return candidatePdt.toISOString()
+  return new Date(`${ymd}T00:00:00-08:00`).toISOString()
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -55,22 +66,52 @@ export async function GET(request: NextRequest) {
 
     // Early return: instructorsOnly mode — return distinct instructor IDs
     if (searchParams.get('instructorsOnly') === 'true') {
-      let iq = supabase
+      // Compute the end of the studio's current calendar week (next Sunday 00:00 PT)
+      // for the "session available this week" badge in the parent booking flow.
+      const now = new Date()
+      const todayYmd = studioDateString(now)
+      const dow = studioDayOfWeek(now) // 0=Sun ... 6=Sat
+      const daysUntilNextSunday = ((7 - dow) % 7) || 7 // Sunday today → next Sunday
+      const [y, m, d] = todayYmd.split('-').map(Number)
+      const nextSundayDateUtc = new Date(Date.UTC(y, m - 1, d + daysUntilNextSunday))
+      const nextSundayYmd = `${nextSundayDateUtc.getUTCFullYear()}-${String(nextSundayDateUtc.getUTCMonth() + 1).padStart(2, '0')}-${String(nextSundayDateUtc.getUTCDate()).padStart(2, '0')}`
+      const weekEndIso = studioMidnightUtcIso(nextSundayYmd)
+      const nowIso = now.toISOString()
+
+      const baseAll = supabase
         .from('sessions')
         .select('instructor_id')
         .or('status.eq.available,status.eq.open')
         .neq('status', 'closed')
         .eq('is_full', false)
-        .gte('start_time', new Date().toISOString())
+        .gte('start_time', nowIso)
+      let iq = baseAll
       if (sessionType) iq = iq.eq('session_type', sessionType)
       if (isRecurring === 'true') iq = iq.eq('is_recurring', true)
       else if (isRecurring === 'false') iq = iq.eq('is_recurring', false)
-      const { data: rows, error: iqError } = await iq
-      if (iqError) {
+
+      let iqWeek = supabase
+        .from('sessions')
+        .select('instructor_id')
+        .or('status.eq.available,status.eq.open')
+        .neq('status', 'closed')
+        .eq('is_full', false)
+        .gte('start_time', nowIso)
+        .lt('start_time', weekEndIso)
+      if (sessionType) iqWeek = iqWeek.eq('session_type', sessionType)
+      if (isRecurring === 'true') iqWeek = iqWeek.eq('is_recurring', true)
+      else if (isRecurring === 'false') iqWeek = iqWeek.eq('is_recurring', false)
+
+      const [{ data: rows, error: iqError }, { data: weekRows, error: iqWeekError }] = await Promise.all([
+        iq,
+        iqWeek,
+      ])
+      if (iqError || iqWeekError) {
         return NextResponse.json({ error: 'Failed to fetch instructors' }, { status: 500 })
       }
       const instructorIds = [...new Set((rows || []).map(r => r.instructor_id))]
-      return NextResponse.json({ instructorIds })
+      const currentWeekInstructorIds = [...new Set((weekRows || []).map(r => r.instructor_id).filter(Boolean))]
+      return NextResponse.json({ instructorIds, currentWeekInstructorIds })
     }
 
     // Build query for available sessions (not full, status available/open)
