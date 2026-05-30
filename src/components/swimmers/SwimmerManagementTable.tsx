@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { differenceInYears, parseISO } from 'date-fns';
-import { StatusBadge, getStatusOptions } from './StatusBadge';
+import { StatusBadge } from './StatusBadge';
 import { SwimmerDetailModal } from './SwimmerDetailModal';
 import { PriorityBadge } from '@/components/admin/PriorityBadge';
 import { PriorityBookingModal } from '@/components/admin/PriorityBookingModal';
@@ -31,14 +31,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
   Search,
-  Filter,
   ChevronUp,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Star,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
@@ -127,42 +125,45 @@ interface SwimmerManagementTableProps {
   error?: any;
 }
 
-// Filter options - using standardized status configurations
-const statusOptions = [
-  { label: 'All Statuses', value: 'all' },
-  ...getStatusOptions('enrollment')
+// Filter option lists — restricted to values actually written by API routes.
+const enrollmentStatusOptions = [
+  { label: 'All Enrollment Statuses', value: 'all' },
+  { label: 'Waitlist',                value: 'waitlist' },
+  { label: 'Pending Enrollment',      value: 'pending_enrollment' },
+  { label: 'Enrolled',                value: 'enrolled' },
+  { label: 'Dropped',                 value: 'dropped' },
+  { label: 'Expired',                 value: 'enrollment_expired' },
+  { label: 'Declined',                value: 'declined' },
 ];
 
-const fundingOptions = [
-  { label: 'All Funding', value: 'all' },
-  ...getStatusOptions('funding')
+const approvalStatusOptions = [
+  { label: 'All Approval Statuses', value: 'all' },
+  { label: 'Pending',  value: 'pending' },
+  { label: 'Approved', value: 'approved' },
+  { label: 'Declined', value: 'declined' },
 ];
 
-const APPROVAL_STATUSES = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'approved', label: 'Approved' },
-  { value: 'declined', label: 'Declined' },
-];
-
-const approvalOptions = [
-  { label: 'All Approval', value: 'all' },
-  ...APPROVAL_STATUSES,
+const assessmentStatusOptions = [
+  { label: 'All Assessment Statuses', value: 'all' },
+  { label: 'Not Scheduled', value: 'not_scheduled' },
+  { label: 'Scheduled',     value: 'scheduled' },
+  { label: 'Completed',     value: 'completed' },
 ];
 
 const levelOptions = [
-  { label: 'All Levels', value: 'all' },
+  { label: 'All Levels',        value: 'all' },
   { label: 'No Level Assigned', value: 'none' },
-  { label: 'White - Water Readiness', value: 'white' },
-  { label: 'Red - Body Position', value: 'red' },
-  { label: 'Yellow - Forward Movement', value: 'yellow' },
-  { label: 'Green - Water Competency', value: 'green' },
-  { label: 'Blue - Streamlines', value: 'blue' },
+  { label: 'White',  value: 'white' },
+  { label: 'Red',    value: 'red' },
+  { label: 'Yellow', value: 'yellow' },
+  { label: 'Green',  value: 'green' },
+  { label: 'Blue',   value: 'blue' },
 ];
 
-const priorityOptions = [
-  { label: 'All', value: 'all' },
-  { label: 'Priority Only', value: 'priority' },
-  { label: 'Standard Only', value: 'standard' },
+const paymentTypeOptions = [
+  { label: 'All Payment Types', value: 'all' },
+  { label: 'Private Pay', value: 'private_pay' },
+  { label: 'Funded',      value: 'funded' },
 ];
 
 const pageSizeOptions = [
@@ -211,9 +212,9 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
   const search = searchParams.get('search') || '';
   const [localSearch, setLocalSearch] = useState(search);
   const status = searchParams.get('status') || 'all';
-  const priority = searchParams.get('priority') || 'all';
   const funding = searchParams.get('funding') || 'all';
   const approval = searchParams.get('approval_status') || 'all';
+  const assessmentStatus = searchParams.get('assessment_status') || 'all';
   const level = searchParams.get('level') || 'all';
   const sortBy = searchParams.get('sortBy') || 'first_name';
   const sortOrder = searchParams.get('sortOrder') || 'asc';
@@ -286,9 +287,9 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
 
       if (search) params.set('search', search);
       if (status !== 'all') params.set('status', status);
-      if (priority !== 'all') params.set('priority', priority);
       if (funding !== 'all') params.set('funding', funding);
       if (approval !== 'all') params.set('approval_status', approval);
+      if (assessmentStatus !== 'all') params.set('assessment_status', assessmentStatus);
       if (level !== 'all') params.set('level', level);
 
       const response = await fetch(`${apiEndpoint}?${params.toString()}`);
@@ -319,7 +320,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
     } finally {
       setLoading(false);
     }
-  }, [role, search, status, funding, approval, level, sortBy, sortOrder, page, limit]);
+  }, [role, search, status, funding, approval, assessmentStatus, level, sortBy, sortOrder, page, limit]);
 
   // Initial fetch
   useEffect(() => {
@@ -513,88 +514,102 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
             </div>
           </div>
           {/* Filter dropdowns */}
-          <div className="flex flex-wrap gap-1.5">
-            <Select value={status} onValueChange={(value) => updateFilter('status', value)}>
-              <SelectTrigger className="w-[150px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                {statusOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground">Enrollment Status</label>
+              <Select value={status} onValueChange={(value) => updateFilter('status', value)}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {enrollmentStatusOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Select value={priority} onValueChange={(value) => updateFilter('priority', value)}>
-              <SelectTrigger className="w-[150px]">
-                <Star className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                {priorityOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={funding} onValueChange={(value) => updateFilter('funding', value)}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Funding" />
-              </SelectTrigger>
-              <SelectContent>
-                {fundingOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground">Approval Status</label>
+              <Select value={approval} onValueChange={(value) => updateFilter('approval_status', value)}>
+                <SelectTrigger className="w-[190px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {approvalStatusOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Select value={approval} onValueChange={(value) => updateFilter('approval_status', value)}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Approval" />
-              </SelectTrigger>
-              <SelectContent>
-                {approvalOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground">Assessment Status</label>
+              <Select value={assessmentStatus} onValueChange={(value) => updateFilter('assessment_status', value)}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {assessmentStatusOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            {/*<Select value={level} onValueChange={(value) => updateFilter('level', value)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Level" />
-              </SelectTrigger>
-              <SelectContent>
-                {levelOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            */}
-            <Select
-              value={limit.toString()}
-              onValueChange={handleLimitChange}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Per page" />
-              </SelectTrigger>
-              <SelectContent>
-                {pageSizeOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground">Level</label>
+              <Select value={level} onValueChange={(value) => updateFilter('level', value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {levelOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground">Payment Type</label>
+              <Select value={funding} onValueChange={(value) => updateFilter('funding', value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {paymentTypeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-muted-foreground">Per page</label>
+              <Select value={limit.toString()} onValueChange={handleLimitChange}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {pageSizeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
