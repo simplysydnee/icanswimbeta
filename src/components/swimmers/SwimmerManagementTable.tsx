@@ -500,7 +500,7 @@ export function SwimmerManagementTable({ role }: SwimmerManagementTableProps) {
     <>
       <div className="space-y-3">
         {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-3">
+        <div className="flex flex-col gap-3">
           {/* Search */}
           <div className="flex-1">
             <div className="relative">
