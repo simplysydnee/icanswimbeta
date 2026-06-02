@@ -6,7 +6,7 @@ import { useWaiverToken } from '@/hooks/useWaiverToken';
 import { useSwimmersNeedingWaivers } from '@/hooks/useSwimmersNeedingWaivers';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, AlertCircle, Loader2, PartyPopper } from 'lucide-react';
+import { CheckCircle, AlertCircle, Loader2, PartyPopper, ArrowLeft } from 'lucide-react';
 import type { SwimmerWaiverStatus } from '@/lib/db/waivers';
 
 export default function WaiverUpdatePage({
@@ -60,6 +60,13 @@ export default function WaiverUpdatePage({
   // Success - show swimmers
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
+      <Button asChild variant="ghost" className="mb-6 cursor-pointer">
+        <Link href="/parent">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Dashboard
+        </Link>
+      </Button>
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Update Swim Waivers</h1>
         <p className="text-gray-600">
