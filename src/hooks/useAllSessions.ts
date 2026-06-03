@@ -48,12 +48,43 @@ interface AllSessionsResponse {
   };
 }
 
-async function fetchAllSessions(month?: number, year?: number): Promise<AllSessionsResponse> {
+// Filters applied server-side (in the database) by /api/admin/sessions/all.
+// All fields are optional; omitted/'all'/empty values mean "no filter".
+export interface SessionFilters {
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  dayOfWeek?: string;
+  timeFilter?: string;
+  instructorId?: string;
+  location?: string;
+  search?: string;
+}
+
+async function fetchAllSessions(
+  month?: number,
+  year?: number,
+  filters?: SessionFilters
+): Promise<AllSessionsResponse> {
   const url = new URL('/api/admin/sessions/all', window.location.origin);
 
   if (month !== undefined && year !== undefined) {
     url.searchParams.set('month', month.toString());
     url.searchParams.set('year', year.toString());
+  }
+
+  if (filters) {
+    const append = (key: string, value?: string) => {
+      if (value && value !== 'all') url.searchParams.set(key, value);
+    };
+    append('status', filters.status);
+    append('startDate', filters.startDate);
+    append('endDate', filters.endDate);
+    append('dayOfWeek', filters.dayOfWeek);
+    append('timeFilter', filters.timeFilter);
+    append('instructorId', filters.instructorId);
+    append('location', filters.location);
+    append('search', filters.search?.trim());
   }
 
   const response = await fetch(url.toString());
@@ -66,10 +97,10 @@ async function fetchAllSessions(month?: number, year?: number): Promise<AllSessi
   return response.json();
 }
 
-export function useAllSessions(month?: number, year?: number) {
+export function useAllSessions(month?: number, year?: number, filters?: SessionFilters) {
   return useQuery<AllSessionsResponse, Error>({
-    queryKey: ['all-sessions', month, year],
-    queryFn: () => fetchAllSessions(month, year),
+    queryKey: ['all-sessions', month, year, filters],
+    queryFn: () => fetchAllSessions(month, year, filters),
     staleTime: 30 * 1000, // 30 seconds
   });
 }
