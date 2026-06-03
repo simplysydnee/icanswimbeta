@@ -56,6 +56,15 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const month = searchParams.get('month');
     const year = searchParams.get('year');
+    // Optional filters (applied in the database, not the browser).
+    const statusParam = searchParams.get('status');
+    const startDateParam = searchParams.get('startDate');
+    const endDateParam = searchParams.get('endDate');
+    const dayOfWeekParam = searchParams.get('dayOfWeek');
+    const timeFilterParam = searchParams.get('timeFilter');
+    const instructorIdParam = searchParams.get('instructorId');
+    const locationParam = searchParams.get('location');
+    const searchParam = searchParams.get('search');
 
     // ========== STEP 1: Authentication ==========
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -133,34 +142,71 @@ export async function GET(request: Request) {
     const cancelledCount = await getCountByStatus(SESSION_STATUS.CANCELLED);
     const noShowCount = await getCountByStatus('no_show');
 
-    // ========== STEP 5: Fetch Sessions ==========
-    let sessionsQuery = supabase
-      .from('sessions')
-      .select(`
-        *,
-        bookings(
-          id,
-          status,
-          swimmer:swimmers(id, first_name, last_name),
-          parent:profiles!parent_id(id, full_name, email, phone)
-        )
-      `)
-      .order('start_time', { ascending: false });
+    // ========== STEP 5: Fetch Sessions (filtered + searched in the database) ==========
+    // Base start_time window comes from month/year; explicit startDate/endDate
+    // (within the month) tighten it. Upper bound is EXCLUSIVE.
+    const monthStart = (monthNum !== null && yearNum !== null)
+      ? new Date(yearNum, monthNum - 1, 1)
+      : null;
+    const monthEnd = (monthNum !== null && yearNum !== null)
+      ? new Date(yearNum, monthNum, 1)
+      : null;
 
-    // Apply date filter if provided
-    if (monthNum !== null && yearNum !== null) {
-      const startDate = new Date(yearNum, monthNum - 1, 1).toISOString();
-      const endDate = new Date(yearNum, monthNum, 1).toISOString();
-
-      sessionsQuery = sessionsQuery
-        .gte('start_time', startDate)
-        .lt('start_time', endDate);
+    let pStartDate: string | null = monthStart ? monthStart.toISOString() : null;
+    if (startDateParam) {
+      pStartDate = new Date(`${startDateParam}T00:00:00`).toISOString();
     }
 
-    // Apply limit AFTER all filters (PostgREST respects this ordering)
-    sessionsQuery = sessionsQuery.range(0, 19999);
+    let pEndDate: string | null = monthEnd ? monthEnd.toISOString() : null;
+    if (endDateParam) {
+      // Exclusive upper bound = start of the day AFTER the selected end date.
+      const end = new Date(`${endDateParam}T00:00:00`);
+      end.setDate(end.getDate() + 1);
+      pEndDate = end.toISOString();
+    }
 
-    const { data: sessions, error: sessionsError } = await sessionsQuery;
+    // Map UI status 'open' -> DB status 'available'. 'all'/empty -> no filter.
+    const pStatus = (!statusParam || statusParam === 'all')
+      ? null
+      : (statusParam === 'open' ? 'available' : statusParam);
+
+    // Day name -> 0..6 (Sunday=0), matching EXTRACT(DOW) / getDay().
+    const DAY_NAME_TO_NUM: Record<string, number> = {
+      sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6,
+    };
+    const pDayOfWeek = (!dayOfWeekParam || dayOfWeekParam === 'all')
+      ? null
+      : (DAY_NAME_TO_NUM[dayOfWeekParam.toLowerCase()] ?? null);
+
+    // Time-of-day buckets (studio-timezone hours), matching the UI options.
+    const TIME_BUCKETS: Record<string, [number, number]> = {
+      am: [0, 11],
+      pm: [12, 23],
+      morning: [6, 11],
+      afternoon: [12, 16],
+      evening: [17, 21],
+    };
+    const bucket = (timeFilterParam && timeFilterParam !== 'all')
+      ? (TIME_BUCKETS[timeFilterParam] ?? null)
+      : null;
+    const pTimeStartHour = bucket ? bucket[0] : null;
+    const pTimeEndHour = bucket ? bucket[1] : null;
+
+    const pInstructorId = (!instructorIdParam || instructorIdParam === 'all') ? null : instructorIdParam;
+    const pLocation = (!locationParam || locationParam === 'all') ? null : locationParam;
+    const pSearch = searchParam ? (searchParam.trim() || null) : null;
+
+    const { data: rpcSessions, error: sessionsError } = await supabase.rpc('list_admin_sessions', {
+      p_start_date: pStartDate,
+      p_end_date: pEndDate,
+      p_status: pStatus,
+      p_day_of_week: pDayOfWeek,
+      p_time_start_hour: pTimeStartHour,
+      p_time_end_hour: pTimeEndHour,
+      p_instructor_id: pInstructorId,
+      p_location: pLocation,
+      p_search: pSearch,
+    });
 
     if (sessionsError) {
       console.error('Error fetching sessions:', sessionsError);
@@ -170,49 +216,9 @@ export async function GET(request: Request) {
       );
     }
 
-    // ========== STEP 6: Get Instructor Information ==========
-    // Get unique instructor IDs from sessions
-    const instructorIds = Array.from(new Set(sessions.map(s => s.instructor_id).filter(Boolean)));
-
-    let instructorsMap = new Map<string, { id: string; name: string }>();
-
-    if (instructorIds.length > 0) {
-      const { data: instructorProfiles, error: instructorsError } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .in('id', instructorIds);
-
-      if (instructorsError) {
-        console.error('Error fetching instructor profiles:', instructorsError);
-        // Continue without instructor names - they'll show as "Unknown Instructor"
-      } else if (instructorProfiles) {
-        instructorProfiles.forEach(profile => {
-          instructorsMap.set(profile.id, {
-            id: profile.id,
-            name: profile.full_name || 'Unknown Instructor'
-          });
-        });
-      }
-    }
-
-    // ========== STEP 7: Process Sessions ==========
-    const processedSessions: SessionWithBookings[] = sessions.map(session => {
-      const instructor = instructorsMap.get(session.instructor_id) || {
-        id: session.instructor_id,
-        name: 'Unknown Instructor'
-      };
-
-      return {
-        ...session,
-        instructor_name: instructor.name,
-        bookings: session.bookings?.map((booking: any) => ({
-          id: booking.id,
-          status: booking.status,
-          swimmer: booking.swimmer,
-          parent: booking.parent
-        })) || []
-      };
-    });
+    // The RPC already returns rows in the SessionWithBookings shape
+    // (instructor_name resolved, bookings aggregated as JSON).
+    const processedSessions: SessionWithBookings[] = (rpcSessions || []) as SessionWithBookings[];
 
     // ========== STEP 8: Calculate Statistics ==========
     const stats = {
