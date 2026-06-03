@@ -17,14 +17,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { AlertCircle, Loader2, Calendar, FilterX, Plus, MoreHorizontal, Eye, Edit, UserPlus, Users, XCircle, CheckCircle, Trash2, Download, X, CalendarCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAllSessions, useOpenSessions, useDeleteSessions, useInstructors } from '@/hooks';
-import { format, parseISO, startOfDay, endOfDay, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { studioTime12, studioTime24, studioShortDate, studioFullDate, studioDateString, studioDayOfWeek } from '@/lib/timezone';
+import { LOCATIONS } from '@/config/constants';
 import { AddSwimmerToSessionDialog } from '@/components/admin/AddSwimmerToSessionDialog';
 import { EditSessionDialog } from '@/components/admin/EditSessionDialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { createClient } from '@/lib/supabase/client';
 
+
+// Day index (studioDayOfWeek / Postgres EXTRACT(DOW) / getDay) -> name. 0 = Sunday.
+const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 // Status color helper
 function getStatusColor(status: string) {
@@ -79,12 +83,6 @@ function AdminSessionsContent() {
     }));
   }, [monthParam, yearParam]);
 
-  // Fetch data with month/year filter
-  const { data, isLoading, error, refetch } = useAllSessions(currentMonthYear.month, currentMonthYear.year);
-  const { data: instructorsData } = useInstructors();
-  const { mutate: openSessions, isPending: isOpening } = useOpenSessions();
-  const { mutate: deleteSessions, isPending: isDeleting } = useDeleteSessions();
-
   // State
   const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'list' | 'group'>('group');
@@ -98,6 +96,31 @@ function AdminSessionsContent() {
     search: '',
     daysOfWeek: [] as string[],
   });
+
+  // Debounce the search box so typing doesn't fire a request per keystroke.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(filters.search), 300);
+    return () => clearTimeout(t);
+  }, [filters.search]);
+
+  // Filters sent to the API — the database applies them (no client-side filtering).
+  const serverFilters = useMemo(() => ({
+    status: statusFilter,
+    startDate: filters.startDate,
+    endDate: filters.endDate,
+    dayOfWeek: filters.daysOfWeek[0],
+    timeFilter: filters.timeFilter,
+    instructorId: filters.instructorFilter,
+    location: filters.locationFilter,
+    search: debouncedSearch,
+  }), [statusFilter, filters.startDate, filters.endDate, filters.daysOfWeek, filters.timeFilter, filters.instructorFilter, filters.locationFilter, debouncedSearch]);
+
+  // Fetch data: month/year + all filters applied server-side.
+  const { data, isLoading, error, refetch } = useAllSessions(currentMonthYear.month, currentMonthYear.year, serverFilters);
+  const { data: instructorsData } = useInstructors();
+  const { mutate: openSessions, isPending: isOpening } = useOpenSessions();
+  const { mutate: deleteSessions, isPending: isDeleting } = useDeleteSessions();
 
   // Modal states
   const [viewingSession, setViewingSession] = useState<any>(null);
@@ -178,79 +201,9 @@ function AdminSessionsContent() {
   // Get all sessions
   const allSessions = useMemo(() => data?.sessions || [], [data]);
 
-  // Filter sessions based on status and filters
-  const filteredSessions = useMemo(() => {
-    let filtered = allSessions;
-
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      // Map UI status 'open' to database status 'available'
-      const dbStatus = statusFilter === 'open' ? 'available' : statusFilter;
-      filtered = filtered.filter(s => s.status === dbStatus);
-    }
-
-    // Apply date range filter
-    if (filters.startDate) {
-      const start = startOfDay(parseISO(filters.startDate));
-      filtered = filtered.filter(s => {
-        const sessionDate = parseISO(s.start_time);
-        return sessionDate >= start;
-      });
-    }
-
-    if (filters.endDate) {
-      const end = endOfDay(parseISO(filters.endDate));
-      filtered = filtered.filter(s => {
-        const sessionDate = parseISO(s.start_time);
-        return sessionDate <= end;
-      });
-    }
-
-    // Apply time of day filter (using studio timezone)
-    if (filters.timeFilter !== 'all') {
-      filtered = filtered.filter(s => {
-        const hour = parseInt(studioTime24(s.start_time).split(':')[0], 10);
-        if (filters.timeFilter === 'morning') return hour >= 6 && hour < 12;
-        if (filters.timeFilter === 'afternoon') return hour >= 12 && hour < 17;
-        if (filters.timeFilter === 'evening') return hour >= 17 && hour < 22;
-        if (filters.timeFilter === 'am') return hour >= 0 && hour < 12;
-        if (filters.timeFilter === 'pm') return hour >= 12 && hour < 24;
-        return true;
-      });
-    }
-
-    // Apply instructor filter
-    if (filters.instructorFilter !== 'all') {
-      filtered = filtered.filter(s => s.instructor_id === filters.instructorFilter);
-    }
-
-    // Apply day of week filter
-    if (filters.daysOfWeek.length > 0) {
-      filtered = filtered.filter(s => filters.daysOfWeek.includes(s.day_of_week));
-    }
-
-    // Apply location filter
-    if (filters.locationFilter !== 'all') {
-      filtered = filtered.filter(s => s.location === filters.locationFilter);
-    }
-
-    // Apply search filter
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      filtered = filtered.filter(s => {
-        const instructorName = s.instructor_name?.toLowerCase() || '';
-        const swimmerNames = s.bookings?.map(b =>
-          `${b.swimmer?.first_name} ${b.swimmer?.last_name}`.toLowerCase()
-        ).join(' ') || '';
-
-        return instructorName.includes(searchLower) ||
-               swimmerNames.includes(searchLower) ||
-               s.location.toLowerCase().includes(searchLower);
-      });
-    }
-
-    return filtered;
-  }, [allSessions, statusFilter, filters]);
+  // Filtering + search are applied server-side (in the database) by the API,
+  // so the returned list is already the result set we render.
+  const filteredSessions = allSessions;
 
   // Group sessions by instructor_id + day_of_week + time slot for group view
   const groupedSessions = useMemo(() => {
@@ -258,7 +211,7 @@ function AdminSessionsContent() {
     const groups = new Map<string, any[]>();
 
     filteredSessions.forEach(session => {
-      const day = session.day_of_week;
+      const day = DAY_NAMES[studioDayOfWeek(session.start_time)];
       const time = studioTime24(session.start_time);
       const instructorId = session.instructor_id || 'unassigned';
       const key = `${instructorId}|${day}|${time}`;
@@ -269,7 +222,7 @@ function AdminSessionsContent() {
     return Array.from(groups.entries())
       .map(([key, sessions]) => ({
         key,
-        dayOfWeek: sessions[0].day_of_week,
+        dayOfWeek: DAY_NAMES[studioDayOfWeek(sessions[0].start_time)],
         timeLabel: studioTime12(sessions[0].start_time),
         endTimeLabel: studioTime12(sessions[0].end_time),
         instructor: sessions[0].instructor_name || 'Unassigned',
@@ -297,44 +250,6 @@ function AdminSessionsContent() {
     cancelled: 0,
     no_shows: 0,
   }, [data]);
-
-  // Get unique locations - normalize inconsistent formats
-  const locations = useMemo(() => {
-    const locs = new Set<string>();
-
-    allSessions.forEach(s => {
-      if (!s.location) return;
-
-      // Normalize location formats
-      let normalized = s.location.trim();
-
-      // Handle "Modesto: 1212 Kansas Ave" -> "Modesto"
-      if (normalized.includes(':') && !normalized.includes('@')) {
-        normalized = normalized.split(':')[0].trim();
-      }
-
-      // Handle full addresses - extract city name if it's a full address
-      if (normalized.includes(', CA')) {
-        // Try to extract city name from address
-        const parts = normalized.split(',');
-        if (parts.length >= 2) {
-          // Get the city part (usually the part before state)
-          const cityPart = parts[parts.length - 2].trim();
-          // If it's just a city name, use it
-          if (cityPart && !cityPart.includes(' ') && cityPart.length < 20) {
-            normalized = cityPart;
-          }
-        }
-      }
-
-      // Standardize casing
-      normalized = normalized.charAt(0).toUpperCase() + normalized.slice(1).toLowerCase();
-
-      locs.add(normalized);
-    });
-
-    return Array.from(locs).sort();
-  }, [allSessions]);
 
   // Selection handlers
   const handleSelectSession = (sessionId: string, selected: boolean) => {
@@ -412,9 +327,11 @@ function AdminSessionsContent() {
   };
 
   const handleOpenAllDrafts = () => {
-    const draftSessions = allSessions.filter(s => s.status === 'draft');
+    // Use the month-wide draft count (stats), since the loaded list may be
+    // narrowed by the active filters. The mutation opens by month/year below.
+    const draftCount = stats.draft;
 
-    if (draftSessions.length === 0) {
+    if (draftCount === 0) {
       toast({
         title: 'No draft sessions',
         description: 'There are no draft sessions to open.',
@@ -425,7 +342,7 @@ function AdminSessionsContent() {
 
     // Confirm action
     const confirmed = window.confirm(
-      `Are you sure you want to open ${draftSessions.length} draft sessions for booking?`
+      `Are you sure you want to open ${draftCount} draft sessions for booking?`
     );
 
     if (!confirmed) return;
@@ -908,8 +825,8 @@ function AdminSessionsContent() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Locations</SelectItem>
-                    {locations.map(loc => (
-                      <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                    {LOCATIONS.map(loc => (
+                      <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1867,8 +1784,8 @@ function AdminSessionsContent() {
                       <SelectValue placeholder="Select location" />
                     </SelectTrigger>
                     <SelectContent>
-                      {locations.map(loc => (
-                        <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                      {LOCATIONS.map(loc => (
+                        <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
